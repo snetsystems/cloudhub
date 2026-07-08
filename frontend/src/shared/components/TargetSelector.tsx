@@ -3,18 +3,7 @@ import React, {ChangeEvent, useMemo, useState} from 'react'
 import {useTranslation} from 'react-i18next'
 import {Input, InputType, ComponentSize} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-
-export interface TargetSelectorItem {
-  id: string
-  label: string
-}
-
-export interface TargetSelectorText {
-  searchPlaceholder?: string
-  selectedCountText?: string
-  emptyText?: string
-  emptySearchText?: string
-}
+import {TargetSelectorItem, TargetSelectorText} from 'src/types'
 
 interface Props {
   items: TargetSelectorItem[]

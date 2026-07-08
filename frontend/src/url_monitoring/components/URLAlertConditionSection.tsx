@@ -16,12 +16,13 @@ import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
 import {
   AlertGroupRule,
   AlertTemplate,
-  DEFAULT_URL_STATUS_FILTERS,
-  UrlAlertStatusFilters,
+  DEFAULT_URL_ERROR_CONFIG,
+  UrlErrorConfig,
   getTriggerOperators,
   getPauseSecondsOptions,
   Source,
 } from 'src/types'
+import {getRuleSpec, patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 
 const LEVEL_ORDER: {[key: string]: number} = {
   critical: 1,
@@ -96,85 +97,95 @@ const URLAlertConditionSection: React.FC<Props> = ({
   children,
 }) => {
   const {t} = useTranslation()
+  const spec = getRuleSpec(rule)
+
+  const updateSpec = useCallback(
+    (patch: Parameters<typeof patchRuleSpec>[1]) => {
+      onUpdateRule(patchRuleSpec(rule, patch))
+    },
+    [rule, onUpdateRule]
+  )
 
   useEffect(() => {
-    if (!source || rule.database?.trim()) {
+    if (!source || spec.database?.trim()) {
       return
     }
 
-    onUpdateRule({
-      database: source.telegraf || 'telegraf',
-      retentionPolicy: source.defaultRP || 'autogen',
-    })
-  }, [source, rule.database, onUpdateRule])
+    onUpdateRule(
+      patchRuleSpec(rule, {
+        database: source.telegraf || 'telegraf',
+        retentionPolicy: source.defaultRP || 'autogen',
+      })
+    )
+  }, [source, spec.database, rule, onUpdateRule])
 
-  const statusFilters = useMemo(
-    (): UrlAlertStatusFilters => ({
-      ...DEFAULT_URL_STATUS_FILTERS,
-      ...(rule.urlStatusFilters || {}),
+  const urlErrorConfig = useMemo(
+    (): UrlErrorConfig => ({
+      ...DEFAULT_URL_ERROR_CONFIG,
+      ...spec.urlErrorConfig,
     }),
-    [rule.urlStatusFilters]
+    [spec.urlErrorConfig]
   )
 
   const handleToggleCondition = useCallback(
     (idx: number, enabled: boolean): void => {
-      const sorted = sortConditions(rule.conditions)
+      const sorted = sortConditions(spec.conditions)
       const next = sorted.map((c, i) => (i === idx ? {...c, enabled} : c))
-      onUpdateRule({conditions: next})
+      updateSpec({conditions: next})
     },
-    [rule.conditions, onUpdateRule]
+    [spec.conditions, updateSpec]
   )
 
   const handleConditionValue = useCallback(
     (idx: number, value: string): void => {
-      const sorted = sortConditions(rule.conditions)
+      const sorted = sortConditions(spec.conditions)
       const next = sorted.map((c, i) => (i === idx ? {...c, value} : c))
-      onUpdateRule({conditions: next})
+      updateSpec({conditions: next})
     },
-    [rule.conditions, onUpdateRule]
+    [spec.conditions, updateSpec]
   )
 
   const handleConditionOperator = useCallback(
     (idx: number, operator: string): void => {
-      const sorted = sortConditions(rule.conditions)
+      const sorted = sortConditions(spec.conditions)
       const next = sorted.map((c, i) => (i === idx ? {...c, operator} : c))
-      onUpdateRule({conditions: next})
+      updateSpec({conditions: next})
     },
-    [rule.conditions, onUpdateRule]
+    [spec.conditions, updateSpec]
   )
 
   const handleTriggerTypeChange = useCallback(
     (trigger: 'threshold' | 'relative'): void => {
-      onUpdateRule({trigger})
+      updateSpec({trigger})
     },
-    [onUpdateRule]
+    [updateSpec]
   )
 
   const handleTriggerValueChange = useCallback(
     (key: 'shift' | 'change', value: string): void => {
-      onUpdateRule({
+      updateSpec({
         values: {
-          ...rule.values,
+          ...spec.values,
           [key]: value,
         },
       })
     },
-    [rule.values, onUpdateRule]
+    [spec.values, updateSpec]
   )
 
   const handleStatusFilterChange = useCallback(
-    (key: keyof UrlAlertStatusFilters, enabled: boolean): void => {
-      onUpdateRule({
-        urlStatusFilters: {
-          ...statusFilters,
+    (key: keyof UrlErrorConfig, enabled: boolean): void => {
+      updateSpec({
+        urlErrorConfig: {
+          ...urlErrorConfig,
           [key]: enabled,
         },
       })
     },
-    [statusFilters, onUpdateRule]
+    [urlErrorConfig, updateSpec]
   )
 
-  const selectedTemplate = templates?.find(t => t.id === rule.templateId)
+  const selectedTemplate = templates?.find(t => t.id === rule.templateKey)
   const translatedPauseOptions = getPauseSecondsOptions(t)
   const selectedPause = translatedPauseOptions.find(
     o => o.value === rule.pauseSeconds
@@ -182,7 +193,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
   const translatedConditionOperators = getTriggerOperators(t)
   const relativeOpOptions = getRelativeOperatorOptions(t)
   const changesOptions = getChangesOptions(t)
-  const isThreshold = !rule.trigger || rule.trigger === 'threshold'
+  const isThreshold = !spec.trigger || spec.trigger === 'threshold'
   const conditionOperators = isThreshold
     ? translatedConditionOperators
     : relativeOpOptions
@@ -315,7 +326,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
                       <Radio.Button
                         id="url-trigger-relative"
                         value="relative"
-                        active={rule.trigger === 'relative'}
+                        active={spec.trigger === 'relative'}
                         onClick={() => handleTriggerTypeChange('relative')}
                       >
                         {t('alert_group_rule.relative')}
@@ -332,7 +343,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
                   </span>
                   <Dropdown
                     menuWidth="80px"
-                    selected={rule.values?.shift || '1m'}
+                    selected={spec.values?.shift || '1m'}
                     onChoose={(item: any) =>
                       handleTriggerValueChange('shift', item.value)
                     }
@@ -347,7 +358,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
                     menuWidth="120px"
                     selected={
                       changesOptions.find(
-                        o => o.value === (rule.values?.change || 'change')
+                        o => o.value === (spec.values?.change || 'change')
                       )?.label || 'change'
                     }
                     onChoose={(item: any) =>
@@ -367,7 +378,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
               )}
 
               <div className="alert-group-template-thresholds">
-                {sortConditions(rule.conditions).map((cond, idx) => {
+                {sortConditions(spec.conditions).map((cond, idx) => {
                   const selectedOperator = conditionOperators.find(
                     o => o.value === (cond.operator || defaultOperator)
                   )
@@ -418,7 +429,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
                               placeholder={valuePlaceholder}
                             />
                           </div>
-                          {!isThreshold && rule.values?.change === '% change' && (
+                          {!isThreshold && spec.values?.change === '% change' && (
                             <span className="alert-group-condition-text-light">
                               %
                             </span>
@@ -440,11 +451,11 @@ const URLAlertConditionSection: React.FC<Props> = ({
               <div className="alert-group-template-thresholds">
                 {([
                   {
-                    key: 'client4xx' as const,
+                    key: 'check4xx' as const,
                     label: t('url_alert_setting.status_client4xx'),
                   },
                   {
-                    key: 'server5xx' as const,
+                    key: 'check5xx' as const,
                     label: t('url_alert_setting.status_server5xx'),
                   },
                   {
@@ -452,7 +463,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
                     label: t('url_alert_setting.status_unknown'),
                   },
                 ] as const).map(({key, label}) => {
-                  const enabled = statusFilters[key]
+                  const enabled = urlErrorConfig[key]
                   return (
                     <div
                       key={key}

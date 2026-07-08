@@ -20,7 +20,7 @@ import {
   AlertGroupRule,
   AlertCondition,
   OPERATOR_SYMBOLS,
-  urlErrorConfigToStatusFilters,
+  RuleSpecValues,
 } from 'src/types'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
@@ -33,6 +33,7 @@ import {
 } from 'src/url_monitoring/types'
 import {getUrlAlertListData} from 'src/url_monitoring/apis'
 import {updateAlertGroupRule, deleteAlertGroupRule} from 'src/alert_group/apis'
+import {getRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 import {URLAlertUrlCell} from 'src/url_monitoring/components/URLAlertUrlCell'
 import AlertSeverityFilter, {
   AlertSeverityFilterValue,
@@ -55,25 +56,17 @@ const getRuleStatusBadges = (
   rule: AlertGroupRule,
   unknownLabel: string
 ): URLAlertStatusBadge[] => {
-  const statusTarget = rule.targets?.find(
-    target => target.field === 'result_code'
-  )
-  const filters =
-    rule.urlStatusFilters ??
-    (rule.urlErrorConfig
-      ? urlErrorConfigToStatusFilters(rule.urlErrorConfig)
-      : statusTarget?.urlErrorConfig
-      ? urlErrorConfigToStatusFilters(statusTarget.urlErrorConfig)
-      : undefined)
+  const spec = getRuleSpec(rule)
+  const config = spec.urlErrorConfig
 
-  if (!filters) {
+  if (!config) {
     return []
   }
 
   const badges: URLAlertStatusBadge[] = []
-  if (filters.client4xx) badges.push({kind: '4xx', label: '4XX'})
-  if (filters.server5xx) badges.push({kind: '5xx', label: '5XX'})
-  if (filters.unknown) badges.push({kind: 'unknown', label: unknownLabel})
+  if (config.check4xx) badges.push({kind: '4xx', label: '4XX'})
+  if (config.check5xx) badges.push({kind: '5xx', label: '5XX'})
+  if (config.unknown) badges.push({kind: 'unknown', label: unknownLabel})
   return badges
 }
 
@@ -100,7 +93,7 @@ const renderAlertStatusBadges = (statuses: URLAlertStatusBadge[]) => {
 
 const renderAlertTriggerCell = (
   trigger: string | undefined,
-  values: AlertGroupRule['values'] | undefined,
+  values: RuleSpecValues | undefined,
   t: (key: string, fallback?: string) => string
 ) => {
   const normalizedTrigger = trigger || 'threshold'
@@ -241,21 +234,25 @@ export function URLAlertPage({router, source, notify}: Props) {
 
   const totalCount = rules.length
   const warningCount = rules.filter(rule =>
-    rule.conditions?.some(c => c.level === 'warning' && c.enabled)
+    getRuleSpec(rule).conditions?.some(c => c.level === 'warning' && c.enabled)
   ).length
   const criticalCount = rules.filter(rule =>
-    rule.conditions?.some(c => c.level === 'critical' && c.enabled)
+    getRuleSpec(rule).conditions?.some(c => c.level === 'critical' && c.enabled)
   ).length
 
   const filteredRules = useMemo(() => {
     if (activeFilter === 'warning') {
       return rules.filter(rule =>
-        rule.conditions?.some(c => c.level === 'warning' && c.enabled)
+        getRuleSpec(rule).conditions?.some(
+          c => c.level === 'warning' && c.enabled
+        )
       )
     }
     if (activeFilter === 'critical') {
       return rules.filter(rule =>
-        rule.conditions?.some(c => c.level === 'critical' && c.enabled)
+        getRuleSpec(rule).conditions?.some(
+          c => c.level === 'critical' && c.enabled
+        )
       )
     }
     return rules
@@ -337,16 +334,19 @@ export function URLAlertPage({router, source, notify}: Props) {
           thead: {className: 'url-alert-trigger-th'},
         },
         render: (_value: unknown, row: AlertGroupRule) => {
-          if (!row.trigger) {
+          const spec = getRuleSpec(row)
+          if (!spec.trigger) {
             return <span>-</span>
           }
-          return renderAlertTriggerCell(row.trigger, row.values, t)
+          return renderAlertTriggerCell(spec.trigger, spec.values, t)
         },
       },
       {
         key: 'conditions',
         name: t('server_alert.rule', '규칙'),
-        render: (value: AlertCondition[], row: AlertGroupRule) => {
+        render: (_value: AlertCondition[], row: AlertGroupRule) => {
+          const spec = getRuleSpec(row)
+          const value = spec.conditions
           if (!value || value.length === 0) {
             return (
               <div className="url-alert-rule-container">
@@ -361,7 +361,7 @@ export function URLAlertPage({router, source, notify}: Props) {
           return (
             <div className="url-alert-rule-container">
               <span>
-                {row.measurement ? `${row.measurement} - ${row.field}` : '-'}
+                {spec.measurement ? `${spec.measurement} - ${spec.field}` : '-'}
               </span>
               {critical && (
                 <span className="url-alert-rule-critical">

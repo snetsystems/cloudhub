@@ -39,6 +39,10 @@ import AlertGroupTargetSection from 'src/alert_group/components/AlertGroupTarget
 import AlertGroupHandlersSection from 'src/alert_group/components/AlertGroupHandlersSection'
 import AlertGroupTestModal from 'src/alert_group/components/AlertGroupTestModal'
 import {applyAlertTemplateToRule} from 'src/alert_group/utils/alertTemplates'
+import {
+  getRuleSpec,
+  patchRuleSpec,
+} from 'src/alert_group/utils/alertRuleSpecs'
 
 // APIs
 import {
@@ -139,9 +143,14 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         let builderMode: 'template' | 'raw' = 'raw'
         let selectedTemplateId = 'custom'
 
-        const matchedTemplate = templates.find(
-          t => t.measurement === rule.measurement && t.field === rule.field
-        )
+        const ruleSpec = getRuleSpec(rule)
+        const matchedTemplate = templates.find(t => {
+          const templateSpec = getRuleSpec({specs: t.specs})
+          return (
+            templateSpec.measurement === ruleSpec.measurement &&
+            templateSpec.field === ruleSpec.field
+          )
+        })
         if (matchedTemplate) {
           builderMode = 'template'
           selectedTemplateId = matchedTemplate.id
@@ -252,16 +261,17 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     // Disabled templates (measurement not in source) should not apply.
     const {availableMeasurements} = this.state
     const {t} = this.props
+    const templateSpec = getRuleSpec({specs: template.specs})
     if (
       availableMeasurements.size > 0 &&
-      !availableMeasurements.has(template.measurement)
+      !availableMeasurements.has(templateSpec.measurement)
     ) {
       this.props.notify(
         notifyError(
           t(
             'alert_group_rule.noti_measurement_required',
             "이 알람을 사용하려면 '{{measurement}}' 데이터 수집이 필요합니다.",
-            {measurement: template.measurement}
+            {measurement: templateSpec.measurement}
           )
         )
       )
@@ -298,7 +308,9 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       )
       return
     }
-    if (!rule.database) {
+    const spec = getRuleSpec(rule)
+
+    if (!spec.database) {
       notify(
         notifyError(
           t('alert_group_rule.noti_select_db', '데이터베이스를 선택해주세요.')
@@ -306,7 +318,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       )
       return
     }
-    if (!rule.measurement) {
+    if (!spec.measurement) {
       notify(
         notifyError(
           t(
@@ -317,7 +329,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       )
       return
     }
-    if (!rule.field) {
+    if (!spec.field) {
       notify(
         notifyError(
           t('alert_group_rule.noti_select_field', '필드(Field)를 선택해주세요.')
@@ -327,8 +339,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     }
 
     // 임계값 필수값 정합성 검사 (활성화된 조건의 임계값 입력 여부 검사)
-    if (Array.isArray(rule.conditions) && rule.trigger !== 'deadman') {
-      for (const cond of rule.conditions) {
+    if (Array.isArray(spec.conditions) && spec.trigger !== 'deadman') {
+      for (const cond of spec.conditions) {
         if (cond.enabled) {
           const valStr =
             cond.value !== undefined && cond.value !== null
@@ -460,13 +472,15 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     }
 
     const ruleToSave =
-      rule.trigger === 'deadman'
+      spec.trigger === 'deadman'
         ? {
             ...rule,
-            conditions: (rule.conditions || []).map(c => ({
-              ...c,
-              enabled: false,
-            })),
+            ...patchRuleSpec(rule, {
+              conditions: (spec.conditions || []).map(c => ({
+                ...c,
+                enabled: false,
+              })),
+            }),
           }
         : rule
 
@@ -541,7 +555,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     const pageTitle = this.isNew
       ? t('alert_group_rule.create_title', '이벤트 그룹 규칙 생성')
       : t('alert_group_rule.edit_title', '이벤트 그룹 규칙 수정')
-    const hasPreview = !!(rule.measurement && rule.field)
+    const ruleSpec = getRuleSpec(rule)
+    const hasPreview = !!(ruleSpec.measurement && ruleSpec.field)
 
     return (
       <Page className="alert-group-rule-page">
@@ -603,12 +618,12 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                         : 'alert-group-preview-empty'
                     }
                     source={source}
-                    database={rule.database}
-                    retentionPolicy={rule.retentionPolicy}
-                    measurement={rule.measurement}
-                    field={rule.field}
+                    database={ruleSpec.database}
+                    retentionPolicy={ruleSpec.retentionPolicy}
+                    measurement={ruleSpec.measurement}
+                    field={ruleSpec.field}
                     conditions={
-                      rule.trigger === 'deadman' ? [] : rule.conditions
+                      ruleSpec.trigger === 'deadman' ? [] : ruleSpec.conditions!
                     }
                     timeRange={DEFAULT_TIME_RANGE}
                   />

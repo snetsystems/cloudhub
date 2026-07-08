@@ -16,13 +16,9 @@ import {
 import {TimeRange} from 'src/types'
 import {
   AlertGroupRule,
-  AlertRuleEventHandler,
   AlertTemplate,
   UserGroup,
   DEFAULT_RULE,
-  DEFAULT_URL_STATUS_FILTERS,
-  normalizeAlertConditions,
-  urlErrorConfigToStatusFilters,
 } from 'src/types'
 
 // Components
@@ -48,13 +44,17 @@ import {
   getURLMonitoring,
 } from 'src/url_monitoring/apis'
 import {URLMonitoringTarget} from 'src/url_monitoring/types'
+import {
+  getRuleSpec,
+  patchRuleSpec,
+} from 'src/alert_group/utils/alertRuleSpecs'
+import {applyAlertTemplateToRule} from 'src/alert_group/utils/alertTemplates'
 
 // APIs
 import {
   createAlertGroupRule,
   updateAlertGroupRule,
   getUserGroups,
-  fetchAvailableMeasurements,
 } from 'src/alert_group/apis'
 import {getActiveKapacitor} from 'src/shared/apis'
 
@@ -102,79 +102,16 @@ const applyUrlAlertTemplateToRule = (
   const retentionPolicy =
     template.retentionPolicy?.trim() || source.defaultRP || 'autogen'
 
-  const statusTarget = template.targets?.find(
-    target => target.field === 'result_code'
-  )
-  const latencyTarget = template.targets?.find(
-    target => target.field === 'response_time'
-  )
-
-  const eventHandlers = Array.isArray(prevRule.eventHandlers)
-    ? prevRule.eventHandlers
-    : []
-  const emailHandler = eventHandlers.find(handler => handler.type === 'email')
-  const nonEmailHandlers = eventHandlers.filter(
-    handler => handler.type !== 'email'
-  )
-  const nextEmailHandler: AlertRuleEventHandler = {
-    ...(emailHandler || {}),
-    type: 'email',
-    enabled: emailHandler?.enabled ?? true,
-    recipientGroupIds:
-      emailHandler?.recipientGroupIds || prevRule.recipientGroupIds || [],
-    configJson: {
-      ...(emailHandler?.configJson || {to: []}),
-      body:
-        template.emailBody ||
-        (emailHandler?.configJson?.body as string | undefined) ||
-        '',
-    },
-  }
-
-  const rawTrigger = latencyTarget?.trigger ?? template.trigger ?? 'threshold'
-  const trigger = rawTrigger === 'deadman' ? 'threshold' : rawTrigger
-  const rawConditions = latencyTarget?.conditions ?? template.conditions
-  const conditions = rawConditions?.length
-    ? normalizeAlertConditions(rawConditions)
-    : DEFAULT_RULE.conditions
-
-  const urlStatusFilters = statusTarget?.urlErrorConfig
-    ? urlErrorConfigToStatusFilters(statusTarget.urlErrorConfig)
-    : DEFAULT_URL_STATUS_FILTERS
+  const nextRule = applyAlertTemplateToRule(prevRule, template)
+  const spec = getRuleSpec(nextRule)
 
   return {
-    ...DEFAULT_RULE,
-    kapacitorId: prevRule.kapacitorId,
-    name: prevRule.name,
-    templateId: template.id,
-    targets: template.targets,
-    database,
-    retentionPolicy,
-    measurement:
-      latencyTarget?.measurement ?? template.measurement ?? DEFAULT_RULE.measurement,
-    field: latencyTarget?.field ?? template.field ?? DEFAULT_RULE.field,
-    derivative: template.derivative,
-    eval: template.eval,
-    trigger,
-    values: {
-      change: 'change',
-      shift: '1m',
-      period: '10m',
-      ...prevRule.values,
-      ...(template.values || {}),
-    },
-    taskType: template.taskType,
-    every: template.every,
-    occurrenceType: template.occurrenceType,
-    occurrenceCount: template.occurrenceCount,
-    occurrenceWindow: template.occurrenceWindow,
-    pauseSeconds: template.pauseSeconds,
-    notifyRecovery: template.notifyRecovery,
-    message: template.message,
-    conditions,
-    urlErrorConfig: statusTarget?.urlErrorConfig,
-    urlStatusFilters,
-    eventHandlers: [...nonEmailHandlers, nextEmailHandler],
+    ...nextRule,
+    targetType: 'url',
+    ...patchRuleSpec(nextRule, {
+      database: spec.database || database,
+      retentionPolicy: spec.retentionPolicy || retentionPolicy,
+    }),
   }
 }
 
@@ -232,13 +169,11 @@ const URLAlertSettingPage: React.FC<Props> = ({
         const [
           loadedUserGroups,
           loadedTemplates,
-          loadedMeasurements,
           activeKapacitor,
           urlMonitoring,
         ] = await Promise.all([
           getUserGroups(),
           getUrlAlertTemplates(),
-          fetchAvailableMeasurements(source).catch(() => new Set<string>()),
           getActiveKapacitor(source).catch(() => null),
           getURLMonitoring().catch(() => null),
         ])
@@ -259,10 +194,6 @@ const URLAlertSettingPage: React.FC<Props> = ({
           const ruleWithKapacitor = {
             ...loadedRule,
             kapacitorId: loadedRule.kapacitorId || activeKapacitorId,
-            urlStatusFilters: {
-              ...DEFAULT_URL_STATUS_FILTERS,
-              ...(loadedRule.urlStatusFilters || {}),
-            },
           }
 
           setRule(ruleWithKapacitor)
@@ -270,12 +201,12 @@ const URLAlertSettingPage: React.FC<Props> = ({
           setUserGroups(loadedUserGroups)
           setTemplates(loadedTemplates)
           setUrlTargets(loadedUrlTargets)
-          setAvailableMeasurements(loadedMeasurements)
+          setAvailableMeasurements(new Set())
           setLoading(RemoteDataState.Done)
           setSelectedTemplateId(
-            loadedRule.templateId &&
-              loadedTemplates.some(t => t.id === loadedRule.templateId)
-              ? loadedRule.templateId
+            loadedRule.templateKey &&
+              loadedTemplates.some(t => t.id === loadedRule.templateKey)
+              ? loadedRule.templateKey
               : 'custom'
           )
         } else {
@@ -287,7 +218,7 @@ const URLAlertSettingPage: React.FC<Props> = ({
           setUserGroups(loadedUserGroups)
           setTemplates(loadedTemplates)
           setUrlTargets(loadedUrlTargets)
-          setAvailableMeasurements(loadedMeasurements)
+          setAvailableMeasurements(new Set())
           setLoading(RemoteDataState.Done)
           setSelectedTemplateId('custom')
         }
@@ -338,9 +269,9 @@ const URLAlertSettingPage: React.FC<Props> = ({
         if (savedRule) {
           setRule(savedRule)
           setSelectedTemplateId(
-            savedRule.templateId &&
-              templates.some(t => t.id === savedRule.templateId)
-              ? savedRule.templateId
+            savedRule.templateKey &&
+              templates.some(t => t.id === savedRule.templateKey)
+              ? savedRule.templateKey
               : 'custom'
           )
           return
@@ -368,25 +299,27 @@ const URLAlertSettingPage: React.FC<Props> = ({
   )
 
   const handleSave = useCallback(async (): Promise<void> => {
+    const spec = getRuleSpec(rule)
+
     if (!rule.name || !rule.name.trim()) {
       notify(notifyError(t('alert_group_rule.noti_enter_name')))
       return
     }
-    if (!rule.database) {
+    if (!spec.database) {
       notify(notifyError(t('alert_group_rule.noti_select_db')))
       return
     }
-    if (!rule.measurement) {
+    if (!spec.measurement) {
       notify(notifyError(t('alert_group_rule.noti_select_measurement')))
       return
     }
-    if (!rule.field) {
+    if (!spec.field) {
       notify(notifyError(t('alert_group_rule.noti_select_field')))
       return
     }
 
-    if (Array.isArray(rule.conditions)) {
-      for (const cond of rule.conditions) {
+    if (Array.isArray(spec.conditions)) {
+      for (const cond of spec.conditions) {
         if (cond.enabled) {
           const valStr =
             cond.value !== undefined && cond.value !== null
@@ -474,10 +407,11 @@ const URLAlertSettingPage: React.FC<Props> = ({
 
     try {
       let nextSavedRule: AlertGroupRule
+      const ruleToSave: AlertGroupRule = {...rule, targetType: 'url'}
       if (isNew) {
-        nextSavedRule = await createAlertGroupRule(rule)
+        nextSavedRule = await createAlertGroupRule(ruleToSave)
       } else {
-        nextSavedRule = await updateAlertGroupRule(ruleId!, rule)
+        nextSavedRule = await updateAlertGroupRule(ruleId!, ruleToSave)
       }
 
       const returnTo = (location.state as any)?.returnTo
@@ -533,6 +467,7 @@ const URLAlertSettingPage: React.FC<Props> = ({
     () => buildUrlPreviewGraphProps(rule, urlTargets),
     [rule, urlTargets]
   )
+  const ruleSpec = getRuleSpec(rule)
 
   if (!source) {
     return null
@@ -588,20 +523,20 @@ const URLAlertSettingPage: React.FC<Props> = ({
                 onUpdateRule={handleUpdateRule}
               >
                 <AlertGroupPreviewGraph
-                  key={`${rule.measurement}-${rule.field}-${(
+                  key={`${ruleSpec.measurement}-${ruleSpec.field}-${(
                     rule.urlTargetIds || []
                   ).join(',')}`}
                   source={source}
-                  database={rule.database || source.telegraf || 'telegraf'}
+                  database={ruleSpec.database || source.telegraf || 'telegraf'}
                   retentionPolicy={
-                    rule.retentionPolicy || source.defaultRP || 'autogen'
+                    ruleSpec.retentionPolicy || source.defaultRP || 'autogen'
                   }
-                  measurement={rule.measurement}
-                  field={rule.field}
+                  measurement={ruleSpec.measurement}
+                  field={ruleSpec.field}
                   tags={previewGraphProps.tags}
                   groupBy={previewGraphProps.groupBy}
                   areTagsAccepted={previewGraphProps.areTagsAccepted}
-                  conditions={rule.conditions}
+                  conditions={ruleSpec.conditions!}
                   timeRange={DEFAULT_TIME_RANGE}
                 />
               </URLAlertConditionSection>

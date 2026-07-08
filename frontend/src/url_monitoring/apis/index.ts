@@ -1,12 +1,6 @@
 import type {AxiosResponse} from 'axios'
 import AJAX from 'src/utils/ajax'
-import {
-  AlertGroupRule,
-  AlertTemplate,
-  DEFAULT_RULE,
-  UrlErrorConfig,
-  urlErrorConfigToStatusFilters,
-} from 'src/types'
+import {AlertGroupRule, AlertTemplate} from 'src/types'
 import {
   getAlertGroupRule,
   getAlertGroupRules,
@@ -187,215 +181,30 @@ export const getURLMonitoringConfigContent = async (
   return (data as {config: string}).config
 }
 
-/** Default URL alert template id (builtin mock). */
-export const DEFAULT_URL_ALERT_TEMPLATE_ID = 'url_monitoring_alert'
-
-const URL_ALERT_BUILTIN_TEMPLATES: AlertTemplate[] = [
-  {
-    id: DEFAULT_URL_ALERT_TEMPLATE_ID,
-    name: '상태 & 지연시간 알림',
-    description:
-      'URL 응답 코드 오류(4xx/5xx)가 발생하거나 응답 시간(지연)이 임계치를 초과할 경우 알림',
-    category: 'url-monitoring',
-    tags: ['url', 'http', 'status-code', 'availability'],
-    taskType: 'stream',
-    every: '30s',
-    occurrenceType: 'consecutive',
-    occurrenceCount: 2,
-    occurrenceWindow: '5m',
-    pauseSeconds: 0,
-    notifyRecovery: true,
-    message:
-      '{{ index .Tags "server" }} URL 모니터링 알람 {{ .Level }} (상태 코드 또는 응답시간 지연)',
-    measurement: 'http_response',
-    field: 'response_time',
-    targets: [
-      {
-        database: '',
-        retentionPolicy: '',
-        measurement: 'http_response',
-        field: 'result_code',
-        trigger: 'threshold',
-        urlErrorConfig: {
-          check4xx: true,
-          check5xx: true,
-          checkUnknown: true,
-        },
-        conditions: [
-          {
-            level: 'critical',
-            value: 0,
-            operator: 'greaterEqual',
-            enabled: false,
-          },
-          {
-            level: 'warning',
-            value: 0,
-            operator: 'greater',
-            enabled: false,
-          },
-          {level: 'info', value: 0, operator: 'greater', enabled: false},
-        ],
-      },
-      {
-        database: '',
-        retentionPolicy: '',
-        measurement: 'http_response',
-        field: 'response_time',
-        trigger: 'threshold',
-        conditions: [
-          {level: 'critical', value: 5.0, operator: 'greater', enabled: true},
-          {level: 'warning', value: 2.0, operator: 'greater', enabled: true},
-          {level: 'info', value: 0, operator: 'greater', enabled: false},
-        ],
-      },
-    ],
-  },
-]
-
 export const getUrlAlertTemplates = async (): Promise<AlertTemplate[]> => {
-  let customFromApi: AlertTemplate[] = []
-  try {
-    const all = await getAlertTemplates()
-    customFromApi = all
-      .filter(t => t.category === 'url-monitoring')
-      .map(t => ({
-        ...t,
-        database: t.database?.trim() || '',
-        retentionPolicy: t.retentionPolicy?.trim() || 'autogen',
-      }))
-  } catch {
-    // degrade to builtin templates only
+  const templates = await getAlertTemplates({targetType: 'url'})
+  const byId = new Map<string, AlertTemplate>()
+  for (const template of templates) {
+    byId.set(template.id, template)
   }
-  return [...URL_ALERT_BUILTIN_TEMPLATES, ...customFromApi]
+  return Array.from(byId.values())
 }
-
-interface MockUrlAlertRuleInput {
-  id: string
-  name: string
-  active: boolean
-  urlTargetIds: string[]
-  status: UrlErrorConfig
-  latency: {critical: number; warning: number}
-  occurrenceCount?: number
-  pauseSeconds?: number
-}
-
-// Builds a URL alert rule that mirrors the backend template form
-// (targets[]: result_code + response_time), matching DEFAULT_URL_ALERT_TEMPLATE_ID.
-const makeMockUrlAlertRule = (input: MockUrlAlertRuleInput): AlertGroupRule => {
-  const {
-    id,
-    name,
-    active,
-    urlTargetIds,
-    status,
-    latency,
-    occurrenceCount = 2,
-    pauseSeconds = 0,
-  } = input
-
-  return {
-    ...DEFAULT_RULE,
-    id,
-    name,
-    active,
-    templateId: DEFAULT_URL_ALERT_TEMPLATE_ID,
-    taskType: 'stream',
-    every: '30s',
-    occurrenceType: 'consecutive',
-    occurrenceCount,
-    occurrenceWindow: '5m',
-    pauseSeconds,
-    notifyRecovery: true,
-    trigger: 'threshold',
-    measurement: 'http_response',
-    field: 'response_time',
-    message:
-      '{{ index .Tags "server" }} URL 모니터링 알람 {{ .Level }} (상태 코드 또는 응답시간 지연)',
-    urlTargetIds,
-    urlErrorConfig: status,
-    urlStatusFilters: urlErrorConfigToStatusFilters(status),
-    conditions: [
-      {
-        level: 'critical',
-        value: String(latency.critical),
-        enabled: true,
-        operator: 'greater',
-      },
-      {
-        level: 'warning',
-        value: String(latency.warning),
-        enabled: true,
-        operator: 'greater',
-      },
-      {level: 'info', value: '0', enabled: false, operator: 'greater'},
-    ],
-    targets: [
-      {
-        database: '',
-        retentionPolicy: '',
-        measurement: 'http_response',
-        field: 'result_code',
-        trigger: 'threshold',
-        urlErrorConfig: status,
-        conditions: [
-          {
-            level: 'critical',
-            value: 0,
-            operator: 'greaterEqual',
-            enabled: false,
-          },
-          {level: 'warning', value: 0, operator: 'greater', enabled: false},
-          {level: 'info', value: 0, operator: 'greater', enabled: false},
-        ],
-      },
-      {
-        database: '',
-        retentionPolicy: '',
-        measurement: 'http_response',
-        field: 'response_time',
-        trigger: 'threshold',
-        conditions: [
-          {
-            level: 'critical',
-            value: latency.critical,
-            operator: 'greater',
-            enabled: true,
-          },
-          {
-            level: 'warning',
-            value: latency.warning,
-            operator: 'greater',
-            enabled: true,
-          },
-          {level: 'info', value: 0, operator: 'greater', enabled: false},
-        ],
-      },
-    ],
-  }
-}
-
-const isUrlAlertRule = (rule: AlertGroupRule): boolean =>
-  rule.measurement === 'http_response'
 
 export interface UrlAlertListData {
   rules: AlertGroupRule[]
   targets: URLMonitoringTarget[]
 }
 
-// Loads the URL alert list (rules) together with the URL monitoring targets
-// used to render the "Request / URL" column. Rules and targets are always
-// sourced together — real API when URL alert rules exist, otherwise the mock
-// bundle — so that rule.urlTargetIds always match the returned target ids.
+// Loads URL alert rules (targetType=url) together with URL monitoring targets
+// for the "Request / URL" column.
 export const getUrlAlertListData = async (): Promise<UrlAlertListData> => {
   const [rules, config] = await Promise.all([
-    getAlertGroupRules({targetType: 'url'}), // 중요: 기본값 'server'가 아님
+    getAlertGroupRules({targetType: 'url'}),
     getURLMonitoring().catch(() => null),
   ])
-  console.log('rules', rules)
+
   return {
-    rules: rules.filter(isUrlAlertRule),
+    rules,
     targets: config?.targets ?? [],
   }
 }
@@ -404,9 +213,6 @@ export const getUrlAlertRules = async (): Promise<AlertGroupRule[]> => {
   const {rules} = await getUrlAlertListData()
   return rules
 }
-
-export const isMockUrlAlertRuleId = (id: string): boolean =>
-  id.startsWith('mock-url-alert-')
 
 export const getUrlAlertRule = async (id: string): Promise<AlertGroupRule> => {
   return getAlertGroupRule(id)

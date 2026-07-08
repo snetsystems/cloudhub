@@ -28,6 +28,7 @@ import {
   deleteAlertGroupRuleAndFetch,
   updateAlertGroupRule,
 } from 'src/alert_group/apis'
+import {getRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
@@ -48,7 +49,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
   // 데이터 가져오기
   const fetchData = async () => {
     try {
-      const rules = await getAlertGroupRules({targetType: 'server'})
+      const rules = await getAlertGroupRules({targetType: 'host'})
       if (rules.length > 0) {
         setData(rules)
       }
@@ -113,21 +114,25 @@ function ServerAlertManagementPage({router, location, notify}: any) {
   // 카운트 계산 (데이터 기반)
   const totalCount = data.length
   const warningCount = data.filter(rule =>
-    rule.conditions?.some(c => c.level === 'warning' && c.enabled)
+    getRuleSpec(rule).conditions?.some(c => c.level === 'warning' && c.enabled)
   ).length
   const criticalCount = data.filter(rule =>
-    rule.conditions?.some(c => c.level === 'critical' && c.enabled)
+    getRuleSpec(rule).conditions?.some(c => c.level === 'critical' && c.enabled)
   ).length
 
   const filteredData = useMemo(() => {
     if (activeFilter === 'warning') {
       return data.filter(rule =>
-        rule.conditions?.some(c => c.level === 'warning' && c.enabled)
+        getRuleSpec(rule).conditions?.some(
+          c => c.level === 'warning' && c.enabled
+        )
       )
     }
     if (activeFilter === 'critical') {
       return data.filter(rule =>
-        rule.conditions?.some(c => c.level === 'critical' && c.enabled)
+        getRuleSpec(rule).conditions?.some(
+          c => c.level === 'critical' && c.enabled
+        )
       )
     }
     return data
@@ -184,8 +189,9 @@ function ServerAlertManagementPage({router, location, notify}: any) {
         key: 'trigger',
         name: t('server_alert.trigger', '조건 방식'),
         render: (_value: any, row: AlertGroupRule) => {
-          const trigger = row.trigger || 'threshold'
-          const values = row.values
+          const spec = getRuleSpec(row)
+          const trigger = spec.trigger || 'threshold'
+          const values = spec.values
 
           if (trigger === 'threshold') {
             return (
@@ -238,7 +244,9 @@ function ServerAlertManagementPage({router, location, notify}: any) {
       {
         key: 'conditions',
         name: t('server_alert.rule', '규칙'),
-        render: (value: AlertCondition[], row: AlertGroupRule) => {
+        render: (_value: AlertCondition[], row: AlertGroupRule) => {
+          const spec = getRuleSpec(row)
+          const value = spec.conditions
           if (!value || value.length === 0) {
             return (
               <div className="server-alert-rule-container">
@@ -253,7 +261,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
           return (
             <div className="server-alert-rule-container">
               <span>
-                {row.measurement ? `${row.measurement} - ${row.field}` : '-'}
+                {spec.measurement ? `${spec.measurement} - ${spec.field}` : '-'}
               </span>
               {critical && (
                 <span className="server-alert-rule-critical">
