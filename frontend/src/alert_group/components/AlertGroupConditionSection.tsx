@@ -40,6 +40,11 @@ import {
 } from 'src/types'
 import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
 import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
+import {
+  getRuleSpec,
+  patchRuleSpec,
+} from 'src/alert_group/utils/alertRuleSpecs'
+import {AlertRuleSpec} from 'src/types'
 
 interface Props extends WithTranslation {
   source: Source
@@ -134,20 +139,29 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   private getTranslatedPauseOptions = (t: TFunction) =>
     getPauseSecondsOptions(t)
 
+  private get spec(): AlertRuleSpec {
+    return getRuleSpec(this.props.rule)
+  }
+
+  private updateSpec = (patch: Partial<AlertRuleSpec>): void => {
+    this.props.onUpdateRule(patchRuleSpec(this.props.rule, patch))
+  }
+
   constructor(props: Props) {
     super(props)
 
     const {source, rule} = props
+    const spec = getRuleSpec(rule)
     // Edit mode: pre-populate from saved rule. New mode: auto-select default DB.
     this.state = {
       queryConfig: {
         ...EMPTY_QUERY_CONFIG,
         id: this.instanceId,
-        database: rule.database || source.telegraf || 'telegraf',
-        retentionPolicy: rule.retentionPolicy || 'autogen',
-        measurement: rule.measurement || '',
-        fields: rule.field
-          ? [{value: rule.field, type: 'field', alias: '', args: []}]
+        database: spec.database || source.telegraf || 'telegraf',
+        retentionPolicy: spec.retentionPolicy || 'autogen',
+        measurement: spec.measurement || '',
+        fields: spec.field
+          ? [{value: spec.field, type: 'field', alias: '', args: []}]
           : [],
         tags: {},
         groupBy: {time: '', tags: []},
@@ -157,43 +171,46 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   }
 
   public componentDidMount() {
-    const {rule, source, onUpdateRule} = this.props
-    if (!rule.database) {
-      onUpdateRule({
+    const {rule, source} = this.props
+    const spec = getRuleSpec(rule)
+    if (!spec.database) {
+      this.updateSpec({
         database: source.telegraf || 'telegraf',
         retentionPolicy: 'autogen',
-        conditions: sortConditions(rule.conditions),
+        conditions: sortConditions(spec.conditions),
       })
     }
   }
 
   public componentDidUpdate(prevProps: Props) {
-    const {rule, source, onUpdateRule} = this.props
+    const {rule, source} = this.props
+    const spec = getRuleSpec(rule)
+    const prevSpec = getRuleSpec(prevProps.rule)
 
     // 부모의 rule.database가 비어있다면, 자식의 기본 폴백값으로 부모 rule 객체 싱크를 맞춤
-    if (!rule.database) {
-      onUpdateRule({
+    if (!spec.database) {
+      this.updateSpec({
         database: source.telegraf || 'telegraf',
         retentionPolicy: 'autogen',
       })
       return
     }
 
-    const isDbChanged = prevProps.rule.database !== rule.database
-    const isRpChanged = prevProps.rule.retentionPolicy !== rule.retentionPolicy
-    const isMeasurementChanged = prevProps.rule.measurement !== rule.measurement
-    const isFieldChanged = prevProps.rule.field !== rule.field
+    const isDbChanged = prevSpec.database !== spec.database
+    const isRpChanged = prevSpec.retentionPolicy !== spec.retentionPolicy
+    const isMeasurementChanged = prevSpec.measurement !== spec.measurement
+    const isFieldChanged = prevSpec.field !== spec.field
 
     if (isDbChanged || isRpChanged || isMeasurementChanged) {
       this.setState({
         queryConfig: {
           ...EMPTY_QUERY_CONFIG,
           id: this.instanceId,
-          database: rule.database || source.telegraf || 'telegraf',
-          retentionPolicy: rule.retentionPolicy || 'autogen',
-          measurement: rule.measurement || '',
-          fields: rule.field
-            ? [{value: rule.field, type: 'field', alias: '', args: []}]
+          database: spec.database || source.telegraf || 'telegraf',
+          retentionPolicy: spec.retentionPolicy || 'autogen',
+          measurement: spec.measurement || '',
+          fields: spec.field
+            ? [{value: spec.field, type: 'field', alias: '', args: []}]
             : [],
           tags: {},
           groupBy: {time: '', tags: []},
@@ -204,8 +221,8 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       this.setState(prev => ({
         queryConfig: {
           ...prev.queryConfig,
-          fields: rule.field
-            ? [{value: rule.field, type: 'field', alias: '', args: []}]
+          fields: spec.field
+            ? [{value: spec.field, type: 'field', alias: '', args: []}]
             : [],
         } as QueryConfig,
       }))
@@ -224,7 +241,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
         fields: [],
       },
     }))
-    this.props.onUpdateRule({
+    this.updateSpec({
       database: namespace.database,
       retentionPolicy: namespace.retentionPolicy,
       measurement: '',
@@ -240,7 +257,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
         fields: [],
       },
     }))
-    this.props.onUpdateRule({measurement, field: ''})
+    this.updateSpec({measurement, field: ''})
   }
 
   private handleToggleField = (field: Field): void => {
@@ -251,7 +268,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     this.setState(prev => ({
       queryConfig: {...prev.queryConfig, fields: nextFields},
     }))
-    this.props.onUpdateRule({field: isSelected ? '' : field.value})
+    this.updateSpec({field: isSelected ? '' : field.value})
   }
 
   private handleApplyFuncsToField = ({field}: ApplyFuncsToFieldArgs): void => {
@@ -259,7 +276,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     this.setState(prev => ({
       queryConfig: {...prev.queryConfig, fields: nextFields},
     }))
-    this.props.onUpdateRule({field: field.value})
+    this.updateSpec({field: field.value})
   }
 
   private handleChooseTag = (tag: Tag): void => {
@@ -326,9 +343,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
   // ── Condition handlers ─────────────────────────────────────────────────────
 
   private handleToggleCondition = (idx: number, enabled: boolean): void => {
-    const sorted = sortConditions(this.props.rule.conditions)
+    const sorted = sortConditions(this.spec.conditions)
     const next = sorted.map((c, i) => (i === idx ? {...c, enabled} : c))
-    this.props.onUpdateRule({conditions: next})
+    this.updateSpec({conditions: next})
   }
 
   private handleTriggerTypeChange = (
@@ -339,50 +356,52 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       change: 'change',
       shift: '1m',
       period: '10m',
-      ...(rule.values || {}),
+      ...(this.spec.values || {}),
     }
 
     // Deadman is meaningful only on Kapacitor stream tasks (matches legacy TICK generation).
     if (trigger === 'deadman') {
       onUpdateRule({
-        trigger,
+        ...patchRuleSpec(rule, {
+          trigger,
+          values: defaultValues,
+        }),
         taskType: 'stream',
-        values: defaultValues,
       })
       return
     }
-    onUpdateRule({
+    this.updateSpec({
       trigger,
       values: defaultValues,
     })
   }
 
   private handleTriggerValueChange = (key: string, value: string) => {
-    const {rule, onUpdateRule} = this.props
-    onUpdateRule({
+    this.updateSpec({
       values: {
-        ...(rule.values || {}),
+        ...(this.spec.values || {}),
         [key]: value,
       },
     })
   }
 
   private handleConditionValue = (idx: number, value: string): void => {
-    const sorted = sortConditions(this.props.rule.conditions)
+    const sorted = sortConditions(this.spec.conditions)
     const next = sorted.map((c, i) => (i === idx ? {...c, value} : c))
-    this.props.onUpdateRule({conditions: next})
+    this.updateSpec({conditions: next})
   }
 
   private handleConditionOperator = (idx: number, operator: string): void => {
-    const sorted = sortConditions(this.props.rule.conditions)
+    const sorted = sortConditions(this.spec.conditions)
     const next = sorted.map((c, i) => (i === idx ? {...c, operator} : c))
-    this.props.onUpdateRule({conditions: next})
+    this.updateSpec({conditions: next})
   }
 
   // ── Render Template UI ─────────────────────────────────────────────────────
 
   private renderTemplateUI(): JSX.Element {
     const {rule, templates, t} = this.props
+    const spec = this.spec
     const selectedTemplate = findSelectedAlertTemplate(templates, rule)
 
     return (
@@ -413,7 +432,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     <Radio.Button
                       id="trigger-threshold"
                       value="threshold"
-                      active={!rule.trigger || rule.trigger === 'threshold'}
+                      active={!spec.trigger || spec.trigger === 'threshold'}
                       onClick={() => this.handleTriggerTypeChange('threshold')}
                     >
                       {t('alert_group_rule.threshold')}
@@ -421,7 +440,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     <Radio.Button
                       id="trigger-relative"
                       value="relative"
-                      active={rule.trigger === 'relative'}
+                      active={spec.trigger === 'relative'}
                       onClick={() => this.handleTriggerTypeChange('relative')}
                     >
                       {t('alert_group_rule.relative')}
@@ -429,7 +448,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     <Radio.Button
                       id="trigger-deadman"
                       value="deadman"
-                      active={rule.trigger === 'deadman'}
+                      active={spec.trigger === 'deadman'}
                       onClick={() => this.handleTriggerTypeChange('deadman')}
                     >
                       {t('alert_group_rule.deadman')}
@@ -440,9 +459,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             </div>
 
             {/* Threshold Rows */}
-            {(!rule.trigger || rule.trigger === 'threshold') && (
+            {(!spec.trigger || spec.trigger === 'threshold') && (
               <div className="alert-group-template-thresholds">
-                {sortConditions(rule.conditions).map((cond, idx) => {
+                {sortConditions(spec.conditions).map((cond, idx) => {
                   const translatedConditionOperators = this.getTranslatedConditionOperators(
                     t
                   )
@@ -509,7 +528,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 })}
               </div>
             )}
-            {rule.trigger === 'relative' && (
+            {spec.trigger === 'relative' && (
               <div className="alert-group-setting-row">
                 <div className="alert-group-setting-label alert-group-setting-label--aligned">
                   {t('alert_group_rule.metric_setting')}
@@ -521,7 +540,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     </span>
                     <Dropdown
                       menuWidth="80px"
-                      selected={rule.values?.shift || '1m'}
+                      selected={spec.values?.shift || '1m'}
                       onChoose={(item: any) =>
                         this.handleTriggerValueChange('shift', item.value)
                       }
@@ -536,7 +555,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       menuWidth="120px"
                       selected={
                         this.getChangesOptions(t).find(
-                          o => o.value === (rule.values?.change || 'change')
+                          o => o.value === (spec.values?.change || 'change')
                         )?.label || 'change'
                       }
                       onChoose={(item: any) =>
@@ -555,7 +574,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   </div>
 
                   <div className="alert-group-template-thresholds">
-                    {sortConditions(rule.conditions).map((cond, idx) => {
+                    {sortConditions(spec.conditions).map((cond, idx) => {
                       const relativeOpOptions = this.getRelativeOperatorOptions(
                         t
                       )
@@ -620,7 +639,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                   )}
                                 />
                               </div>
-                              {rule.values?.change === '% change' && (
+                              {spec.values?.change === '% change' && (
                                 <span className="alert-group-condition-text-light">
                                   %
                                 </span>
@@ -634,7 +653,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 </div>
               </div>
             )}
-            {rule.trigger === 'deadman' && (
+            {spec.trigger === 'deadman' && (
               <div className="alert-group-setting-row">
                 <div className="alert-group-setting-label alert-group-setting-label--aligned">
                   {t('alert_group_rule.metric_setting')}
@@ -646,7 +665,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     </span>
                     <Dropdown
                       menuWidth="60px"
-                      selected={rule.values?.period || '1m'}
+                      selected={spec.values?.period || '1m'}
                       onChoose={(item: any) =>
                         this.handleTriggerValueChange('period', item.value)
                       }
@@ -680,6 +699,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       t,
     } = this.props
     const {queryConfig} = this.state
+    const spec = this.spec
 
     const translatedPauseOptions = this.getTranslatedPauseOptions(t)
     const selectedPause = translatedPauseOptions.find(
@@ -750,7 +770,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       <Radio.Button
                         id="trigger-threshold"
                         value="threshold"
-                        active={!rule.trigger || rule.trigger === 'threshold'}
+                        active={!spec.trigger || spec.trigger === 'threshold'}
                         onClick={() =>
                           this.handleTriggerTypeChange('threshold')
                         }
@@ -760,7 +780,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       <Radio.Button
                         id="trigger-relative"
                         value="relative"
-                        active={rule.trigger === 'relative'}
+                        active={spec.trigger === 'relative'}
                         onClick={() => this.handleTriggerTypeChange('relative')}
                       >
                         {t('alert_group_rule.relative')}
@@ -768,7 +788,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       <Radio.Button
                         id="trigger-deadman"
                         value="deadman"
-                        active={rule.trigger === 'deadman'}
+                        active={spec.trigger === 'deadman'}
                         onClick={() => this.handleTriggerTypeChange('deadman')}
                       >
                         {t('alert_group_rule.deadman')}
@@ -778,14 +798,14 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 </div>
               </div>
 
-              {(!rule.trigger || rule.trigger === 'threshold') && (
+              {(!spec.trigger || spec.trigger === 'threshold') && (
                 <div className="alert-group-setting-row">
                   <div className="alert-group-setting-label alert-group-setting-label--aligned">
                     {t('alert_group_rule.metric_setting')}
                   </div>
                   <div className="alert-group-setting-control alert-group-condition-flex-col-16">
                     <div className="alert-group-template-thresholds">
-                      {sortConditions(rule.conditions).map((cond, idx) => {
+                      {sortConditions(spec.conditions).map((cond, idx) => {
                         const translatedConditionOperators = this.getTranslatedConditionOperators(
                           t
                         )
@@ -862,7 +882,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   </div>
                 </div>
               )}
-              {rule.trigger === 'relative' && (
+              {spec.trigger === 'relative' && (
                 <div className="alert-group-setting-row">
                   <div className="alert-group-setting-label alert-group-setting-label--aligned">
                     {t('alert_group_rule.metric_setting')}
@@ -874,7 +894,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       </span>
                       <Dropdown
                         menuWidth="60px"
-                        selected={rule.values?.shift || '1m'}
+                        selected={spec.values?.shift || '1m'}
                         onChoose={(item: any) =>
                           this.handleTriggerValueChange('shift', item.value)
                         }
@@ -889,7 +909,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         menuWidth="120px"
                         selected={
                           this.getChangesOptions(t).find(
-                            o => o.value === (rule.values?.change || 'change')
+                            o => o.value === (spec.values?.change || 'change')
                           )?.label || 'change'
                         }
                         onChoose={(item: any) =>
@@ -908,7 +928,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     </div>
 
                     <div className="alert-group-template-thresholds">
-                      {sortConditions(rule.conditions).map((cond, idx) => {
+                      {sortConditions(spec.conditions).map((cond, idx) => {
                         const relativeOpOptions = this.getRelativeOperatorOptions(
                           t
                         )
@@ -976,7 +996,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                                     )}
                                   />
                                 </div>
-                                {rule.values?.change === '% change' && (
+                                {spec.values?.change === '% change' && (
                                   <span className="alert-group-condition-text-light">
                                     %
                                   </span>
@@ -990,7 +1010,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                   </div>
                 </div>
               )}
-              {rule.trigger === 'deadman' && (
+              {spec.trigger === 'deadman' && (
                 <div className="alert-group-setting-row">
                   <div className="alert-group-setting-label alert-group-setting-label--aligned">
                     {t('alert_group_rule.metric_setting')}
@@ -1002,7 +1022,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       </span>
                       <Dropdown
                         menuWidth="80px"
-                        selected={rule.values?.period || '10m'}
+                        selected={spec.values?.period || '10m'}
                         onChoose={(item: any) =>
                           this.handleTriggerValueChange('period', item.value)
                         }

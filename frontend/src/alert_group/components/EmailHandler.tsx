@@ -47,7 +47,7 @@ interface State {
 export default class EmailHandler extends PureComponent<EmailHandlerProps, State> {
   constructor(props: EmailHandlerProps) {
     super(props)
-    const recipientGroupIds = props.rule.recipientGroupIds || []
+    const recipientGroupIds = props.selectedHandler.recipientGroupIds || []
     this.state = {
       receiveMode: recipientGroupIds.length > 0 ? 'specific' : 'all',
       emailBodyView: 'edit',
@@ -55,8 +55,11 @@ export default class EmailHandler extends PureComponent<EmailHandlerProps, State
   }
 
   public componentDidUpdate(prevProps: EmailHandlerProps) {
-    if (this.props.rule.recipientGroupIds !== prevProps.rule.recipientGroupIds) {
-      const recipientGroupIds = this.props.rule.recipientGroupIds || []
+    const recipientGroupIds =
+      this.props.selectedHandler.recipientGroupIds || []
+    const prevRecipientGroupIds =
+      prevProps.selectedHandler.recipientGroupIds || []
+    if (recipientGroupIds !== prevRecipientGroupIds) {
       const nextReceiveMode = recipientGroupIds.length > 0 ? 'specific' : 'all'
       if (nextReceiveMode !== this.state.receiveMode) {
         this.setState({receiveMode: nextReceiveMode})
@@ -64,21 +67,33 @@ export default class EmailHandler extends PureComponent<EmailHandlerProps, State
     }
   }
 
+  private patchEmailHandler = (
+    patch: Partial<AlertRuleEventHandler>
+  ): void => {
+    const {rule, onUpdateRule} = this.props
+    const handlers = rule.eventHandlers || []
+    onUpdateRule({
+      eventHandlers: handlers.map(handler =>
+        handler.type === 'email' ? {...handler, ...patch} : handler
+      ),
+    })
+  }
+
   private handleReceiveModeChange = (mode: 'all' | 'specific'): void => {
     this.setState({receiveMode: mode})
     if (mode === 'all') {
-      this.props.onUpdateRule({recipientGroupIds: []})
+      this.patchEmailHandler({recipientGroupIds: []})
     }
   }
 
   private handleUserGroupDropdownChange = (selectedIDs: string[]): void => {
-    this.props.onUpdateRule({recipientGroupIds: selectedIDs})
+    this.patchEmailHandler({recipientGroupIds: selectedIDs})
   }
 
   private getMatchedMembers(): UserGroupMember[] {
-    const {rule, userGroups} = this.props
+    const {userGroups, selectedHandler} = this.props
     const {receiveMode} = this.state
-    const recipientGroupIds = rule.recipientGroupIds || []
+    const recipientGroupIds = selectedHandler.recipientGroupIds || []
 
     let matchedGroups: UserGroup[] = []
 
@@ -204,7 +219,6 @@ export default class EmailHandler extends PureComponent<EmailHandlerProps, State
 
   public render() {
     const {
-      rule,
       selectedHandler,
       userGroups,
       smtpConfig,
@@ -387,7 +401,7 @@ export default class EmailHandler extends PureComponent<EmailHandlerProps, State
                         {userGroups.length > 0 ? (
                           <MultiSelectDropdown
                             selectedIDs={
-                              rule.recipientGroupIds || []
+                              selectedHandler.recipientGroupIds || []
                             }
                             onChange={
                               this.handleUserGroupDropdownChange

@@ -11,6 +11,7 @@ import {
   IconFont,
 } from 'src/reusable_ui'
 import {AlertTemplate} from 'src/types'
+import {getRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 import AlertGroupTemplateTooltip from 'src/alert_group/components/AlertGroupTemplateTooltip'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
@@ -47,16 +48,19 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
   // SHOW MEASUREMENTS failed) are always enabled so the UI degrades gracefully.
 
   private isAvailable = (template: AlertTemplate): boolean => {
+    if (template.category === 'url-monitoring') {
+      return true
+    }
     const {availableMeasurements} = this.props
     if (!availableMeasurements || availableMeasurements.size === 0) {
       return true
     }
-    return availableMeasurements.has(template.measurement)
+    return availableMeasurements.has(getRuleSpec({specs: template.specs}).measurement)
   }
 
   private getDisabledReason = (template: AlertTemplate): string =>
     this.props.t('alert_group_rule.disabled_reason_telegraf', {
-      measurement: template.measurement,
+      measurement: getRuleSpec({specs: template.specs}).measurement,
     })
 
   private getTooltipMessage = (template: AlertTemplate): string => {

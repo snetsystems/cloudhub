@@ -54,10 +54,7 @@ const getEmailHandler = (
 
 const getTestRecipientGroupIds = (rule: AlertGroupRule): string[] => {
   const emailHandler = getEmailHandler(rule)
-  if (emailHandler) {
-    return [...(emailHandler.recipientGroupIds || [])]
-  }
-  return [...(rule.recipientGroupIds || [])]
+  return [...(emailHandler?.recipientGroupIds || [])]
 }
 
 const getTestEmailBody = (rule: AlertGroupRule): string => {

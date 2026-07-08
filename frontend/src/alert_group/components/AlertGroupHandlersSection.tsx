@@ -66,7 +66,7 @@ interface State {
 
 const resolveActiveAlertTemplate = (
   templates: AlertTemplate[] = [],
-  rule: Pick<AlertGroupRule, 'measurement' | 'field' | 'templateId'>,
+  rule: Pick<AlertGroupRule, 'specs' | 'templateKey'>,
   selectedTemplateId?: string
 ): AlertTemplate | undefined => {
   if (selectedTemplateId && selectedTemplateId !== 'custom') {
@@ -75,8 +75,8 @@ const resolveActiveAlertTemplate = (
       return bySidebar
     }
   }
-  if (rule.templateId) {
-    const byRule = templates.find(template => template.id === rule.templateId)
+  if (rule.templateKey) {
+    const byRule = templates.find(template => template.id === rule.templateKey)
     if (byRule) {
       return byRule
     }
@@ -86,7 +86,7 @@ const resolveActiveAlertTemplate = (
 
 const getTemplateEmailBody = (
   templates: AlertTemplate[] = [],
-  rule: Pick<AlertGroupRule, 'measurement' | 'field' | 'templateId'>,
+  rule: Pick<AlertGroupRule, 'specs' | 'templateKey'>,
   selectedTemplateId?: string
 ): string =>
   resolveActiveAlertTemplate(templates, rule, selectedTemplateId)?.emailBody?.trim() ||
