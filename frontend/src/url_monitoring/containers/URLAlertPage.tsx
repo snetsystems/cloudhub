@@ -31,10 +31,7 @@ import {
   URLAlertStatusBadge,
   URLMonitoringTarget,
 } from 'src/url_monitoring/types'
-import {
-  getUrlAlertListData,
-  isMockUrlAlertRuleId,
-} from 'src/url_monitoring/apis'
+import {getUrlAlertListData} from 'src/url_monitoring/apis'
 import {updateAlertGroupRule, deleteAlertGroupRule} from 'src/alert_group/apis'
 import {URLAlertUrlCell} from 'src/url_monitoring/components/URLAlertUrlCell'
 import AlertSeverityFilter, {
@@ -195,15 +192,6 @@ export function URLAlertPage({router, source, notify}: Props) {
     async (rule: AlertGroupRule) => {
       if (!rule || !rule.id) return
 
-      if (isMockUrlAlertRuleId(rule.id)) {
-        setRules(prev =>
-          prev.map(item =>
-            item.id === rule.id ? {...item, active: !item.active} : item
-          )
-        )
-        return
-      }
-
       try {
         const updatedRule = await updateAlertGroupRule(rule.id, {
           ...rule,
@@ -227,16 +215,6 @@ export function URLAlertPage({router, source, notify}: Props) {
   const handleDelete = useCallback(
     async (rule: AlertGroupRule) => {
       if (!rule || !rule.id) return
-
-      if (isMockUrlAlertRuleId(rule.id)) {
-        setRules(prev => prev.filter(item => item.id !== rule.id))
-        notify(
-          notifySuccess(
-            t('server_alert.delete_success', '이벤트 그룹 규칙을 삭제했습니다.')
-          )
-        )
-        return
-      }
 
       try {
         await deleteAlertGroupRule(rule.id)
@@ -295,8 +273,8 @@ export function URLAlertPage({router, source, notify}: Props) {
 
   const renderTopRight = () => (
     <Button
-      text={t('url_alert.add_event')}
-      icon={IconFont.Plus}
+      text={t('url_alert.add_event', '이벤트 추가')}
+      icon={IconFont.BellAdd}
       size={ComponentSize.Small}
       color={ComponentColor.Primary}
       onClick={() => navigateToAlertSetting()}

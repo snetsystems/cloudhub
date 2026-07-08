@@ -535,4 +535,8 @@
   &.git-pull-request::before {
     content: '\e974';
   }
+
+  &.bell-add::before {
+    content: '\e95d';
+  }
 }

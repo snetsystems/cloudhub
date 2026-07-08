@@ -53,6 +53,7 @@ const normalizeAlertGroupRule = (
         }))
       : DEFAULT_RULE.conditions,
     hostnames: Array.isArray(rule?.hostnames) ? rule.hostnames : [],
+    urlTargetIds: Array.isArray(rule?.urlTargetIds) ? rule.urlTargetIds : [],
     recipientGroupIds,
     eventHandlers: Array.isArray(rule?.eventHandlers) ? rule.eventHandlers : [],
   }
@@ -118,15 +119,18 @@ const toAlertGroupRuleRequest = (rule: AlertGroupRule) => {
 }
 
 // Alert Group Rules
-export const getAlertGroupRules = async (): Promise<AlertGroupRule[]> => {
+export const getAlertGroupRules = async ({
+  targetType,
+}: {
+  targetType?: string
+}) => {
   const {data} = await AJAX({
     method: 'GET',
-    url: '/cloudhub/v2/alert-group-rules',
+    url: `/cloudhub/v2/alert-group-rules?targetType=${targetType ?? 'server'}`,
   })
   const rules = (data as AlertGroupRulesResponse).alertGroupRules || []
   return rules.map(normalizeAlertGroupRule)
 }
-
 export const getAlertGroupRule = async (
   id: string
 ): Promise<AlertGroupRule> => {
@@ -197,7 +201,7 @@ export const deleteAlertGroupRuleAndFetch = async (
   id: string
 ): Promise<AlertGroupRule[]> => {
   await deleteAlertGroupRule(id)
-  return await getAlertGroupRules()
+  return await getAlertGroupRules({targetType: 'server'})
 }
 
 // Alert Rule event handlers

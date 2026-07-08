@@ -2025,11 +2025,11 @@ type UrlErrorConfig struct {
 // level per row (critical | warning | info). Replaces the legacy
 // AlertRule.Conditions JSON array.
 type AlertRuleCondition struct {
-	AlertRuleID    string          `json:"alertRuleId"`
-	Level          string          `json:"level"` // critical | warning | info
-	Value          float64         `json:"value"`
-	Operator       string          `json:"operator"` // greater | less | equal | not_equal | greater_equal | less_equal | status_4xx | status_5xx | status_unknown
-	Enabled        bool            `json:"enabled"`
+	AlertRuleID string  `json:"alertRuleId"`
+	Level       string  `json:"level"` // critical | warning | info
+	Value       float64 `json:"value"`
+	Operator    string  `json:"operator"` // greater | less | equal | not_equal | greater_equal | less_equal | status_4xx | status_5xx | status_unknown
+	Enabled     bool    `json:"enabled"`
 }
 
 const (
@@ -2039,8 +2039,6 @@ const (
 	AlertConditionOperatorNotEqual     = "not_equal"
 	AlertConditionOperatorGreaterEqual = "greater_equal"
 	AlertConditionOperatorLessEqual    = "less_equal"
-
-
 )
 
 func NormalizeAlertConditionOperator(operator string) string {
@@ -2181,7 +2179,7 @@ type AlertRuleSpec struct {
 	Trigger         string               `json:"trigger,omitempty"`
 	Every           string               `json:"every,omitempty"`
 	TriggerValues   *TriggerValues       `json:"values,omitempty"`
-	UrlErrorConfig  *UrlErrorConfig       `json:"urlErrorConfig,omitempty"`
+	UrlErrorConfig  *UrlErrorConfig      `json:"urlErrorConfig,omitempty"`
 	Conditions      []AlertRuleCondition `json:"conditions,omitempty"`
 	DeleteYN        bool                 `json:"deleteYn,omitempty"`
 	CreatedAt       time.Time            `json:"createdAt,omitempty"`
@@ -2189,19 +2187,20 @@ type AlertRuleSpec struct {
 }
 
 type AlertGroupRule struct {
-	ID              string          `json:"id"`
-	OrgID           string          `json:"orgId"`
-	KapacitorID     string          `json:"kapacitorId,omitempty"` // alert_kapacitors.id
-	Name            string          `json:"name"`
-	Specs           []AlertRuleSpec `json:"specs"`
-	TaskType        string          `json:"taskType"` // stream | batch
-	TargetType      string          `json:"targetType"` // host | url
+	ID               string                  `json:"id"`
+	OrgID            string                  `json:"orgId"`
+	KapacitorID      string                  `json:"kapacitorId,omitempty"` // alert_kapacitors.id
+	Name             string                  `json:"name"`
+	Specs            []AlertRuleSpec         `json:"specs"`
+	TaskType         string                  `json:"taskType"`       // stream | batch
+	TargetType       string                  `json:"targetType"`     // host | url
 	OccurrenceType   string                  `json:"occurrenceType"` // consecutive | recent
 	OccurrenceCount  int                     `json:"occurrenceCount"`
 	OccurrenceWindow string                  `json:"occurrenceWindow"`
 	PauseSeconds     int                     `json:"pauseSeconds"`
 	NotifyRecovery   bool                    `json:"notifyRecovery"`
 	Message          string                  `json:"message"`
+	TemplateKey      string                  `json:"templateKey"`
 	Active           bool                    `json:"active"`
 	Hostnames        []string                `json:"hostnames,omitempty"`
 	URLTargetIDs     []string                `json:"urlTargetIds,omitempty"`
