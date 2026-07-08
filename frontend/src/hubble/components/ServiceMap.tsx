@@ -1,12 +1,11 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {HubbleEdge, HubbleSnapshot} from 'src/hubble/types'
 import HubbleNodeCard from 'src/hubble/components/HubbleNodeCard'
-import MapSelectionBar from 'src/hubble/components/MapSelectionBar'
 import {useCardDrag} from 'src/hubble/hooks/useCardDrag'
 import {useTransformPan} from 'src/hubble/hooks/useTransformPan'
 import {
   computeContentBounds,
-  computeNamespaceRegion,
+  computeClusterNamespaceRegion,
   ContentBounds,
   expandContentBounds,
   cardHeightForNode,
@@ -97,19 +96,10 @@ const renderRecoveredBadge = (
 
 const edgeId = (src: string, dst: string): string => `${src}|${dst}`
 
-interface MapRegionBounds {
-  x: number
-  y: number
-  width: number
-}
-
 type MapRegionTone = 'external' | 'applications' | 'system'
 
-// Region headers are rendered above the edge layer so connection curves do
-// not paint over the section titles. Dragging a header moves every card in
-// that region together.
+// Region header sits inside the region box so it always tracks the area.
 const MapRegionHeader: React.FC<{
-  bounds: MapRegionBounds
   tone: MapRegionTone
   title: string
   subtitle: string
@@ -117,7 +107,6 @@ const MapRegionHeader: React.FC<{
   isDragging?: boolean
   onDragStart: (clientX: number, clientY: number) => void
 }> = ({
-  bounds,
   tone,
   title,
   subtitle,
@@ -126,76 +115,46 @@ const MapRegionHeader: React.FC<{
   onDragStart,
 }) => (
   <div
-    className={`hubble-map-region-header-layer hubble-map-region-header-layer--${tone}`}
-    style={{left: bounds.x, top: bounds.y, width: bounds.width}}
+    className={`hubble-map-region-header hubble-map-region-header--${tone}${
+      isDragging ? ' is-dragging' : ''
+    }`}
+    onMouseDown={e => {
+      if (e.button !== 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      onDragStart(e.clientX, e.clientY)
+    }}
   >
-    <div
-      className={`hubble-map-region-header${
-        isDragging ? ' is-dragging' : ''
-      }`}
-      onMouseDown={e => {
-        if (e.button !== 0) return
-        e.preventDefault()
-        e.stopPropagation()
-        onDragStart(e.clientX, e.clientY)
-      }}
-    >
-      <div className="hubble-map-region-header-text">
-        <strong className="hubble-map-region-title">{title}</strong>
-        <span className="hubble-map-region-subtitle">{subtitle}</span>
-      </div>
-      <span className="hubble-map-region-count">
-        {count.toLocaleString()}
-      </span>
+    <div className="hubble-map-region-header-text">
+      <strong className="hubble-map-region-title">{title}</strong>
+      <span className="hubble-map-region-subtitle">{subtitle}</span>
     </div>
+    <span className="hubble-map-region-count">{count.toLocaleString()}</span>
   </div>
 )
 
 const NamespaceRegionHeader: React.FC<{
-  bounds: MapRegionBounds
   namespace: string
   count: number
   isDragging?: boolean
   onDragStart: (clientX: number, clientY: number) => void
-}> = ({bounds, namespace, count, isDragging = false, onDragStart}) => (
+}> = ({namespace, count, isDragging = false, onDragStart}) => (
   <div
-    className="hubble-map-region-header-layer hubble-map-region-header-layer--namespace"
-    style={{left: bounds.x, top: bounds.y, width: bounds.width}}
+    className={`hubble-namespace-region-header${
+      isDragging ? ' is-dragging' : ''
+    }`}
+    onMouseDown={e => {
+      if (e.button !== 0) return
+      e.preventDefault()
+      e.stopPropagation()
+      onDragStart(e.clientX, e.clientY)
+    }}
   >
-    <div
-      className={`hubble-namespace-region-header${
-        isDragging ? ' is-dragging' : ''
-      }`}
-      onMouseDown={e => {
-        if (e.button !== 0) return
-        e.preventDefault()
-        e.stopPropagation()
-        onDragStart(e.clientX, e.clientY)
-      }}
-    >
-      <span className="hubble-namespace-region-kind">Namespace</span>
-      <strong>{namespace}</strong>
-      <span>{count.toLocaleString()} workloads</span>
-    </div>
+    <span className="hubble-namespace-region-kind">Namespace</span>
+    <strong>{namespace}</strong>
+    <span>{count.toLocaleString()} workloads</span>
   </div>
 )
-
-const shortNodeId = (id: string): string =>
-  id.replace(/^(nsgrp:|ns:|wl:|ext:)/, '')
-
-const formatEdgeLabel = (
-  src: string,
-  dst: string,
-  flowCount: number,
-  deniedCount: number
-): string => {
-  const base = `${shortNodeId(src)} → ${shortNodeId(
-    dst
-  )} (${flowCount.toLocaleString()} flow events`
-  return deniedCount > 0
-    ? `${base}, ${deniedCount.toLocaleString()} denied)`
-    : `${base})`
-}
 
 // isFocusNs returns true for workload nodes living in the active drilldown
 // namespace — i.e. the cards we want to highlight as "this is your scope".
@@ -436,7 +395,7 @@ const ServiceMap: React.FC<Props> = ({
 
   const focusNamespaceRegion = useMemo(
     () =>
-      computeNamespaceRegion(
+      computeClusterNamespaceRegion(
         Array.from(renderPositionById.values()),
         focusNamespaceNodeIds
       ),
@@ -449,7 +408,7 @@ const ServiceMap: React.FC<Props> = ({
 
   const externalMapRegion = useMemo(
     () =>
-      computeNamespaceRegion(
+      computeClusterNamespaceRegion(
         Array.from(renderPositionById.values()),
         mapRegionNodeIds.external
       ),
@@ -458,7 +417,7 @@ const ServiceMap: React.FC<Props> = ({
 
   const applicationsMapRegion = useMemo(
     () =>
-      computeNamespaceRegion(
+      computeClusterNamespaceRegion(
         Array.from(renderPositionById.values()),
         mapRegionNodeIds.applications,
         drilldown ? APPLICATIONS_DRILLDOWN_PADDING : undefined
@@ -468,7 +427,7 @@ const ServiceMap: React.FC<Props> = ({
 
   const systemMapRegion = useMemo(
     () =>
-      computeNamespaceRegion(
+      computeClusterNamespaceRegion(
         Array.from(renderPositionById.values()),
         mapRegionNodeIds.system
       ),
@@ -538,11 +497,6 @@ const ServiceMap: React.FC<Props> = ({
     displayEdges.length,
   ])
 
-  const selectedNode = useMemo(
-    () => nodes.find(n => n.id === selectedNodeId) ?? null,
-    [nodes, selectedNodeId]
-  )
-
   const selectedEdge = useMemo(() => {
     if (!selectedEdgeId || !snapshot) return null
     const sep = selectedEdgeId.indexOf('|')
@@ -551,15 +505,6 @@ const ServiceMap: React.FC<Props> = ({
     const dst = selectedEdgeId.slice(sep + 1)
     return snapshot.edges.find(e => e.src === src && e.dst === dst) ?? null
   }, [selectedEdgeId, snapshot])
-
-  const selectedEdgeLabel = selectedEdge
-    ? formatEdgeLabel(
-        selectedEdge.src,
-        selectedEdge.dst,
-        selectedEdge.flowCount,
-        selectedEdge.verdictCounts?.DROPPED ?? 0
-      )
-    : null
 
   const hasSelectionFocus = selectedNodeId !== null || selectedEdgeId !== null
 
@@ -591,10 +536,6 @@ const ServiceMap: React.FC<Props> = ({
     }
   }
 
-  const handleClearSelection = () => {
-    handleCanvasClick()
-  }
-
   const handleResetLayout = () => {
     sessionBoundsRef.current = null
     resetOffsets()
@@ -607,12 +548,6 @@ const ServiceMap: React.FC<Props> = ({
 
   return (
     <div className="hubble-service-map">
-      <MapSelectionBar
-        selectedNode={selectedNode}
-        selectedEdgeLabel={selectedEdgeLabel}
-        nodeStats={selectedNode ? nodeStats.get(selectedNode.id) ?? null : null}
-        onClear={handleClearSelection}
-      />
       <div className="hubble-map-toolbar">
         <div className="hubble-map-hint">
           <span className="hubble-map-level">
@@ -708,7 +643,26 @@ const ServiceMap: React.FC<Props> = ({
                   height: externalMapRegion.height,
                 }}
                 aria-label={`External or unresolved, ${externalMapRegion.memberCount} nodes`}
-              />
+              >
+                <MapRegionHeader
+                  tone="external"
+                  title="External"
+                  subtitle="Unresolved endpoints"
+                  count={externalMapRegion.memberCount}
+                  isDragging={isRegionDragging(
+                    draggingRegionMembers,
+                    mapRegionNodeIds.external
+                  )}
+                  onDragStart={(clientX, clientY) =>
+                    beginRegionDrag(
+                      'external',
+                      mapRegionNodeIds.external,
+                      clientX,
+                      clientY
+                    )
+                  }
+                />
+              </div>
             )}
             {applicationsMapRegion && (
               <div
@@ -720,7 +674,26 @@ const ServiceMap: React.FC<Props> = ({
                   height: applicationsMapRegion.height,
                 }}
                 aria-label={`Applications, ${applicationsMapRegion.memberCount} nodes`}
-              />
+              >
+                <MapRegionHeader
+                  tone="applications"
+                  title="Applications"
+                  subtitle="In-cluster workloads"
+                  count={applicationsMapRegion.memberCount}
+                  isDragging={isRegionDragging(
+                    draggingRegionMembers,
+                    mapRegionNodeIds.applications
+                  )}
+                  onDragStart={(clientX, clientY) =>
+                    beginRegionDrag(
+                      'applications',
+                      mapRegionNodeIds.applications,
+                      clientX,
+                      clientY
+                    )
+                  }
+                />
+              </div>
             )}
             {systemMapRegion && (
               <div
@@ -732,7 +705,26 @@ const ServiceMap: React.FC<Props> = ({
                   height: systemMapRegion.height,
                 }}
                 aria-label={`System namespaces, ${systemMapRegion.memberCount} nodes`}
-              />
+              >
+                <MapRegionHeader
+                  tone="system"
+                  title="System"
+                  subtitle="Platform namespaces"
+                  count={systemMapRegion.memberCount}
+                  isDragging={isRegionDragging(
+                    draggingRegionMembers,
+                    mapRegionNodeIds.system
+                  )}
+                  onDragStart={(clientX, clientY) =>
+                    beginRegionDrag(
+                      'system',
+                      mapRegionNodeIds.system,
+                      clientX,
+                      clientY
+                    )
+                  }
+                />
+              </div>
             )}
             {drilldown && focusNamespaceRegion && (
               <div
@@ -744,7 +736,24 @@ const ServiceMap: React.FC<Props> = ({
                   height: focusNamespaceRegion.height,
                 }}
                 aria-label={`Namespace ${drilldown}, ${focusNamespaceRegion.memberCount} visible workloads`}
-              />
+              >
+                <NamespaceRegionHeader
+                  namespace={drilldown}
+                  count={focusNamespaceRegion.memberCount}
+                  isDragging={isRegionDragging(
+                    draggingRegionMembers,
+                    focusNamespaceNodeIds
+                  )}
+                  onDragStart={(clientX, clientY) =>
+                    beginRegionDrag(
+                      'namespace',
+                      focusNamespaceNodeIds,
+                      clientX,
+                      clientY
+                    )
+                  }
+                />
+              </div>
             )}
 
             <svg
@@ -899,88 +908,6 @@ const ServiceMap: React.FC<Props> = ({
               )
             })}
 
-            {externalMapRegion && (
-              <MapRegionHeader
-                bounds={externalMapRegion}
-                tone="external"
-                title="External"
-                subtitle="Unresolved endpoints"
-                count={externalMapRegion.memberCount}
-                isDragging={isRegionDragging(
-                  draggingRegionMembers,
-                  mapRegionNodeIds.external
-                )}
-                onDragStart={(clientX, clientY) =>
-                  beginRegionDrag(
-                    'external',
-                    mapRegionNodeIds.external,
-                    clientX,
-                    clientY
-                  )
-                }
-              />
-            )}
-            {applicationsMapRegion && (
-              <MapRegionHeader
-                bounds={applicationsMapRegion}
-                tone="applications"
-                title="Applications"
-                subtitle="In-cluster workloads"
-                count={applicationsMapRegion.memberCount}
-                isDragging={isRegionDragging(
-                  draggingRegionMembers,
-                  mapRegionNodeIds.applications
-                )}
-                onDragStart={(clientX, clientY) =>
-                  beginRegionDrag(
-                    'applications',
-                    mapRegionNodeIds.applications,
-                    clientX,
-                    clientY
-                  )
-                }
-              />
-            )}
-            {systemMapRegion && (
-              <MapRegionHeader
-                bounds={systemMapRegion}
-                tone="system"
-                title="System"
-                subtitle="Platform namespaces"
-                count={systemMapRegion.memberCount}
-                isDragging={isRegionDragging(
-                  draggingRegionMembers,
-                  mapRegionNodeIds.system
-                )}
-                onDragStart={(clientX, clientY) =>
-                  beginRegionDrag(
-                    'system',
-                    mapRegionNodeIds.system,
-                    clientX,
-                    clientY
-                  )
-                }
-              />
-            )}
-            {drilldown && focusNamespaceRegion && (
-              <NamespaceRegionHeader
-                bounds={focusNamespaceRegion}
-                namespace={drilldown}
-                count={focusNamespaceRegion.memberCount}
-                isDragging={isRegionDragging(
-                  draggingRegionMembers,
-                  focusNamespaceNodeIds
-                )}
-                onDragStart={(clientX, clientY) =>
-                  beginRegionDrag(
-                    'namespace',
-                    focusNamespaceNodeIds,
-                    clientX,
-                    clientY
-                  )
-                }
-              />
-            )}
           </div>
         </div>
       </div>

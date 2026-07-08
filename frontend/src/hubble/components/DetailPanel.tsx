@@ -158,21 +158,21 @@ const DetailPanel: React.FC<Props> = ({
   return (
     <div className="hubble-panel hubble-detail-panel">
       <div className="hubble-panel-header">
-        <h4 className="hubble-panel-title">Connection details</h4>
-        <div className="hubble-panel-header-actions">
-          {activeNodeId && (
-            <button
-              className="hubble-panel-back"
-              onClick={onBack}
-              title="Back to connection list"
-            >
-              ← Back
-            </button>
-          )}
-          <button className="hubble-panel-close" onClick={onClose} title="Close">
-            ×
+        {activeNodeId ? (
+          <button
+            className="hubble-panel-title hubble-panel-back"
+            onClick={onBack}
+            title="연결 목록으로 돌아가기"
+          >
+            <span className="hubble-panel-back-arrow">‹</span>
+            Connections
           </button>
-        </div>
+        ) : (
+          <h4 className="hubble-panel-title">Connection details</h4>
+        )}
+        <button className="hubble-panel-close" onClick={onClose} title="Close">
+          ×
+        </button>
       </div>
       <FancyScrollbar autoHide={true} className="hubble-detail-scroll">
       <div className="hubble-detail-scroll-content">
@@ -437,7 +437,7 @@ const EdgeListView: React.FC<{
       <div className="hubble-panel-header">
         <h4 className="hubble-panel-title">
           Connection details
-          <span className="hubble-panel-subtitle"> — {activeNodeLabel}</span>
+          <span className="hubble-panel-subtitle">{activeNodeLabel}</span>
         </h4>
         <button className="hubble-panel-close" onClick={onClose} title="Close">
           ×

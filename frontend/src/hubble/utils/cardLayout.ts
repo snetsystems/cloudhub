@@ -100,6 +100,71 @@ export const computeNamespaceRegion = (
   }
 }
 
+const CLUSTER_X_GAP = COL_GAP + CARD_WIDTH
+
+const clusterMembersByX = (members: CardPosition[]): CardPosition[][] => {
+  const sorted = [...members].sort((a, b) => a.x - b.x || a.y - b.y)
+  const clusters: CardPosition[][] = []
+
+  for (const member of sorted) {
+    const last = clusters[clusters.length - 1]
+    const anchor = last?.[last.length - 1]
+    if (!anchor || member.x - anchor.x > CLUSTER_X_GAP) {
+      clusters.push([member])
+      continue
+    }
+    last.push(member)
+  }
+
+  return clusters
+}
+
+const clusterCentroidDistance = (cluster: CardPosition[]): number => {
+  const originX = CANVAS_PADDING
+  const originY = CANVAS_PADDING + COLUMN_LABEL_HEIGHT
+  const cx = cluster.reduce((sum, p) => sum + p.x, 0) / cluster.length
+  const cy = cluster.reduce((sum, p) => sum + p.y, 0) / cluster.length
+  return Math.hypot(cx - originX, cy - originY)
+}
+
+const pickPrimaryCluster = (clusters: CardPosition[][]): CardPosition[] => {
+  if (clusters.length <= 1) {
+    return clusters[0] ?? []
+  }
+
+  return clusters.reduce((best, candidate) => {
+    if (candidate.length > best.length) return candidate
+    if (candidate.length < best.length) return best
+    return clusterCentroidDistance(candidate) > clusterCentroidDistance(best)
+      ? candidate
+      : best
+  })
+}
+
+// computeClusterNamespaceRegion draws the region box around the densest
+// spatial cluster only. When cards in the same section were dragged apart,
+// a full-member bounding box leaves the header stranded at the far left while
+// cards sit elsewhere — the detached header the user reported.
+export const computeClusterNamespaceRegion = (
+  positions: CardPosition[],
+  memberIds: ReadonlySet<string>,
+  extra?: RegionPadding
+): NamespaceRegion | null => {
+  const members = positions.filter(position => memberIds.has(position.id))
+  if (members.length === 0) return null
+
+  const clusters = clusterMembersByX(members)
+  const primary = pickPrimaryCluster(clusters)
+  const primaryIds = new Set(primary.map(position => position.id))
+  const region = computeNamespaceRegion(positions, primaryIds, extra)
+  if (!region) return null
+
+  return {
+    ...region,
+    memberCount: members.length,
+  }
+}
+
 const columnForNode = (node: HubbleNode): number => {
   if (node.kind === 'external') return 0
   if (node.system) return 2
