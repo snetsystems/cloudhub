@@ -84,10 +84,11 @@
     "active": "활성",
     "event_name": "이벤트 이름",
     "rule": "규칙",
-    "alarm_count": "알람 횟수",
+    "alarm_count": "알림 발생 기준",
     "pause": "스누즈",
     "in_use": "사용중",
     "not_in_use": "사용 안함",
+    "edit": "편집",
     "delete": "삭제",
     "delete_success": "이벤트 그룹 규칙을 삭제했습니다.",
     "delete_failed": "이벤트 그룹 규칙 삭제에 실패했습니다.",
@@ -98,10 +99,19 @@
   },
   "url_alert": {
     "add_event": "이벤트 추가",
+    "active": "활성",
     "event_name": "이벤트 이름",
     "status": "상태",
+    "trigger": "조건 방식",
+    "rule": "규칙",
+    "alarm_count": "알림 발생 기준",
+    "pause": "스누즈",
+    "status_unknown": "알수없음",
     "table_title": "URL Alerts",
     "edit": "편집",
+    "delete": "삭제",
+    "delete_success": "이벤트 그룹 규칙을 삭제했습니다.",
+    "delete_failed": "이벤트 그룹 규칙 삭제에 실패했습니다.",
     "click_to_view_urls": "클릭하여 URL 보기",
     "and_n_more": "외 {{num}}개"
   },
@@ -348,9 +358,6 @@
     "header_value": "설정값 (Value)",
     "delete_confirm": "삭제",
     "no_headers": "등록된 HTTP 헤더가 없습니다."
-  },
-  "url_alert": {
-    "add_event": "이벤트 추가"
   },
   "url_alert_setting": {
     "title": "URL 알림 규칙 설정",

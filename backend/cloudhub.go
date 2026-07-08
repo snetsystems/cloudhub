@@ -1923,8 +1923,8 @@ type URLMonitoringTarget struct {
 	URL             string `json:"url"`
 	Interval        string `json:"interval"`
 	ResponseTimeout string `json:"responseTimeout"`
-	Method          string `json:"method"`
-	AlertRuleID     string `json:"alertRuleId,omitempty"`
+	Method          string   `json:"method"`
+	AlertRuleIDs    []string `json:"alertRuleIds,omitempty"`
 }
 
 // URLMonitoring represents per-org URL monitoring configuration.
