@@ -26,7 +26,7 @@ func NewAlertRuleStore(client *Client) *AlertRuleStore {
 // RawClient exposes the underlying client for one-off admin scripts.
 func (s *AlertRuleStore) RawClient() *Client { return s.client }
 
-const alertRuleCols = `id, org_id, kapacitor_id, name, task_type, target_type, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as, delete_yn, created_at, updated_at`
+const alertRuleCols = `id, org_id, kapacitor_id, name, task_type, target_type, occurrence_type, occurrence_count, occurrence_window, pause_seconds, notify_recovery, message, active, derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as, template_key, delete_yn, created_at, updated_at`
 
 func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.AlertGroupRule, error) {
 	var r cloudhub.AlertGroupRule
@@ -38,6 +38,7 @@ func (s *AlertRuleStore) scan(row interface{ Scan(...any) error }) (cloudhub.Ale
 		&r.TaskType, &r.TargetType, &r.OccurrenceType, &r.OccurrenceCount,
 		&r.OccurrenceWindow, &r.PauseSeconds, &r.NotifyRecovery, &r.Message, &r.Active,
 		&derivativeEnabled, &derivativeNonNegative, &derivativeUnit, &evalExpression, &evalAs,
+		&r.TemplateKey,
 		&r.DeleteYN, &ca, &ua,
 	); err != nil {
 		return r, fmt.Errorf("alert_rule scan: %w", err)
@@ -113,9 +114,9 @@ func (s *AlertRuleStore) Get(ctx context.Context, id string) (cloudhub.AlertGrou
 func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cloudhub.AlertGroupRule, error) {
 	const q = `INSERT INTO alert_rules (
 		org_id, kapacitor_id, name, task_type, target_type, occurrence_type, occurrence_count, occurrence_window,
-		pause_seconds, notify_recovery, message, active,
+		pause_seconds, notify_recovery, message, template_key, active,
 		derivative_enabled, derivative_non_negative, derivative_unit, eval_expression, eval_as
-	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+	) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
 	RETURNING id, created_at, updated_at`
 	var ca, ua time.Time
 	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
@@ -123,7 +124,7 @@ func (s *AlertRuleStore) Add(ctx context.Context, r cloudhub.AlertGroupRule) (cl
 	if err := s.client.QueryRowContext(ctx, q,
 		r.OrgID, r.KapacitorID, r.Name, r.TaskType, r.TargetType,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
-		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
+		r.PauseSeconds, r.NotifyRecovery, r.Message, r.TemplateKey, r.Active,
 		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
 	).Scan(&r.ID, &ca, &ua); err != nil {
 		return cloudhub.AlertGroupRule{}, fmt.Errorf("alert_rule.Add: %w", err)
@@ -140,17 +141,17 @@ func (s *AlertRuleStore) Update(ctx context.Context, r cloudhub.AlertGroupRule) 
 	const q = `UPDATE alert_rules SET
 		kapacitor_id=$1, name=$2, task_type=$3, target_type=$4,
 		occurrence_type=$5, occurrence_count=$6, occurrence_window=$7,
-		pause_seconds=$8, notify_recovery=$9, message=$10, active=$11,
-		derivative_enabled=$12, derivative_non_negative=$13, derivative_unit=$14,
-		eval_expression=$15, eval_as=$16,
+		pause_seconds=$8, notify_recovery=$9, message=$10, template_key=$11, active=$12,
+		derivative_enabled=$13, derivative_non_negative=$14, derivative_unit=$15,
+		eval_expression=$16, eval_as=$17,
 		updated_at=NOW()
-	WHERE id=$17 AND delete_yn = false`
+	WHERE id=$18 AND delete_yn = false`
 	derEnabled, derNonNegative, derUnit := splitDerivative(r.Derivative)
 	evalExpression, evalAs := splitEval(r.Eval)
 	if _, err := s.client.ExecContext(ctx, q,
 		r.KapacitorID, r.Name, r.TaskType, r.TargetType,
 		r.OccurrenceType, r.OccurrenceCount, r.OccurrenceWindow,
-		r.PauseSeconds, r.NotifyRecovery, r.Message, r.Active,
+		r.PauseSeconds, r.NotifyRecovery, r.Message, r.TemplateKey, r.Active,
 		derEnabled, derNonNegative, derUnit, evalExpression, evalAs,
 		r.ID,
 	); err != nil {
@@ -363,7 +364,7 @@ func (s *AlertRuleStore) SetSpecs(ctx context.Context, ruleID string, specs []cl
 					return err
 				}
 			}
-			
+
 			if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_conditions WHERE alert_rule_spec_id = $1`, specID); err != nil {
 				return err
 			}
@@ -376,7 +377,7 @@ func (s *AlertRuleStore) SetSpecs(ctx context.Context, ruleID string, specs []cl
 					return err
 				}
 			}
-			
+
 			if _, err := tx.ExecContext(ctx, `DELETE FROM alert_rule_trigger_values WHERE alert_rule_spec_id = $1`, specID); err != nil {
 				return err
 			}
