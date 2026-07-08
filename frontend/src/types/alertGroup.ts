@@ -52,52 +52,46 @@ export interface AlertConditionApi {
   enabled: boolean
 }
 
+export const normalizeAlertConditionOperator = (
+  operator?: AlertConditionOperatorApi
+): AlertConditionOperator => {
+  switch (operator) {
+    case 'greaterEqual':
+      return 'greater_equal'
+    case 'lessEqual':
+      return 'less_equal'
+    case 'notEqual':
+      return 'not_equal'
+    default:
+      return (operator as AlertConditionOperator) || 'greater'
+  }
+}
+
+export const normalizeAlertConditions = (
+  conditions?: Array<{
+    level: AlertConditionLevel
+    value: number | string
+    operator?: AlertConditionOperatorApi
+    enabled: boolean
+  }>
+): AlertCondition[] =>
+  (conditions ?? []).map(condition => ({
+    level: condition.level,
+    value: String(condition.value),
+    operator: normalizeAlertConditionOperator(condition.operator),
+    enabled: condition.enabled,
+  }))
+
 export interface UrlErrorConfig {
   check4xx: boolean
   check5xx: boolean
   unknown: boolean
 }
 
-export interface UrlAlertStatusFilters {
-  client4xx: boolean
-  server5xx: boolean
-  unknown: boolean
-}
-
-export const urlErrorConfigToStatusFilters = (
-  config: UrlErrorConfig
-): UrlAlertStatusFilters => ({
-  client4xx: config.check4xx,
-  server5xx: config.check5xx,
-  unknown: config.unknown,
-})
-
-export const statusFiltersToUrlErrorConfig = (
-  filters: UrlAlertStatusFilters
-): UrlErrorConfig => ({
-  check4xx: filters.client4xx,
-  check5xx: filters.server5xx,
-  unknown: filters.unknown,
-})
-
-export const DEFAULT_URL_STATUS_FILTERS: UrlAlertStatusFilters = {
-  client4xx: true,
-  server5xx: true,
+export const DEFAULT_URL_ERROR_CONFIG: UrlErrorConfig = {
+  check4xx: true,
+  check5xx: true,
   unknown: false,
-}
-
-/** Per-metric target inside a URL monitoring alert template (API `targets[]`). */
-export interface AlertTemplateTarget {
-  database: string
-  retentionPolicy: string
-  measurement: string
-  field: string
-  trigger?: 'threshold' | 'relative' | 'deadman'
-  urlErrorConfig?: UrlErrorConfig
-  conditions?: AlertConditionApi[]
-  derivative?: DerivativeConfig
-  eval?: EvalConfig
-  values?: AlertGroupRule['values']
 }
 
 // DerivativeConfig — when enabled, the backend tickscript inserts
@@ -118,6 +112,12 @@ export interface EvalConfig {
   as: string
 }
 
+export interface RuleSpecValues {
+  change?: string
+  shift?: string
+  period?: string
+}
+
 export interface AlertRuleSpec {
   id?: string
   alertRuleId?: string
@@ -128,55 +128,60 @@ export interface AlertRuleSpec {
   trigger?: 'threshold' | 'relative' | 'deadman'
   every?: string
   urlErrorConfig?: UrlErrorConfig
-  conditions?: AlertConditionApi[]
-  values?: AlertGroupRule['values']
+  conditions?: AlertCondition[]
+  values?: RuleSpecValues
+  createdAt?: string
+  updatedAt?: string
 }
 
+/** Rule metadata + targets/handlers. Metric fields live in `specs[0]`. */
 export interface AlertGroupRule {
   id?: string
   name: string
-  database?: string
-  retentionPolicy?: string
-  measurement: string
-  field: string
-  conditions: AlertCondition[]
+  specs: AlertRuleSpec[]
   taskType: string
-  every: string
   occurrenceType: 'consecutive' | 'recent' | 'total'
   occurrenceCount: number
   occurrenceWindow: string
   pauseSeconds: number
   notifyRecovery: boolean
   message: string
-  trigger: 'threshold' | 'relative' | 'deadman'
-  values?: {
-    change?: string
-    shift?: string
-    period?: string
-  }
   active: boolean
   kapacitorId: string
   targetType?: 'host' | 'url'
-  specs?: AlertRuleSpec[]
   hostnames: string[]
-  recipientGroupIds: string[]
   eventHandlers?: AlertRuleEventHandler[]
-  // Optional TICK transformations between |from() and the alert pipeline.
-  // Templates set these; users can override via raw mode (future UI).
   derivative?: DerivativeConfig
   eval?: EvalConfig
   tickscript?: string
   orgId?: string
   createdAt?: string
   updatedAt?: string
-  /** Selected builtin/custom template id when the rule was created from a template. */
-  templateId?: string
-  /** API wire format for URL status checks; UI uses urlStatusFilters. */
-  urlErrorConfig?: UrlErrorConfig
-  urlStatusFilters?: UrlAlertStatusFilters
+  templateKey?: string
   urlTargetIds?: string[]
-  /** Composite URL templates: status + latency targets from the blueprint. */
-  targets?: AlertTemplateTarget[]
+}
+
+/** API request/response wire format for alert group rules (v2). */
+export interface AlertGroupRuleRequest {
+  id?: string
+  name: string
+  kapacitorId: string
+  specs: AlertRuleSpec[]
+  taskType: string
+  targetType?: 'host' | 'url'
+  occurrenceType: AlertGroupRule['occurrenceType']
+  occurrenceCount: number
+  occurrenceWindow: string
+  pauseSeconds: number
+  notifyRecovery: boolean
+  message: string
+  templateKey: string
+  active: boolean
+  hostnames?: string[]
+  urlTargetIds?: string[]
+  derivative?: DerivativeConfig
+  eval?: EvalConfig
+  eventHandlers?: AlertRuleEventHandler[]
 }
 
 export interface TargetSelectorItem {
@@ -340,25 +345,29 @@ export interface UserGroup {
   updatedAt?: string
 }
 
-export const DEFAULT_RULE: AlertGroupRule = {
-  name: '',
+export const DEFAULT_RULE_SPEC: AlertRuleSpec = {
   database: '',
   retentionPolicy: '',
   measurement: '',
   field: '',
-  conditions: [
-    {level: 'critical', value: '', enabled: true, operator: 'greater'},
-    {level: 'warning', value: '', enabled: true, operator: 'greater'},
-    {level: 'info', value: '', enabled: false, operator: 'greater'},
-  ],
   trigger: 'threshold',
+  every: '30s',
   values: {
     change: 'change',
     shift: '1m',
     period: '10m',
   },
+  conditions: [
+    {level: 'critical', value: '', enabled: true, operator: 'greater'},
+    {level: 'warning', value: '', enabled: true, operator: 'greater'},
+    {level: 'info', value: '', enabled: false, operator: 'greater'},
+  ],
+}
+
+export const DEFAULT_RULE: AlertGroupRule = {
+  name: '',
+  specs: [{...DEFAULT_RULE_SPEC}],
   taskType: 'stream',
-  every: '30s',
   occurrenceType: 'consecutive',
   occurrenceCount: 1,
   occurrenceWindow: '5m',
@@ -368,11 +377,12 @@ export const DEFAULT_RULE: AlertGroupRule = {
   active: true,
   kapacitorId: '',
   hostnames: [],
-  recipientGroupIds: [],
+  templateKey: '',
 }
 
-// AlertTemplate matches backend/cloud API blueprint for creating an AlertGroupRule.
-// Server templates use flat measurement/field; URL templates may use `targets[]`.
+// Builtin alert template blueprint (server-monitoring | url-monitoring).
+// Metric fields live in `specs[0]`; top-level database/measurement/field are
+// wire-format placeholders (often empty strings from the API).
 export interface AlertTemplate {
   id: string
   name: string
@@ -386,7 +396,7 @@ export interface AlertTemplate {
   derivative?: DerivativeConfig
   eval?: EvalConfig
   trigger?: 'threshold' | 'relative' | 'deadman'
-  values?: AlertGroupRule['values']
+  values?: RuleSpecValues
   taskType: string
   every: string
   occurrenceType: AlertGroupRule['occurrenceType']
@@ -397,10 +407,7 @@ export interface AlertTemplate {
   message: string
   emailBody?: string
   conditions?: AlertConditionApi[]
-  /** URL monitoring: one or more metric targets (status code, latency, …). */
-  targets?: AlertTemplateTarget[]
-  /** @deprecated Prefer targets[].urlErrorConfig — kept for flat templates. */
-  urlStatusFilters?: UrlAlertStatusFilters
+  specs?: AlertRuleSpec[]
 }
 
 export const getTriggerOperators = (t: TFunction) => [
