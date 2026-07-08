@@ -237,11 +237,10 @@ UPDATE url_check_targets SET
     interval         = $4,
     response_timeout = $5,
     method           = $6,
-    alert_rule_id    = $7,
-    updated_at       = $8
-WHERE id = $1 AND url_check_id = $9 AND delete_yn = false`
+    updated_at       = $7
+WHERE id = $1 AND url_check_id = $8 AND delete_yn = false`
 		res, err := tx.ExecContext(ctx, upd,
-			t.ID, t.Name, t.URL, t.Interval, t.ResponseTimeout, t.Method, t.AlertRuleID, now, m.ID,
+			t.ID, t.Name, t.URL, t.Interval, t.ResponseTimeout, t.Method, now, m.ID,
 		)
 		if err != nil {
 			return fmt.Errorf("url_check_targets update: %w", err)
@@ -280,7 +279,7 @@ func (s *URLMonitoringStore) Delete(ctx context.Context, id string) error {
 // getTargets fetches active targets for the given url_check ID.
 func (s *URLMonitoringStore) getTargets(ctx context.Context, monitoringID string) ([]cloudhub.URLMonitoringTarget, error) {
 	const q = `
-SELECT id, url_check_id, name, url, interval, response_timeout, method, alert_rule_id
+SELECT id, url_check_id, name, url, interval, response_timeout, method
 FROM url_check_targets
 WHERE url_check_id = $1 AND delete_yn = false
 ORDER BY created_at ASC`
@@ -291,16 +290,36 @@ ORDER BY created_at ASC`
 	}
 	defer rows.Close()
 
-	targets := make([]cloudhub.URLMonitoringTarget, 0)
+	var targets []cloudhub.URLMonitoringTarget
 	for rows.Next() {
 		var t cloudhub.URLMonitoringTarget
 		if err := rows.Scan(&t.ID, &t.URLMonitoringID, &t.Name, &t.URL,
-			&t.Interval, &t.ResponseTimeout, &t.Method, &t.AlertRuleID); err != nil {
+			&t.Interval, &t.ResponseTimeout, &t.Method); err != nil {
 			return nil, fmt.Errorf("url_check_targets scan: %w", err)
 		}
 		targets = append(targets, t)
 	}
-	return targets, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	for i := range targets {
+		qMap := `SELECT alert_rule_id FROM alert_rule_urls WHERE url_target_id = $1`
+		mRows, err := s.client.QueryContext(ctx, qMap, targets[i].ID)
+		if err != nil {
+			// Ignore mapping error if table doesn't exist
+			continue
+		}
+		for mRows.Next() {
+			var rID string
+			if err := mRows.Scan(&rID); err == nil {
+				targets[i].AlertRuleIDs = append(targets[i].AlertRuleIDs, rID)
+			}
+		}
+		mRows.Close()
+	}
+
+	return targets, nil
 }
 
 // insertTargets inserts a slice of targets for the given url_check ID.
@@ -316,11 +335,11 @@ func insertTargets(ctx context.Context, tx rdb.Store, monitoringID string, targe
 
 func insertTarget(ctx context.Context, tx rdb.Store, monitoringID string, t *cloudhub.URLMonitoringTarget, now time.Time) error {
 	const q = `
-INSERT INTO url_check_targets (url_check_id, name, url, interval, response_timeout, method, alert_rule_id, created_at, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+INSERT INTO url_check_targets (url_check_id, name, url, interval, response_timeout, method, created_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING id`
 	row := tx.QueryRowContext(ctx, q,
-		monitoringID, t.Name, t.URL, t.Interval, t.ResponseTimeout, t.Method, t.AlertRuleID, now, now,
+		monitoringID, t.Name, t.URL, t.Interval, t.ResponseTimeout, t.Method, now, now,
 	)
 	if err := row.Scan(&t.ID); err != nil {
 		return fmt.Errorf("url_check_targets insert: %w", err)

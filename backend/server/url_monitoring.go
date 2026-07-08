@@ -26,8 +26,8 @@ type urlMonitoringTargetResponse struct {
 	URL             string `json:"url"`
 	Interval        string `json:"interval"`
 	ResponseTimeout string `json:"responseTimeout"`
-	Method          string `json:"method"`
-	AlertRuleID     string `json:"alertRuleId,omitempty"`
+	Method          string   `json:"method"`
+	AlertRuleIDs    []string `json:"alertRuleIds,omitempty"`
 }
 
 // urlMonitoringTargetUpsertRequest is used by POST/PATCH /url-monitoring-targets.
@@ -37,8 +37,8 @@ type urlMonitoringTargetUpsertRequest struct {
 	URL             string `json:"url"`
 	Interval        string `json:"interval"`
 	ResponseTimeout string `json:"responseTimeout"`
-	Method          string `json:"method"`
-	AlertRuleID     string `json:"alertRuleId,omitempty"`
+	Method          string   `json:"method"`
+	AlertRuleIDs    []string `json:"alertRuleIds,omitempty"`
 }
 
 func normalizeAndValidateURLMonitoringURL(rawURL string) (string, error) {
@@ -75,7 +75,7 @@ func toURLMonitoringResponse(m *cloudhub.URLMonitoring) urlMonitoringResponse {
 			Interval:        t.Interval,
 			ResponseTimeout: t.ResponseTimeout,
 			Method:          t.Method,
-			AlertRuleID:     t.AlertRuleID,
+			AlertRuleIDs:    t.AlertRuleIDs,
 		}
 	}
 	return urlMonitoringResponse{
@@ -253,7 +253,7 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		Interval:        req.Interval,
 		ResponseTimeout: req.ResponseTimeout,
 		Method:          req.Method,
-		AlertRuleID:     req.AlertRuleID,
+		AlertRuleIDs:    req.AlertRuleIDs,
 	})
 
 	// Deploy conf first; only persist to DB if deployment succeeds.
@@ -274,10 +274,12 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if req.AlertRuleID != "" {
+	if len(req.AlertRuleIDs) > 0 {
 		for _, t := range result.Targets {
 			if strings.EqualFold(t.Name, req.Name) {
-				_ = s.autoLinkURLToAlertRule(ctx, t.ID, req.AlertRuleID)
+				for _, ruleID := range req.AlertRuleIDs {
+					_ = s.autoLinkURLToAlertRule(ctx, t.ID, ruleID)
+				}
 				break
 			}
 		}
@@ -353,19 +355,19 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
+	var oldAlertRuleIDs []string
 	found := false
-	oldAlertRuleID := ""
 	for i := range m.Targets {
 		if m.Targets[i].ID != targetID {
 			continue
 		}
-		oldAlertRuleID = m.Targets[i].AlertRuleID
+		oldAlertRuleIDs = m.Targets[i].AlertRuleIDs
 		m.Targets[i].Name = req.Name
 		m.Targets[i].URL = req.URL
 		m.Targets[i].Interval = req.Interval
 		m.Targets[i].ResponseTimeout = req.ResponseTimeout
 		m.Targets[i].Method = req.Method
-		m.Targets[i].AlertRuleID = req.AlertRuleID
+		m.Targets[i].AlertRuleIDs = req.AlertRuleIDs
 		found = true
 		break
 	}
@@ -386,12 +388,23 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if oldAlertRuleID != req.AlertRuleID {
-		if oldAlertRuleID != "" {
-			_ = s.removeURLFromAlertRule(ctx, targetID, oldAlertRuleID)
+	oldMap := make(map[string]bool)
+	for _, id := range oldAlertRuleIDs {
+		oldMap[id] = true
+	}
+	newMap := make(map[string]bool)
+	for _, id := range req.AlertRuleIDs {
+		newMap[id] = true
+	}
+
+	for id := range oldMap {
+		if !newMap[id] {
+			_ = s.removeURLFromAlertRule(ctx, targetID, id)
 		}
-		if req.AlertRuleID != "" {
-			_ = s.autoLinkURLToAlertRule(ctx, targetID, req.AlertRuleID)
+	}
+	for id := range newMap {
+		if !oldMap[id] {
+			_ = s.autoLinkURLToAlertRule(ctx, targetID, id)
 		}
 	}
 
@@ -430,14 +443,14 @@ func (s *Service) DeleteURLMonitoringTarget(w http.ResponseWriter, r *http.Reque
 	}
 
 	var deletedName string
-	var deletedAlertRuleID string
+	var deletedAlertRuleIDs []string
 	found := false
 	next := make([]cloudhub.URLMonitoringTarget, 0, len(m.Targets))
 	for _, t := range m.Targets {
 		if t.ID == targetID {
 			found = true
 			deletedName = t.Name
-			deletedAlertRuleID = t.AlertRuleID
+			deletedAlertRuleIDs = t.AlertRuleIDs
 			continue
 		}
 		next = append(next, t)
@@ -460,8 +473,8 @@ func (s *Service) DeleteURLMonitoringTarget(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if deletedAlertRuleID != "" {
-		_ = s.removeURLFromAlertRule(ctx, targetID, deletedAlertRuleID)
+	for _, id := range deletedAlertRuleIDs {
+		_ = s.removeURLFromAlertRule(ctx, targetID, id)
 	}
 
 	logName := deletedName
@@ -582,7 +595,7 @@ func (s *Service) BulkAddURLMonitoringTargets(w http.ResponseWriter, r *http.Req
 			existing.Interval = t.Interval
 			existing.ResponseTimeout = t.ResponseTimeout
 			existing.Method = t.Method
-			existing.AlertRuleID = t.AlertRuleID
+			existing.AlertRuleIDs = t.AlertRuleIDs
 		} else {
 			m.Targets = append(m.Targets, cloudhub.URLMonitoringTarget{
 				Name:            t.Name,
@@ -590,7 +603,7 @@ func (s *Service) BulkAddURLMonitoringTargets(w http.ResponseWriter, r *http.Req
 				Interval:        t.Interval,
 				ResponseTimeout: t.ResponseTimeout,
 				Method:          t.Method,
-				AlertRuleID:     t.AlertRuleID,
+				AlertRuleIDs:    t.AlertRuleIDs,
 			})
 		}
 		succeeded = append(succeeded, t.Name)
@@ -624,10 +637,12 @@ func (s *Service) BulkAddURLMonitoringTargets(w http.ResponseWriter, r *http.Req
 		latestM, _ := s.Store.URLMonitoring(ctx).Get(ctx, orgID)
 		if latestM != nil {
 			for _, reqTarget := range validTargets {
-				if reqTarget.AlertRuleID != "" {
+				if len(reqTarget.AlertRuleIDs) > 0 {
 					for _, t := range latestM.Targets {
 						if strings.EqualFold(t.Name, reqTarget.Name) {
-							_ = s.autoLinkURLToAlertRule(ctx, t.ID, reqTarget.AlertRuleID)
+							for _, ruleID := range reqTarget.AlertRuleIDs {
+								_ = s.autoLinkURLToAlertRule(ctx, t.ID, ruleID)
+							}
 							break
 						}
 					}
