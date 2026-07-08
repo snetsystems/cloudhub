@@ -84,10 +84,11 @@
     "active": "Active",
     "event_name": "Event Name",
     "rule": "Rule",
-    "alarm_count": "Alarm Count",
+    "alarm_count": "Occurrence Criteria",
     "pause": "Snooze",
     "in_use": "In Use",
     "not_in_use": "Not in Use",
+    "edit": "Edit",
     "delete": "Delete",
     "delete_success": "Alert group rule deleted successfully.",
     "delete_failed": "Failed to delete alert group rule.",
@@ -98,10 +99,19 @@
   },
   "url_alert": {
     "add_event": "Add Event",
+    "active": "Active",
     "event_name": "Event Name",
     "status": "Status",
+    "trigger": "Trigger Type",
+    "rule": "Rule",
+    "alarm_count": "Occurrence Criteria",
+    "pause": "Snooze",
+    "status_unknown": "Unknown",
     "table_title": "URL Alerts",
     "edit": "Edit",
+    "delete": "Delete",
+    "delete_success": "Alert group rule deleted successfully.",
+    "delete_failed": "Failed to delete alert group rule.",
     "click_to_view_urls": "Click to view URLs",
     "and_n_more": "and {{num}} more"
   },
@@ -351,9 +361,6 @@
     "header_value": "Value",
     "delete_confirm": "Delete",
     "no_headers": "No HTTP headers registered."
-  },
-  "url_alert": {
-    "add_event": "Add Event"
   },
   "url_alert_setting": {
     "title": "URL Alert Rule Settings",

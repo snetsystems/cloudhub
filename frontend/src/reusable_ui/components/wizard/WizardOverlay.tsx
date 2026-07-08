@@ -38,10 +38,17 @@ class WizardOverlay extends PureComponent<Props> {
     return (
       <div className="wizard-overlay">
         <OverlayTechnology visible={visible}>
-          <OverlayContainer maxWidth={maxWidth}>
-            <OverlayHeading title={title} onDismiss={this.handleFinish} />
-            <OverlayBody>{this.WizardController}</OverlayBody>
-          </OverlayContainer>
+          <div
+            className="wizard-overlay__dismiss-area"
+            onClick={this.handleFinish}
+          >
+            <div onClick={this.stopDialogClickPropagation}>
+              <OverlayContainer maxWidth={maxWidth}>
+                <OverlayHeading title={title} />
+                <OverlayBody>{this.WizardController}</OverlayBody>
+              </OverlayContainer>
+            </div>
+          </div>
         </OverlayTechnology>
       </div>
     )
@@ -70,6 +77,12 @@ class WizardOverlay extends PureComponent<Props> {
 
     toggleVisibility(false)()
     resetWizardState()
+  }
+
+  private stopDialogClickPropagation = (
+    e: React.MouseEvent<HTMLDivElement>
+  ) => {
+    e.stopPropagation()
   }
 }
 

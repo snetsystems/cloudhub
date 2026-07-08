@@ -4,6 +4,10 @@
 */
 
 .wizard-overlay {
+  .wizard-overlay__dismiss-area {
+    height: 100%;
+  }
+
   .overlay--body {
     padding: 30px 0;
   }
