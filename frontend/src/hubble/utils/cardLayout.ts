@@ -14,9 +14,9 @@ export const ROW_GAP = 24
 export const GRID_GAP = 32
 export const CANVAS_PADDING = 48
 export const CANVAS_EXTRA_BOTTOM = 40
-export const COLUMN_LABEL_HEIGHT = 28
+export const COLUMN_LABEL_HEIGHT = 48
 export const NAMESPACE_REGION_SIDE_PADDING = 24
-export const NAMESPACE_REGION_TOP_PADDING = 40
+export const NAMESPACE_REGION_TOP_PADDING = 52
 export const NAMESPACE_REGION_BOTTOM_PADDING = 24
 export const NAMESPACE_GROUP_GAP = 32
 
@@ -126,7 +126,11 @@ export const cardHeightForNode = (
   const portRows =
     ((node.topInPorts?.length ?? 0) > 0 ? 1 : 0) +
     ((node.topOutPorts?.length ?? 0) > 0 ? 1 : 0)
-  const hasDrops = (stats?.deniedFlows ?? 0) > 0
+  // The Ingress/Egress drop breakdown row only renders when both directions
+  // have drops (a single direction would just repeat the "Dropped N" header
+  // badge) — see HubbleNodeCard.tsx. Height reservation must match that.
+  const hasDrops =
+    (stats?.ingressDeniedFlows ?? 0) > 0 && (stats?.egressDeniedFlows ?? 0) > 0
   const externalIPCount = node.topExternalIPs?.length ?? 0
 
   return (

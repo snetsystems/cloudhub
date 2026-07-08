@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {
   OverlayTechnology,
   OverlayContainer,
@@ -6,9 +6,12 @@ import {
   OverlayBody,
 } from 'src/reusable_ui'
 import {HubbleFlowRecord} from 'src/hubble/types'
+import {buildEdgePath} from 'src/hubble/utils/edgeAnchors'
+import {edgeVerdictColor} from 'src/hubble/utils/edgeVerdict'
 import {
   PodOption,
   PodConnectionSummary,
+  reconcilePodOrder,
   summarizePodConnections,
   summarizePods,
 } from 'src/hubble/utils/podConnections'
@@ -23,6 +26,37 @@ const PodConnectionsPanel: React.FC<Props> = ({flows, namespace}) => {
     flows,
     namespace,
   ])
+
+  // The pod list order is deliberately NOT recomputed straight from `pods`
+  // on every render: the underlying flow feed is a rolling window (last 200
+  // events), so raw flow counts wobble on every push and would otherwise
+  // reorder the chips constantly. reconcilePodOrder pins existing chips in
+  // place and only re-sorts on a real event (namespace switch, or a pod's
+  // denied-flow status changing) — see podConnections.ts.
+  const orderRef = useRef<string[]>([])
+  const deniedKeysRef = useRef<Set<string>>(new Set())
+  const namespaceRef = useRef(namespace)
+
+  const orderedPods = useMemo(() => {
+    if (namespaceRef.current !== namespace) {
+      orderRef.current = []
+      deniedKeysRef.current = new Set()
+      namespaceRef.current = namespace
+    }
+    orderRef.current = reconcilePodOrder(
+      orderRef.current,
+      deniedKeysRef.current,
+      pods
+    )
+    deniedKeysRef.current = new Set(
+      pods.filter(p => p.deniedFlows > 0).map(p => p.key)
+    )
+    const byKey = new Map(pods.map(p => [p.key, p]))
+    return orderRef.current
+      .map(key => byKey.get(key))
+      .filter((p): p is PodOption => !!p)
+  }, [pods, namespace])
+
   const [selectedPodKey, setSelectedPodKey] = useState<string>('')
 
   useEffect(() => {
@@ -48,10 +82,10 @@ const PodConnectionsPanel: React.FC<Props> = ({flows, namespace}) => {
           No pod-level flows observed in this namespace.
         </div>
       )}
-      {pods.length > 0 && (
+      {orderedPods.length > 0 && (
         <>
           <div className="hubble-pod-list">
-            {pods.slice(0, 8).map(pod => (
+            {orderedPods.slice(0, 8).map(pod => (
               <button
                 type="button"
                 key={pod.key}
@@ -61,15 +95,24 @@ const PodConnectionsPanel: React.FC<Props> = ({flows, namespace}) => {
                 onClick={() => setSelectedPodKey(pod.key)}
                 title={`${pod.key} connections`}
               >
-                <span className="hubble-pod-chip-name">{pod.pod}</span>
+                <span className="hubble-pod-chip-header">
+                  <span className="hubble-pod-chip-name">{pod.pod}</span>
+                  {pod.deniedFlows > 0 && (
+                    <span className="hubble-pod-chip-badge">
+                      Dropped {pod.deniedFlows}
+                    </span>
+                  )}
+                </span>
                 <span className="hubble-pod-chip-meta">
                   {pod.workload || 'unknown'} · {pod.flowCount}
                 </span>
               </button>
             ))}
           </div>
-          {pods.length > 8 && (
-            <div className="hubble-pod-more">+{pods.length - 8} more pods</div>
+          {orderedPods.length > 8 && (
+            <div className="hubble-pod-more">
+              +{orderedPods.length - 8} more pods
+            </div>
           )}
         </>
       )}
@@ -122,7 +165,7 @@ const PodConnectionsModal: React.FC<{
               </div>
             )}
             {connections.length > 0 && (
-              <table className="table v-center table-highlight hubble-pod-modal-table">
+              <table className="hubble-pod-modal-table">
                 <thead>
                   <tr>
                     <th>Direction</th>
@@ -168,28 +211,6 @@ const PodConnectionsGraph: React.FC<{
   return (
     <div className="hubble-pod-graph">
       <svg viewBox="0 0 900 280" role="img" aria-label="Pod connection graph">
-        <defs>
-          <marker
-            id="hubble-pod-arrow-ok"
-            markerWidth="8"
-            markerHeight="8"
-            refX="7"
-            refY="4"
-            orient="auto"
-          >
-            <path d="M0,0 L8,4 L0,8 z" fill="#65b7ff" />
-          </marker>
-          <marker
-            id="hubble-pod-arrow-drop"
-            markerWidth="8"
-            markerHeight="8"
-            refX="7"
-            refY="4"
-            orient="auto"
-          >
-            <path d="M0,0 L8,4 L0,8 z" fill="#ff6f6f" />
-          </marker>
-        </defs>
         {inbound.map((connection, index) => (
           <GraphConnection
             key={`in-${connection.key}`}
@@ -213,6 +234,7 @@ const PodConnectionsGraph: React.FC<{
           y={140}
           label={pod.pod}
           meta={pod.workload || pod.namespace}
+          kind="workload"
           selected
         />
       </svg>
@@ -232,21 +254,18 @@ const GraphConnection: React.FC<{
   total: number
   selectedLabel: string
 }> = ({connection, index, total, selectedLabel}) => {
-  const center = {x: 450, y: 140}
-  const peerX = connection.direction === 'inbound' ? 170 : 730
+  const inbound = connection.direction === 'inbound'
+  const peerX = inbound ? 170 : 730
   const peerY = graphY(index, total)
   const dropped = (connection.verdictCounts.DROPPED || 0) > 0
-  const color = dropped ? '#ff6f6f' : '#65b7ff'
-  const marker = dropped
-    ? 'url(#hubble-pod-arrow-drop)'
-    : 'url(#hubble-pod-arrow-ok)'
-  const from =
-    connection.direction === 'inbound' ? {x: peerX + 76, y: peerY} : center
-  const to =
-    connection.direction === 'inbound' ? center : {x: peerX - 76, y: peerY}
-  const labelX =
-    connection.direction === 'inbound' ? center.x - 112 : center.x + 112
-  const labelY = peerY - 10
+  // Reuse the main ServiceMap edge palette (forwarded green / denied red) so
+  // the modal graph reads as the same product surface, not a separate one.
+  const color = edgeVerdictColor(dropped ? 'denied' : 'forwarded')
+  // Anchor on the node edges (peer side ↔ pod side), like ServiceMap does,
+  // and draw a curved bezier instead of a straight line. The pod node spans
+  // x=374..526 around the centre at (450, 140).
+  const from = inbound ? {x: peerX + 76, y: peerY} : {x: 526, y: 140}
+  const to = inbound ? {x: 374, y: 140} : {x: peerX - 76, y: peerY}
   const peerLabel =
     connection.peerPod ||
     connection.peerWorkload ||
@@ -256,33 +275,24 @@ const GraphConnection: React.FC<{
 
   return (
     <g>
-      <line
-        x1={from.x}
-        y1={from.y}
-        x2={to.x}
-        y2={to.y}
+      <path
+        d={buildEdgePath(from, to)}
+        fill="none"
         stroke={color}
         strokeWidth={edgeWidth(connection.flowCount)}
-        markerEnd={marker}
-        opacity={0.88}
+        strokeDasharray={dropped ? '6 4' : undefined}
+        opacity={0.75}
       />
-      <text
-        x={labelX}
-        y={labelY}
-        className="hubble-pod-graph-edge-label"
-        textAnchor="middle"
-      >
-        {formatGraphEdgeLabel(connection)}
-      </text>
       <GraphNode
         x={peerX}
         y={peerY}
         label={peerLabel}
         meta={connection.peerWorkload || connection.peerNamespace || 'external'}
+        kind={graphNodeKind(connection)}
         grouped={connection.key.includes('|group:')}
       />
       <title>
-        {connection.direction === 'inbound'
+        {inbound
           ? `${peerLabel} -> ${selectedLabel}`
           : `${selectedLabel} -> ${peerLabel}`}
       </title>
@@ -290,32 +300,74 @@ const GraphConnection: React.FC<{
   )
 }
 
+// GRAPH_NODE_ACCENT_COLOR mirrors the left accent bar HubbleNodeCard uses to
+// distinguish node kind (.hubble-node-card--workload / --external) — the
+// graph draws its own SVG "cards" instead of reusing that DOM component, so
+// the color has to be replicated here to keep the two visually consistent.
+const GRAPH_NODE_ACCENT_COLOR: Record<'workload' | 'external', string> = {
+  workload: '#7a65f2',
+  external: '#8e91a1',
+}
+
+// isRedundantMeta mirrors HubbleNodeCard's nodeSubtitle() rule: don't show a
+// second line that just repeats the first. Pod names are usually
+// "<workload>-<hash/ordinal>", so the workload meta line is redundant with
+// the pod label far more often than it's distinct — check the prefix, not
+// just exact equality.
+export const isRedundantMeta = (label: string, meta: string): boolean =>
+  !meta || meta === label || label.startsWith(`${meta}-`)
+
 const GraphNode: React.FC<{
   x: number
   y: number
   label: string
   meta: string
+  kind: 'workload' | 'external'
   selected?: boolean
   grouped?: boolean
-}> = ({x, y, label, meta, selected, grouped}) => (
-  <g transform={`translate(${x - 76}, ${y - 24})`}>
-    <rect
-      width="152"
-      height="48"
-      rx="5"
-      className={`hubble-pod-graph-node ${selected ? 'is-selected' : ''} ${
-        grouped ? 'is-grouped' : ''
-      }`}
-    />
-    <text x="10" y="20" className="hubble-pod-graph-node-label">
-      {truncateMiddle(label, 21)}
-    </text>
-    <text x="10" y="37" className="hubble-pod-graph-node-meta">
-      {truncateMiddle(meta, 20)}
-    </text>
-    <title>{label}</title>
-  </g>
-)
+}> = ({x, y, label, meta, kind, selected, grouped}) => {
+  const showMeta = !isRedundantMeta(label, meta)
+  return (
+    <g transform={`translate(${x - 76}, ${y - 24})`}>
+      <rect
+        width="152"
+        height="48"
+        rx="5"
+        className={`hubble-pod-graph-node ${selected ? 'is-selected' : ''} ${
+          grouped ? 'is-grouped' : ''
+        }`}
+      />
+      <rect
+        className="hubble-pod-graph-node-accent"
+        x="0"
+        y="4"
+        width="3"
+        height="40"
+        rx="1.5"
+        fill={GRAPH_NODE_ACCENT_COLOR[kind]}
+      />
+      {/* HTML label inside foreignObject so overflow is trimmed by actual
+          width with a CSS ellipsis — same mechanism the ServiceMap node
+          cards use — instead of a font-dependent character cap. */}
+      <foreignObject x="8" y="4" width="136" height="40">
+        <div className="hubble-pod-graph-node-text">
+          <div className="hubble-pod-graph-node-label" title={label}>
+            {label}
+          </div>
+          {showMeta && <div className="hubble-pod-graph-node-meta">{meta}</div>}
+        </div>
+      </foreignObject>
+      <title>{label}</title>
+    </g>
+  )
+}
+
+export const graphNodeKind = (
+  connection: PodConnectionSummary
+): 'workload' | 'external' =>
+  !connection.key.includes('|group:') && isPodPeer(connection)
+    ? 'workload'
+    : 'external'
 
 const summarizeGraphConnections = (
   connections: PodConnectionSummary[]
@@ -419,7 +471,10 @@ const ConnectionRow: React.FC<{connection: PodConnectionSummary}> = ({
         className={`hubble-pod-direction is-${connection.direction}`}
         title={connection.direction}
       >
-        {connection.direction === 'outbound' ? 'OUT' : 'IN'}
+        <span className="hubble-pod-direction-glyph">
+          {connection.direction === 'outbound' ? '⬆' : '⬇'}
+        </span>
+        {connection.direction === 'outbound' ? 'Out' : 'In'}
       </span>
     </td>
     <td className="hubble-pod-modal-mono">
@@ -454,27 +509,6 @@ const formatDropReason = (reasons: Record<string, number>): string => {
   return top ? `${top[0]} (${top[1]})` : ''
 }
 
-const formatGraphEdgeLabel = (connection: PodConnectionSummary): string => {
-  if (connection.key.includes('|group:DNS')) {
-    const dropped = connection.verdictCounts.DROPPED || 0
-    return dropped > 0
-      ? `DNS · DROP ${dropped}`
-      : `DNS · ${connection.flowCount}`
-  }
-  if (connection.key.includes('|group:External / IP')) {
-    const dropped = connection.verdictCounts.DROPPED || 0
-    return dropped > 0
-      ? `External · DROP ${dropped}`
-      : `External · ${connection.flowCount}`
-  }
-  const port = connection.port
-    ? `${connection.port} ${connection.protocol}`
-    : ''
-  const dropped = connection.verdictCounts.DROPPED || 0
-  if (dropped > 0) return `${port || 'flow'} · dropped ${dropped}`
-  return `${port || 'flow'} · ${connection.flowCount}`
-}
-
 const graphY = (index: number, total: number): number => {
   if (total <= 1) return 140
   return 48 + (184 / (total - 1)) * index
@@ -482,12 +516,6 @@ const graphY = (index: number, total: number): number => {
 
 const edgeWidth = (flowCount: number): number =>
   Math.max(2, Math.min(8, Math.log10(flowCount + 1) * 2.4))
-
-const truncateMiddle = (value: string, max: number): string => {
-  if (!value || value.length <= max) return value
-  const half = Math.floor((max - 1) / 2)
-  return `${value.slice(0, half)}…${value.slice(value.length - half)}`
-}
 
 const newerTime = (a: string, b: string): string => {
   if (!a) return b

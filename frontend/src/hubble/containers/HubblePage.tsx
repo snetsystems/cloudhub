@@ -77,6 +77,7 @@ const HubblePage: React.FC = () => {
   } | null>(null)
   const [crossNsMode, setCrossNsMode] = useState<CrossNsMode>('group')
   const [clusterListError, setClusterListError] = useState<string>('')
+  const [livePaused, setLivePaused] = useState(false)
 
   // Threesizer proportions — CloudHub convention: array sums to 1.0.
   // Outer split: map+sidepanels (top) vs flow table (bottom).
@@ -114,6 +115,7 @@ const HubblePage: React.FC = () => {
     setFlowFilters({})
     setPolicyBaseline(null)
     setSidePanelTab('talkers')
+    setLivePaused(false)
   }, [cluster])
 
   useEffect(() => {
@@ -127,7 +129,7 @@ const HubblePage: React.FC = () => {
     connected,
     loading,
     error: streamError,
-  } = useHubbleSnapshot(cluster, drilldown)
+  } = useHubbleSnapshot(cluster, drilldown, livePaused)
 
   // Cross-ns presentation: 'group' collapses foreign-namespace workloads into
   // synthetic ns-group cards via groupExternalNamespaces; 'dim' and 'show'
@@ -162,7 +164,8 @@ const HubblePage: React.FC = () => {
     200,
     !!cluster && (!flowTableHidden || !!drilldown),
     effectiveNamespace,
-    flowFilters
+    flowFilters,
+    livePaused
   )
 
   const policyContext = useMemo(
@@ -323,7 +326,7 @@ const HubblePage: React.FC = () => {
         )}
         <SideTab
           id="edge"
-          label="Edge"
+          label="Connections"
           active={sidePanelTab === 'edge'}
           onClick={setSidePanelTab}
         />
@@ -362,6 +365,7 @@ const HubblePage: React.FC = () => {
             snapshot={snapshot}
             selectedEdgeId={detailEdgeId}
             activeNodeId={activeNodeId}
+            livePaused={livePaused}
             onSelectEdge={handleEdgeDetails}
             onBack={handleBackToEdgeList}
             onClose={handleClearSelection}
@@ -375,6 +379,7 @@ const HubblePage: React.FC = () => {
     <FlowTable
       flows={allFlows}
       connected={flowsConnected}
+      paused={livePaused}
       loading={flowsLoading}
       error={flowsError}
       filters={flowFilters}
@@ -390,6 +395,13 @@ const HubblePage: React.FC = () => {
           <div className="hubble-page-title">
             <Page.Title title="Cilium" />
             <HubbleBetaBadge />
+            {clusters.length > 0 && (
+              <StatusBar
+                wsConnected={connected}
+                paused={livePaused}
+                onTogglePause={() => setLivePaused(p => !p)}
+              />
+            )}
           </div>
           {drilldown && (
             <button className="hubble-back-button" onClick={exitDrilldown}>
@@ -446,13 +458,6 @@ const HubblePage: React.FC = () => {
       </Page.Header>
       <Page.Contents fullWidth={true} scrollable={false}>
         <div className="hubble-page-content">
-          {clusters.length > 0 && (
-            <StatusBar
-              snapshot={snapshot}
-              wsConnected={connected}
-              onHelp={() => setTutorial({initial: 'header', tabs: ['header']})}
-            />
-          )}
           {displayError && <div className="hubble-error">{displayError}</div>}
           {clusters.length === 0 && !clusterListError && (
             <div className="hubble-empty">

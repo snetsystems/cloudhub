@@ -47,12 +47,12 @@ const Row: React.FC<{
 
 const EDGE_STEPS: TutorialStep[] = [
   {
-    title: 'Edge details — 연결 요약',
+    title: 'Connection details — 연결 요약',
     description:
-      '맵에서 연결(엣지)을 클릭하면 이 탭이 열립니다. From/To는 통신 양 끝의 노드이고, Flow events는 Hubble이 관측한 이벤트 수(패킷/바이트 양이 아님), Active conns는 고유 5-tuple 기준 실제 연결 수의 근사치, Denied는 정책에 의해 차단된 이벤트 수입니다.',
+      '맵에서 연결을 클릭하면 이 탭이 열립니다. From/To는 통신 양 끝의 노드이고, Flow events는 Hubble이 관측한 이벤트 수(패킷/바이트 양이 아님), Active conns는 고유 5-tuple 기준 실제 연결 수의 근사치, Denied는 정책에 의해 차단된 이벤트 수입니다.',
     render: () => (
       <div>
-        <div className="hubble-detail-subtitle">Edge details</div>
+        <div className="hubble-detail-subtitle">Connection details</div>
         <Row label="From" value="ns:beyla-trace-demo" />
         <Row label="To" value="ns:ai-agent-poc" />
         <Row label="Flow events" value="96" />
@@ -166,9 +166,9 @@ const HEADER_STEPS: TutorialStep[] = [
     ),
   },
   {
-    title: 'Window · Flow events · Edges · Last flow',
+    title: 'Window · Flow events · Connections · Last flow',
     description:
-      'Window는 관측 구간(기본 5분)과 채움 비율 — 이 구간에 트래픽이 없던 워크로드는 맵에 나타나지 않습니다. Flow events는 수신한 관측 이벤트 누적 수(트래픽 양 아님), Edges는 추적 중인 연결 수(cap hit 시 경고), Last flow는 마지막 수신 경과 시간으로 30초 이상이면 노란색 경고가 됩니다.',
+      'Window는 관측 구간(기본 5분)과 채움 비율 — 이 구간에 트래픽이 없던 워크로드는 맵에 나타나지 않습니다. Flow events는 수신한 관측 이벤트 누적 수(트래픽 양 아님), Connections는 추적 중인 연결 수(cap hit 시 경고), Last flow는 마지막 수신 경과 시간으로 30초 이상이면 노란색 경고가 됩니다.',
     render: () => (
       <div className="hubble-status-bar">
         <span className="hubble-status-item">
@@ -178,7 +178,7 @@ const HEADER_STEPS: TutorialStep[] = [
           Flow events <strong>2,003,207</strong>
         </span>
         <span className="hubble-status-item">
-          Edges <strong>101</strong>
+          Connections <strong>101</strong>
         </span>
         <span className="hubble-status-item">
           Last flow <strong>just now</strong>
@@ -258,8 +258,6 @@ const MockCard: React.FC<{
   <HubbleNodeCard
     node={node}
     stats={stats}
-    shareDisplay={{mode: 'none', inShare: null, outShare: null}}
-    windowLabel="5m"
     x={x}
     y={y}
     height={cardHeightForNode(node, stats)}
@@ -301,7 +299,7 @@ const NODES_STEPS: TutorialStep[] = [
   {
     title: 'In / Out — 유입·유출 이벤트',
     description:
-      '현재 윈도우(기본 5분)에서 이 노드로 들어오고(In) 나간(Out) flow 이벤트 수입니다 — 패킷/바이트 양이 아닙니다. 카드를 클릭해 선택하면 이웃 카드에 %가 나타나는데, 이는 선택한 노드와의 연결 기여도를 뜻합니다.',
+      '현재 윈도우(기본 5분)에서 이 노드로 들어오고(In) 나간(Out) flow 이벤트 수입니다 — 패킷/바이트 양이 아닙니다.',
     render: () => (
       <div className="hubble-tutorial-map" style={{height: 156}}>
         <MockCard
@@ -337,7 +335,7 @@ const NODES_STEPS: TutorialStep[] = [
   {
     title: 'External 카드 — 외부 대상',
     description:
-      '클러스터 밖 대상은 EXTERNAL 카드로 묶입니다. DNS로 식별되면 도메인 이름(FQDN) 카드로, 아니면 "Unknown External" 하나로 집계되며 이때 실제 외부 IP 상위 3개가 카드에 미리 표시됩니다. 연결을 클릭하면 Edge 탭에서 top 5까지 확인됩니다.',
+      '클러스터 밖 대상은 EXTERNAL 카드로 묶입니다. DNS로 식별되면 도메인 이름(FQDN) 카드로, 아니면 "Unknown External" 하나로 집계되며 이때 실제 외부 IP 상위 3개가 카드에 미리 표시됩니다. 연결을 클릭하면 Connections 탭에서 top 5까지 확인됩니다.',
     render: () => (
       <div className="hubble-tutorial-map" style={{height: 210}}>
         <MockCard
@@ -357,9 +355,9 @@ const NODES_STEPS: TutorialStep[] = [
     ),
   },
   {
-    title: '엣지(연결선) 읽는 법',
+    title: '연결선 읽는 법',
     description:
-      '선 두께는 이벤트 수(로그 스케일)입니다. 초록 실선은 정상, 빨간 점선은 차단(denied) 포함, 선 가운데 ⚠는 최근 drop 후 회복을 뜻합니다. 선을 클릭하면 우측 Edge 탭에 verdict·정책·최근 flow 상세가 열리고, namespace 카드를 선택하면 "Open namespace"로 드릴다운합니다.',
+      '선 두께는 이벤트 수(로그 스케일)입니다. 초록 실선은 정상, 빨간 점선은 차단(denied) 포함, 선 가운데 ⚠는 최근 drop 후 회복을 뜻합니다. 선을 클릭하면 우측 Connections 탭에 verdict·정책·최근 flow 상세가 열리고, namespace 카드를 선택하면 "Open namespace"로 드릴다운합니다.',
     render: () => (
       <div className="hubble-tutorial-map" style={{height: 190}}>
         <MockCard node={nsNode('web')} stats={mockStats()} y={26} />
@@ -520,7 +518,7 @@ const TUTORIALS: Record<TutorialTab, {label: string; steps: TutorialStep[]}> = {
   talkers: {label: 'Talkers', steps: TALKERS_STEPS},
   policy: {label: 'Policy', steps: POLICY_STEPS},
   pods: {label: 'Pods', steps: PODS_STEPS},
-  edge: {label: 'Edge', steps: EDGE_STEPS},
+  edge: {label: 'Connections', steps: EDGE_STEPS},
 }
 
 const TAB_ORDER: TutorialTab[] = [

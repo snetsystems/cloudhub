@@ -16,6 +16,7 @@ interface Props {
   snapshot: HubbleSnapshot | null
   selectedEdgeId: string | null
   activeNodeId: string | null
+  livePaused?: boolean
   onSelectEdge: (edgeId: string, src: string, dst: string) => void
   onBack: () => void
   onClose: () => void
@@ -35,6 +36,17 @@ const edgeId = (src: string, dst: string): string => `${src}|${dst}`
 const shortNodeId = (id: string): string =>
   id.replace(/^(nsgrp:|ns:|wl:|ext:)/, '')
 
+// nodeKindLabel derives an endpoint's kind from its node-id prefix, mirroring
+// the kind shown on the map's node cards (NS / workload / external), so each
+// side of a connection can be tagged without a snapshot lookup.
+const nodeKindLabel = (id: string): string => {
+  if (id.startsWith('nsgrp:')) return 'ns group'
+  if (id.startsWith('ns:')) return 'ns'
+  if (id.startsWith('wl:')) return 'workload'
+  if (id.startsWith('ext:')) return 'external'
+  return ''
+}
+
 // DetailPanel is shown when the user taps an edge. It surfaces the
 // Cilium-specific data: per-verdict counts, top deny reasons, matched
 // policies, and the most-recent raw flows. Empty when nothing is selected.
@@ -43,6 +55,7 @@ const DetailPanel: React.FC<Props> = ({
   snapshot,
   selectedEdgeId,
   activeNodeId,
+  livePaused = false,
   onSelectEdge,
   onBack,
   onClose,
@@ -50,7 +63,13 @@ const DetailPanel: React.FC<Props> = ({
   const edge = findEdge(snapshot, selectedEdgeId)
   const parsed = parseEdgeId(selectedEdgeId)
   const {flows: recentFlows, loading: flowsLoading, error: flowsError} =
-    useEdgeFlows(cluster, parsed?.src ?? null, parsed?.dst ?? null, 20)
+    useEdgeFlows(
+      cluster,
+      parsed?.src ?? null,
+      parsed?.dst ?? null,
+      20,
+      livePaused
+    )
   const [detailFlow, setDetailFlow] = useState<HubbleFlowRecord | null>(null)
   const [selectedPolicy, setSelectedPolicy] = useState<HubblePolicyRef | null>(
     null
@@ -89,7 +108,7 @@ const DetailPanel: React.FC<Props> = ({
     }
     return (
       <div className="hubble-panel hubble-detail-panel is-empty">
-        <h4 className="hubble-panel-title">Edge details</h4>
+        <h4 className="hubble-panel-title">Connection details</h4>
         <div className="hubble-panel-empty">
           Select a connection, then click View details.
         </div>
@@ -139,7 +158,7 @@ const DetailPanel: React.FC<Props> = ({
   return (
     <div className="hubble-panel hubble-detail-panel">
       <div className="hubble-panel-header">
-        <h4 className="hubble-panel-title">Edge details</h4>
+        <h4 className="hubble-panel-title">Connection details</h4>
         <div className="hubble-panel-header-actions">
           {activeNodeId && (
             <button
@@ -311,7 +330,7 @@ const DetailPanel: React.FC<Props> = ({
         <div className="hubble-detail-section hubble-detail-section--denied">
           <div
             className="hubble-detail-subtitle hubble-detail-subtitle--denied"
-            title="이 엣지에서 트래픽을 차단한 CiliumNetworkPolicy / NetworkPolicy. 클릭하면 정책 spec(YAML/JSON)을 모달로 확인."
+            title="이 연결에서 트래픽을 차단한 CiliumNetworkPolicy / NetworkPolicy. 클릭하면 정책 spec(YAML/JSON)을 모달로 확인."
           >
             Denied by policies
           </div>
@@ -324,7 +343,7 @@ const DetailPanel: React.FC<Props> = ({
         <div className="hubble-detail-section">
           <div
             className="hubble-detail-subtitle"
-            title="이 엣지의 트래픽을 허용한 정책. 클릭하면 정책 spec을 모달로 확인."
+            title="이 연결의 트래픽을 허용한 정책. 클릭하면 정책 spec을 모달로 확인."
           >
             Allowed by policies
           </div>
@@ -417,7 +436,7 @@ const EdgeListView: React.FC<{
     <div className="hubble-panel hubble-detail-panel">
       <div className="hubble-panel-header">
         <h4 className="hubble-panel-title">
-          Edge details
+          Connection details
           <span className="hubble-panel-subtitle"> — {activeNodeLabel}</span>
         </h4>
         <button className="hubble-panel-close" onClick={onClose} title="Close">
@@ -453,6 +472,8 @@ const EdgeListView: React.FC<{
             {edges.map(e => {
               const denied = e.verdictCounts?.DROPPED ?? 0
               const id = edgeId(e.src, e.dst)
+              const srcKind = nodeKindLabel(e.src)
+              const dstKind = nodeKindLabel(e.dst)
               return (
                 <li
                   className="hubble-top-talkers-row hubble-edge-list-row"
@@ -469,11 +490,21 @@ const EdgeListView: React.FC<{
                 >
                   <span className="hubble-edge-label">
                     <span className="hubble-edge-src">
-                      {shortNodeId(e.src)}
+                      <span className="hubble-edge-name">
+                        {shortNodeId(e.src)}
+                      </span>
+                      {srcKind && (
+                        <span className="hubble-edge-kind">{srcKind}</span>
+                      )}
                     </span>
                     <span className="hubble-edge-arrow">→</span>
                     <span className="hubble-edge-dst">
-                      {shortNodeId(e.dst)}
+                      <span className="hubble-edge-name">
+                        {shortNodeId(e.dst)}
+                      </span>
+                      {dstKind && (
+                        <span className="hubble-edge-kind">{dstKind}</span>
+                      )}
                     </span>
                   </span>
                   <span>
@@ -611,7 +642,7 @@ const RecentFlowsSection: React.FC<{
   <div className="hubble-detail-section">
     <div
       className="hubble-detail-subtitle"
-      title="이 엣지의 최근 raw flow 이벤트 (1초마다 갱신). 한 줄 클릭하면 Hubble UI 수준의 전체 디테일 (identity, labels, TCP flags, IP, 포트 등) 표시."
+      title="이 연결의 최근 raw flow 이벤트 (1초마다 갱신). 한 줄 클릭하면 Hubble UI 수준의 전체 디테일 (identity, labels, TCP flags, IP, 포트 등) 표시."
     >
       Recent flows{loading && flows.length === 0 ? ' (loading…)' : ''}
     </div>

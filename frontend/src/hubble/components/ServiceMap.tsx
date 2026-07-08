@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {HubbleEdge, HubbleSnapshot} from 'src/hubble/types'
 import HubbleNodeCard from 'src/hubble/components/HubbleNodeCard'
 import MapSelectionBar from 'src/hubble/components/MapSelectionBar'
@@ -28,8 +28,6 @@ import {
 } from 'src/hubble/utils/groupExternalNamespaces'
 import {buildEdgePath, computeEdgeAnchors} from 'src/hubble/utils/edgeAnchors'
 import {buildNodeStats} from 'src/hubble/utils/nodeStats'
-import {buildNodeShareMap} from 'src/hubble/utils/trafficShare'
-import {formatWindowDuration} from 'src/hubble/utils/time'
 
 interface Props {
   snapshot: HubbleSnapshot | null
@@ -99,6 +97,89 @@ const renderRecoveredBadge = (
 
 const edgeId = (src: string, dst: string): string => `${src}|${dst}`
 
+interface MapRegionBounds {
+  x: number
+  y: number
+  width: number
+}
+
+type MapRegionTone = 'external' | 'applications' | 'system'
+
+// Region headers are rendered above the edge layer so connection curves do
+// not paint over the section titles. Dragging a header moves every card in
+// that region together.
+const MapRegionHeader: React.FC<{
+  bounds: MapRegionBounds
+  tone: MapRegionTone
+  title: string
+  subtitle: string
+  count: number
+  isDragging?: boolean
+  onDragStart: (clientX: number, clientY: number) => void
+}> = ({
+  bounds,
+  tone,
+  title,
+  subtitle,
+  count,
+  isDragging = false,
+  onDragStart,
+}) => (
+  <div
+    className={`hubble-map-region-header-layer hubble-map-region-header-layer--${tone}`}
+    style={{left: bounds.x, top: bounds.y, width: bounds.width}}
+  >
+    <div
+      className={`hubble-map-region-header${
+        isDragging ? ' is-dragging' : ''
+      }`}
+      onMouseDown={e => {
+        if (e.button !== 0) return
+        e.preventDefault()
+        e.stopPropagation()
+        onDragStart(e.clientX, e.clientY)
+      }}
+    >
+      <div className="hubble-map-region-header-text">
+        <strong className="hubble-map-region-title">{title}</strong>
+        <span className="hubble-map-region-subtitle">{subtitle}</span>
+      </div>
+      <span className="hubble-map-region-count">
+        {count.toLocaleString()}
+      </span>
+    </div>
+  </div>
+)
+
+const NamespaceRegionHeader: React.FC<{
+  bounds: MapRegionBounds
+  namespace: string
+  count: number
+  isDragging?: boolean
+  onDragStart: (clientX: number, clientY: number) => void
+}> = ({bounds, namespace, count, isDragging = false, onDragStart}) => (
+  <div
+    className="hubble-map-region-header-layer hubble-map-region-header-layer--namespace"
+    style={{left: bounds.x, top: bounds.y, width: bounds.width}}
+  >
+    <div
+      className={`hubble-namespace-region-header${
+        isDragging ? ' is-dragging' : ''
+      }`}
+      onMouseDown={e => {
+        if (e.button !== 0) return
+        e.preventDefault()
+        e.stopPropagation()
+        onDragStart(e.clientX, e.clientY)
+      }}
+    >
+      <span className="hubble-namespace-region-kind">Namespace</span>
+      <strong>{namespace}</strong>
+      <span>{count.toLocaleString()} workloads</span>
+    </div>
+  </div>
+)
+
 const shortNodeId = (id: string): string =>
   id.replace(/^(nsgrp:|ns:|wl:|ext:)/, '')
 
@@ -124,6 +205,14 @@ const isFocusNsNodeId = (
 ): boolean =>
   !!drilldownNamespace && nodeId.startsWith(`wl:${drilldownNamespace}/`)
 
+const isRegionDragging = (
+  draggingRegionMembers: Set<string> | null,
+  memberIds: ReadonlySet<string>
+): boolean =>
+  !!draggingRegionMembers &&
+  memberIds.size > 0 &&
+  [...memberIds].every(id => draggingRegionMembers.has(id))
+
 const ServiceMap: React.FC<Props> = ({
   snapshot,
   hideSystemNodes,
@@ -142,6 +231,21 @@ const ServiceMap: React.FC<Props> = ({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
 
+  // Drilling into (or out of) a namespace swaps the node id scheme (e.g.
+  // "ns:cloudhub" -> "wl:cloudhub/*"), so a selection made before the
+  // transition can no longer match anything in the new node/edge set. Left
+  // uncleared, that stale selection still counts as "focused", which dims
+  // every node/edge since none of them connect to it. Clear it synchronously
+  // during render (rather than in an effect) so the very first render of the
+  // new view is already undimmed — the standard React pattern for resetting
+  // state when a prop changes: https://react.dev/learn/you-might-not-need-an-effect
+  const [selectionDrilldown, setSelectionDrilldown] = useState(drilldown)
+  if (selectionDrilldown !== drilldown) {
+    setSelectionDrilldown(drilldown)
+    setSelectedNodeId(null)
+    setSelectedEdgeId(null)
+  }
+
   // systemFilteredNodes: nodes after the "Hide system NS" filter. Verdict
   // filter is applied on top by trimming orphans from this set further down.
   const systemFilteredNodes = useMemo(
@@ -156,8 +260,8 @@ const ServiceMap: React.FC<Props> = ({
 
   // verdictFilteredEdges: all non-self-loop edges among system-filtered nodes
   // that pass the verdict filter. Used both for deriving visible nodes (so
-  // orphans disappear when "Denied only" is selected) and for traffic-share
-  // calculations.
+  // orphans disappear when "Denied only" is selected) and for neighbor
+  // lookups (visibleEdges below).
   const verdictFilteredEdges = useMemo(() => {
     if (!snapshot) return []
     return (snapshot.edges || []).filter(e => {
@@ -195,14 +299,9 @@ const ServiceMap: React.FC<Props> = ({
     [snapshot]
   )
 
-  const windowLabel = useMemo(
-    () => formatWindowDuration(snapshot?.window.start, snapshot?.window.end),
-    [snapshot]
-  )
-
   const visibleNodeIds = useMemo(() => new Set(nodes.map(n => n.id)), [nodes])
 
-  const edgesForShare = useMemo(
+  const visibleEdges = useMemo(
     () =>
       verdictFilteredEdges.filter(
         e => visibleNodeIds.has(e.src) && visibleNodeIds.has(e.dst)
@@ -213,24 +312,12 @@ const ServiceMap: React.FC<Props> = ({
   const neighborIds = useMemo(() => {
     if (!selectedNodeId) return new Set<string>()
     const ids = new Set<string>()
-    for (const e of edgesForShare) {
+    for (const e of visibleEdges) {
       if (e.src === selectedNodeId) ids.add(e.dst)
       if (e.dst === selectedNodeId) ids.add(e.src)
     }
     return ids
-  }, [selectedNodeId, edgesForShare])
-
-  const nodeShareMap = useMemo(
-    () =>
-      buildNodeShareMap(
-        nodes.map(n => n.id),
-        selectedNodeId,
-        neighborIds,
-        edgesForShare,
-        nodeStats
-      ),
-    [nodes, selectedNodeId, neighborIds, edgesForShare, nodeStats]
-  )
+  }, [selectedNodeId, visibleEdges])
 
   const cardHeights = useMemo(() => {
     const map = new Map<string, number>()
@@ -307,7 +394,9 @@ const ServiceMap: React.FC<Props> = ({
   const {
     applyPositions,
     startDrag,
+    startRegionDrag,
     draggingNodeId,
+    draggingRegionMembers,
     consumeDidDrag,
     resetOffsets,
   } = useCardDrag(layoutKey, getScale, drilldown ?? 'overview')
@@ -387,12 +476,24 @@ const ServiceMap: React.FC<Props> = ({
   )
 
   const positionById = useMemo(() => {
-    const map = new Map<string, typeof positions[0]>()
+    const map = new Map<string, {x: number; y: number}>()
     for (const p of positions) {
-      map.set(p.id, p)
+      map.set(p.id, {x: p.x, y: p.y})
     }
     return map
   }, [positions])
+
+  const beginRegionDrag = useCallback(
+    (
+      regionKey: string,
+      memberIds: ReadonlySet<string>,
+      clientX: number,
+      clientY: number
+    ) => {
+      startRegionDrag(regionKey, memberIds, clientX, clientY, positionById)
+    },
+    [positionById, startRegionDrag]
+  )
 
   const displayEdges = useMemo(() => {
     if (!snapshot) return []
@@ -514,16 +615,29 @@ const ServiceMap: React.FC<Props> = ({
       />
       <div className="hubble-map-toolbar">
         <div className="hubble-map-hint">
-          <span className="hubble-map-hint-line">
-            {hiddenEdgeCount > 0
-              ? `상위 ${TOP_EDGES_LIMIT}개 연결 (+${hiddenEdgeCount}개 숨김). `
-              : ''}
-            빈 공간 드래그: 이동 · 휠: 확대/축소
-          </span>
-          <span className="hubble-map-hint-line hubble-map-hint-line--legend">
-            {selectedNodeId
-              ? '선택: 이웃 카드 % = 연결(엣지) 기여도 · Out=→선택 In · In=선택→Out · 기타 % 없음'
-              : 'In/Out 아래 % = 화면 노드 전체 flow 대비'}
+          <span className="hubble-map-level">
+            {drilldown
+              ? `${drilldown} 네임스페이스 — 워크로드 간 연결`
+              : 'Overview — 네임스페이스 간 연결'}
+            <span className="hubble-map-info" tabIndex={0}>
+              <span className="hubble-map-info-icon" aria-hidden="true">
+                i
+              </span>
+              <span
+                className="hubble-map-info-tooltip"
+                role="tooltip"
+                aria-label="맵 사용법"
+              >
+                {hiddenEdgeCount > 0 && (
+                  <span className="hubble-map-info-tooltip-line">
+                    {`상위 ${TOP_EDGES_LIMIT}개 연결 (+${hiddenEdgeCount}개 숨김)`}
+                  </span>
+                )}
+                <span className="hubble-map-info-tooltip-line">
+                  빈 공간 드래그: 이동 · 휠: 확대/축소
+                </span>
+              </span>
+            </span>
           </span>
         </div>
         <div className="hubble-map-toolbar-actions">
@@ -594,12 +708,7 @@ const ServiceMap: React.FC<Props> = ({
                   height: externalMapRegion.height,
                 }}
                 aria-label={`External or unresolved, ${externalMapRegion.memberCount} nodes`}
-              >
-                <div className="hubble-map-region-header">
-                  <strong>External / Unresolved</strong>
-                  <span>{externalMapRegion.memberCount.toLocaleString()}</span>
-                </div>
-              </div>
+              />
             )}
             {applicationsMapRegion && (
               <div
@@ -611,14 +720,7 @@ const ServiceMap: React.FC<Props> = ({
                   height: applicationsMapRegion.height,
                 }}
                 aria-label={`Applications, ${applicationsMapRegion.memberCount} nodes`}
-              >
-                <div className="hubble-map-region-header">
-                  <strong>Applications</strong>
-                  <span>
-                    {applicationsMapRegion.memberCount.toLocaleString()}
-                  </span>
-                </div>
-              </div>
+              />
             )}
             {systemMapRegion && (
               <div
@@ -630,12 +732,7 @@ const ServiceMap: React.FC<Props> = ({
                   height: systemMapRegion.height,
                 }}
                 aria-label={`System namespaces, ${systemMapRegion.memberCount} nodes`}
-              >
-                <div className="hubble-map-region-header">
-                  <strong>System</strong>
-                  <span>{systemMapRegion.memberCount.toLocaleString()}</span>
-                </div>
-              </div>
+              />
             )}
             {drilldown && focusNamespaceRegion && (
               <div
@@ -647,18 +744,7 @@ const ServiceMap: React.FC<Props> = ({
                   height: focusNamespaceRegion.height,
                 }}
                 aria-label={`Namespace ${drilldown}, ${focusNamespaceRegion.memberCount} visible workloads`}
-              >
-                <div className="hubble-namespace-region-header">
-                  <span className="hubble-namespace-region-kind">
-                    Namespace
-                  </span>
-                  <strong>{drilldown}</strong>
-                  <span>
-                    {focusNamespaceRegion.memberCount.toLocaleString()}{' '}
-                    workloads
-                  </span>
-                </div>
-              </div>
+              />
             )}
 
             <svg
@@ -776,14 +862,6 @@ const ServiceMap: React.FC<Props> = ({
                   key={node.id}
                   node={node}
                   stats={stats}
-                  shareDisplay={
-                    nodeShareMap.get(node.id) ?? {
-                      mode: 'none',
-                      inShare: null,
-                      outShare: null,
-                    }
-                  }
-                  windowLabel={windowLabel}
                   x={pos.x}
                   y={pos.y}
                   height={pos.height}
@@ -795,7 +873,10 @@ const ServiceMap: React.FC<Props> = ({
                   showDrillAction={
                     !drilldown && node.kind === 'namespace' && isSelected
                   }
-                  isDragging={draggingNodeId === node.id}
+                  isDragging={
+                    draggingNodeId === node.id ||
+                    !!draggingRegionMembers?.has(node.id)
+                  }
                   onSelect={() => {
                     if (consumeDidDrag()) return
                     setSelectedNodeId(node.id)
@@ -817,6 +898,89 @@ const ServiceMap: React.FC<Props> = ({
                 />
               )
             })}
+
+            {externalMapRegion && (
+              <MapRegionHeader
+                bounds={externalMapRegion}
+                tone="external"
+                title="External"
+                subtitle="Unresolved endpoints"
+                count={externalMapRegion.memberCount}
+                isDragging={isRegionDragging(
+                  draggingRegionMembers,
+                  mapRegionNodeIds.external
+                )}
+                onDragStart={(clientX, clientY) =>
+                  beginRegionDrag(
+                    'external',
+                    mapRegionNodeIds.external,
+                    clientX,
+                    clientY
+                  )
+                }
+              />
+            )}
+            {applicationsMapRegion && (
+              <MapRegionHeader
+                bounds={applicationsMapRegion}
+                tone="applications"
+                title="Applications"
+                subtitle="In-cluster workloads"
+                count={applicationsMapRegion.memberCount}
+                isDragging={isRegionDragging(
+                  draggingRegionMembers,
+                  mapRegionNodeIds.applications
+                )}
+                onDragStart={(clientX, clientY) =>
+                  beginRegionDrag(
+                    'applications',
+                    mapRegionNodeIds.applications,
+                    clientX,
+                    clientY
+                  )
+                }
+              />
+            )}
+            {systemMapRegion && (
+              <MapRegionHeader
+                bounds={systemMapRegion}
+                tone="system"
+                title="System"
+                subtitle="Platform namespaces"
+                count={systemMapRegion.memberCount}
+                isDragging={isRegionDragging(
+                  draggingRegionMembers,
+                  mapRegionNodeIds.system
+                )}
+                onDragStart={(clientX, clientY) =>
+                  beginRegionDrag(
+                    'system',
+                    mapRegionNodeIds.system,
+                    clientX,
+                    clientY
+                  )
+                }
+              />
+            )}
+            {drilldown && focusNamespaceRegion && (
+              <NamespaceRegionHeader
+                bounds={focusNamespaceRegion}
+                namespace={drilldown}
+                count={focusNamespaceRegion.memberCount}
+                isDragging={isRegionDragging(
+                  draggingRegionMembers,
+                  focusNamespaceNodeIds
+                )}
+                onDragStart={(clientX, clientY) =>
+                  beginRegionDrag(
+                    'namespace',
+                    focusNamespaceNodeIds,
+                    clientX,
+                    clientY
+                  )
+                }
+              />
+            )}
           </div>
         </div>
       </div>
@@ -824,4 +988,19 @@ const ServiceMap: React.FC<Props> = ({
   )
 }
 
-export default ServiceMap
+const serviceMapPropsEqual = (prev: Props, next: Props): boolean =>
+  prev.snapshot === next.snapshot &&
+  prev.hideSystemNodes === next.hideSystemNodes &&
+  prev.simplifiedView === next.simplifiedView &&
+  prev.verdictFilter === next.verdictFilter &&
+  prev.noiseFilters === next.noiseFilters &&
+  prev.crossNsMode === next.crossNsMode &&
+  prev.drilldown === next.drilldown &&
+  prev.detailEdgeId === next.detailEdgeId &&
+  prev.onNodeDrillDown === next.onNodeDrillDown &&
+  prev.onNodeSelect === next.onNodeSelect &&
+  prev.onEdgeDetails === next.onEdgeDetails &&
+  prev.onClearSelection === next.onClearSelection &&
+  prev.onHelp === next.onHelp
+
+export default React.memo(ServiceMap, serviceMapPropsEqual)

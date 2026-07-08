@@ -7,6 +7,15 @@ import {
   clearCardOffsets,
 } from 'src/hubble/utils/cardOffsetsStorage'
 
+type DragMode =
+  | {kind: 'node'; nodeId: string; origX: number; origY: number}
+  | {
+      kind: 'region'
+      regionKey: string
+      memberIds: string[]
+      origPositions: Map<string, DragOffset>
+    }
+
 // viewKey identifies which map the offsets belong to ('overview' or the
 // drilldown namespace); dragged positions are persisted per view so a
 // hand-arranged map survives reloads.
@@ -19,14 +28,15 @@ export const useCardDrag = (
     loadCardOffsets(viewKey)
   )
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null)
+  const [draggingRegionMembers, setDraggingRegionMembers] = useState<
+    Set<string> | null
+  >(null)
   const [dragTick, setDragTick] = useState(0)
   const liveOffsetsRef = useRef<Map<string, DragOffset>>(new Map())
   const dragRef = useRef<{
-    nodeId: string
+    mode: DragMode
     startX: number
     startY: number
-    origX: number
-    origY: number
   } | null>(null)
   const didDragRef = useRef(false)
   const rafRef = useRef<number | null>(null)
@@ -37,6 +47,7 @@ export const useCardDrag = (
     setOffsets(loadCardOffsets(viewKey))
     liveOffsetsRef.current = new Map()
     setDraggingNodeId(null)
+    setDraggingRegionMembers(null)
     setDragTick(0)
     dragRef.current = null
     didDragRef.current = false
@@ -73,19 +84,54 @@ export const useCardDrag = (
     ) => {
       didDragRef.current = false
       dragRef.current = {
-        nodeId,
+        mode: {kind: 'node', nodeId, origX, origY},
         startX: clientX,
         startY: clientY,
-        origX,
-        origY,
       }
       setDraggingNodeId(nodeId)
+      setDraggingRegionMembers(null)
     },
     []
   )
 
+  const startRegionDrag = useCallback(
+    (
+      regionKey: string,
+      memberIds: Iterable<string>,
+      clientX: number,
+      clientY: number,
+      currentPositions: Map<string, DragOffset>
+    ) => {
+      const origPositions = new Map<string, DragOffset>()
+      for (const id of memberIds) {
+        const pos = currentPositions.get(id)
+        if (pos) {
+          origPositions.set(id, {x: pos.x, y: pos.y})
+        }
+      }
+      if (origPositions.size === 0) return
+
+      didDragRef.current = false
+      dragRef.current = {
+        mode: {
+          kind: 'region',
+          regionKey,
+          memberIds: Array.from(origPositions.keys()),
+          origPositions,
+        },
+        startX: clientX,
+        startY: clientY,
+      }
+      setDraggingNodeId(null)
+      setDraggingRegionMembers(new Set(origPositions.keys()))
+    },
+    []
+  )
+
+  const isDragging = draggingNodeId !== null || draggingRegionMembers !== null
+
   useEffect(() => {
-    if (!draggingNodeId) return
+    if (!isDragging) return
 
     const onMove = (e: MouseEvent) => {
       e.preventDefault()
@@ -99,28 +145,58 @@ export const useCardDrag = (
         didDragRef.current = true
       }
 
-      liveOffsetsRef.current.set(drag.nodeId, {
-        x: drag.origX + dx,
-        y: drag.origY + dy,
-      })
+      if (drag.mode.kind === 'node') {
+        liveOffsetsRef.current.set(drag.mode.nodeId, {
+          x: drag.mode.origX + dx,
+          y: drag.mode.origY + dy,
+        })
+      } else {
+        for (const [id, orig] of drag.mode.origPositions) {
+          liveOffsetsRef.current.set(id, {
+            x: orig.x + dx,
+            y: orig.y + dy,
+          })
+        }
+      }
       scheduleDragRender()
     }
 
     const onUp = () => {
       const drag = dragRef.current
       if (drag) {
-        const live = liveOffsetsRef.current.get(drag.nodeId)
-        if (live) {
-          setOffsets(prev => {
-            const next = new Map(prev)
-            next.set(drag.nodeId, live)
-            return next
-          })
-          saveCardOffset(viewKey, drag.nodeId, live)
+        if (drag.mode.kind === 'node') {
+          const live = liveOffsetsRef.current.get(drag.mode.nodeId)
+          if (live) {
+            setOffsets(prev => {
+              const next = new Map(prev)
+              next.set(drag.mode.nodeId, live)
+              return next
+            })
+            saveCardOffset(viewKey, drag.mode.nodeId, live)
+          }
+        } else {
+          const nextOffsets = new Map<string, DragOffset>()
+          for (const id of drag.mode.memberIds) {
+            const live = liveOffsetsRef.current.get(id)
+            if (live) {
+              nextOffsets.set(id, live)
+              saveCardOffset(viewKey, id, live)
+            }
+          }
+          if (nextOffsets.size > 0) {
+            setOffsets(prev => {
+              const next = new Map(prev)
+              for (const [id, offset] of nextOffsets) {
+                next.set(id, offset)
+              }
+              return next
+            })
+          }
         }
       }
       dragRef.current = null
       setDraggingNodeId(null)
+      setDraggingRegionMembers(null)
     }
 
     window.addEventListener('mousemove', onMove)
@@ -129,13 +205,13 @@ export const useCardDrag = (
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
     }
-  }, [draggingNodeId, getScale, scheduleDragRender, viewKey])
+  }, [getScale, isDragging, scheduleDragRender, viewKey])
 
   useEffect(() => {
-    if (!draggingNodeId) return
+    if (!isDragging) return
     document.body.classList.add('hubble-is-dragging')
     return () => document.body.classList.remove('hubble-is-dragging')
-  }, [draggingNodeId])
+  }, [isDragging])
 
   const consumeDidDrag = useCallback(() => {
     const moved = didDragRef.current
@@ -148,6 +224,7 @@ export const useCardDrag = (
     setOffsets(new Map())
     liveOffsetsRef.current = new Map()
     setDraggingNodeId(null)
+    setDraggingRegionMembers(null)
     setDragTick(0)
     dragRef.current = null
     didDragRef.current = false
@@ -160,7 +237,9 @@ export const useCardDrag = (
   return {
     applyPositions,
     startDrag,
+    startRegionDrag,
     draggingNodeId,
+    draggingRegionMembers,
     consumeDidDrag,
     resetOffsets,
   }

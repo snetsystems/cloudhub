@@ -51,12 +51,12 @@ const VERDICT_OPTIONS: ReadonlyArray<{
   {
     value: 'denied',
     label: 'Denied',
-    title: 'DROPPED flow가 있는 엣지만 표시 — 정책 차단 확인용',
+    title: 'DROPPED flow가 있는 연결만 표시 — 정책 차단 확인용',
   },
   {
     value: 'allowed',
     label: 'Allowed',
-    title: 'DROPPED flow가 전혀 없는 엣지만 표시 — 정상 트래픽 확인용',
+    title: 'DROPPED flow가 전혀 없는 연결만 표시 — 정상 트래픽 확인용',
   },
 ]
 

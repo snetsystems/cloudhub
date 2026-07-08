@@ -143,6 +143,7 @@ const loadColumns = (): Record<ColumnId, boolean> => {
 interface Props {
   flows: HubbleFlowRecord[]
   connected: boolean
+  paused?: boolean
   loading: boolean
   error: string
   filters: HubbleFlowFilters
@@ -153,6 +154,7 @@ interface Props {
 const FlowTable: React.FC<Props> = ({
   flows,
   connected,
+  paused = false,
   loading,
   error,
   filters,
@@ -209,10 +211,10 @@ const FlowTable: React.FC<Props> = ({
           </span>
           <span
             className={`hubble-flow-table-status ${
-              connected ? 'is-ok' : 'is-bad'
+              !connected ? 'is-bad' : paused ? 'is-paused' : 'is-ok'
             }`}
           >
-            {connected ? 'live' : 'reconnecting'}
+            {!connected ? 'reconnecting' : paused ? 'paused' : 'live'}
           </span>
         </span>
         <div className="hubble-flow-table-actions">

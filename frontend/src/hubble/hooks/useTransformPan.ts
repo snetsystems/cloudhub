@@ -143,6 +143,8 @@ export const useTransformPan = (enabled: boolean) => {
       if (button !== 0 && button !== 1) return false
       if (target.closest('button')) return false
       if (target.closest('.hubble-node-card-grip')) return false
+      if (target.closest('.hubble-map-region-header')) return false
+      if (target.closest('.hubble-namespace-region-header')) return false
       if (button === 1 || shiftKey) return true
       if (target.closest('.hubble-node-card-body')) return false
       if (target.closest('.hubble-node-card-action')) return false

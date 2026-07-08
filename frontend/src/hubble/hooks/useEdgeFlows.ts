@@ -24,7 +24,8 @@ export const useEdgeFlows = (
   cluster: string,
   src: string | null,
   dst: string | null,
-  limit = 20
+  limit = 20,
+  paused = false
 ): UseEdgeFlowsResult => {
   const [flows, setFlows] = useState<HubbleFlowRecord[]>([])
   const [loading, setLoading] = useState(false)
@@ -32,6 +33,9 @@ export const useEdgeFlows = (
   const [error, setError] = useState('')
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pausedRef = useRef(paused)
+
+  pausedRef.current = paused
 
   useEffect(() => {
     if (!cluster || !src || !dst) {
@@ -72,7 +76,7 @@ export const useEdgeFlows = (
         setError('')
       }
       ws.onmessage = ev => {
-        if (cancelled) return
+        if (cancelled || pausedRef.current) return
         try {
           const parsed = JSON.parse(ev.data) as HubbleEdgeFlowsResponse
           setFlows(parsed.flows || [])

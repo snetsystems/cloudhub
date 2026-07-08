@@ -28,7 +28,8 @@ const RECONNECT_MAX_MS = 30000
 // per-namespace drilldown stream.
 export const useHubbleSnapshot = (
   cluster: string,
-  namespace: string | null
+  namespace: string | null,
+  paused = false
 ): UseHubbleSnapshotResult => {
   const [snapshot, setSnapshot] = useState<HubbleSnapshot | null>(null)
   const [connected, setConnected] = useState(false)
@@ -36,6 +37,21 @@ export const useHubbleSnapshot = (
   const [error, setError] = useState('')
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<number | null>(null)
+  const pausedRef = useRef(paused)
+  const frozenSnapshotRef = useRef<HubbleSnapshot | null>(null)
+  const wasPausedRef = useRef(paused)
+
+  pausedRef.current = paused
+  if (paused && !wasPausedRef.current) {
+    frozenSnapshotRef.current = snapshot
+  }
+  if (!paused) {
+    frozenSnapshotRef.current = null
+  }
+  wasPausedRef.current = paused
+
+  const displaySnapshot =
+    paused && frozenSnapshotRef.current ? frozenSnapshotRef.current : snapshot
 
   useEffect(() => {
     if (!cluster) {
@@ -83,7 +99,7 @@ export const useHubbleSnapshot = (
         setError('')
       }
       ws.onmessage = ev => {
-        if (cancelled) return
+        if (cancelled || pausedRef.current) return
         try {
           const parsed = JSON.parse(ev.data) as HubbleSnapshot
           setSnapshot(parsed)
@@ -124,5 +140,5 @@ export const useHubbleSnapshot = (
     }
   }, [cluster, namespace])
 
-  return {snapshot, connected, loading, error}
+  return {snapshot: displaySnapshot, connected, loading, error}
 }
