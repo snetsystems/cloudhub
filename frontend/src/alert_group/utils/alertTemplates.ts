@@ -12,9 +12,9 @@ export const findSelectedAlertTemplate = (
   templates: AlertTemplate[] = [],
   rule: Pick<AlertGroupRule, 'specs'>
 ): AlertTemplate | undefined => {
-  const ruleSpec = getRuleSpec(rule)
+  const ruleSpec = rule.specs[0]
   return templates.find(template => {
-    const templateSpec = getRuleSpec({specs: template.specs})
+    const templateSpec = getRuleSpec(template)
     return (
       templateSpec.measurement === ruleSpec.measurement &&
       templateSpec.field === ruleSpec.field
@@ -26,7 +26,7 @@ export const applyAlertTemplateToRule = (
   rule: AlertGroupRule,
   template: AlertTemplate
 ): AlertGroupRule => {
-  const templateSpec = getRuleSpec({specs: template.specs})
+  const templateSpec = getRuleSpec(template)
 
   const eventHandlers = Array.isArray(rule.eventHandlers)
     ? rule.eventHandlers
@@ -50,7 +50,7 @@ export const applyAlertTemplateToRule = (
   }
 
   const nextTrigger = templateSpec.trigger || 'threshold'
-  let nextConditions = templateSpec.conditions || getRuleSpec(rule).conditions!
+  let nextConditions = templateSpec.conditions || rule.specs[0].conditions!
 
   if (nextTrigger === 'deadman') {
     nextConditions = nextConditions.map(condition => ({
@@ -59,7 +59,7 @@ export const applyAlertTemplateToRule = (
     }))
   }
 
-  const currentSpec = getRuleSpec(rule)
+  const currentSpec = rule.specs[0]
 
   return {
     ...rule,

@@ -44,10 +44,7 @@ import {
   getURLMonitoring,
 } from 'src/url_monitoring/apis'
 import {URLMonitoringTarget} from 'src/url_monitoring/types'
-import {
-  getRuleSpec,
-  patchRuleSpec,
-} from 'src/alert_group/utils/alertRuleSpecs'
+import {patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 import {applyAlertTemplateToRule} from 'src/alert_group/utils/alertTemplates'
 
 // APIs
@@ -103,7 +100,7 @@ const applyUrlAlertTemplateToRule = (
     template.retentionPolicy?.trim() || source.defaultRP || 'autogen'
 
   const nextRule = applyAlertTemplateToRule(prevRule, template)
-  const spec = getRuleSpec(nextRule)
+  const spec = nextRule.specs[0]
 
   return {
     ...nextRule,
@@ -299,7 +296,7 @@ const URLAlertSettingPage: React.FC<Props> = ({
   )
 
   const handleSave = useCallback(async (): Promise<void> => {
-    const spec = getRuleSpec(rule)
+    const spec = rule.specs[0]
 
     if (!rule.name || !rule.name.trim()) {
       notify(notifyError(t('alert_group_rule.noti_enter_name')))
@@ -467,7 +464,7 @@ const URLAlertSettingPage: React.FC<Props> = ({
     () => buildUrlPreviewGraphProps(rule, urlTargets),
     [rule, urlTargets]
   )
-  const ruleSpec = getRuleSpec(rule)
+  const ruleSpec = rule.specs[0]
 
   if (!source) {
     return null
