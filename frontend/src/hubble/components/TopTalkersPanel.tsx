@@ -13,6 +13,7 @@ const TopTalkersPanel: React.FC<Props> = ({snapshot}) => {
     <div className="hubble-panel hubble-top-talkers">
       <h4 className="hubble-panel-title">Top Talkers</h4>
       <FancyScrollbar autoHide={true} className="hubble-top-talkers-scroll">
+        <div className="hubble-top-talkers-scroll-content">
         {talkers.length === 0 && (
           <div className="hubble-panel-empty">No traffic in window</div>
         )}
@@ -21,6 +22,7 @@ const TopTalkersPanel: React.FC<Props> = ({snapshot}) => {
             <TopTalkerRow key={`${t.src}|${t.dst}`} talker={t} />
           ))}
         </ul>
+        </div>
       </FancyScrollbar>
     </div>
   )

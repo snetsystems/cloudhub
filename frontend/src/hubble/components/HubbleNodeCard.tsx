@@ -2,15 +2,9 @@ import React from 'react'
 import {HubbleNode} from 'src/hubble/types'
 import {NodeTrafficStats} from 'src/hubble/utils/nodeStats'
 import {CARD_WIDTH} from 'src/hubble/utils/cardLayout'
-import {
-  NodeShareDisplay,
-} from 'src/hubble/utils/trafficShare'
-
 interface Props {
   node: HubbleNode
   stats: NodeTrafficStats
-  shareDisplay: NodeShareDisplay
-  windowLabel: string | null
   x: number
   y: number
   height: number
@@ -58,7 +52,6 @@ const nodeSubtitle = (node: HubbleNode, title: string): string | null => {
 const HubbleNodeCard: React.FC<Props> = ({
   node,
   stats,
-  windowLabel,
   x,
   y,
   height,
@@ -143,7 +136,7 @@ const HubbleNodeCard: React.FC<Props> = ({
                 ? 'External'
                 : node.kind === 'workload'
                 ? 'Workload'
-                : 'Namespace'}
+                : 'NS'}
             </span>
             {hasDenied && (
               <span
@@ -196,7 +189,7 @@ const HubbleNodeCard: React.FC<Props> = ({
           {(node.topExternalIPs?.length ?? 0) > 0 && (
             <div
               className="hubble-node-card-ext-ips"
-              title="이 Unknown External 뒤에 숨은 실제 외부 IP 상위 목록 (엣지 클릭 → Edge 탭에서 상세 확인). DNS visibility를 켜면 도메인 이름으로 분해됩니다."
+              title="이 Unknown External 뒤에 숨은 실제 외부 IP 상위 목록 (연결 클릭 → Connections 탭에서 상세 확인). DNS visibility를 켜면 도메인 이름으로 분해됩니다."
             >
               {node.topExternalIPs!.map(ip => (
                 <div className="hubble-node-card-ext-ip" key={ip.name}>
@@ -226,21 +219,16 @@ const HubbleNodeCard: React.FC<Props> = ({
               </span>
             </span>
           </div>
-          <div className="hubble-node-card-window">
-            flow events / {windowLabel || 'window'}
-          </div>
-          {hasDenied && (
-            <div className="hubble-node-card-drops">
-              {stats.ingressDeniedFlows > 0 && (
+          {hasDenied &&
+            stats.ingressDeniedFlows > 0 &&
+            stats.egressDeniedFlows > 0 && (
+              <div className="hubble-node-card-drops">
                 <span>
                   Ingress drop {formatFlows(stats.ingressDeniedFlows)}
                 </span>
-              )}
-              {stats.egressDeniedFlows > 0 && (
                 <span>Egress drop {formatFlows(stats.egressDeniedFlows)}</span>
-              )}
-            </div>
-          )}
+              </div>
+            )}
         </div>
         {showDrillAction && (
           <button

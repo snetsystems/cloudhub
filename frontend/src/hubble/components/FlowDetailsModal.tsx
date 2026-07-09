@@ -1,4 +1,5 @@
 import React, {useState} from 'react'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {HubbleFlowRecord, HubblePolicyRef} from 'src/hubble/types'
 import PolicyModal from 'src/hubble/components/PolicyModal'
 
@@ -36,7 +37,13 @@ const FlowDetailsModal: React.FC<Props> = ({flow, cluster, onClose}) => {
             ×
           </button>
         </div>
-        <div className="hubble-flow-modal-body">
+        <FancyScrollbar
+          autoHide={true}
+          autoHeight={true}
+          maxHeight="calc(88vh - 49px)"
+          className="hubble-flow-modal-scroll"
+        >
+          <div className="hubble-flow-modal-body">
           <Field label="Timestamp" value={flow.time} mono />
           <Field
             label="Verdict"
@@ -164,7 +171,8 @@ const FlowDetailsModal: React.FC<Props> = ({flow, cluster, onClose}) => {
               )}
             </>
           )}
-        </div>
+          </div>
+        </FancyScrollbar>
       </div>
       {cluster && (
         <PolicyModal

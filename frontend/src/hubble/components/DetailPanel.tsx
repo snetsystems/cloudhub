@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {
   HubbleEdge,
@@ -15,6 +15,10 @@ interface Props {
   cluster: string
   snapshot: HubbleSnapshot | null
   selectedEdgeId: string | null
+  activeNodeId: string | null
+  livePaused?: boolean
+  onSelectEdge: (edgeId: string, src: string, dst: string) => void
+  onBack: () => void
   onClose: () => void
 }
 
@@ -27,6 +31,22 @@ const parseEdgeId = (
   return {src: edgeId.slice(0, sep), dst: edgeId.slice(sep + 1)}
 }
 
+const edgeId = (src: string, dst: string): string => `${src}|${dst}`
+
+const shortNodeId = (id: string): string =>
+  id.replace(/^(nsgrp:|ns:|wl:|ext:)/, '')
+
+// nodeKindLabel derives an endpoint's kind from its node-id prefix, mirroring
+// the kind shown on the map's node cards (NS / workload / external), so each
+// side of a connection can be tagged without a snapshot lookup.
+const nodeKindLabel = (id: string): string => {
+  if (id.startsWith('nsgrp:')) return 'ns group'
+  if (id.startsWith('ns:')) return 'ns'
+  if (id.startsWith('wl:')) return 'workload'
+  if (id.startsWith('ext:')) return 'external'
+  return ''
+}
+
 // DetailPanel is shown when the user taps an edge. It surfaces the
 // Cilium-specific data: per-verdict counts, top deny reasons, matched
 // policies, and the most-recent raw flows. Empty when nothing is selected.
@@ -34,21 +54,61 @@ const DetailPanel: React.FC<Props> = ({
   cluster,
   snapshot,
   selectedEdgeId,
+  activeNodeId,
+  livePaused = false,
+  onSelectEdge,
+  onBack,
   onClose,
 }) => {
   const edge = findEdge(snapshot, selectedEdgeId)
   const parsed = parseEdgeId(selectedEdgeId)
   const {flows: recentFlows, loading: flowsLoading, error: flowsError} =
-    useEdgeFlows(cluster, parsed?.src ?? null, parsed?.dst ?? null, 20)
+    useEdgeFlows(
+      cluster,
+      parsed?.src ?? null,
+      parsed?.dst ?? null,
+      20,
+      livePaused
+    )
   const [detailFlow, setDetailFlow] = useState<HubbleFlowRecord | null>(null)
   const [selectedPolicy, setSelectedPolicy] = useState<HubblePolicyRef | null>(
     null
   )
+  const [edgeSrcSearch, setEdgeSrcSearch] = useState('')
+  const [edgeDstSearch, setEdgeDstSearch] = useState('')
+
+  // Reset the connection-list search whenever the active node changes, so a
+  // stale query from the previous node doesn't hide the new node's edges.
+  useEffect(() => {
+    setEdgeSrcSearch('')
+    setEdgeDstSearch('')
+  }, [activeNodeId])
 
   if (!edge) {
+    if (activeNodeId) {
+      // Called directly (not as JSX) so its output is inlined into this
+      // component's own render tree rather than a nested component
+      // boundary — keeps it visible to shallow rendering in tests.
+      // WARNING: EdgeListView is typed/defined as React.FC but invoked as a
+      // plain function here. It MUST NEVER have hooks (useState, useEffect,
+      // useMemo, etc.) added to it. Hook calls would attach to DetailPanel's
+      // fiber instead of a distinct component instance; since this call is
+      // conditional, this silently violates the Rules of Hooks. If hooks are
+      // needed, convert this to JSX invocation: <EdgeListView ... />
+      return EdgeListView({
+        snapshot,
+        activeNodeId,
+        onSelectEdge,
+        onClose,
+        srcSearch: edgeSrcSearch,
+        dstSearch: edgeDstSearch,
+        onSrcSearchChange: setEdgeSrcSearch,
+        onDstSearchChange: setEdgeDstSearch,
+      })
+    }
     return (
       <div className="hubble-panel hubble-detail-panel is-empty">
-        <h4 className="hubble-panel-title">Edge details</h4>
+        <h4 className="hubble-panel-title">Connection details</h4>
         <div className="hubble-panel-empty">
           Select a connection, then click View details.
         </div>
@@ -98,19 +158,35 @@ const DetailPanel: React.FC<Props> = ({
   return (
     <div className="hubble-panel hubble-detail-panel">
       <div className="hubble-panel-header">
-        <h4 className="hubble-panel-title">Edge details</h4>
+        {activeNodeId ? (
+          <button
+            className="hubble-panel-title hubble-panel-back"
+            onClick={onBack}
+            title="연결 목록으로 돌아가기"
+          >
+            <span className="hubble-panel-back-arrow">‹</span>
+            Connections
+          </button>
+        ) : (
+          <h4 className="hubble-panel-title">Connection details</h4>
+        )}
         <button className="hubble-panel-close" onClick={onClose} title="Close">
           ×
         </button>
       </div>
       <FancyScrollbar autoHide={true} className="hubble-detail-scroll">
+      <div className="hubble-detail-scroll-content">
       <div className="hubble-detail-row">
         <span className="hubble-detail-key">From</span>
-        <span className="hubble-detail-value">{edge.src}</span>
+        <span className="hubble-detail-value" title={edge.src}>
+          {edge.src}
+        </span>
       </div>
       <div className="hubble-detail-row">
         <span className="hubble-detail-key">To</span>
-        <span className="hubble-detail-value">{edge.dst}</span>
+        <span className="hubble-detail-value" title={edge.dst}>
+          {edge.dst}
+        </span>
       </div>
       <div
         className="hubble-detail-row"
@@ -219,6 +295,19 @@ const DetailPanel: React.FC<Props> = ({
               </span>
             </div>
           ))}
+          {(edge.topL7Policies?.length ?? 0) > 0 && (
+            <>
+              <div
+                className="hubble-detail-l7-policy-hint"
+                title="L7 차단은 deny 규칙 매칭이 아니라 '허용 목록에 없는 호출'이라서 Cilium이 차단 정책을 지목하지 않습니다. 아래는 이 연결의 L7 트래픽을 통제한 허용 목록 정책 — 위 호출들을 거부한 주체입니다. 클릭하면 허용 목록(spec)을 확인할 수 있습니다. (숫자는 이 정책이 L7 트래픽을 통제한 횟수)"
+              >
+                Blocked by allowlist policy
+              </div>
+              {edge.topL7Policies!.map((p, i) => (
+                <PolicyRow key={i} policy={p} onClick={setSelectedPolicy} denied />
+              ))}
+            </>
+          )}
         </div>
       )}
       {(edge.topDenyReasons?.length ?? 0) > 0 && (
@@ -241,7 +330,7 @@ const DetailPanel: React.FC<Props> = ({
         <div className="hubble-detail-section hubble-detail-section--denied">
           <div
             className="hubble-detail-subtitle hubble-detail-subtitle--denied"
-            title="이 엣지에서 트래픽을 차단한 CiliumNetworkPolicy / NetworkPolicy. 클릭하면 정책 spec(YAML/JSON)을 모달로 확인."
+            title="이 연결에서 트래픽을 차단한 CiliumNetworkPolicy / NetworkPolicy. 클릭하면 정책 spec(YAML/JSON)을 모달로 확인."
           >
             Denied by policies
           </div>
@@ -254,7 +343,7 @@ const DetailPanel: React.FC<Props> = ({
         <div className="hubble-detail-section">
           <div
             className="hubble-detail-subtitle"
-            title="이 엣지의 트래픽을 허용한 정책. 클릭하면 정책 spec을 모달로 확인."
+            title="이 연결의 트래픽을 허용한 정책. 클릭하면 정책 spec을 모달로 확인."
           >
             Allowed by policies
           </div>
@@ -287,6 +376,7 @@ const DetailPanel: React.FC<Props> = ({
         error={flowsError}
         onSelect={setDetailFlow}
       />
+      </div>
       </FancyScrollbar>
       <FlowDetailsModal
         flow={detailFlow}
@@ -298,6 +388,140 @@ const DetailPanel: React.FC<Props> = ({
         policy={selectedPolicy}
         onClose={() => setSelectedPolicy(null)}
       />
+    </div>
+  )
+}
+
+const EdgeListView: React.FC<{
+  snapshot: HubbleSnapshot | null
+  activeNodeId: string
+  onSelectEdge: (edgeId: string, src: string, dst: string) => void
+  onClose: () => void
+  srcSearch: string
+  dstSearch: string
+  onSrcSearchChange: (value: string) => void
+  onDstSearchChange: (value: string) => void
+}> = ({
+  snapshot,
+  activeNodeId,
+  onSelectEdge,
+  onClose,
+  srcSearch,
+  dstSearch,
+  onSrcSearchChange,
+  onDstSearchChange,
+}) => {
+  const activeNode = snapshot?.nodes.find(n => n.id === activeNodeId) ?? null
+  const activeNodeLabel = activeNode
+    ? activeNode.name || activeNode.label || shortNodeId(activeNodeId)
+    : shortNodeId(activeNodeId)
+
+  const allEdges = (snapshot?.edges ?? [])
+    .filter(e => e.src === activeNodeId || e.dst === activeNodeId)
+    .slice()
+    .sort((a, b) => b.flowCount - a.flowCount)
+
+  const srcQuery = srcSearch.trim().toLowerCase()
+  const dstQuery = dstSearch.trim().toLowerCase()
+  const hasQuery = !!srcQuery || !!dstQuery
+  const edges = hasQuery
+    ? allEdges.filter(
+        e =>
+          (!srcQuery || shortNodeId(e.src).toLowerCase().includes(srcQuery)) &&
+          (!dstQuery || shortNodeId(e.dst).toLowerCase().includes(dstQuery))
+      )
+    : allEdges
+
+  return (
+    <div className="hubble-panel hubble-detail-panel">
+      <div className="hubble-panel-header">
+        <h4 className="hubble-panel-title">
+          Connection details
+          <span className="hubble-panel-subtitle">{activeNodeLabel}</span>
+        </h4>
+        <button className="hubble-panel-close" onClick={onClose} title="Close">
+          ×
+        </button>
+      </div>
+      <div className="hubble-edge-list-search">
+        <input
+          className="hubble-flow-filter-input"
+          value={srcSearch}
+          onChange={e => onSrcSearchChange(e.target.value)}
+          placeholder="Source"
+          aria-label="Filter connections by source"
+        />
+        <input
+          className="hubble-flow-filter-input"
+          value={dstSearch}
+          onChange={e => onDstSearchChange(e.target.value)}
+          placeholder="Destination"
+          aria-label="Filter connections by destination"
+        />
+      </div>
+      <FancyScrollbar autoHide={true} className="hubble-detail-scroll">
+        <div className="hubble-detail-scroll-content">
+          {edges.length === 0 && (
+            <div className="hubble-panel-empty">
+              {hasQuery
+                ? 'No connections match this filter'
+                : 'No connections for this node in the current window'}
+            </div>
+          )}
+          <ul className="hubble-top-talkers-list">
+            {edges.map(e => {
+              const denied = e.verdictCounts?.DROPPED ?? 0
+              const id = edgeId(e.src, e.dst)
+              const srcKind = nodeKindLabel(e.src)
+              const dstKind = nodeKindLabel(e.dst)
+              return (
+                <li
+                  className="hubble-top-talkers-row hubble-edge-list-row"
+                  key={id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onSelectEdge(id, e.src, e.dst)}
+                  onKeyDown={ev => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                      ev.preventDefault()
+                      onSelectEdge(id, e.src, e.dst)
+                    }
+                  }}
+                >
+                  <span className="hubble-edge-label">
+                    <span className="hubble-edge-src">
+                      <span className="hubble-edge-name">
+                        {shortNodeId(e.src)}
+                      </span>
+                      {srcKind && (
+                        <span className="hubble-edge-kind">{srcKind}</span>
+                      )}
+                    </span>
+                    <span className="hubble-edge-arrow">→</span>
+                    <span className="hubble-edge-dst">
+                      <span className="hubble-edge-name">
+                        {shortNodeId(e.dst)}
+                      </span>
+                      {dstKind && (
+                        <span className="hubble-edge-kind">{dstKind}</span>
+                      )}
+                    </span>
+                  </span>
+                  <span>
+                    <strong>{e.flowCount.toLocaleString()}</strong>
+                    {denied > 0 && (
+                      <span className="hubble-verdict-dropped">
+                        {' '}
+                        ({denied.toLocaleString()} denied)
+                      </span>
+                    )}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      </FancyScrollbar>
     </div>
   )
 }
@@ -418,7 +642,7 @@ const RecentFlowsSection: React.FC<{
   <div className="hubble-detail-section">
     <div
       className="hubble-detail-subtitle"
-      title="이 엣지의 최근 raw flow 이벤트 (1초마다 갱신). 한 줄 클릭하면 Hubble UI 수준의 전체 디테일 (identity, labels, TCP flags, IP, 포트 등) 표시."
+      title="이 연결의 최근 raw flow 이벤트 (1초마다 갱신). 한 줄 클릭하면 Hubble UI 수준의 전체 디테일 (identity, labels, TCP flags, IP, 포트 등) 표시."
     >
       Recent flows{loading && flows.length === 0 ? ' (loading…)' : ''}
     </div>

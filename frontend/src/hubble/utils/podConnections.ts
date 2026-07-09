@@ -8,6 +8,7 @@ export interface PodOption {
   pod: string
   workload: string
   flowCount: number
+  deniedFlows: number
   lastSeen: string
 }
 
@@ -36,11 +37,13 @@ export const summarizePods = (
 ): PodOption[] => {
   const pods = new Map<string, PodOption>()
   flows.forEach(flow => {
+    const denied = flow.verdict === 'DROPPED'
     addPod(pods, {
       namespace: flow.srcNamespace || '',
       pod: flow.srcPod || '',
       workload: flow.srcWorkload || '',
       time: flow.time,
+      denied,
       filterNamespace: namespace,
     })
     addPod(pods, {
@@ -48,13 +51,54 @@ export const summarizePods = (
       pod: flow.dstPod || '',
       workload: flow.dstWorkload || '',
       time: flow.time,
+      denied,
       filterNamespace: namespace,
     })
   })
-  return Array.from(pods.values()).sort((a, b) => {
-    if (b.flowCount !== a.flowCount) return b.flowCount - a.flowCount
-    return b.lastSeen.localeCompare(a.lastSeen)
-  })
+  return Array.from(pods.values()).sort(comparePods)
+}
+
+// comparePods surfaces pods with denied flows first — a pod under active
+// policy drops is what an operator needs to see regardless of how little
+// traffic it otherwise carries (a failing pod often has few flows, not many).
+export const comparePods = (a: PodOption, b: PodOption): number => {
+  const deniedDelta = Number(b.deniedFlows > 0) - Number(a.deniedFlows > 0)
+  if (deniedDelta !== 0) return deniedDelta
+  if (b.flowCount !== a.flowCount) return b.flowCount - a.flowCount
+  return b.lastSeen.localeCompare(a.lastSeen)
+}
+
+// reconcilePodOrder keeps already-listed pods pinned at their current
+// position across live updates instead of re-sorting on every flow push —
+// the underlying flow window is a noisy rolling sample, so raw flowCount
+// order changes constantly even though nothing meaningful happened. A full
+// re-sort only happens when there is nothing to preserve yet, or when the
+// set of pods with active denies changes (a real, worth-surfacing event).
+// Pods that are otherwise new just get appended in sorted order.
+export const reconcilePodOrder = (
+  prevOrder: string[],
+  prevDeniedKeys: Set<string>,
+  pods: PodOption[]
+): string[] => {
+  const byKey = new Map(pods.map(p => [p.key, p]))
+  const deniedKeys = new Set(
+    pods.filter(p => p.deniedFlows > 0).map(p => p.key)
+  )
+  const deniedSetChanged =
+    deniedKeys.size !== prevDeniedKeys.size ||
+    Array.from(deniedKeys).some(key => !prevDeniedKeys.has(key))
+
+  if (prevOrder.length === 0 || deniedSetChanged) {
+    return pods.slice().sort(comparePods).map(p => p.key)
+  }
+
+  const kept = prevOrder.filter(key => byKey.has(key))
+  const known = new Set(kept)
+  const fresh = pods
+    .filter(p => !known.has(p.key))
+    .sort(comparePods)
+    .map(p => p.key)
+  return [...kept, ...fresh]
 }
 
 export const summarizePodConnections = (
@@ -123,6 +167,7 @@ const addPod = (
     pod: string
     workload: string
     time: string
+    denied: boolean
     filterNamespace?: string | null
   }
 ) => {
@@ -135,9 +180,11 @@ const addPod = (
     pod: input.pod,
     workload: input.workload,
     flowCount: 0,
+    deniedFlows: 0,
     lastSeen: '',
   }
   pod.flowCount += 1
+  if (input.denied) pod.deniedFlows += 1
   pod.lastSeen = newerTime(pod.lastSeen, input.time)
   if (!pod.workload && input.workload) pod.workload = input.workload
   pods.set(key, pod)

@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestNewCustomLinks(t *testing.T) {
@@ -64,7 +66,7 @@ func TestNewHubbleConfig_ExcludedNSDefaults(t *testing.T) {
 	// No patterns given → sensible defaults so "Hide system NS" works
 	// out of the box.
 	cfg, err := NewHubbleConfig(
-		5*time.Minute, 10*time.Second, 2*time.Second, 300, nil, "",
+		5*time.Minute, 10*time.Second, 2*time.Second, 300, nil, nil, "",
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -77,12 +79,39 @@ func TestNewHubbleConfig_ExcludedNSDefaults(t *testing.T) {
 	// Explicit patterns override the defaults untouched.
 	custom := []string{"longhorn-*"}
 	cfg, err = NewHubbleConfig(
-		5*time.Minute, 10*time.Second, 2*time.Second, 300, custom, "",
+		5*time.Minute, 10*time.Second, 2*time.Second, 300, custom, nil, "",
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(cfg.ExcludedNamespaceGlobs, custom) {
 		t.Errorf("custom ExcludedNamespaceGlobs = %v, want %v", cfg.ExcludedNamespaceGlobs, custom)
+	}
+}
+
+func TestNewHubbleConfig_FromMapFlags(t *testing.T) {
+	cfg, err := NewHubbleConfig(
+		5*time.Minute, 10*time.Second, 2*time.Second, 300, nil,
+		map[string]string{
+			"cluster":   "dev",
+			"relay-url": "10.20.2.231:31234",
+			"plaintext": "true",
+		},
+		"",
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Clusters) != 1 {
+		t.Fatalf("Clusters len = %d, want 1", len(cfg.Clusters))
+	}
+	got := cfg.Clusters[0]
+	want := cloudhub.HubbleClusterConfig{
+		Name:      "dev",
+		RelayURL:  "10.20.2.231:31234",
+		Plaintext: true,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("cluster = %+v, want %+v", got, want)
 	}
 }

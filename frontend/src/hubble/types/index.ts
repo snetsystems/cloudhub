@@ -74,6 +74,10 @@ export interface HubbleEdge {
   topDenyReasons?: HubbleNamedCount[]
   topAllowedPolicies?: HubblePolicyRefCount[]
   topDeniedPolicies?: HubblePolicyRefCount[]
+  // Allow policies that governed proxied(L7) traffic on this edge = the L7
+  // allowlist. L7 denials carry no deniedBy in Cilium, so these are the
+  // policies whose allowlist rejected the calls listed in topL7Denied.
+  topL7Policies?: HubblePolicyRefCount[]
   topL7?: HubbleNamedCount[]
   // DROPPED-verdict L7 signatures only — what specifically was blocked.
   topL7Denied?: HubbleNamedCount[]
@@ -178,6 +182,8 @@ export interface HubbleEdgeFlowsResponse {
 export interface HubbleFlowFilters {
   srcWorkload?: string
   dstWorkload?: string
+  srcNamespace?: string
+  dstNamespace?: string
   verdict?: string
   dropReason?: string
   protocol?: string

@@ -181,3 +181,41 @@ func TestEndpointResolverReservedIdentities(t *testing.T) {
 		})
 	}
 }
+
+func TestEndpointResolverMapsClusterServiceFQDNToKubernetesEndpoint(t *testing.T) {
+	tests := []struct {
+		name string
+		lvl  Level
+		fqdn string
+		want string
+	}{
+		{
+			name: "namespace level",
+			lvl:  LevelNamespace,
+			fqdn: "customer.beyla-trace-demo.svc.cluster.local",
+			want: "ns:beyla-trace-demo",
+		},
+		{
+			name: "workload level with trailing dot",
+			lvl:  LevelWorkload,
+			fqdn: "customer.beyla-trace-demo.svc.corp.internal.",
+			want: "wl:beyla-trace-demo/customer",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewEndpointResolver()
+			f := resolverFlow(
+				&flow.Endpoint{Namespace: "default", Workloads: []*flow.Workload{{Name: "api"}}},
+				&flow.Endpoint{Identity: reservedIdentityWorld},
+			)
+			f.DestinationNames = []string{tt.fqdn}
+
+			_, dst := r.MapFlow(f, tt.lvl)
+			if dst != tt.want {
+				t.Fatalf("destination = %q, want %q", dst, tt.want)
+			}
+		})
+	}
+}

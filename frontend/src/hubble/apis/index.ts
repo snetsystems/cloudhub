@@ -133,6 +133,8 @@ const appendFlowFilters = (
   if (!filters) return
   setParam(qs, 'srcWorkload', filters.srcWorkload)
   setParam(qs, 'dstWorkload', filters.dstWorkload)
+  setParam(qs, 'srcNamespace', filters.srcNamespace)
+  setParam(qs, 'dstNamespace', filters.dstNamespace)
   setParam(qs, 'verdict', filters.verdict)
   setParam(qs, 'dropReason', filters.dropReason)
   setParam(qs, 'protocol', filters.protocol)

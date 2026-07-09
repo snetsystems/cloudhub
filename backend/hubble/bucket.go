@@ -56,7 +56,15 @@ type EdgeCounters struct {
 	L7              map[string]int64
 	AllowedPolicies map[string]*policyBucket
 	DeniedPolicies  map[string]*policyBucket
-	ConnHashes      map[uint64]struct{}
+	// L7Policies are the allow policies that sent this edge's traffic to the
+	// L7 proxy — i.e. the owners of the L7 allowlist. In Hubble data the
+	// policy refs and the L7 payload arrive on separate flow events
+	// (REDIRECTED verdict + AllowedBy vs Envoy L7 flow with no refs), so we
+	// key off the REDIRECTED verdict. When an L7 request is denied Cilium
+	// sets no DeniedBy (nothing matched), making this the only way to
+	// attribute the denial to a policy.
+	L7Policies map[string]*policyBucket
+	ConnHashes map[uint64]struct{}
 	ConnCapped      bool
 	L7Stats         map[string]*l7Stat
 	ExternalIPs     map[string]int64
@@ -87,6 +95,7 @@ func (b *Bucket) Add(k EdgeKey, seenAt time.Time, denyReason string, allowed, de
 			L7:              make(map[string]int64),
 			AllowedPolicies: make(map[string]*policyBucket),
 			DeniedPolicies:  make(map[string]*policyBucket),
+			L7Policies:      make(map[string]*policyBucket),
 			ConnHashes:      make(map[uint64]struct{}),
 			L7Stats:         make(map[string]*l7Stat),
 			ExternalIPs:     make(map[string]int64),
@@ -105,6 +114,9 @@ func (b *Bucket) Add(k EdgeKey, seenAt time.Time, denyReason string, allowed, de
 	}
 	for _, p := range allowed {
 		addPolicyBucket(c.AllowedPolicies, p)
+		if k.Verdict == "REDIRECTED" || extras.L7Type != "" {
+			addPolicyBucket(c.L7Policies, p)
+		}
 	}
 	for _, p := range denied {
 		addPolicyBucket(c.DeniedPolicies, p)

@@ -15,6 +15,8 @@ func newFlow(ts time.Time, srcNs, dstNs, verdict string) *flow.Flow {
 		v = flow.Verdict_DROPPED
 	case "ERROR":
 		v = flow.Verdict_ERROR
+	case "REDIRECTED":
+		v = flow.Verdict_REDIRECTED
 	}
 	return &flow.Flow{
 		Time:    timestamppb.New(ts),
@@ -40,6 +42,41 @@ func newHTTPFlow(ts time.Time, srcPort uint32, latencyMs uint64) *flow.Flow {
 		LatencyNs: latencyMs * 1_000_000,
 	}
 	return f
+}
+
+func TestAggregator_EdgeTopL7Policies(t *testing.T) {
+	now := time.Now()
+	a := NewOverviewAggregator(5*time.Minute, 10*time.Second, 1000)
+	a.SetClockFunc(func() time.Time { return now })
+
+	// In real Hubble data the policy refs and the L7 payload arrive on
+	// separate flow events: the policy-verdict flow has verdict REDIRECTED
+	// ("sent to the L7 proxy") + AllowedBy, while the Envoy-generated L7 flow
+	// carries l7 but no policy refs.
+	ref := &flow.Policy{Kind: "CiliumNetworkPolicy", Namespace: "default", Name: "l7-allowlist"}
+	redirected := newFlow(now, "default", "backend", "REDIRECTED")
+	redirected.IngressAllowedBy = []*flow.Policy{ref}
+	a.Add(redirected)
+
+	// Plain L4 flow allowed by another policy: must not appear in TopL7Policies.
+	plain := newFlow(now, "default", "backend", "FORWARDED")
+	plain.IngressAllowedBy = []*flow.Policy{{Kind: "CiliumNetworkPolicy", Namespace: "default", Name: "l4-allow"}}
+	a.Add(plain)
+
+	snap := a.Snapshot("test-cluster")
+	if len(snap.Edges) != 1 {
+		t.Fatalf("expected 1 edge, got %d", len(snap.Edges))
+	}
+	e := snap.Edges[0]
+	if len(e.TopL7Policies) != 1 {
+		t.Fatalf("TopL7Policies got %+v, want exactly the l7-allowlist policy", e.TopL7Policies)
+	}
+	if e.TopL7Policies[0].Name != "l7-allowlist" || e.TopL7Policies[0].Count != 1 {
+		t.Fatalf("TopL7Policies[0] got %+v, want l7-allowlist count=1", e.TopL7Policies[0])
+	}
+	if len(e.TopAllowedPolicies) != 2 {
+		t.Fatalf("TopAllowedPolicies got %+v, want both policies", e.TopAllowedPolicies)
+	}
 }
 
 func TestAggregator_EdgeActiveConnsAndL7Metrics(t *testing.T) {

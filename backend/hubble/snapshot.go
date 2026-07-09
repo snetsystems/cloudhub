@@ -95,7 +95,12 @@ type SnapshotEdge struct {
 	TopDenyReasons      []NamedCount     `json:"topDenyReasons,omitempty"`
 	TopAllowedPolicies  []PolicyRefCount `json:"topAllowedPolicies,omitempty"`
 	TopDeniedPolicies   []PolicyRefCount `json:"topDeniedPolicies,omitempty"`
-	TopL7               []NamedCount     `json:"topL7,omitempty"`
+	// TopL7Policies are the allow policies that governed proxied (L7) traffic
+	// on this edge — i.e. the L7 allowlist. L7 denials carry no DeniedBy in
+	// Cilium (nothing matched), so when TopL7Denied is non-empty these are
+	// the policies whose allowlist rejected those calls.
+	TopL7Policies []PolicyRefCount `json:"topL7Policies,omitempty"`
+	TopL7         []NamedCount     `json:"topL7,omitempty"`
 	TopL7Denied         []NamedCount     `json:"topL7Denied,omitempty"`
 	// ActiveConns approximates distinct connections (5-tuples) observed on
 	// this edge within the window. When ActiveConnsCapped is true the value
@@ -157,6 +162,7 @@ func assembleSnapshot(b *baseAggregator, cluster string) *Snapshot {
 					DenyReasons:         map[string]int64{},
 					AllowedPolicies:     map[string]*policyBucket{},
 					DeniedPolicies:      map[string]*policyBucket{},
+					L7Policies:          map[string]*policyBucket{},
 					L7:                  map[string]int64{},
 					L7Denied:            map[string]int64{},
 					ConnHashes:          map[uint64]struct{}{},
@@ -179,6 +185,7 @@ func assembleSnapshot(b *baseAggregator, cluster string) *Snapshot {
 			}
 			mergePolicyBuckets(e.AllowedPolicies, c.AllowedPolicies)
 			mergePolicyBuckets(e.DeniedPolicies, c.DeniedPolicies)
+			mergePolicyBuckets(e.L7Policies, c.L7Policies)
 			for l, n := range c.L7 {
 				e.L7[l] += n
 				if k.Verdict == "DROPPED" {
@@ -232,6 +239,7 @@ func assembleSnapshot(b *baseAggregator, cluster string) *Snapshot {
 			TopDenyReasons:      topN(m.DenyReasons, TopDenyReasonsLimit),
 			TopAllowedPolicies:  rankPolicies(m.AllowedPolicies, TopPoliciesLimit),
 			TopDeniedPolicies:   rankPolicies(m.DeniedPolicies, TopPoliciesLimit),
+			TopL7Policies:       rankPolicies(m.L7Policies, TopPoliciesLimit),
 			TopL7:               topN(m.L7, TopL7Limit),
 			TopL7Denied:         topN(m.L7Denied, TopL7Limit),
 			ActiveConns:         int64(len(m.ConnHashes)),
@@ -298,6 +306,7 @@ type mergedEdge struct {
 	DenyReasons         map[string]int64
 	AllowedPolicies     map[string]*policyBucket
 	DeniedPolicies      map[string]*policyBucket
+	L7Policies          map[string]*policyBucket
 	L7                  map[string]int64
 	L7Denied            map[string]int64
 	ConnHashes          map[uint64]struct{}

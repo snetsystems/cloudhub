@@ -40,6 +40,28 @@ func TestBucket_AddFlow_CountsAndAttributes(t *testing.T) {
 	}
 }
 
+func TestBucket_TracksL7AllowlistPolicies(t *testing.T) {
+	b := NewBucket(time.Now())
+	k := EdgeKey{Src: "ns:default", Dst: "ns:kube-system", Verdict: "FORWARDED"}
+	allow := []PolicyRef{{Name: "l7-allowlist", Namespace: "default", Kind: "CiliumNetworkPolicy"}}
+	now := time.Now()
+
+	// Proxied flow (has an L7 layer): its allow policies own the L7 allowlist.
+	b.Add(k, now, "", allow, nil, "HTTP GET /", FlowExtras{L7Type: "HTTP"})
+	b.Add(k, now, "", allow, nil, "HTTP GET /", FlowExtras{L7Type: "HTTP"})
+	// Plain L4 flow: allow policy counted, but not as an L7 allowlist.
+	b.Add(k, now, "", allow, nil, "", FlowExtras{})
+
+	c := b.Edges[k]
+	key := policyKey(allow[0])
+	if c.L7Policies[key] == nil || c.L7Policies[key].Count != 2 {
+		t.Fatalf("L7Policies[l7-allowlist] got %v, want count=2", c.L7Policies[key])
+	}
+	if c.AllowedPolicies[key] == nil || c.AllowedPolicies[key].Count != 3 {
+		t.Fatalf("AllowedPolicies[l7-allowlist] got %v, want count=3", c.AllowedPolicies[key])
+	}
+}
+
 func TestBucket_TracksActiveConnsAndL7Latency(t *testing.T) {
 	b := NewBucket(time.Now())
 	k := EdgeKey{Src: "ns:default", Dst: "ns:kube-system", Verdict: "FORWARDED"}

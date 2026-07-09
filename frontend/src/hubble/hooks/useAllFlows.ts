@@ -24,7 +24,8 @@ export const useAllFlows = (
   limit = 200,
   enabled = true,
   namespace?: string | null,
-  filters?: HubbleFlowFilters
+  filters?: HubbleFlowFilters,
+  paused = false
 ): UseAllFlowsResult => {
   const [flows, setFlows] = useState<HubbleFlowRecord[]>([])
   const [connected, setConnected] = useState(false)
@@ -32,6 +33,9 @@ export const useAllFlows = (
   const [error, setError] = useState('')
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pausedRef = useRef(paused)
+
+  pausedRef.current = paused
 
   useEffect(() => {
     if (!cluster || !enabled) {
@@ -74,7 +78,7 @@ export const useAllFlows = (
         setError('')
       }
       ws.onmessage = ev => {
-        if (cancelled) return
+        if (cancelled || pausedRef.current) return
         try {
           const parsed = JSON.parse(ev.data) as HubbleEdgeFlowsResponse
           setFlows(parsed.flows || [])

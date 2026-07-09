@@ -41,6 +41,8 @@ type hubbleFlowFilter struct {
 	Namespace    string
 	SrcWorkload  string
 	DstWorkload  string
+	SrcNamespace string
+	DstNamespace string
 	Verdicts     map[string]struct{}
 	DropReason   string
 	Protocol     string
@@ -408,6 +410,8 @@ func parseHubbleFlowFilter(r *http.Request) hubbleFlowFilter {
 		Namespace:    strings.TrimSpace(q.Get("namespace")),
 		SrcWorkload:  strings.TrimSpace(q.Get("srcWorkload")),
 		DstWorkload:  strings.TrimSpace(q.Get("dstWorkload")),
+		SrcNamespace: strings.TrimSpace(q.Get("srcNamespace")),
+		DstNamespace: strings.TrimSpace(q.Get("dstNamespace")),
 		DropReason:   strings.TrimSpace(q.Get("dropReason")),
 		Protocol:     strings.TrimSpace(q.Get("protocol")),
 		L7Type:       strings.TrimSpace(q.Get("l7Type")),
@@ -468,6 +472,8 @@ func (f hubbleFlowFilter) empty() bool {
 	return f.Namespace == "" &&
 		f.SrcWorkload == "" &&
 		f.DstWorkload == "" &&
+		f.SrcNamespace == "" &&
+		f.DstNamespace == "" &&
 		len(f.Verdicts) == 0 &&
 		f.DropReason == "" &&
 		f.Protocol == "" &&
@@ -486,6 +492,12 @@ func (f hubbleFlowFilter) matches(flow hubble.FlowRecord) bool {
 		return false
 	}
 	if f.DstWorkload != "" && !containsFold(flow.DstWorkload, f.DstWorkload) && !containsFold(flow.DstPod, f.DstWorkload) {
+		return false
+	}
+	if f.SrcNamespace != "" && !containsFold(flow.SrcNamespace, f.SrcNamespace) {
+		return false
+	}
+	if f.DstNamespace != "" && !containsFold(flow.DstNamespace, f.DstNamespace) {
 		return false
 	}
 	if len(f.Verdicts) > 0 {

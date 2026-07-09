@@ -14,9 +14,9 @@ export const ROW_GAP = 24
 export const GRID_GAP = 32
 export const CANVAS_PADDING = 48
 export const CANVAS_EXTRA_BOTTOM = 40
-export const COLUMN_LABEL_HEIGHT = 28
+export const COLUMN_LABEL_HEIGHT = 48
 export const NAMESPACE_REGION_SIDE_PADDING = 24
-export const NAMESPACE_REGION_TOP_PADDING = 40
+export const NAMESPACE_REGION_TOP_PADDING = 52
 export const NAMESPACE_REGION_BOTTOM_PADDING = 24
 export const NAMESPACE_GROUP_GAP = 32
 
@@ -100,6 +100,71 @@ export const computeNamespaceRegion = (
   }
 }
 
+const CLUSTER_X_GAP = COL_GAP + CARD_WIDTH
+
+const clusterMembersByX = (members: CardPosition[]): CardPosition[][] => {
+  const sorted = [...members].sort((a, b) => a.x - b.x || a.y - b.y)
+  const clusters: CardPosition[][] = []
+
+  for (const member of sorted) {
+    const last = clusters[clusters.length - 1]
+    const anchor = last?.[last.length - 1]
+    if (!anchor || member.x - anchor.x > CLUSTER_X_GAP) {
+      clusters.push([member])
+      continue
+    }
+    last.push(member)
+  }
+
+  return clusters
+}
+
+const clusterCentroidDistance = (cluster: CardPosition[]): number => {
+  const originX = CANVAS_PADDING
+  const originY = CANVAS_PADDING + COLUMN_LABEL_HEIGHT
+  const cx = cluster.reduce((sum, p) => sum + p.x, 0) / cluster.length
+  const cy = cluster.reduce((sum, p) => sum + p.y, 0) / cluster.length
+  return Math.hypot(cx - originX, cy - originY)
+}
+
+const pickPrimaryCluster = (clusters: CardPosition[][]): CardPosition[] => {
+  if (clusters.length <= 1) {
+    return clusters[0] ?? []
+  }
+
+  return clusters.reduce((best, candidate) => {
+    if (candidate.length > best.length) return candidate
+    if (candidate.length < best.length) return best
+    return clusterCentroidDistance(candidate) > clusterCentroidDistance(best)
+      ? candidate
+      : best
+  })
+}
+
+// computeClusterNamespaceRegion draws the region box around the densest
+// spatial cluster only. When cards in the same section were dragged apart,
+// a full-member bounding box leaves the header stranded at the far left while
+// cards sit elsewhere — the detached header the user reported.
+export const computeClusterNamespaceRegion = (
+  positions: CardPosition[],
+  memberIds: ReadonlySet<string>,
+  extra?: RegionPadding
+): NamespaceRegion | null => {
+  const members = positions.filter(position => memberIds.has(position.id))
+  if (members.length === 0) return null
+
+  const clusters = clusterMembersByX(members)
+  const primary = pickPrimaryCluster(clusters)
+  const primaryIds = new Set(primary.map(position => position.id))
+  const region = computeNamespaceRegion(positions, primaryIds, extra)
+  if (!region) return null
+
+  return {
+    ...region,
+    memberCount: members.length,
+  }
+}
+
 const columnForNode = (node: HubbleNode): number => {
   if (node.kind === 'external') return 0
   if (node.system) return 2
@@ -126,7 +191,11 @@ export const cardHeightForNode = (
   const portRows =
     ((node.topInPorts?.length ?? 0) > 0 ? 1 : 0) +
     ((node.topOutPorts?.length ?? 0) > 0 ? 1 : 0)
-  const hasDrops = (stats?.deniedFlows ?? 0) > 0
+  // The Ingress/Egress drop breakdown row only renders when both directions
+  // have drops (a single direction would just repeat the "Dropped N" header
+  // badge) — see HubbleNodeCard.tsx. Height reservation must match that.
+  const hasDrops =
+    (stats?.ingressDeniedFlows ?? 0) > 0 && (stats?.egressDeniedFlows ?? 0) > 0
   const externalIPCount = node.topExternalIPs?.length ?? 0
 
   return (
@@ -288,13 +357,11 @@ export const layoutCards = (
   // Ties resolve to the wider grid (closer to one row).
   let best: CardPosition[] = []
   let bestScore = -Infinity
-  for (let cols = 1; cols <= appCount; cols++) {
+  const maxGridCols = Math.min(appCount, MAX_GRID_COLS)
+  for (let cols = 1; cols <= maxGridCols; cols++) {
     const candidate = assembleColumns(byColumn, cardHeights, focusNodeIds, cols)
     const bounds = computeContentBounds(candidate)
-    const score = Math.min(
-      viewportAspect / bounds.width,
-      1 / bounds.height
-    )
+    const score = Math.min(viewportAspect / bounds.width, 1 / bounds.height)
     if (score >= bestScore) {
       bestScore = score
       best = candidate
@@ -388,7 +455,8 @@ export const computeContentBounds = (
   positions: CardPosition[]
 ): ContentBounds => {
   const emptyWidth = CANVAS_PADDING * 2 + CARD_WIDTH
-  const emptyHeight = CANVAS_PADDING * 2 + CARD_BASE_HEIGHT + CANVAS_EXTRA_BOTTOM
+  const emptyHeight =
+    CANVAS_PADDING * 2 + CARD_BASE_HEIGHT + CANVAS_EXTRA_BOTTOM
 
   if (positions.length === 0) {
     return {

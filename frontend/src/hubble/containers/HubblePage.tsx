@@ -12,6 +12,7 @@ import FlowDetailsModal from 'src/hubble/components/FlowDetailsModal'
 import SidePanelTutorial, {
   TutorialTab,
 } from 'src/hubble/components/SidePanelTutorial'
+import HubbleBetaBadge from 'src/hubble/components/HubbleBetaBadge'
 import PolicyImpactPanel from 'src/hubble/components/PolicyImpactPanel'
 import PodConnectionsPanel from 'src/hubble/components/PodConnectionsPanel'
 import {getHubbleClusters} from 'src/hubble/apis'
@@ -36,6 +37,10 @@ import {
   CrossNsMode,
   groupExternalNamespaces,
 } from 'src/hubble/utils/groupExternalNamespaces'
+import {
+  edgeDetailFilters,
+  nodeFocusFilters,
+} from 'src/hubble/utils/edgeFocusFilters'
 
 // drillNamespace extracts the namespace name from a "ns:<name>" node id.
 const drillNamespace = (nodeId: string): string | null => {
@@ -62,6 +67,7 @@ const HubblePage: React.FC = () => {
     setPolicyBaseline,
   ] = useState<PolicyImpactBaseline | null>(null)
   const [detailEdgeId, setDetailEdgeId] = useState<string | null>(null)
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null)
   const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>('talkers')
   // Which tutorial modal is open. Each "?" button scopes the modal to the
   // guides for its own screen area (header / map nodes / side panel tabs).
@@ -71,6 +77,7 @@ const HubblePage: React.FC = () => {
   } | null>(null)
   const [crossNsMode, setCrossNsMode] = useState<CrossNsMode>('group')
   const [clusterListError, setClusterListError] = useState<string>('')
+  const [livePaused, setLivePaused] = useState(false)
 
   // Threesizer proportions — CloudHub convention: array sums to 1.0.
   // Outer split: map+sidepanels (top) vs flow table (bottom).
@@ -104,8 +111,11 @@ const HubblePage: React.FC = () => {
   useEffect(() => {
     setDrilldown(null)
     setDetailEdgeId(null)
+    setActiveNodeId(null)
+    setFlowFilters({})
     setPolicyBaseline(null)
     setSidePanelTab('talkers')
+    setLivePaused(false)
   }, [cluster])
 
   useEffect(() => {
@@ -119,7 +129,7 @@ const HubblePage: React.FC = () => {
     connected,
     loading,
     error: streamError,
-  } = useHubbleSnapshot(cluster, drilldown)
+  } = useHubbleSnapshot(cluster, drilldown, livePaused)
 
   // Cross-ns presentation: 'group' collapses foreign-namespace workloads into
   // synthetic ns-group cards via groupExternalNamespaces; 'dim' and 'show'
@@ -134,6 +144,16 @@ const HubblePage: React.FC = () => {
 
   // Bottom flow stream. Overview is cluster-wide; drilldown is namespace-scoped.
   // Keep it alive in drilldown because PodConnectionsPanel also depends on it.
+  const listViewNamespace = useMemo(
+    () =>
+      !detailEdgeId && activeNodeId
+        ? nodeFocusFilters(activeNodeId).namespace
+        : null,
+    [detailEdgeId, activeNodeId]
+  )
+
+  const effectiveNamespace = drilldown || listViewNamespace
+
   const {
     flows: allFlows,
     connected: flowsConnected,
@@ -143,8 +163,9 @@ const HubblePage: React.FC = () => {
     cluster,
     200,
     !!cluster && (!flowTableHidden || !!drilldown),
-    drilldown,
-    flowFilters
+    effectiveNamespace,
+    flowFilters,
+    livePaused
   )
 
   const policyContext = useMemo(
@@ -171,23 +192,45 @@ const HubblePage: React.FC = () => {
       if (ns) {
         setDrilldown(ns)
         setDetailEdgeId(null)
+        setActiveNodeId(null)
+        setFlowFilters({})
       }
     },
     [drilldown]
   )
 
-  const handleEdgeDetails = useCallback((edgeId: string) => {
-    setDetailEdgeId(edgeId)
-    setSidePanelTab('edge')
+  const handleNodeSelect = useCallback((nodeId: string) => {
+    setActiveNodeId(nodeId)
+    setDetailEdgeId(null)
+    setFlowFilters(nodeFocusFilters(nodeId).filters)
   }, [])
 
-  const handleClearEdgeDetails = useCallback(() => {
+  const handleEdgeDetails = useCallback(
+    (edgeId: string, src: string, dst: string) => {
+      setDetailEdgeId(edgeId)
+      setSidePanelTab('edge')
+      setActiveNodeId(prev => prev ?? src)
+      setFlowFilters(edgeDetailFilters(src, dst))
+    },
+    []
+  )
+
+  const handleBackToEdgeList = useCallback(() => {
     setDetailEdgeId(null)
+    setFlowFilters(activeNodeId ? nodeFocusFilters(activeNodeId).filters : {})
+  }, [activeNodeId])
+
+  const handleClearSelection = useCallback(() => {
+    setActiveNodeId(null)
+    setDetailEdgeId(null)
+    setFlowFilters({})
   }, [])
 
   const exitDrilldown = useCallback(() => {
     setDrilldown(null)
     setDetailEdgeId(null)
+    setActiveNodeId(null)
+    setFlowFilters({})
     setSidePanelTab(tab => (tab === 'pods' ? 'talkers' : tab))
   }, [])
 
@@ -246,8 +289,9 @@ const HubblePage: React.FC = () => {
         drilldown={drilldown}
         detailEdgeId={detailEdgeId}
         onNodeDrillDown={handleNodeDrillDown}
+        onNodeSelect={handleNodeSelect}
         onEdgeDetails={handleEdgeDetails}
-        onClearEdgeDetails={handleClearEdgeDetails}
+        onClearSelection={handleClearSelection}
         onHelp={() => setTutorial({initial: 'nodes', tabs: ['nodes']})}
       />
     </div>
@@ -282,7 +326,7 @@ const HubblePage: React.FC = () => {
         )}
         <SideTab
           id="edge"
-          label="Edge"
+          label="Connections"
           active={sidePanelTab === 'edge'}
           onClick={setSidePanelTab}
         />
@@ -320,7 +364,11 @@ const HubblePage: React.FC = () => {
             cluster={cluster}
             snapshot={snapshot}
             selectedEdgeId={detailEdgeId}
-            onClose={() => setDetailEdgeId(null)}
+            activeNodeId={activeNodeId}
+            livePaused={livePaused}
+            onSelectEdge={handleEdgeDetails}
+            onBack={handleBackToEdgeList}
+            onClose={handleClearSelection}
           />
         )}
       </div>
@@ -331,6 +379,7 @@ const HubblePage: React.FC = () => {
     <FlowTable
       flows={allFlows}
       connected={flowsConnected}
+      paused={livePaused}
       loading={flowsLoading}
       error={flowsError}
       filters={flowFilters}
@@ -343,7 +392,17 @@ const HubblePage: React.FC = () => {
     <Page className="hubble-page">
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title="Network Observability" />
+          <div className="hubble-page-title">
+            <Page.Title title="Cilium" />
+            <HubbleBetaBadge />
+            {clusters.length > 0 && (
+              <StatusBar
+                wsConnected={connected}
+                paused={livePaused}
+                onTogglePause={() => setLivePaused(p => !p)}
+              />
+            )}
+          </div>
           {drilldown && (
             <button className="hubble-back-button" onClick={exitDrilldown}>
               ← Overview
@@ -399,13 +458,6 @@ const HubblePage: React.FC = () => {
       </Page.Header>
       <Page.Contents fullWidth={true} scrollable={false}>
         <div className="hubble-page-content">
-          {clusters.length > 0 && (
-            <StatusBar
-              snapshot={snapshot}
-              wsConnected={connected}
-              onHelp={() => setTutorial({initial: 'header', tabs: ['header']})}
-            />
-          )}
           {displayError && <div className="hubble-error">{displayError}</div>}
           {clusters.length === 0 && !clusterListError && (
             <div className="hubble-empty">

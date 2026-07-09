@@ -12,6 +12,28 @@
   }
 }
 
+.hubble-beta-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: $c-comet;
+  background: rgba($c-comet, 0.15);
+  border: 1px solid rgba($c-comet, 0.35);
+}
+
+.hubble-page-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .hubble-page-content {
   position: relative;
   flex: 1 1 auto;
@@ -84,8 +106,50 @@
 .hubble-flow-table-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
   width: 100%;
+  min-width: 0;
+}
+
+// Matches $scrollbar-track-size in fancy-scrollbars.scss — inset content so it
+// does not sit under the custom track; native scrollbar hidden separately.
+$hubble-fancy-scroll-gutter: 20px;
+
+@mixin hubble-fancy-scroll-view {
+  overflow-x: hidden !important;
+  overflow-y: scroll !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+}
+
+.hubble-detail-scroll-content,
+.hubble-top-talkers-scroll-content {
+  box-sizing: border-box;
+  min-width: 0;
+  padding-right: $hubble-fancy-scroll-gutter;
+}
+
+// react-custom-scrollbars defaults to overflow: scroll on the view, so minor
+// width overflow (e.g. negative margins on flow rows) still shows a horizontal bar.
+.hubble-detail-scroll.fancy-scroll--container,
+.hubble-top-talkers-scroll.fancy-scroll--container {
+  overflow: hidden;
+}
+
+.hubble-detail-scroll.fancy-scroll--container .fancy-scroll--view,
+.hubble-top-talkers-scroll.fancy-scroll--container .fancy-scroll--view,
+.hubble-flow-modal-scroll.fancy-scroll--container .fancy-scroll--view {
+  @include hubble-fancy-scroll-view;
+}
+
+.hubble-detail-scroll.fancy-scroll--container .fancy-scroll--track-h,
+.hubble-top-talkers-scroll.fancy-scroll--container .fancy-scroll--track-h {
+  display: none !important;
 }
 
 .hubble-graph-area {
@@ -180,70 +244,6 @@
   overflow: hidden;
 }
 
-.hubble-map-selection-bar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  padding: 8px 12px;
-  background: #22252f;
-  border-bottom: 1px solid #2c3038;
-  font-size: 12px;
-  color: #bec2cc;
-}
-
-.hubble-map-selection-label strong {
-  color: #f0f1f4;
-}
-
-.hubble-map-selection-hint {
-  color: #8e91a1;
-  font-size: 11px;
-}
-
-.hubble-map-selection-traffic {
-  font-size: 12px;
-  color: #bec2cc;
-}
-
-.hubble-map-selection-traffic strong {
-  color: #22adf6;
-  font-family: ui-monospace, monospace;
-  font-weight: 600;
-}
-
-.hubble-map-selection-action {
-  background: #22adf6;
-  border: 0;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  cursor: pointer;
-}
-
-.hubble-map-selection-action:hover {
-  background: #4591ed;
-}
-
-.hubble-map-selection-clear {
-  margin-left: auto;
-  background: transparent;
-  border: 1px solid #434453;
-  border-radius: 4px;
-  color: #8e91a1;
-  font-size: 11px;
-  padding: 3px 10px;
-  cursor: pointer;
-}
-
-.hubble-map-selection-clear:hover {
-  color: #f0f1f4;
-  border-color: #545667;
-}
-
 .hubble-map-toolbar {
   flex: 0 0 auto;
   display: flex;
@@ -259,13 +259,75 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 11px;
-  color: #8e91a1;
+  font-size: 12px;
+  color: #bec2cc;
 }
 
-.hubble-map-hint-line--legend {
-  color: #727688;
+.hubble-map-level {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4591ed;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hubble-map-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  outline: none;
+}
+
+.hubble-map-info-icon {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #545667;
+  border-radius: 50%;
+  color: #9195a6;
   font-size: 10px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 12px;
+  text-align: center;
+  cursor: default;
+}
+
+.hubble-map-info:hover .hubble-map-info-icon,
+.hubble-map-info:focus .hubble-map-info-icon,
+.hubble-map-info:focus-within .hubble-map-info-icon {
+  color: #22adf6;
+  border-color: #22adf6;
+}
+
+.hubble-map-info-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background: #2c3038;
+  border: 1px solid #434453;
+  border-radius: 4px;
+  color: #bec2cc;
+  font-size: 11px;
+  font-weight: 400;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+
+.hubble-map-info:hover .hubble-map-info-tooltip,
+.hubble-map-info:focus .hubble-map-info-tooltip,
+.hubble-map-info:focus-within .hubble-map-info-tooltip {
+  opacity: 1;
+  visibility: visible;
 }
 
 .hubble-map-reset-layout {
@@ -341,72 +403,170 @@
 .hubble-namespace-region {
   position: absolute;
   box-sizing: border-box;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   border: 1px solid rgba(72, 172, 214, 0.42);
   border-radius: 8px;
   background: rgba(33, 48, 63, 0.42);
   box-shadow: inset 0 0 0 1px rgba(101, 183, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .hubble-map-region {
   position: absolute;
   box-sizing: border-box;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .hubble-map-region--external {
-  border: 1px dashed rgba(142, 146, 160, 0.4);
-  background: rgba(46, 47, 56, 0.28);
+  border: 1px solid rgba(142, 145, 161, 0.5);
+  border-left: 4px solid rgba(190, 194, 204, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba(56, 58, 70, 0.82) 0%,
+    rgba(38, 40, 48, 0.62) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 2px 10px rgba(0, 0, 0, 0.18);
 }
 
 .hubble-map-region--applications {
-  border: 1px solid rgba(72, 172, 214, 0.24);
-  background: rgba(28, 39, 51, 0.22);
+  border: 1px solid rgba(34, 173, 246, 0.38);
+  border-left: 4px solid rgba(34, 173, 246, 0.95);
+  background: linear-gradient(
+    180deg,
+    rgba(24, 52, 72, 0.88) 0%,
+    rgba(20, 36, 50, 0.68) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(101, 183, 255, 0.08),
+    0 2px 10px rgba(0, 0, 0, 0.18);
 }
 
 .hubble-map-region--system {
-  border: 1px solid rgba(122, 101, 242, 0.22);
-  background: rgba(38, 34, 58, 0.24);
+  border: 1px solid rgba(122, 101, 242, 0.38);
+  border-left: 4px solid rgba(147, 148, 255, 0.9);
+  background: linear-gradient(
+    180deg,
+    rgba(48, 42, 72, 0.82) 0%,
+    rgba(34, 30, 52, 0.62) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(147, 148, 255, 0.06),
+    0 2px 10px rgba(0, 0, 0, 0.18);
 }
 
 .hubble-map-region-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 28px;
-  padding: 0 12px;
-  color: #777d8d;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
 }
 
-.hubble-map-region-header strong {
-  color: #9298a8;
-  font-size: 10px;
+.hubble-map-region-header.is-dragging,
+.hubble-namespace-region-header.is-dragging {
+  cursor: grabbing;
+}
+
+.hubble-map-region-header--external {
+  background: rgba(34, 36, 44, 0.96);
+  border-bottom-color: rgba(190, 194, 204, 0.14);
+}
+
+.hubble-map-region-header--applications {
+  background: rgba(16, 36, 52, 0.96);
+  border-bottom-color: rgba(34, 173, 246, 0.18);
+}
+
+.hubble-map-region-header--system {
+  background: rgba(30, 24, 48, 0.96);
+  border-bottom-color: rgba(147, 148, 255, 0.16);
+}
+
+.hubble-map-region-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.hubble-map-region-title {
+  color: #d3d6db;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+}
+
+.hubble-map-region-subtitle {
+  color: #9aa0ae;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.25;
+}
+
+.hubble-map-region-count {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e3e5ea;
+  font-size: 12px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
-.hubble-map-region--applications .hubble-map-region-header strong {
-  color: #5798bd;
+.hubble-map-region-header--external .hubble-map-region-title {
+  color: #e3e5ea;
 }
 
-.hubble-map-region--system .hubble-map-region-header strong {
-  color: #8f7ee0;
+.hubble-map-region-header--applications .hubble-map-region-title {
+  color: #7fd4ff;
+}
+
+.hubble-map-region-header--applications .hubble-map-region-count {
+  background: rgba(34, 173, 246, 0.16);
+  color: #a8e4ff;
+}
+
+.hubble-map-region-header--system .hubble-map-region-title {
+  color: #b8adff;
+}
+
+.hubble-map-region-header--system .hubble-map-region-count {
+  background: rgba(122, 101, 242, 0.18);
+  color: #cfc8ff;
 }
 
 .hubble-namespace-region-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 28px;
-  padding: 0 12px;
+  flex: 0 0 auto;
+  min-height: 46px;
+  padding: 10px 14px;
+  background: rgba(20, 34, 48, 0.96);
+  border-bottom: 1px solid rgba(72, 172, 214, 0.22);
   color: #8d94a6;
-  font-size: 10px;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  pointer-events: auto;
+  cursor: grab;
+  user-select: none;
 }
 
 .hubble-namespace-region-header strong {
@@ -448,7 +608,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 2;
+  z-index: 1;
   // The SVG container itself doesn't receive events — that way background
   // clicks (deselect) still reach the pan surface beneath. Individual edge
   // paths re-enable pointer events below.
@@ -598,7 +758,7 @@
 }
 
 .hubble-node-card-kind {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -607,7 +767,7 @@
 }
 
 .hubble-node-card-badge {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   padding: 1px 6px;
   border-radius: 999px;
@@ -655,8 +815,8 @@
 }
 
 .hubble-node-card-title {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
   color: #f0f1f4;
   white-space: nowrap;
   overflow: hidden;
@@ -665,7 +825,7 @@
 }
 
 .hubble-node-card-subtitle {
-  font-size: 10px;
+  font-size: 12px;
   color: #8e91a1;
   margin-bottom: 6px;
   white-space: nowrap;
@@ -699,7 +859,7 @@
 }
 
 .hubble-node-card-port {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #22adf6;
   margin-bottom: 4px;
@@ -717,7 +877,7 @@
 
 .hubble-node-card-port-dir {
   margin-right: 3px;
-  font-size: 9px;
+  font-size: 11px;
 }
 
 .hubble-node-card-labels {
@@ -754,24 +914,17 @@
 }
 
 .hubble-node-card-metric-label {
-  font-size: 9px;
+  font-size: 11px;
   text-transform: uppercase;
   color: #8e91a1;
 }
 
 .hubble-node-card-metric-value {
-  font-size: 12px;
-  font-family: ui-monospace, monospace;
+  font-size: 14px;
   color: #f0f1f4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.hubble-node-card-window {
-  margin-top: 4px;
-  color: #727688;
-  font-size: 9px;
 }
 
 // Top external IPs previewed on the "Unknown External" card.
@@ -781,9 +934,8 @@
 }
 
 .hubble-node-card-ext-ip {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 14px;
-  font-family: ui-monospace, monospace;
   color: #8e91a1;
   white-space: nowrap;
   overflow: hidden;
@@ -796,20 +948,8 @@
   gap: 4px 8px;
   margin-top: 6px;
   color: #ff7a7a;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
-}
-
-.hubble-node-card-metric-share {
-  display: block;
-  font-size: 9px;
-  font-weight: 500;
-  color: #727688;
-  line-height: 1.1;
-}
-
-.hubble-node-card-metric-share--reference {
-  color: #22adf6;
 }
 
 .hubble-node-card-internal {
@@ -1039,15 +1179,10 @@
 }
 
 .hubble-status-bar {
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  margin-bottom: 4px;
+  flex-shrink: 0;
   flex: 0 0 auto;
-  background: #22252f;
-  border-radius: 4px;
   color: #bec2cc;
   font-size: 12px;
 }
@@ -1076,8 +1211,23 @@
   color: #4ed8a0;
 }
 
+.hubble-status-pill.is-paused {
+  color: #ffb94a;
+}
+
 .hubble-status-pill.is-bad {
   color: #ff6f6f;
+}
+
+.hubble-status-pill-toggle {
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  line-height: inherit;
+}
+
+.hubble-status-pill-toggle:hover {
+  filter: brightness(1.08);
 }
 
 .hubble-status-dot {
@@ -1109,6 +1259,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -1127,7 +1278,7 @@
 }
 
 .hubble-detail-panel {
-  flex: 1 1 38%;
+  flex: 1 1 auto;
   min-height: 0;
 }
 
@@ -1158,6 +1309,67 @@
 
 .hubble-panel-close:hover {
   color: #f0f1f4;
+}
+
+// A connection's detail view uses its header itself as the back breadcrumb —
+// "‹ Connections" returns to the list — so no extra row is added. It inherits
+// the panel-title styling (shared class) with a link-blue chevron and a hover
+// underline cueing that it's clickable.
+.hubble-panel-back {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.hubble-panel-back-arrow {
+  color: #22adf6;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hubble-panel-back:hover {
+  text-decoration: underline;
+}
+
+// Focus-node tag in the connection-list header — a subtle chip (brighter than
+// plain muted text) so the node name is clearly separated from the title and
+// stays readable, matching the endpoint kind-tag language.
+.hubble-panel-subtitle {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 3px;
+  background: rgba(142, 145, 161, 0.16);
+  color: #d4d7dd;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.hubble-edge-list-row {
+  cursor: pointer;
+}
+
+.hubble-edge-list-row:hover {
+  color: #f0f1f4;
+}
+
+.hubble-edge-list-search {
+  display: flex;
+  gap: 6px;
+  // Left 0 aligns with the header/rows; right 20px matches the row scroll
+  // gutter; bottom 12px separates the filter from the first connection.
+  padding: 4px 20px 12px 0;
+}
+
+.hubble-edge-list-search .hubble-flow-filter-input {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
 }
 
 .hubble-panel-empty {
@@ -1260,7 +1472,6 @@
   gap: 5px;
   min-width: 0;
   color: #bec2cc;
-  font-family: ui-monospace, monospace;
   font-size: 10px;
 }
 
@@ -1300,8 +1511,8 @@
 .hubble-pod-chip {
   min-width: 0;
   max-width: 100%;
-  background: #1c1f28;
-  border: 1px solid #2c3038;
+  background: #383846;
+  border: 1px solid #434453;
   border-radius: 4px;
   color: #bec2cc;
   cursor: pointer;
@@ -1314,8 +1525,14 @@
 
 .hubble-pod-chip:hover,
 .hubble-pod-chip.is-selected {
-  border-color: #65b7ff;
+  border-color: #22adf6;
   color: #f0f1f4;
+}
+
+.hubble-pod-chip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .hubble-pod-chip-name {
@@ -1323,32 +1540,47 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 11px;
+}
+
+.hubble-pod-chip-badge {
+  flex: 0 0 auto;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  background: rgba(255, 111, 111, 0.15);
+  color: #ff6f6f;
 }
 
 .hubble-pod-chip-meta,
 .hubble-pod-more {
   color: #8e91a1;
+  font-size: 11px;
+}
+
+// Direction uses the HubbleNodeCard port idiom (glyph + text, no pill),
+// keeping the table's original in/out hues: inbound green, outbound blue.
+.hubble-pod-direction {
+  align-items: center;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 600;
+  gap: 3px;
+  line-height: 1;
+}
+
+.hubble-pod-direction-glyph {
   font-size: 10px;
 }
 
-.hubble-pod-direction {
-  border-radius: 3px;
-  color: #fff;
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 3px 4px;
+.hubble-pod-direction.is-inbound {
+  color: #4b7f63;
 }
 
 .hubble-pod-direction.is-outbound {
-  background: #4591ed;
-}
-
-.hubble-pod-direction.is-inbound {
-  background: #4b7f63;
+  color: #4591ed;
 }
 
 .hubble-top-talkers-list {
@@ -1363,6 +1595,7 @@
   gap: 8px;
   padding: 4px 0;
   border-bottom: 1px solid #2c3038;
+  font-size: 13px;
 }
 
 .hubble-top-talkers-row:last-child {
@@ -1374,8 +1607,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
+  font-size: 13px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1383,8 +1615,32 @@
 
 .hubble-edge-src,
 .hubble-edge-dst {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.hubble-edge-name {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Endpoint kind tag (ns / workload / external / ns group) — same vocabulary
+// as the map node-card kind label, muted so it reads as metadata next to the
+// endpoint name.
+.hubble-edge-kind {
+  flex: 0 0 auto;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(142, 145, 161, 0.14);
+  color: #8e91a1;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .hubble-edge-arrow {
@@ -1395,15 +1651,26 @@
 .hubble-detail-row {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
   padding: 3px 0;
+  min-width: 0;
 }
 
 .hubble-detail-key {
   color: #8e91a1;
+  flex: 0 0 auto;
 }
 
 .hubble-detail-value {
   color: #f0f1f4;
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 1px;
 }
 
 .hubble-detail-section {
@@ -1415,13 +1682,26 @@
 // "Denied L7" — visually elevated so operators looking at the panel for the
 // first time know this is the actionable info ("what was actually blocked").
 .hubble-detail-section--denied {
-  background: rgba(255, 111, 111, 0.06);
+  position: relative;
   border-top: 1px solid rgba(255, 111, 111, 0.35);
-  margin-left: -12px;
-  margin-right: -12px;
-  padding-left: 12px;
-  padding-right: 12px;
   padding-bottom: 6px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 111, 111, 0.06);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
 .hubble-detail-subtitle {
@@ -1434,6 +1714,17 @@
   color: #ff6f6f;
 }
 
+// Sub-label inside the Denied L7 section linking the denied calls to the
+// L7 allowlist policy that rejected them (Cilium sets no DeniedBy at L7).
+.hubble-detail-l7-policy-hint {
+  margin: 6px 0 2px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #ff9d9d;
+  cursor: help;
+}
+
 .hubble-detail-denied-summary .hubble-detail-key {
   color: #ff6f6f;
   font-weight: 600;
@@ -1442,11 +1733,14 @@
 .hubble-detail-l7-row {
   align-items: flex-start;
   gap: 6px;
+
+  .hubble-detail-value {
+    flex: 0 0 auto;
+  }
 }
 
 .hubble-detail-l7-name {
   flex: 1 1 auto;
-  font-family: ui-monospace, monospace;
   font-size: 11px;
   color: #bec2cc;
   overflow: hidden;
@@ -1460,6 +1754,7 @@
   padding: 6px 0;
   border-bottom: 1px solid #2c3038;
   font-size: 11px;
+  min-width: 0;
 }
 
 .hubble-flow-row:last-child {
@@ -1489,15 +1784,15 @@
 
 .hubble-flow-proto {
   color: #545667;
-  font-family: ui-monospace, monospace;
   font-size: 10px;
 }
 
 .hubble-flow-endpoints {
-  font-family: ui-monospace, monospace;
   color: #bec2cc;
   padding-top: 2px;
-  word-break: break-all;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .hubble-flow-arrow {
@@ -1510,12 +1805,10 @@
 }
 
 .hubble-flow-l7 {
-  font-family: ui-monospace, monospace;
   color: #bec2cc;
 }
 
 .hubble-flow-reason {
-  font-family: ui-monospace, monospace;
 }
 
 .hubble-detail-flows-error {
@@ -1526,10 +1819,9 @@
 
 .hubble-flow-row--clickable {
   cursor: pointer;
-  margin: 0 -8px;
-  padding-left: 8px;
-  padding-right: 8px;
   border-radius: 3px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .hubble-flow-row--clickable:hover {
@@ -1558,6 +1850,7 @@
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   color: #bec2cc;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
@@ -1566,6 +1859,20 @@
   width: 720px;
   max-width: 92vw;
   max-height: 88vh;
+
+  .hubble-flow-modal-scroll {
+    width: 100%;
+    min-height: 0;
+    flex: 0 1 auto;
+  }
+
+  .hubble-flow-modal-scroll.fancy-scroll--container .fancy-scroll--track-h {
+    display: none !important;
+  }
+
+  .hubble-flow-modal-body {
+    overflow: visible;
+  }
 }
 
 .hubble-flow-modal-header {
@@ -1621,12 +1928,10 @@
 }
 
 .hubble-flow-modal-field-value.is-mono {
-  font-family: ui-monospace, monospace;
   font-size: 11px;
 }
 
 .hubble-flow-modal-field-value .is-mono {
-  font-family: ui-monospace, monospace;
   font-size: 11px;
 }
 
@@ -1662,7 +1967,6 @@
 
 .hubble-pod-modal-subtitle span:first-child {
   color: #bec2cc;
-  font-family: ui-monospace, monospace;
 }
 
 .hubble-pod-modal-body {
@@ -1679,14 +1983,46 @@
 .hubble-pod-modal-table {
   width: 100%;
   min-width: 980px;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.hubble-pod-modal-table thead {
+  position: sticky;
+  top: 0;
+  background: #22252f;
+  z-index: 1;
+}
+
+.hubble-pod-modal-table th {
+  text-align: left;
+  padding: 6px 10px;
+  color: #8e91a1;
+  font-weight: 600;
+  border-bottom: 1px solid #2c3038;
+  white-space: nowrap;
+}
+
+.hubble-pod-modal-table td {
+  padding: 4px 10px;
+  border-bottom: 1px solid #2c3038;
+  color: #bec2cc;
+  white-space: nowrap;
+}
+
+.hubble-pod-modal-table tbody tr:hover {
+  background: rgba(34, 173, 246, 0.06);
+}
+
+.hubble-pod-modal-table .text-right {
+  text-align: right;
 }
 
 .hubble-pod-modal-mono {
-  font-family: ui-monospace, monospace;
 }
 
 .hubble-pod-graph {
-  background: #1c1f28;
+  background: #1c1c21;
   border: 1px solid #2c3038;
   border-radius: 4px;
   margin-bottom: 12px;
@@ -1700,47 +2036,54 @@
 }
 
 .hubble-pod-graph-node {
-  fill: #2b2f3a;
-  stroke: #3c4250;
+  fill: #383846;
+  stroke: #434453;
   stroke-width: 1;
 }
 
 .hubble-pod-graph-node.is-selected {
-  fill: #31394a;
-  stroke: #65b7ff;
+  stroke: #22adf6;
   stroke-width: 2;
 }
 
 .hubble-pod-graph-node.is-grouped {
-  fill: #252934;
+  fill: #2c3038;
   stroke-dasharray: 4 3;
 }
 
+// Node label/meta render as HTML inside an SVG <foreignObject>, so overflow
+// is trimmed by real width with text-overflow (same pattern as the
+// .hubble-node-card-title on the main map), not a character cap.
+.hubble-pod-graph-node-text {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 40px;
+  justify-content: center;
+  overflow: hidden;
+}
+
 .hubble-pod-graph-node-label {
-  fill: #f0f1f4;
-  font-family: ui-monospace, monospace;
+  color: #f0f1f4;
   font-size: 12px;
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hubble-pod-graph-node-meta {
-  fill: #8e91a1;
-  font-size: 10px;
-}
-
-.hubble-pod-graph-edge-label {
-  fill: #bec2cc;
-  font-family: ui-monospace, monospace;
-  font-size: 10px;
-  paint-order: stroke;
-  stroke: #1c1f28;
-  stroke-width: 4px;
+  color: #8e91a1;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hubble-pod-graph-note {
   border-top: 1px solid #2c3038;
   color: #8e91a1;
-  font-size: 10px;
+  font-size: 11px;
   padding: 6px 8px;
 }
 
@@ -1769,7 +2112,6 @@
 .hubble-flow-modal-label-chip {
   background: #2c3038;
   color: #bec2cc;
-  font-family: ui-monospace, monospace;
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 3px;
@@ -1778,7 +2120,7 @@
 
 .hubble-flow-details-modal {
   .hubble-flow-modal-body {
-    padding: 16px 20px;
+    padding: 16px calc(20px + #{$hubble-fancy-scroll-gutter}) 16px 20px;
     font-size: 13px;
   }
 
@@ -1813,7 +2155,7 @@
     width: 92vw;
 
     .hubble-flow-modal-body {
-      padding: 12px 14px;
+      padding: 12px calc(14px + #{$hubble-fancy-scroll-gutter}) 12px 14px;
     }
 
     .hubble-flow-modal-field {
@@ -1831,6 +2173,10 @@
   cursor: pointer;
   border-radius: 3px;
   padding: 4px 6px;
+
+  .hubble-detail-value {
+    flex: 0 0 auto;
+  }
 
   &:hover {
     background: rgba(86, 99, 122, 0.18);
@@ -1852,7 +2198,6 @@
   display: inline-block;
   background: #383d47;
   color: #d3d6db;
-  font-family: ui-monospace, monospace;
   font-size: 9px;
   font-weight: 600;
   padding: 1px 5px;
@@ -1872,7 +2217,6 @@
   gap: 6px;
   background: #2c3038;
   color: #d3d6db;
-  font-family: ui-monospace, monospace;
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 3px;
@@ -1911,7 +2255,6 @@
 .hubble-policy-modal-snippet {
   background: #1c1f26;
   color: #d3d6db;
-  font-family: ui-monospace, monospace;
   font-size: 11px;
   padding: 8px 10px;
   border-radius: 3px;
@@ -1964,7 +2307,6 @@
 
 .hubble-policy-summary-value {
   color: #d3d6db;
-  font-family: ui-monospace, monospace;
   word-break: break-all;
 }
 
@@ -2006,7 +2348,6 @@
 
 .hubble-policy-summary-badge {
   display: inline-block;
-  font-family: ui-monospace, monospace;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -2046,7 +2387,6 @@
 .hubble-policy-summary-chip {
   background: #2c3038;
   color: #d3d6db;
-  font-family: ui-monospace, monospace;
   font-size: 11px;
   padding: 2px 6px;
   border-radius: 2px;
@@ -2090,7 +2430,6 @@
   flex: 1 1 auto;
   min-width: 0;
   color: #6b707a;
-  font-family: ui-monospace, monospace;
   font-size: 10px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2101,7 +2440,6 @@
   display: block;
   background: #1c1f26;
   color: #d3d6db;
-  font-family: ui-monospace, monospace;
   font-size: 11px;
   line-height: 1.45;
   padding: 10px 12px;
@@ -2204,6 +2542,11 @@
 .hubble-flow-table-status.is-ok {
   background: rgba(78, 216, 160, 0.15);
   color: #4ed8a0;
+}
+
+.hubble-flow-table-status.is-paused {
+  background: rgba(255, 185, 74, 0.15);
+  color: #ffb94a;
 }
 
 .hubble-flow-table-status.is-bad {
@@ -2386,7 +2729,6 @@
 }
 
 .hubble-flow-table-body td.is-mono {
-  font-family: ui-monospace, monospace;
   font-size: 11px;
 }
 
@@ -2435,6 +2777,10 @@
 // scan the primary verdicts first.
 .hubble-verdict-row {
   align-items: baseline;
+
+  [class^='hubble-verdict-'] {
+    flex: 0 0 auto;
+  }
 }
 
 .hubble-verdict-row--secondary {
