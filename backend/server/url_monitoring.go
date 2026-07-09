@@ -193,7 +193,9 @@ func (s *Service) AddURLMonitoringTarget(w http.ResponseWriter, r *http.Request)
 	}
 
 	var req urlMonitoringTargetUpsertRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
 	}
@@ -305,7 +307,9 @@ func (s *Service) PatchURLMonitoringTarget(w http.ResponseWriter, r *http.Reques
 	}
 
 	var req urlMonitoringTargetUpsertRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
 	}
@@ -513,7 +517,9 @@ func (s *Service) BulkAddURLMonitoringTargets(w http.ResponseWriter, r *http.Req
 	}
 
 	var req urlMonitoringBulkAddRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(r.Body)
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
 	}
