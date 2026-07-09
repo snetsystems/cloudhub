@@ -49,7 +49,7 @@ export const applyAlertTemplateToRule = (
     },
   }
 
-  const nextTrigger = templateSpec.trigger || 'threshold'
+  const nextTrigger = templateSpec.trigger
   let nextConditions = templateSpec.conditions || rule.specs[0].conditions!
 
   if (nextTrigger === 'deadman') {

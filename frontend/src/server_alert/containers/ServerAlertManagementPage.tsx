@@ -189,7 +189,7 @@ function ServerAlertManagementPage({router, location, notify}: any) {
         name: t('server_alert.trigger', '조건 방식'),
         render: (_value: any, row: AlertGroupRule) => {
           const spec = row.specs[0]
-          const trigger = spec.trigger || 'threshold'
+          const trigger = spec.trigger
           const values = spec.values
 
           if (trigger === 'threshold') {

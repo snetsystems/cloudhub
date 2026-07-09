@@ -193,7 +193,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
   const translatedConditionOperators = getTriggerOperators(t)
   const relativeOpOptions = getRelativeOperatorOptions(t)
   const changesOptions = getChangesOptions(t)
-  const isThreshold = !spec.trigger || spec.trigger === 'threshold'
+  const isThreshold = spec.trigger === 'threshold'
   const conditionOperators = isThreshold
     ? translatedConditionOperators
     : relativeOpOptions

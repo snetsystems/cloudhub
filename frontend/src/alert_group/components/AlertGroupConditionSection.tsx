@@ -34,6 +34,7 @@ import {
 
 import {
   AlertGroupRule,
+  AlertRuleTrigger,
   AlertTemplate,
   getTriggerOperators,
   getPauseSecondsOptions,
@@ -347,9 +348,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     this.updateSpec({conditions: next})
   }
 
-  private handleTriggerTypeChange = (
-    trigger: 'threshold' | 'relative' | 'deadman'
-  ) => {
+  private handleTriggerTypeChange = (trigger: AlertRuleTrigger) => {
     const {rule, onUpdateRule} = this.props
     const defaultValues = {
       change: 'change',
@@ -431,7 +430,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                     <Radio.Button
                       id="trigger-threshold"
                       value="threshold"
-                      active={!spec.trigger || spec.trigger === 'threshold'}
+                      active={spec.trigger === 'threshold'}
                       onClick={() => this.handleTriggerTypeChange('threshold')}
                     >
                       {t('alert_group_rule.threshold')}
@@ -458,7 +457,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
             </div>
 
             {/* Threshold Rows */}
-            {(!spec.trigger || spec.trigger === 'threshold') && (
+            {spec.trigger === 'threshold' && (
               <div className="alert-group-template-thresholds">
                 {sortConditions(spec.conditions).map((cond, idx) => {
                   const translatedConditionOperators = this.getTranslatedConditionOperators(
@@ -769,7 +768,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                       <Radio.Button
                         id="trigger-threshold"
                         value="threshold"
-                        active={!spec.trigger || spec.trigger === 'threshold'}
+                        active={spec.trigger === 'threshold'}
                         onClick={() =>
                           this.handleTriggerTypeChange('threshold')
                         }
@@ -797,7 +796,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 </div>
               </div>
 
-              {(!spec.trigger || spec.trigger === 'threshold') && (
+              {spec.trigger === 'threshold' && (
                 <div className="alert-group-setting-row">
                   <div className="alert-group-setting-label alert-group-setting-label--aligned">
                     {t('alert_group_rule.metric_setting')}
