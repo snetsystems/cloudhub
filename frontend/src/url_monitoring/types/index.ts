@@ -5,7 +5,7 @@ export interface URLMonitoringTarget {
   interval: string
   responseTimeout?: string
   method?: string
-  alertRuleId?: string
+  alertRuleIds?: string[]
   elapsedTimeEnabled?: boolean
   elapsedTimeMs?: number | null
   elapsedTimeAlertMessage?: string

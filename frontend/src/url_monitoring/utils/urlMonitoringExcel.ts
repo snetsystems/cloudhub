@@ -4,14 +4,22 @@ import type {URLMonitoringTargetUpsertRequest} from 'src/url_monitoring/apis'
 
 const SHEET_NAME = 'Targets'
 
+type ExcelTargetField =
+  | 'name'
+  | 'url'
+  | 'interval'
+  | 'responseTimeout'
+  | 'method'
+  | 'alertRuleIds'
+
 /** Normalized header → request field (matches POST/PATCH / bulk API JSON keys). */
-const HEADER_TO_FIELD: Record<string, keyof URLMonitoringTargetUpsertRequest> = {
+const HEADER_TO_FIELD: Record<string, ExcelTargetField> = {
   name: 'name',
   url: 'url',
   interval: 'interval',
   responsetimeout: 'responseTimeout',
   method: 'method',
-  alertruleid: 'alertRuleId',
+  alertruleids: 'alertRuleIds',
 }
 
 function normalizeHeaderCell(value: unknown): string {
@@ -39,10 +47,21 @@ export function downloadUrlMonitoringTargetsExcel(
     interval: t.interval ?? '',
     responseTimeout: t.responseTimeout ?? '',
     method: t.method ?? '',
-    alertRuleId: t.alertRuleId ?? '',
+    alertRuleIds: (t.alertRuleIds ?? []).join(','),
   }))
   const ws = XLSX.utils.json_to_sheet(
-    rows.length ? rows : [{name: '', url: '', interval: '', responseTimeout: '', method: '', alertRuleId: ''}]
+    rows.length
+      ? rows
+      : [
+          {
+            name: '',
+            url: '',
+            interval: '',
+            responseTimeout: '',
+            method: '',
+            alertRuleIds: '',
+          },
+        ]
   )
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME)
@@ -78,7 +97,7 @@ export function parseUrlMonitoringExcelBuffer(
   }
 
   const headerRow = matrix[0] ?? []
-  const fieldByCol: Array<keyof URLMonitoringTargetUpsertRequest | null> = []
+  const fieldByCol: Array<ExcelTargetField | null> = []
   for (let c = 0; c < headerRow.length; c++) {
     const key = normalizeHeaderCell(headerRow[c])
     fieldByCol[c] = HEADER_TO_FIELD[key] ?? null
@@ -109,8 +128,13 @@ export function parseUrlMonitoringExcelBuffer(
         case 'interval':
         case 'responseTimeout':
         case 'method':
-        case 'alertRuleId':
           rec[field] = str
+          break
+        case 'alertRuleIds':
+          rec[field] = str
+            .split(/[,;]/)
+            .map(id => id.trim())
+            .filter(Boolean)
           break
         default: {
           const _n: never = field

@@ -706,6 +706,27 @@ tbody tr td.text-center.justify-center:last-child {
     margin-bottom: 18px;
   }
 
+  .url-monitoring-form-sheet__alert-rule-dropdown {
+    width: 100%;
+
+    .dropdown-toggle {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .device-group-host-selector {
+      height: 200px;
+
+      &--list {
+        max-height: 180px;
+      }
+
+      &--item {
+        height: 32px;
+      }
+    }
+  }
+
   .url-monitoring-form-sheet__label {
     font-size: 13px;
     font-weight: 600;
