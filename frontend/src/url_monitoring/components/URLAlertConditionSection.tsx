@@ -22,7 +22,7 @@ import {
   getPauseSecondsOptions,
   Source,
 } from 'src/types'
-import {getRuleSpec, patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
+import {patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 
 const LEVEL_ORDER: {[key: string]: number} = {
   critical: 1,
@@ -97,7 +97,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
   children,
 }) => {
   const {t} = useTranslation()
-  const spec = getRuleSpec(rule)
+  const spec = rule.specs[0]
 
   const updateSpec = useCallback(
     (patch: Parameters<typeof patchRuleSpec>[1]) => {

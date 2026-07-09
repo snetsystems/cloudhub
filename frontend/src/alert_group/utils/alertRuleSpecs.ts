@@ -7,16 +7,15 @@ import {
   normalizeAlertConditions,
 } from 'src/types'
 
-export const getRuleSpec = (rule: Partial<AlertGroupRule>): AlertRuleSpec => ({
-  ...DEFAULT_RULE_SPEC,
-  ...rule.specs?.[0],
-})
+/** Fallback for partial sources (e.g. templates). Normalized rules: use `rule.specs[0]`. */
+export const getRuleSpec = (source: {specs?: AlertRuleSpec[]}): AlertRuleSpec =>
+  source.specs?.[0] ?? DEFAULT_RULE_SPEC
 
 export const patchRuleSpec = (
   rule: AlertGroupRule,
   patch: Partial<AlertRuleSpec>
 ): Partial<AlertGroupRule> => ({
-  specs: [{...getRuleSpec(rule), ...patch}],
+  specs: [{...(rule.specs[0] ?? DEFAULT_RULE_SPEC), ...patch}],
 })
 
 const normalizeSpecFromApi = (spec: AlertRuleSpec): AlertRuleSpec => {
@@ -103,7 +102,7 @@ export const buildAlertGroupRuleRequest = (rule: AlertGroupRule) => ({
   ...(rule.urlTargetIds ? {urlTargetIds: rule.urlTargetIds} : {}),
   ...(rule.derivative ? {derivative: rule.derivative} : {}),
   ...(rule.eval ? {eval: rule.eval} : {}),
-  specs: [normalizeSpecForApi(getRuleSpec(rule))],
+  specs: [normalizeSpecForApi(rule.specs[0] ?? DEFAULT_RULE_SPEC)],
   eventHandlers: rule.eventHandlers || [],
 })
 

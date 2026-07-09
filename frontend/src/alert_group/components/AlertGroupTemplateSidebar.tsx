@@ -55,12 +55,12 @@ class AlertGroupTemplateSidebar extends PureComponent<Props, State> {
     if (!availableMeasurements || availableMeasurements.size === 0) {
       return true
     }
-    return availableMeasurements.has(getRuleSpec({specs: template.specs}).measurement)
+    return availableMeasurements.has(getRuleSpec(template).measurement)
   }
 
   private getDisabledReason = (template: AlertTemplate): string =>
     this.props.t('alert_group_rule.disabled_reason_telegraf', {
-      measurement: getRuleSpec({specs: template.specs}).measurement,
+      measurement: getRuleSpec(template).measurement,
     })
 
   private getTooltipMessage = (template: AlertTemplate): string => {

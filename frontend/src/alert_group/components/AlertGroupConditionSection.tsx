@@ -41,7 +41,6 @@ import {
 import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
 import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
 import {
-  getRuleSpec,
   patchRuleSpec,
 } from 'src/alert_group/utils/alertRuleSpecs'
 import {AlertRuleSpec} from 'src/types'
@@ -140,7 +139,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     getPauseSecondsOptions(t)
 
   private get spec(): AlertRuleSpec {
-    return getRuleSpec(this.props.rule)
+    return this.props.rule.specs[0]
   }
 
   private updateSpec = (patch: Partial<AlertRuleSpec>): void => {
@@ -151,7 +150,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     super(props)
 
     const {source, rule} = props
-    const spec = getRuleSpec(rule)
+    const spec = rule.specs[0]
     // Edit mode: pre-populate from saved rule. New mode: auto-select default DB.
     this.state = {
       queryConfig: {
@@ -172,7 +171,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
   public componentDidMount() {
     const {rule, source} = this.props
-    const spec = getRuleSpec(rule)
+    const spec = rule.specs[0]
     if (!spec.database) {
       this.updateSpec({
         database: source.telegraf || 'telegraf',
@@ -184,8 +183,8 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
   public componentDidUpdate(prevProps: Props) {
     const {rule, source} = this.props
-    const spec = getRuleSpec(rule)
-    const prevSpec = getRuleSpec(prevProps.rule)
+    const spec = rule.specs[0]
+    const prevSpec = prevProps.rule.specs[0]
 
     // 부모의 rule.database가 비어있다면, 자식의 기본 폴백값으로 부모 rule 객체 싱크를 맞춤
     if (!spec.database) {

@@ -143,9 +143,9 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         let builderMode: 'template' | 'raw' = 'raw'
         let selectedTemplateId = 'custom'
 
-        const ruleSpec = getRuleSpec(rule)
+        const ruleSpec = rule.specs[0]
         const matchedTemplate = templates.find(t => {
-          const templateSpec = getRuleSpec({specs: t.specs})
+          const templateSpec = getRuleSpec(t)
           return (
             templateSpec.measurement === ruleSpec.measurement &&
             templateSpec.field === ruleSpec.field
@@ -261,7 +261,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     // Disabled templates (measurement not in source) should not apply.
     const {availableMeasurements} = this.state
     const {t} = this.props
-    const templateSpec = getRuleSpec({specs: template.specs})
+    const templateSpec = getRuleSpec(template)
     if (
       availableMeasurements.size > 0 &&
       !availableMeasurements.has(templateSpec.measurement)
@@ -308,7 +308,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       )
       return
     }
-    const spec = getRuleSpec(rule)
+    const spec = rule.specs[0]
 
     if (!spec.database) {
       notify(
@@ -555,7 +555,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
     const pageTitle = this.isNew
       ? t('alert_group_rule.create_title', '이벤트 그룹 규칙 생성')
       : t('alert_group_rule.edit_title', '이벤트 그룹 규칙 수정')
-    const ruleSpec = getRuleSpec(rule)
+    const ruleSpec = rule.specs[0]
     const hasPreview = !!(ruleSpec.measurement && ruleSpec.field)
 
     return (
