@@ -1259,9 +1259,7 @@ $alert-group--preview-graph-shell-height: 360px;
   margin-top: 2px;
   padding: $ix-marg-b;
   box-sizing: border-box;
-  width: max-content;
-  min-width: 480px;
-  max-width: 720px;
+  width: 100%;
 }
 
 .alert-group-target--host-dropdown-menu-inner {
@@ -1474,11 +1472,20 @@ $alert-group--preview-graph-shell-height: 360px;
   font-size: $ix-text-base;
   font-weight: 600;
   color: $g15-platinum;
-  margin-top: 6px;
-}
 
-.alert-group-setting-label--aligned {
-  margin-top: 4px;
+  &--aligned {
+    margin-top: 6px;
+  }
+
+  &--title {
+    margin-top: 12px;
+  }
+
+  &--flex {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 }
 
 .alert-group-setting-control {
@@ -1990,12 +1997,6 @@ $alert-group--preview-graph-shell-height: 360px;
   font-size: 11px;
 }
 
-.alert-group-setting-label--flex {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .query-builder--disabled {
   pointer-events: none;
   opacity: 0.55;
@@ -2107,7 +2108,7 @@ $alert-group--preview-graph-shell-height: 360px;
 .alert-group-email-title-hint {
   margin-top: 0;
   margin-bottom: 15px;
-  
+
   .icon.info-sign {
     margin-right: 6px;
   }

@@ -342,6 +342,10 @@ $um-unknown: $c-comet;
     top: 0;
     z-index: 2;
     background-color: $g4-onyx;
+
+    span {
+      white-space: nowrap;
+    }
   }
 
   .url-alert-url-th {
