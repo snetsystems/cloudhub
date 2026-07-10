@@ -1523,8 +1523,7 @@ $hubble-fancy-scroll-gutter: 20px;
   text-align: left;
 }
 
-.hubble-pod-chip:hover,
-.hubble-pod-chip.is-selected {
+.hubble-pod-chip:hover {
   border-color: #22adf6;
   color: #f0f1f4;
 }
@@ -1560,27 +1559,111 @@ $hubble-fancy-scroll-gutter: 20px;
   font-size: 11px;
 }
 
-// Direction uses the HubbleNodeCard port idiom (glyph + text, no pill),
-// keeping the table's original in/out hues: inbound green, outbound blue.
-.hubble-pod-direction {
-  align-items: center;
-  display: inline-flex;
+.hubble-pod-detail-subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 8px;
+  color: #8e91a1;
   font-size: 11px;
-  font-weight: 600;
-  gap: 3px;
+}
+
+.hubble-pod-detail-subtitle span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hubble-pod-detail-subtitle span:first-child {
+  color: #bec2cc;
+}
+
+.hubble-pod-peer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hubble-pod-peer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  color: #bec2cc;
+}
+
+.hubble-pod-peer-row:hover,
+.hubble-pod-peer-row:focus {
+  background: rgba(34, 173, 246, 0.08);
+  outline: none;
+}
+
+.hubble-pod-peer-row.is-denied {
+  background: rgba(255, 111, 111, 0.06);
+}
+
+// Focused peer: the row whose pod<->peer pair the bottom flow table is
+// filtered to. Persistent accent (distinct from the transient :hover) with a
+// left bar, so it stays visible while the operator browses other rows.
+.hubble-pod-peer-row.is-focused {
+  background: rgba(34, 173, 246, 0.14);
+  box-shadow: inset 2px 0 0 #22adf6;
+}
+
+.hubble-pod-peer-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+// inbound green / outbound blue — same hues the old direction cell used.
+.hubble-pod-peer-dir {
+  flex: 0 0 auto;
+  font-size: 10px;
   line-height: 1;
 }
 
-.hubble-pod-direction-glyph {
-  font-size: 10px;
-}
-
-.hubble-pod-direction.is-inbound {
+.hubble-pod-peer-dir.is-inbound {
   color: #4b7f63;
 }
 
-.hubble-pod-direction.is-outbound {
+.hubble-pod-peer-dir.is-outbound {
   color: #4591ed;
+}
+
+.hubble-pod-peer-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hubble-pod-peer-port {
+  flex: 0 0 auto;
+  color: #8e91a1;
+}
+
+.hubble-pod-peer-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.hubble-pod-peer-verdicts {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.hubble-pod-peer-flows {
+  color: #8e91a1;
+  min-width: 20px;
+  text-align: right;
 }
 
 .hubble-top-talkers-list {
@@ -1933,158 +2016,6 @@ $hubble-fancy-scroll-gutter: 20px;
 
 .hubble-flow-modal-field-value .is-mono {
   font-size: 11px;
-}
-
-.hubble-overlay-close {
-  background: transparent;
-  border: 0;
-  color: #8e91a1;
-  cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
-  padding: 0 4px;
-}
-
-.hubble-overlay-close:hover {
-  color: #f0f1f4;
-}
-
-.hubble-pod-modal-subtitle {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 0 10px;
-  color: #8e91a1;
-  font-size: 11px;
-}
-
-.hubble-pod-modal-subtitle span {
-  max-width: 360px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hubble-pod-modal-subtitle span:first-child {
-  color: #bec2cc;
-}
-
-.hubble-pod-modal-body {
-  max-height: 560px;
-  overflow: auto;
-}
-
-@media (max-height: 780px) {
-  .hubble-pod-modal-body {
-    max-height: calc(100vh - 220px);
-  }
-}
-
-.hubble-pod-modal-table {
-  width: 100%;
-  min-width: 980px;
-  border-collapse: collapse;
-  font-size: 11px;
-}
-
-.hubble-pod-modal-table thead {
-  position: sticky;
-  top: 0;
-  background: #22252f;
-  z-index: 1;
-}
-
-.hubble-pod-modal-table th {
-  text-align: left;
-  padding: 6px 10px;
-  color: #8e91a1;
-  font-weight: 600;
-  border-bottom: 1px solid #2c3038;
-  white-space: nowrap;
-}
-
-.hubble-pod-modal-table td {
-  padding: 4px 10px;
-  border-bottom: 1px solid #2c3038;
-  color: #bec2cc;
-  white-space: nowrap;
-}
-
-.hubble-pod-modal-table tbody tr:hover {
-  background: rgba(34, 173, 246, 0.06);
-}
-
-.hubble-pod-modal-table .text-right {
-  text-align: right;
-}
-
-.hubble-pod-modal-mono {
-}
-
-.hubble-pod-graph {
-  background: #1c1c21;
-  border: 1px solid #2c3038;
-  border-radius: 4px;
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-
-.hubble-pod-graph svg {
-  display: block;
-  width: 100%;
-  height: 280px;
-}
-
-.hubble-pod-graph-node {
-  fill: #383846;
-  stroke: #434453;
-  stroke-width: 1;
-}
-
-.hubble-pod-graph-node.is-selected {
-  stroke: #22adf6;
-  stroke-width: 2;
-}
-
-.hubble-pod-graph-node.is-grouped {
-  fill: #2c3038;
-  stroke-dasharray: 4 3;
-}
-
-// Node label/meta render as HTML inside an SVG <foreignObject>, so overflow
-// is trimmed by real width with text-overflow (same pattern as the
-// .hubble-node-card-title on the main map), not a character cap.
-.hubble-pod-graph-node-text {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  height: 40px;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.hubble-pod-graph-node-label {
-  color: #f0f1f4;
-  font-size: 12px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hubble-pod-graph-node-meta {
-  color: #8e91a1;
-  font-size: 11px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.hubble-pod-graph-note {
-  border-top: 1px solid #2c3038;
-  color: #8e91a1;
-  font-size: 11px;
-  padding: 6px 8px;
 }
 
 .hubble-flow-modal-field-note {
