@@ -33,7 +33,6 @@ import {
 } from 'src/url_monitoring/types'
 import {getUrlAlertListData} from 'src/url_monitoring/apis'
 import {updateAlertGroupRule, deleteAlertGroupRule} from 'src/alert_group/apis'
-import {getRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 import {URLAlertUrlCell} from 'src/url_monitoring/components/URLAlertUrlCell'
 import AlertSeverityFilter, {
   AlertSeverityFilterValue,
@@ -56,7 +55,7 @@ const getRuleStatusBadges = (
   rule: AlertGroupRule,
   unknownLabel: string
 ): URLAlertStatusBadge[] => {
-  const spec = getRuleSpec(rule)
+  const spec = rule.specs[0]
   const config = spec.urlErrorConfig
 
   if (!config) {
@@ -234,23 +233,23 @@ export function URLAlertPage({router, source, notify}: Props) {
 
   const totalCount = rules.length
   const warningCount = rules.filter(rule =>
-    getRuleSpec(rule).conditions?.some(c => c.level === 'warning' && c.enabled)
+    rule.specs[0].conditions?.some(c => c.level === 'warning' && c.enabled)
   ).length
   const criticalCount = rules.filter(rule =>
-    getRuleSpec(rule).conditions?.some(c => c.level === 'critical' && c.enabled)
+    rule.specs[0].conditions?.some(c => c.level === 'critical' && c.enabled)
   ).length
 
   const filteredRules = useMemo(() => {
     if (activeFilter === 'warning') {
       return rules.filter(rule =>
-        getRuleSpec(rule).conditions?.some(
+        rule.specs[0].conditions?.some(
           c => c.level === 'warning' && c.enabled
         )
       )
     }
     if (activeFilter === 'critical') {
       return rules.filter(rule =>
-        getRuleSpec(rule).conditions?.some(
+        rule.specs[0].conditions?.some(
           c => c.level === 'critical' && c.enabled
         )
       )
@@ -334,7 +333,7 @@ export function URLAlertPage({router, source, notify}: Props) {
           thead: {className: 'url-alert-trigger-th'},
         },
         render: (_value: unknown, row: AlertGroupRule) => {
-          const spec = getRuleSpec(row)
+          const spec = row.specs[0]
           if (!spec.trigger) {
             return <span>-</span>
           }
@@ -345,7 +344,7 @@ export function URLAlertPage({router, source, notify}: Props) {
         key: 'conditions',
         name: t('server_alert.rule', '규칙'),
         render: (_value: AlertCondition[], row: AlertGroupRule) => {
-          const spec = getRuleSpec(row)
+          const spec = row.specs[0]
           const value = spec.conditions
           if (!value || value.length === 0) {
             return (
