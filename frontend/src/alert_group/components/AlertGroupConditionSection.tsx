@@ -1020,7 +1020,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
 
           {/* Occurrence Group */}
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label">
+            <div className="alert-group-setting-label alert-group-setting-label--aligned">
               {t('alert_group_rule.occurrence_count')}
             </div>
             <div className="alert-group-setting-control">

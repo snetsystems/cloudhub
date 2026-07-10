@@ -449,7 +449,7 @@ export function URLAlertPage({router, source, notify}: Props) {
           <SourceIndicator />
         </Page.Header.Right>
       </Page.Header>
-      <Page.Contents scrollable={false} fullWidth={true}>
+      <Page.Contents scrollable={true} fullWidth={true}>
         <div className="url-page-graph-table-container-wrapper">
           <TableComponent
             tableTitle={`${filteredRules.length} ${t(
