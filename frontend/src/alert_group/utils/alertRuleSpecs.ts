@@ -2,14 +2,17 @@ import {
   AlertConditionApi,
   AlertGroupRule,
   AlertRuleSpec,
+  AlertRuleTrigger,
   AlertTemplate,
   DEFAULT_RULE_SPEC,
   normalizeAlertConditions,
 } from 'src/types'
 
 /** Fallback for partial sources (e.g. templates). Normalized rules: use `rule.specs[0]`. */
-export const getRuleSpec = (source: {specs?: AlertRuleSpec[]}): AlertRuleSpec =>
-  source.specs?.[0] ?? DEFAULT_RULE_SPEC
+export const getRuleSpec = (source: {specs?: Partial<AlertRuleSpec>[]}): AlertRuleSpec =>
+  source.specs?.[0]
+    ? normalizeSpecFromApi(source.specs[0])
+    : DEFAULT_RULE_SPEC
 
 export const patchRuleSpec = (
   rule: AlertGroupRule,
@@ -18,11 +21,12 @@ export const patchRuleSpec = (
   specs: [{...(rule.specs[0] ?? DEFAULT_RULE_SPEC), ...patch}],
 })
 
-const normalizeSpecFromApi = (spec: AlertRuleSpec): AlertRuleSpec => {
+const normalizeSpecFromApi = (spec: Partial<AlertRuleSpec>): AlertRuleSpec => {
   const conditions = normalizeAlertConditions(spec.conditions)
   return {
     ...DEFAULT_RULE_SPEC,
     ...spec,
+    trigger: spec.trigger ?? DEFAULT_RULE_SPEC.trigger,
     conditions: conditions.length ? conditions : DEFAULT_RULE_SPEC.conditions,
   }
 }
@@ -43,7 +47,7 @@ export const ensureRuleFromApi = (
 }
 
 const buildSpecTriggerValues = (
-  trigger: AlertRuleSpec['trigger'],
+  trigger: AlertRuleTrigger,
   values?: AlertRuleSpec['values']
 ): AlertRuleSpec['values'] | undefined => {
   if (trigger === 'relative') {
@@ -70,7 +74,7 @@ const normalizeSpecForApi = (spec: AlertRuleSpec): AlertRuleSpecWire => ({
   retentionPolicy: spec.retentionPolicy || '',
   measurement: spec.measurement,
   field: spec.field,
-  trigger: spec.trigger || 'threshold',
+  trigger: spec.trigger,
   every: spec.every || DEFAULT_RULE_SPEC.every,
   values: buildSpecTriggerValues(spec.trigger, spec.values),
   urlErrorConfig: spec.urlErrorConfig,
@@ -116,6 +120,6 @@ export const normalizeAlertTemplate = (
 
   return {
     ...template,
-    specs: [normalizeSpecFromApi(spec as AlertRuleSpec)],
+    specs: [normalizeSpecFromApi(spec)],
   }
 }

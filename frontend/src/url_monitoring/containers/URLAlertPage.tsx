@@ -19,6 +19,7 @@ import {
   AlignType,
   AlertGroupRule,
   AlertCondition,
+  AlertRuleTrigger,
   OPERATOR_SYMBOLS,
   RuleSpecValues,
 } from 'src/types'
@@ -91,13 +92,11 @@ const renderAlertStatusBadges = (statuses: URLAlertStatusBadge[]) => {
 }
 
 const renderAlertTriggerCell = (
-  trigger: string | undefined,
+  trigger: AlertRuleTrigger,
   values: RuleSpecValues | undefined,
   t: (key: string, fallback?: string) => string
 ) => {
-  const normalizedTrigger = trigger || 'threshold'
-
-  if (normalizedTrigger === 'threshold') {
+  if (trigger === 'threshold') {
     return (
       <div className="server-alert-trigger-cell">
         <span className="server-alert-trigger-main">
@@ -107,7 +106,7 @@ const renderAlertTriggerCell = (
     )
   }
 
-  if (normalizedTrigger === 'relative') {
+  if (trigger === 'relative') {
     const shift = values?.shift || ''
     const changeVal = values?.change || 'change'
     const changeText =
@@ -334,9 +333,6 @@ export function URLAlertPage({router, source, notify}: Props) {
         },
         render: (_value: unknown, row: AlertGroupRule) => {
           const spec = row.specs[0]
-          if (!spec.trigger) {
-            return <span>-</span>
-          }
           return renderAlertTriggerCell(spec.trigger, spec.values, t)
         },
       },

@@ -10,7 +10,6 @@ type ExcelTargetField =
   | 'interval'
   | 'responseTimeout'
   | 'method'
-  | 'alertRuleIds'
 
 /** Normalized header → request field (matches POST/PATCH / bulk API JSON keys). */
 const HEADER_TO_FIELD: Record<string, ExcelTargetField> = {
@@ -19,7 +18,6 @@ const HEADER_TO_FIELD: Record<string, ExcelTargetField> = {
   interval: 'interval',
   responsetimeout: 'responseTimeout',
   method: 'method',
-  alertruleids: 'alertRuleIds',
 }
 
 function normalizeHeaderCell(value: unknown): string {
@@ -47,7 +45,6 @@ export function downloadUrlMonitoringTargetsExcel(
     interval: t.interval ?? '',
     responseTimeout: t.responseTimeout ?? '',
     method: t.method ?? '',
-    alertRuleIds: (t.alertRuleIds ?? []).join(','),
   }))
   const ws = XLSX.utils.json_to_sheet(
     rows.length
@@ -59,7 +56,6 @@ export function downloadUrlMonitoringTargetsExcel(
             interval: '',
             responseTimeout: '',
             method: '',
-            alertRuleIds: '',
           },
         ]
   )
@@ -120,8 +116,7 @@ export function parseUrlMonitoringExcelBuffer(
     for (let c = 0; c < fieldByCol.length; c++) {
       const field = fieldByCol[c]
       if (!field) continue
-      const raw = row[c]
-      const str = cellToString(raw)
+      const str = cellToString(row[c])
       switch (field) {
         case 'name':
         case 'url':
@@ -129,12 +124,6 @@ export function parseUrlMonitoringExcelBuffer(
         case 'responseTimeout':
         case 'method':
           rec[field] = str
-          break
-        case 'alertRuleIds':
-          rec[field] = str
-            .split(/[,;]/)
-            .map(id => id.trim())
-            .filter(Boolean)
           break
         default: {
           const _n: never = field
