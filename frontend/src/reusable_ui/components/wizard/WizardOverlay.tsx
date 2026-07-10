@@ -42,12 +42,10 @@ class WizardOverlay extends PureComponent<Props> {
             className="wizard-overlay__dismiss-area"
             onClick={this.handleFinish}
           >
-            <div onClick={this.stopDialogClickPropagation}>
-              <OverlayContainer maxWidth={maxWidth}>
-                <OverlayHeading title={title} />
-                <OverlayBody>{this.WizardController}</OverlayBody>
-              </OverlayContainer>
-            </div>
+            <OverlayContainer maxWidth={maxWidth}>
+              <OverlayHeading title={title} onDismiss={this.handleFinish} />
+              <OverlayBody>{this.WizardController}</OverlayBody>
+            </OverlayContainer>
           </div>
         </OverlayTechnology>
       </div>

@@ -14,7 +14,11 @@ class OverlayContainer extends Component<Props> {
     const {children} = this.props
 
     return (
-      <div className="overlay--container" style={this.style}>
+      <div
+        className="overlay--container"
+        onClick={e => e.stopPropagation()}
+        style={this.style}
+      >
         {children}
       </div>
     )
