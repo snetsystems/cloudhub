@@ -1917,12 +1917,12 @@ type HostStore interface {
 
 // URLMonitoringTarget represents a single URL to monitor.
 type URLMonitoringTarget struct {
-	ID              string `json:"id"`
-	URLMonitoringID string `json:"urlMonitoringId"`
-	Name            string `json:"name"`
-	URL             string `json:"url"`
-	Interval        string `json:"interval"`
-	ResponseTimeout string `json:"responseTimeout"`
+	ID              string   `json:"id"`
+	URLMonitoringID string   `json:"urlMonitoringId"`
+	Name            string   `json:"name"`
+	URL             string   `json:"url"`
+	Interval        string   `json:"interval"`
+	ResponseTimeout string   `json:"responseTimeout"`
 	Method          string   `json:"method"`
 	AlertRuleIDs    []string `json:"alertRuleIds,omitempty"`
 }
@@ -2186,6 +2186,11 @@ type AlertRuleSpec struct {
 	UpdatedAt       time.Time            `json:"updatedAt,omitempty"`
 }
 
+type AlertRuleHostDetail struct {
+	Host string `json:"host"`
+	IP   string `json:"ip"`
+}
+
 type AlertGroupRule struct {
 	ID               string                  `json:"id"`
 	OrgID            string                  `json:"orgId"`
@@ -2203,6 +2208,7 @@ type AlertGroupRule struct {
 	TemplateKey      string                  `json:"templateKey"`
 	Active           bool                    `json:"active"`
 	Hostnames        []string                `json:"hostnames,omitempty"`
+	HostDetails      []AlertRuleHostDetail   `json:"hostDetails,omitempty"`
 	URLTargetIDs     []string                `json:"urlTargetIds,omitempty"`
 	EventHandlers    []AlertRuleEventHandler `json:"eventHandlers,omitempty"`
 	// RecipientGroupIDs is kept for internal email-only compatibility paths.

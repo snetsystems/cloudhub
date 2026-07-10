@@ -78,6 +78,9 @@ func (s *AlertRuleStore) All(ctx context.Context, orgID string) ([]cloudhub.Aler
 		if r.Hostnames, err = s.Hostnames(ctx, r.ID); err != nil {
 			return nil, err
 		}
+		if r.HostDetails, err = s.HostDetails(ctx, r.ID); err != nil {
+			return nil, err
+		}
 		if r.URLTargetIDs, err = s.URLTargetIDs(ctx, r.ID); err != nil {
 			return nil, err
 		}
@@ -101,6 +104,9 @@ func (s *AlertRuleStore) Get(ctx context.Context, id string) (cloudhub.AlertGrou
 		return r, err
 	}
 	if r.Hostnames, err = s.Hostnames(ctx, id); err != nil {
+		return r, err
+	}
+	if r.HostDetails, err = s.HostDetails(ctx, id); err != nil {
 		return r, err
 	}
 	if r.URLTargetIDs, err = s.URLTargetIDs(ctx, id); err != nil {
@@ -572,4 +578,32 @@ func (s *AlertRuleStore) RulesByRecipientGroup(ctx context.Context, recipientGro
 		out = append(out, r)
 	}
 	return out, nil
+}
+
+func (s *AlertRuleStore) HostDetails(ctx context.Context, ruleID string) ([]cloudhub.AlertRuleHostDetail, error) {
+	// alert_rule_hosts 와 hosts 테이블을 hostname 으로 조인합니다.
+	q := `
+		SELECT 
+			a.hostname, 
+			COALESCE(h.ip, '') AS ip
+		FROM alert_rule_hosts a
+		LEFT JOIN hosts h ON a.hostname = h.hostname
+		WHERE a.alert_rule_id = $1
+	`
+
+	rows, err := s.client.QueryContext(ctx, q, ruleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var details []cloudhub.AlertRuleHostDetail
+	for rows.Next() {
+		var d cloudhub.AlertRuleHostDetail
+		if err := rows.Scan(&d.Host, &d.IP); err != nil {
+			return nil, err
+		}
+		details = append(details, d)
+	}
+	return details, rows.Err()
 }
