@@ -47,10 +47,14 @@ interface Props {
 // During drilldown the Applications region wraps the focus Namespace region.
 // Because both regions share their topmost cards, we lift the Applications
 // header above the Namespace header (extra top) and pad the sides/bottom so
-// the nesting reads like Hubble UI. DRILLDOWN_TOP_RESERVE adds matching room
-// at the top of the content so the raised Applications header isn't clipped.
-const DRILLDOWN_TOP_RESERVE = 34
-const APPLICATIONS_DRILLDOWN_PADDING = {top: 34, side: 16, bottom: 16}
+// the nesting reads like Hubble UI. The extra top must clear the Applications
+// header (~54px, see .hubble-map-region-header) so it doesn't overlap the inner
+// Namespace region's box. DRILLDOWN_TOP_RESERVE reserves matching room at the
+// top of the content so the raised Applications header isn't clipped after
+// fit-to-viewport: it must cover the region's total rise above its top card
+// (NAMESPACE_REGION_TOP_PADDING 64 + extra top 64) minus the canvas padding.
+const DRILLDOWN_TOP_RESERVE = 80
+const APPLICATIONS_DRILLDOWN_PADDING = {top: 64, side: 16, bottom: 16}
 
 const edgeWidth = (value: number, max: number): number => {
   if (!max || max <= 0) return 1.5

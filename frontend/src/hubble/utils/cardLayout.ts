@@ -16,7 +16,12 @@ export const CANVAS_PADDING = 48
 export const CANVAS_EXTRA_BOTTOM = 40
 export const COLUMN_LABEL_HEIGHT = 48
 export const NAMESPACE_REGION_SIDE_PADDING = 24
-export const NAMESPACE_REGION_TOP_PADDING = 52
+// Top padding reserves the vertical space a region's header occupies before the
+// first card. It MUST exceed the rendered header height or the header overlaps
+// the top card / a nested region: the two-line map-region header
+// (.hubble-map-region-header — title + subtitle, ~54px) is the tallest, so this
+// is sized to clear it with a ~10px gap.
+export const NAMESPACE_REGION_TOP_PADDING = 64
 export const NAMESPACE_REGION_BOTTOM_PADDING = 24
 export const NAMESPACE_GROUP_GAP = 32
 

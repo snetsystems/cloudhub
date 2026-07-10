@@ -16,6 +16,8 @@ import HubbleBetaBadge from 'src/hubble/components/HubbleBetaBadge'
 import PolicyImpactPanel from 'src/hubble/components/PolicyImpactPanel'
 import PodConnectionsPanel from 'src/hubble/components/PodConnectionsPanel'
 import {getHubbleClusters} from 'src/hubble/apis'
+import {PodConnectionSummary, PodOption} from 'src/hubble/utils/podConnections'
+import {podFocusFilters, podPeerFilters} from 'src/hubble/utils/podFocusFilters'
 import {useHubbleSnapshot} from 'src/hubble/hooks/useHubbleSnapshot'
 import {useAllFlows} from 'src/hubble/hooks/useAllFlows'
 import {
@@ -68,6 +70,8 @@ const HubblePage: React.FC = () => {
   ] = useState<PolicyImpactBaseline | null>(null)
   const [detailEdgeId, setDetailEdgeId] = useState<string | null>(null)
   const [activeNodeId, setActiveNodeId] = useState<string | null>(null)
+  const [activePodKey, setActivePodKey] = useState<string | null>(null)
+  const [focusedPeerKey, setFocusedPeerKey] = useState<string | null>(null)
   const [sidePanelTab, setSidePanelTab] = useState<SidePanelTab>('talkers')
   // Which tutorial modal is open. Each "?" button scopes the modal to the
   // guides for its own screen area (header / map nodes / side panel tabs).
@@ -112,6 +116,8 @@ const HubblePage: React.FC = () => {
     setDrilldown(null)
     setDetailEdgeId(null)
     setActiveNodeId(null)
+    setActivePodKey(null)
+    setFocusedPeerKey(null)
     setFlowFilters({})
     setPolicyBaseline(null)
     setSidePanelTab('talkers')
@@ -201,6 +207,8 @@ const HubblePage: React.FC = () => {
 
   const handleNodeSelect = useCallback((nodeId: string) => {
     setActiveNodeId(nodeId)
+    setActivePodKey(null)
+    setFocusedPeerKey(null)
     setDetailEdgeId(null)
     setFlowFilters(nodeFocusFilters(nodeId).filters)
   }, [])
@@ -210,6 +218,8 @@ const HubblePage: React.FC = () => {
       setDetailEdgeId(edgeId)
       setSidePanelTab('edge')
       setActiveNodeId(prev => prev ?? src)
+      setActivePodKey(null)
+      setFocusedPeerKey(null)
       setFlowFilters(edgeDetailFilters(src, dst))
     },
     []
@@ -222,14 +232,43 @@ const HubblePage: React.FC = () => {
 
   const handleClearSelection = useCallback(() => {
     setActiveNodeId(null)
+    setActivePodKey(null)
+    setFocusedPeerKey(null)
     setDetailEdgeId(null)
     setFlowFilters({})
   }, [])
+
+  const handlePodSelect = useCallback((pod: PodOption) => {
+    setActivePodKey(pod.key)
+    setFocusedPeerKey(null)
+    setFlowFilters(podFocusFilters(pod.pod))
+  }, [])
+
+  const handleBackToPodList = useCallback(() => {
+    setActivePodKey(null)
+    setFocusedPeerKey(null)
+    setFlowFilters({})
+  }, [])
+
+  const handleFocusPodPeer = useCallback(
+    (pod: PodOption, peer: PodConnectionSummary) => {
+      if (focusedPeerKey === peer.key) {
+        setFocusedPeerKey(null)
+        setFlowFilters(podFocusFilters(pod.pod))
+      } else {
+        setFocusedPeerKey(peer.key)
+        setFlowFilters(podPeerFilters(pod.pod, peer, peer.direction))
+      }
+    },
+    [focusedPeerKey]
+  )
 
   const exitDrilldown = useCallback(() => {
     setDrilldown(null)
     setDetailEdgeId(null)
     setActiveNodeId(null)
+    setActivePodKey(null)
+    setFocusedPeerKey(null)
     setFlowFilters({})
     setSidePanelTab(tab => (tab === 'pods' ? 'talkers' : tab))
   }, [])
@@ -357,7 +396,15 @@ const HubblePage: React.FC = () => {
           />
         )}
         {sidePanelTab === 'pods' && drilldown && (
-          <PodConnectionsPanel flows={allFlows} namespace={drilldown} />
+          <PodConnectionsPanel
+            flows={allFlows}
+            namespace={drilldown}
+            activePodKey={activePodKey}
+            focusedPeerKey={focusedPeerKey}
+            onSelectPod={handlePodSelect}
+            onBack={handleBackToPodList}
+            onFocusPeer={handleFocusPodPeer}
+          />
         )}
         {sidePanelTab === 'edge' && (
           <DetailPanel
