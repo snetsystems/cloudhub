@@ -11,7 +11,7 @@ import {
 } from 'src/types'
 import {ADMIN_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import SystemConfirmModal from 'src/device_management/components/MonitoringModal'
-import {ComponentColor} from 'src/reusable_ui'
+import {Button, ComponentColor, ComponentSize, IconFont} from 'src/reusable_ui'
 import {
   hasMonitoringDevice,
   checkNetworkDeviceOrganizationStatus,
@@ -143,21 +143,23 @@ function DeviceManagementBtn({
             </button>
           </div>
           <div className="space-x">
-            <div
+            <Button
               onClick={connectDevice('Creating')}
-              className="btn button btn-sm btn-primary"
-              title="Add Device"
-            >
-              <span className="icon plus" /> Add Device
-            </div>
+              color={ComponentColor.Primary}
+              size={ComponentSize.Small}
+              titleText="Add Device"
+              text="Add Device"
+              icon={IconFont.Plus}
+            />
 
-            <div
+            <Button
               onClick={importDevice}
-              className="btn button btn-sm btn-primary"
-              title="Import Device"
-            >
-              <span className="icon import" /> Import Device
-            </div>
+              color={ComponentColor.Primary}
+              size={ComponentSize.Small}
+              titleText="Import Device"
+              text="Import Device2"
+              icon={IconFont.Import}
+            />
           </div>
         </div>
       )}
