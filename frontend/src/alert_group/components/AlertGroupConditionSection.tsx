@@ -41,9 +41,7 @@ import {
 } from 'src/types'
 import {findSelectedAlertTemplate} from 'src/alert_group/utils/alertTemplates'
 import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
-import {
-  patchRuleSpec,
-} from 'src/alert_group/utils/alertRuleSpecs'
+import {patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 import {AlertRuleSpec} from 'src/types'
 
 interface Props extends WithTranslation {
@@ -151,6 +149,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     super(props)
 
     const {source, rule} = props
+    console.log('hwanhoon rule', rule)
     const spec = rule.specs[0]
     // Edit mode: pre-populate from saved rule. New mode: auto-select default DB.
     this.state = {
@@ -405,9 +404,10 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     return (
       <div className="alert-group-template-container">
         {this.props.children}
+
         <div className="alert-group-setting-row alert-group-setting-row--template-summary">
-          <div className="alert-group-setting-label alert-group-setting-label--aligned">
-            {t('alert_group_rule.metric_setting')}
+          <div className="alert-group-setting-label">
+            {t('alert_group_rule.metric_label')}
           </div>
           <div className="alert-group-setting-control">
             <div className="alert-group-selected-template-name">
@@ -415,7 +415,14 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 ? selectedTemplate.name
                 : t('alert_group_rule.select_template')}
             </div>
+          </div>
+        </div>
 
+        <div className="alert-group-setting-row">
+          <div className="alert-group-setting-label alert-group-setting-label--title">
+            {t('alert_group_rule.metric_setting')}
+          </div>
+          <div className="alert-group-setting-control">
             {/* Alert Type Selector */}
             <div className="alert-group-setting-row child-component">
               <div className="alert-group-setting-label alert-group-setting-label--aligned">
@@ -527,155 +534,136 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
               </div>
             )}
             {spec.trigger === 'relative' && (
-              <div className="alert-group-setting-row">
-                <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                  {t('alert_group_rule.metric_setting')}
+              <div className="alert-group-condition-flex-col-16">
+                <div className="alert-group-condition-flex-wrap">
+                  <span className="alert-group-condition-text-light">
+                    {t('alert_group_rule.cond_prev')}
+                  </span>
+                  <Dropdown
+                    menuWidth="80px"
+                    selected={spec.values?.shift || '1m'}
+                    onChoose={(item: any) =>
+                      this.handleTriggerValueChange('shift', item.value)
+                    }
+                    buttonColor="btn-default"
+                    buttonSize="btn-sm"
+                    items={SHIFTS.map(shift => ({text: shift, value: shift}))}
+                  />
+                  <span className="alert-group-condition-text-light">
+                    {t('alert_group_rule.cond_vs')}
+                  </span>
+                  <Dropdown
+                    menuWidth="120px"
+                    selected={
+                      this.getChangesOptions(t).find(
+                        o => o.value === (spec.values?.change || 'change')
+                      )?.label || 'change'
+                    }
+                    onChoose={(item: any) =>
+                      this.handleTriggerValueChange('change', item.value)
+                    }
+                    buttonColor="btn-default"
+                    buttonSize="btn-sm"
+                    items={this.getChangesOptions(t).map(o => ({
+                      text: o.label,
+                      value: o.value,
+                    }))}
+                  />
+                  <span className="alert-group-condition-text-light">
+                    {t('alert_group_rule.cond_is')}
+                  </span>
                 </div>
-                <div className="alert-group-setting-control alert-group-condition-flex-col-16">
-                  <div className="alert-group-condition-flex-wrap">
-                    <span className="alert-group-condition-text-light">
-                      {t('alert_group_rule.cond_prev')}
-                    </span>
-                    <Dropdown
-                      menuWidth="80px"
-                      selected={spec.values?.shift || '1m'}
-                      onChoose={(item: any) =>
-                        this.handleTriggerValueChange('shift', item.value)
-                      }
-                      buttonColor="btn-default"
-                      buttonSize="btn-sm"
-                      items={SHIFTS.map(t => ({text: t, value: t}))}
-                    />
-                    <span className="alert-group-condition-text-light">
-                      {t('alert_group_rule.cond_vs')}
-                    </span>
-                    <Dropdown
-                      menuWidth="120px"
-                      selected={
-                        this.getChangesOptions(t).find(
-                          o => o.value === (spec.values?.change || 'change')
-                        )?.label || 'change'
-                      }
-                      onChoose={(item: any) =>
-                        this.handleTriggerValueChange('change', item.value)
-                      }
-                      buttonColor="btn-default"
-                      buttonSize="btn-sm"
-                      items={this.getChangesOptions(t).map(o => ({
-                        text: o.label,
-                        value: o.value,
-                      }))}
-                    />
-                    <span className="alert-group-condition-text-light">
-                      {t('alert_group_rule.cond_is')}
-                    </span>
-                  </div>
 
-                  <div className="alert-group-template-thresholds">
-                    {sortConditions(spec.conditions).map((cond, idx) => {
-                      const relativeOpOptions = this.getRelativeOperatorOptions(
-                        t
-                      )
-                      const selectedOperator = cond.operator || 'greater'
-                      const selectedOpObj = relativeOpOptions.find(
-                        o => o.value === selectedOperator
-                      )
-                      return (
-                        <div
-                          key={idx}
-                          className="alert-group-condition-flex-row-12"
+                <div className="alert-group-template-thresholds">
+                  {sortConditions(spec.conditions).map((cond, idx) => {
+                    const relativeOpOptions = this.getRelativeOperatorOptions(t)
+                    const selectedOperator = cond.operator || 'greater'
+                    const selectedOpObj = relativeOpOptions.find(
+                      o => o.value === selectedOperator
+                    )
+                    return (
+                      <div
+                        key={idx}
+                        className="alert-group-condition-flex-row-12"
+                      >
+                        <SlideToggle
+                          active={cond.enabled}
+                          onChange={() =>
+                            this.handleToggleCondition(idx, !cond.enabled)
+                          }
+                          size={ComponentSize.ExtraSmall}
+                          color={this.conditionToggleColor(cond.level)}
+                        />
+                        <span
+                          className={`alert-group-threshold--badge alert-group-condition-w80 ${
+                            cond.level
+                          }${!cond.enabled ? ' disabled' : ''}`}
                         >
-                          <SlideToggle
-                            active={cond.enabled}
-                            onChange={() =>
-                              this.handleToggleCondition(idx, !cond.enabled)
-                            }
-                            size={ComponentSize.ExtraSmall}
-                            color={this.conditionToggleColor(cond.level)}
-                          />
-                          <span
-                            className={`alert-group-threshold--badge alert-group-condition-w80 ${
-                              cond.level
-                            }${!cond.enabled ? ' disabled' : ''}`}
-                          >
-                            {this.conditionLabel(cond.level)}
-                          </span>
+                          {this.conditionLabel(cond.level)}
+                        </span>
 
-                          {cond.enabled && (
-                            <>
-                              <Dropdown
-                                menuWidth="200px"
-                                className={'threshold'}
-                                selected={
-                                  selectedOpObj
-                                    ? selectedOpObj.label
-                                    : relativeOpOptions[0].label
+                        {cond.enabled && (
+                          <>
+                            <Dropdown
+                              menuWidth="200px"
+                              className={'threshold'}
+                              selected={
+                                selectedOpObj
+                                  ? selectedOpObj.label
+                                  : relativeOpOptions[0].label
+                              }
+                              onChoose={(item: any) =>
+                                this.handleConditionOperator(idx, item.value)
+                              }
+                              buttonColor="btn-default"
+                              buttonSize="btn-sm"
+                              items={relativeOpOptions.map(o => ({
+                                text: o.label,
+                                value: o.value,
+                              }))}
+                            />
+                            <div className="alert-group-condition-w100">
+                              <Input
+                                value={cond.value}
+                                onChange={e =>
+                                  this.handleConditionValue(idx, e.target.value)
                                 }
-                                onChoose={(item: any) =>
-                                  this.handleConditionOperator(idx, item.value)
-                                }
-                                buttonColor="btn-default"
-                                buttonSize="btn-sm"
-                                items={relativeOpOptions.map(o => ({
-                                  text: o.label,
-                                  value: o.value,
-                                }))}
+                                type={InputType.Number}
+                                size={ComponentSize.Small}
+                                placeholder={t('alert_group_rule.value_input')}
                               />
-                              <div className="alert-group-condition-w100">
-                                <Input
-                                  value={cond.value}
-                                  onChange={e =>
-                                    this.handleConditionValue(
-                                      idx,
-                                      e.target.value
-                                    )
-                                  }
-                                  type={InputType.Number}
-                                  size={ComponentSize.Small}
-                                  placeholder={t(
-                                    'alert_group_rule.value_input'
-                                  )}
-                                />
-                              </div>
-                              {spec.values?.change === '% change' && (
-                                <span className="alert-group-condition-text-light">
-                                  %
-                                </span>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
+                            </div>
+                            {spec.values?.change === '% change' && (
+                              <span className="alert-group-condition-text-light">
+                                %
+                              </span>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             )}
             {spec.trigger === 'deadman' && (
-              <div className="alert-group-setting-row">
-                <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                  {t('alert_group_rule.metric_setting')}
-                </div>
-                <div className="alert-group-setting-control alert-group-condition-flex-col-16">
-                  <div className="alert-group-condition-flex-row-8">
-                    <span className="alert-group-condition-text-light">
-                      {t('alert_group_rule.deadman_data_receipt')}
-                    </span>
-                    <Dropdown
-                      menuWidth="60px"
-                      selected={spec.values?.period || '1m'}
-                      onChoose={(item: any) =>
-                        this.handleTriggerValueChange('period', item.value)
-                      }
-                      buttonColor="btn-default"
-                      buttonSize="btn-sm"
-                      items={PERIODS.map(val => ({text: val, value: val}))}
-                    />
-                    <span className="alert-group-condition-text-light">
-                      {t('alert_group_rule.deadman_no_data_for')}
-                    </span>
-                  </div>
-                </div>
+              <div className="alert-group-condition-flex-row-8">
+                <span className="alert-group-condition-text-light">
+                  {t('alert_group_rule.deadman_data_receipt')}
+                </span>
+                <Dropdown
+                  menuWidth="60px"
+                  selected={spec.values?.period || '1m'}
+                  onChoose={(item: any) =>
+                    this.handleTriggerValueChange('period', item.value)
+                  }
+                  buttonColor="btn-default"
+                  buttonSize="btn-sm"
+                  items={PERIODS.map(val => ({text: val, value: val}))}
+                />
+                <span className="alert-group-condition-text-light">
+                  {t('alert_group_rule.deadman_no_data_for')}
+                </span>
               </div>
             )}
           </div>
@@ -754,54 +742,58 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 return child
               })}
 
-              {/* Alert Type Selector */}
               <div className="alert-group-setting-row">
-                <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                  {t('alert_group_rule.alert_type')}
+                <div className="alert-group-setting-label alert-group-setting-label--title">
+                  {t('alert_group_rule.metric_setting')}
                 </div>
-                <div className="alert-group-setting-control alert-group-condition-flex-col-16">
-                  <div className="alert-group-condition-flex-row-12">
-                    <span className="alert-group-condition-text-light-sm">
-                      {t('alert_group_rule.choose_one')}
-                    </span>
-                    <Radio color={ComponentColor.Success}>
-                      <Radio.Button
-                        id="trigger-threshold"
-                        value="threshold"
-                        active={spec.trigger === 'threshold'}
-                        onClick={() =>
-                          this.handleTriggerTypeChange('threshold')
-                        }
-                      >
-                        {t('alert_group_rule.threshold')}
-                      </Radio.Button>
-                      <Radio.Button
-                        id="trigger-relative"
-                        value="relative"
-                        active={spec.trigger === 'relative'}
-                        onClick={() => this.handleTriggerTypeChange('relative')}
-                      >
-                        {t('alert_group_rule.relative')}
-                      </Radio.Button>
-                      <Radio.Button
-                        id="trigger-deadman"
-                        value="deadman"
-                        active={spec.trigger === 'deadman'}
-                        onClick={() => this.handleTriggerTypeChange('deadman')}
-                      >
-                        {t('alert_group_rule.deadman')}
-                      </Radio.Button>
-                    </Radio>
+                <div className="alert-group-setting-control">
+                  {/* Alert Type Selector */}
+                  <div className="alert-group-setting-row child-component">
+                    <div className="alert-group-setting-label alert-group-setting-label--aligned">
+                      {t('alert_group_rule.alert_type')}
+                    </div>
+                    <div className="alert-group-setting-control">
+                      <div className="alert-group-condition-flex-row-12">
+                        <span className="alert-group-condition-text-light-sm">
+                          {t('alert_group_rule.choose_one')}
+                        </span>
+                        <Radio color={ComponentColor.Success}>
+                          <Radio.Button
+                            id="trigger-threshold"
+                            value="threshold"
+                            active={spec.trigger === 'threshold'}
+                            onClick={() =>
+                              this.handleTriggerTypeChange('threshold')
+                            }
+                          >
+                            {t('alert_group_rule.threshold')}
+                          </Radio.Button>
+                          <Radio.Button
+                            id="trigger-relative"
+                            value="relative"
+                            active={spec.trigger === 'relative'}
+                            onClick={() =>
+                              this.handleTriggerTypeChange('relative')
+                            }
+                          >
+                            {t('alert_group_rule.relative')}
+                          </Radio.Button>
+                          <Radio.Button
+                            id="trigger-deadman"
+                            value="deadman"
+                            active={spec.trigger === 'deadman'}
+                            onClick={() =>
+                              this.handleTriggerTypeChange('deadman')
+                            }
+                          >
+                            {t('alert_group_rule.deadman')}
+                          </Radio.Button>
+                        </Radio>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {spec.trigger === 'threshold' && (
-                <div className="alert-group-setting-row">
-                  <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                    {t('alert_group_rule.metric_setting')}
-                  </div>
-                  <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                  {spec.trigger === 'threshold' && (
                     <div className="alert-group-template-thresholds">
                       {sortConditions(spec.conditions).map((cond, idx) => {
                         const translatedConditionOperators = this.getTranslatedConditionOperators(
@@ -877,143 +869,131 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         )
                       })}
                     </div>
-                  </div>
-                </div>
-              )}
-              {spec.trigger === 'relative' && (
-                <div className="alert-group-setting-row">
-                  <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                    {t('alert_group_rule.metric_setting')}
-                  </div>
-                  <div className="alert-group-setting-control alert-group-condition-flex-col-16">
-                    <div className="alert-group-condition-flex-wrap">
-                      <span className="alert-group-condition-text-light">
-                        {t('alert_group_rule.cond_prev')}
-                      </span>
-                      <Dropdown
-                        menuWidth="60px"
-                        selected={spec.values?.shift || '1m'}
-                        onChoose={(item: any) =>
-                          this.handleTriggerValueChange('shift', item.value)
-                        }
-                        buttonColor="btn-default"
-                        buttonSize="btn-sm"
-                        items={SHIFTS.map(val => ({text: val, value: val}))}
-                      />
-                      <span className="alert-group-condition-text-light">
-                        {t('alert_group_rule.cond_vs')}
-                      </span>
-                      <Dropdown
-                        menuWidth="120px"
-                        selected={
-                          this.getChangesOptions(t).find(
-                            o => o.value === (spec.values?.change || 'change')
-                          )?.label || 'change'
-                        }
-                        onChoose={(item: any) =>
-                          this.handleTriggerValueChange('change', item.value)
-                        }
-                        buttonColor="btn-default"
-                        buttonSize="btn-sm"
-                        items={this.getChangesOptions(t).map(o => ({
-                          text: o.label,
-                          value: o.value,
-                        }))}
-                      />
-                      <span className="alert-group-condition-text-light">
-                        {t('alert_group_rule.cond_is')}
-                      </span>
-                    </div>
+                  )}
+                  {spec.trigger === 'relative' && (
+                    <div className="alert-group-condition-flex-col-16">
+                      <div className="alert-group-condition-flex-wrap">
+                        <span className="alert-group-condition-text-light">
+                          {t('alert_group_rule.cond_prev')}
+                        </span>
+                        <Dropdown
+                          menuWidth="60px"
+                          selected={spec.values?.shift || '1m'}
+                          onChoose={(item: any) =>
+                            this.handleTriggerValueChange('shift', item.value)
+                          }
+                          buttonColor="btn-default"
+                          buttonSize="btn-sm"
+                          items={SHIFTS.map(val => ({text: val, value: val}))}
+                        />
+                        <span className="alert-group-condition-text-light">
+                          {t('alert_group_rule.cond_vs')}
+                        </span>
+                        <Dropdown
+                          menuWidth="120px"
+                          selected={
+                            this.getChangesOptions(t).find(
+                              o => o.value === (spec.values?.change || 'change')
+                            )?.label || 'change'
+                          }
+                          onChoose={(item: any) =>
+                            this.handleTriggerValueChange('change', item.value)
+                          }
+                          buttonColor="btn-default"
+                          buttonSize="btn-sm"
+                          items={this.getChangesOptions(t).map(o => ({
+                            text: o.label,
+                            value: o.value,
+                          }))}
+                        />
+                        <span className="alert-group-condition-text-light">
+                          {t('alert_group_rule.cond_is')}
+                        </span>
+                      </div>
 
-                    <div className="alert-group-template-thresholds">
-                      {sortConditions(spec.conditions).map((cond, idx) => {
-                        const relativeOpOptions = this.getRelativeOperatorOptions(
-                          t
-                        )
-                        const selectedOperator = cond.operator || 'greater'
-                        const selectedOpObj = relativeOpOptions.find(
-                          o => o.value === selectedOperator
-                        )
-                        return (
-                          <div
-                            key={idx}
-                            className="alert-group-condition-flex-row-12"
-                          >
-                            <SlideToggle
-                              active={cond.enabled}
-                              onChange={() =>
-                                this.handleToggleCondition(idx, !cond.enabled)
-                              }
-                              size={ComponentSize.ExtraSmall}
-                              color={this.conditionToggleColor(cond.level)}
-                            />
-                            <span
-                              className={`alert-group-threshold--badge alert-group-condition-w80 ${
-                                cond.level
-                              }${!cond.enabled ? ' disabled' : ''}`}
+                      <div className="alert-group-template-thresholds">
+                        {sortConditions(spec.conditions).map((cond, idx) => {
+                          const relativeOpOptions = this.getRelativeOperatorOptions(
+                            t
+                          )
+                          const selectedOperator = cond.operator || 'greater'
+                          const selectedOpObj = relativeOpOptions.find(
+                            o => o.value === selectedOperator
+                          )
+                          return (
+                            <div
+                              key={idx}
+                              className="alert-group-condition-flex-row-12"
                             >
-                              {this.conditionLabel(cond.level)}
-                            </span>
+                              <SlideToggle
+                                active={cond.enabled}
+                                onChange={() =>
+                                  this.handleToggleCondition(idx, !cond.enabled)
+                                }
+                                size={ComponentSize.ExtraSmall}
+                                color={this.conditionToggleColor(cond.level)}
+                              />
+                              <span
+                                className={`alert-group-threshold--badge alert-group-condition-w80 ${
+                                  cond.level
+                                }${!cond.enabled ? ' disabled' : ''}`}
+                              >
+                                {this.conditionLabel(cond.level)}
+                              </span>
 
-                            {cond.enabled && (
-                              <>
-                                <Dropdown
-                                  menuWidth="200px"
-                                  className={'threshold'}
-                                  selected={
-                                    selectedOpObj
-                                      ? selectedOpObj.label
-                                      : relativeOpOptions[0].label
-                                  }
-                                  onChoose={(item: any) =>
-                                    this.handleConditionOperator(
-                                      idx,
-                                      item.value
-                                    )
-                                  }
-                                  buttonColor="btn-default"
-                                  buttonSize="btn-sm"
-                                  items={relativeOpOptions.map(o => ({
-                                    text: o.label,
-                                    value: o.value,
-                                  }))}
-                                />
-                                <div className="alert-group-condition-w100">
-                                  <Input
-                                    value={cond.value}
-                                    onChange={e =>
-                                      this.handleConditionValue(
+                              {cond.enabled && (
+                                <>
+                                  <Dropdown
+                                    menuWidth="200px"
+                                    className={'threshold'}
+                                    selected={
+                                      selectedOpObj
+                                        ? selectedOpObj.label
+                                        : relativeOpOptions[0].label
+                                    }
+                                    onChoose={(item: any) =>
+                                      this.handleConditionOperator(
                                         idx,
-                                        e.target.value
+                                        item.value
                                       )
                                     }
-                                    type={InputType.Number}
-                                    size={ComponentSize.Small}
-                                    placeholder={t(
-                                      'alert_group_rule.value_input'
-                                    )}
+                                    buttonColor="btn-default"
+                                    buttonSize="btn-sm"
+                                    items={relativeOpOptions.map(o => ({
+                                      text: o.label,
+                                      value: o.value,
+                                    }))}
                                   />
-                                </div>
-                                {spec.values?.change === '% change' && (
-                                  <span className="alert-group-condition-text-light">
-                                    %
-                                  </span>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        )
-                      })}
+                                  <div className="alert-group-condition-w100">
+                                    <Input
+                                      value={cond.value}
+                                      onChange={e =>
+                                        this.handleConditionValue(
+                                          idx,
+                                          e.target.value
+                                        )
+                                      }
+                                      type={InputType.Number}
+                                      size={ComponentSize.Small}
+                                      placeholder={t(
+                                        'alert_group_rule.value_input'
+                                      )}
+                                    />
+                                  </div>
+                                  {spec.values?.change === '% change' && (
+                                    <span className="alert-group-condition-text-light">
+                                      %
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
-              {spec.trigger === 'deadman' && (
-                <div className="alert-group-setting-row">
-                  <div className="alert-group-setting-label alert-group-setting-label--aligned">
-                    {t('alert_group_rule.metric_setting')}
-                  </div>
-                  <div className="alert-group-setting-control alert-group-condition-flex-col-16">
+                  )}
+                  {spec.trigger === 'deadman' && (
                     <div className="alert-group-condition-flex-row-8">
                       <span className="alert-group-condition-text-light">
                         {t('alert_group_rule.deadman_data_receipt')}
@@ -1032,9 +1012,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                         {t('alert_group_rule.deadman_no_data_for')}
                       </span>
                     </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
             </>
           )}
 
