@@ -1,18 +1,23 @@
-import {
-  AlertGroupRule,
-  AlertRuleEventHandler,
-  AlertTemplate,
-} from 'src/types'
-import {
-  getRuleSpec,
-  patchRuleSpec,
-} from 'src/alert_group/utils/alertRuleSpecs'
+import {AlertGroupRule, AlertRuleEventHandler, AlertTemplate} from 'src/types'
+import {getRuleSpec, patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 
 export const findSelectedAlertTemplate = (
   templates: AlertTemplate[] = [],
-  rule: Pick<AlertGroupRule, 'specs'>
+  rule: Pick<AlertGroupRule, 'id' | 'specs' | 'templateKey'>
 ): AlertTemplate | undefined => {
+  if (rule.templateKey) {
+    return templates.find(template => template.id === rule.templateKey)
+  }
+
+  if (!rule.id) {
+    return undefined
+  }
+
   const ruleSpec = rule.specs[0]
+  if (!ruleSpec?.measurement || !ruleSpec?.field) {
+    return undefined
+  }
+
   return templates.find(template => {
     const templateSpec = getRuleSpec(template)
     return (
@@ -49,7 +54,7 @@ export const applyAlertTemplateToRule = (
     },
   }
 
-  const nextTrigger = templateSpec.trigger || 'threshold'
+  const nextTrigger = templateSpec.trigger
   let nextConditions = templateSpec.conditions || rule.specs[0].conditions!
 
   if (nextTrigger === 'deadman') {
@@ -65,7 +70,8 @@ export const applyAlertTemplateToRule = (
     ...rule,
     ...patchRuleSpec(rule, {
       database: templateSpec.database || currentSpec.database,
-      retentionPolicy: templateSpec.retentionPolicy || currentSpec.retentionPolicy,
+      retentionPolicy:
+        templateSpec.retentionPolicy || currentSpec.retentionPolicy,
       measurement: templateSpec.measurement,
       field: templateSpec.field,
       trigger: nextTrigger,

@@ -1,8 +1,21 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import classnames from 'classnames'
+import {useTranslation} from 'react-i18next'
+import {
+  ComponentColor,
+  ComponentSize,
+  ComponentStatus,
+} from 'src/reusable_ui'
+import DropdownButton from 'src/reusable_ui/components/dropdowns/DropdownButton'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Dropdown from 'src/shared/components/Dropdown'
-import {AlertGroupRule, DropdownItem, Notification} from 'src/types'
+import {ClickOutside} from 'src/shared/components/ClickOutside'
+import TargetSelector from 'src/shared/components/TargetSelector'
+import {
+  AlertGroupRule,
+  Notification,
+  RemoteDataState,
+} from 'src/types'
 import {URLMonitoringTarget} from 'src/url_monitoring/types'
 import {
   addURLMonitoringTarget,
@@ -10,13 +23,6 @@ import {
   getUrlAlertRules,
   patchURLMonitoringTarget,
 } from 'src/url_monitoring/apis'
-
-// Sentinel value for the "not mapped" option in the alert group dropdown.
-const NO_ALERT_RULE = ''
-
-interface AlertRuleDropdownItem extends DropdownItem {
-  id: string
-}
 
 export type URLMonitoringSheetMode = 'add' | 'edit' | 'copy'
 
@@ -29,7 +35,7 @@ export interface URLMonitoringFormSheetProps {
   notify: (n: Notification) => void
 }
 
-const COLLECTION_INTERVAL_ITEMS: DropdownItem[] = [
+const COLLECTION_INTERVAL_ITEMS = [
   {text: '1 min'},
   {text: '2 min'},
   {text: '5 min'},
@@ -62,6 +68,7 @@ export function URLMonitoringFormSheet({
   onSaved,
   notify,
 }: URLMonitoringFormSheetProps) {
+  const {t} = useTranslation()
   const [isMounted, setIsMounted] = useState(isOpen)
   const [isVisible, setIsVisible] = useState(isOpen)
   const [isLoading, setIsLoading] = useState(false)
@@ -70,8 +77,16 @@ export function URLMonitoringFormSheet({
   const [name, setName] = useState('')
   const [url, setUrl] = useState('')
   const [collectionInterval, setCollectionInterval] = useState('1m')
-  const [alertRuleId, setAlertRuleId] = useState<string>(NO_ALERT_RULE)
+  const [alertRuleIds, setAlertRuleIds] = useState<string[]>([])
   const [alertRules, setAlertRules] = useState<AlertGroupRule[]>([])
+  const [alertRulesLoad, setAlertRulesLoad] = useState(RemoteDataState.NotStarted)
+  const [alertRulePickerOpen, setAlertRulePickerOpen] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) return
+    setAlertRuleIds([])
+    setAlertRulePickerOpen(false)
+  }, [isOpen])
 
   useEffect(() => {
     if (isOpen) {
@@ -90,7 +105,7 @@ export function URLMonitoringFormSheet({
       setName('')
       setUrl('')
       setCollectionInterval('1m')
-      setAlertRuleId(NO_ALERT_RULE)
+      setAlertRuleIds([])
       setNameError(null)
       return
     }
@@ -98,24 +113,46 @@ export function URLMonitoringFormSheet({
       setName(initialTarget.name)
       setUrl(initialTarget.url)
       setCollectionInterval(initialTarget.interval ?? '1m')
-      setAlertRuleId(initialTarget.alertRuleId ?? NO_ALERT_RULE)
       setNameError(null)
     }
   }, [isOpen, mode, initialTarget])
 
   useEffect(() => {
+    if (!isOpen || alertRulesLoad !== RemoteDataState.Done) return
+
+    if (mode === 'add') {
+      return
+    }
+
+    if (!initialTarget) {
+      setAlertRuleIds([])
+      return
+    }
+
+    const knownIds = new Set(
+      alertRules
+        .map(rule => String(rule.id ?? '').trim())
+        .filter(Boolean)
+    )
+    setAlertRuleIds(
+      (initialTarget.alertRuleIds ?? []).filter(id => knownIds.has(id))
+    )
+  }, [isOpen, mode, initialTarget, alertRulesLoad, alertRules])
+
+  useEffect(() => {
     if (!isOpen) return
     let cancelled = false
+    setAlertRulesLoad(RemoteDataState.Loading)
     getUrlAlertRules()
       .then(rules => {
-        if (!cancelled) {
-          setAlertRules(rules)
-        }
+        if (cancelled) return
+        setAlertRules(rules)
+        setAlertRulesLoad(RemoteDataState.Done)
       })
       .catch(() => {
-        if (!cancelled) {
-          setAlertRules([])
-        }
+        if (cancelled) return
+        setAlertRules([])
+        setAlertRulesLoad(RemoteDataState.Error)
       })
     return () => {
       cancelled = true
@@ -137,22 +174,60 @@ export function URLMonitoringFormSheet({
     return 'Add URL'
   }, [mode])
 
-  const alertRuleItems = useMemo<AlertRuleDropdownItem[]>(() => {
-    const items: AlertRuleDropdownItem[] = [
-      {id: NO_ALERT_RULE, text: 'Not mapped'},
-    ]
-    alertRules.forEach(rule => {
-      if (rule.id) {
-        items.push({id: rule.id, text: rule.name || rule.id})
-      }
-    })
-    return items
-  }, [alertRules])
+  const alertRuleSelectorItems = useMemo(
+    () =>
+      alertRules
+        .filter(rule => rule.id)
+        .map(rule => ({
+          id: String(rule.id).trim(),
+          label: rule.name || String(rule.id).trim(),
+        })),
+    [alertRules]
+  )
 
-  const selectedAlertRuleLabel = useMemo(() => {
-    const matched = alertRuleItems.find(item => item.id === alertRuleId)
-    return matched ? matched.text : 'Not mapped'
-  }, [alertRuleItems, alertRuleId])
+  const alertRuleSelectorText = useMemo(
+    () => ({
+      searchPlaceholder: t(
+        'url_monitoring.search_alert_rules',
+        'Search alert groups...'
+      ),
+      selectedCountText: t('alert_group_rule.n_selected', {
+        count: alertRuleIds.length,
+      }),
+      emptyText: t(
+        'url_monitoring.no_alert_rules',
+        'No alert groups available'
+      ),
+      emptySearchText: t(
+        'url_monitoring.no_alert_rules_search_results',
+        'No matching alert groups'
+      ),
+    }),
+    [alertRuleIds.length, t]
+  )
+
+  const closeAlertRulePicker = useCallback((): void => {
+    setAlertRulePickerOpen(false)
+  }, [])
+
+  const toggleAlertRulePicker = useCallback((): void => {
+    if (isLoading || alertRulesLoad !== RemoteDataState.Done) {
+      return
+    }
+    setAlertRulePickerOpen(open => !open)
+  }, [alertRulesLoad, isLoading])
+
+  const alertRuleDropdownStatus =
+    alertRulesLoad === RemoteDataState.Loading
+      ? ComponentStatus.Loading
+      : alertRulesLoad === RemoteDataState.Error
+      ? ComponentStatus.Error
+      : ComponentStatus.Default
+
+  const alertRuleTriggerLabel =
+    alertRuleIds.length === 0
+      ? t('url_monitoring.alert_rules_not_mapped', 'Not mapped')
+      : t('alert_group_rule.n_selected', {count: alertRuleIds.length})
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) return
@@ -160,21 +235,16 @@ export function URLMonitoringFormSheet({
     setNameError(null)
     setIsLoading(true)
     try {
-      const alertRuleIdValue = alertRuleId || undefined
+      const payload = {
+        name,
+        url,
+        interval: collectionInterval,
+        alertRuleIds,
+      }
       if (mode === 'edit' && initialTarget?.id) {
-        await patchURLMonitoringTarget(initialTarget.id, {
-          name,
-          url,
-          interval: collectionInterval,
-          alertRuleId: alertRuleIdValue,
-        })
+        await patchURLMonitoringTarget(initialTarget.id, payload)
       } else {
-        await addURLMonitoringTarget({
-          name,
-          url,
-          interval: collectionInterval,
-          alertRuleId: alertRuleIdValue,
-        })
+        await addURLMonitoringTarget(payload)
       }
       notify({
         type: 'success',
@@ -209,7 +279,7 @@ export function URLMonitoringFormSheet({
     name,
     url,
     collectionInterval,
-    alertRuleId,
+    alertRuleIds,
     onSaved,
     onClose,
     notify,
@@ -313,18 +383,48 @@ export function URLMonitoringFormSheet({
               <span className="url-monitoring-form-sheet__label">
                 Alert group <span>(optional)</span>
               </span>
-              <Dropdown
-                className="dropdown-stretch"
-                items={alertRuleItems}
-                selected={selectedAlertRuleLabel}
-                onChoose={(item: DropdownItem) =>
-                  setAlertRuleId((item as AlertRuleDropdownItem).id)
-                }
-                disabled={isLoading}
-                buttonSize="btn-sm"
-                buttonColor="btn-default"
-                useAutoComplete={alertRuleItems.length > 6}
-              />
+              {alertRulesLoad === RemoteDataState.Error ? (
+                <span className="url-monitoring-form-sheet__error-text">
+                  Failed to load alert groups.
+                </span>
+              ) : (
+                <ClickOutside onClickOutside={closeAlertRulePicker}>
+                  <div
+                    className={classnames(
+                      'dropdown dropdown-small dropdown-default',
+                      'alert-group-target--dropdown-root',
+                      'url-monitoring-form-sheet__alert-rule-dropdown'
+                    )}
+                  >
+                    <DropdownButton
+                      active={alertRulePickerOpen}
+                      color={ComponentColor.Default}
+                      size={ComponentSize.Small}
+                      status={alertRuleDropdownStatus}
+                      onClick={toggleAlertRulePicker}
+                      title={t(
+                        'url_monitoring.select_alert_rules',
+                        'Select alert groups'
+                      )}
+                    >
+                      {alertRuleTriggerLabel}
+                    </DropdownButton>
+                    {alertRulePickerOpen &&
+                      alertRulesLoad === RemoteDataState.Done && (
+                        <div className="dropdown--menu-container dropdown--onyx alert-group-target--host-dropdown-menu">
+                          <div className="alert-group-target--host-dropdown-menu-inner">
+                            <TargetSelector
+                              items={alertRuleSelectorItems}
+                              selectedIds={alertRuleIds}
+                              onChange={setAlertRuleIds}
+                              text={alertRuleSelectorText}
+                            />
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                </ClickOutside>
+              )}
             </div>
           </div>
         </FancyScrollbar>

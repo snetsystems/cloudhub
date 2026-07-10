@@ -193,7 +193,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
   const translatedConditionOperators = getTriggerOperators(t)
   const relativeOpOptions = getRelativeOperatorOptions(t)
   const changesOptions = getChangesOptions(t)
-  const isThreshold = !spec.trigger || spec.trigger === 'threshold'
+  const isThreshold = spec.trigger === 'threshold'
   const conditionOperators = isThreshold
     ? translatedConditionOperators
     : relativeOpOptions
@@ -213,7 +213,9 @@ const URLAlertConditionSection: React.FC<Props> = ({
           id="url-occ-consecutive"
           value="consecutive"
           active={rule.occurrenceType === 'consecutive'}
-          onClick={(_v: string) => onUpdateRule({occurrenceType: 'consecutive'})}
+          onClick={(_v: string) =>
+            onUpdateRule({occurrenceType: 'consecutive'})
+          }
           titleText={t('alert_group_rule.occ_consecutive')}
         >
           {t('alert_group_rule.occ_consecutive')}
@@ -283,7 +285,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
           {children}
 
           <div className="alert-group-setting-row alert-group-setting-row--template-summary">
-            <div className="alert-group-setting-label alert-group-setting-label--aligned">
+            <div className="alert-group-setting-label">
               {t('url_alert_setting.metric_label')}
             </div>
             <div className="alert-group-setting-control">
@@ -301,7 +303,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
           </div>
 
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label alert-group-setting-label--aligned">
+            <div className="alert-group-setting-label alert-group-setting-label--title">
               {t('url_alert_setting.latency_label')}
             </div>
             <div className="alert-group-setting-control">
@@ -383,7 +385,10 @@ const URLAlertConditionSection: React.FC<Props> = ({
                     o => o.value === (cond.operator || defaultOperator)
                   )
                   return (
-                    <div key={idx} className="alert-group-condition-flex-row-12">
+                    <div
+                      key={idx}
+                      className="alert-group-condition-flex-row-12"
+                    >
                       <SlideToggle
                         active={cond.enabled}
                         onChange={() =>
@@ -429,11 +434,12 @@ const URLAlertConditionSection: React.FC<Props> = ({
                               placeholder={valuePlaceholder}
                             />
                           </div>
-                          {!isThreshold && spec.values?.change === '% change' && (
-                            <span className="alert-group-condition-text-light">
-                              %
-                            </span>
-                          )}
+                          {!isThreshold &&
+                            spec.values?.change === '% change' && (
+                              <span className="alert-group-condition-text-light">
+                                %
+                              </span>
+                            )}
                         </>
                       )}
                     </div>
@@ -444,7 +450,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
           </div>
 
           <div className="alert-group-setting-row">
-            <div className="alert-group-setting-label alert-group-setting-label--aligned">
+            <div className="alert-group-setting-label alert-group-setting-label--title">
               {t('url_alert_setting.status_label')}
             </div>
             <div className="alert-group-setting-control">
@@ -471,9 +477,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
                     >
                       <SlideToggle
                         active={enabled}
-                        onChange={() =>
-                          handleStatusFilterChange(key, !enabled)
-                        }
+                        onChange={() => handleStatusFilterChange(key, !enabled)}
                         size={ComponentSize.ExtraSmall}
                         color={ComponentColor.Danger}
                       />
@@ -531,7 +535,7 @@ const URLAlertConditionSection: React.FC<Props> = ({
         </div>
 
         <div className="alert-group-setting-row">
-          <div className="alert-group-setting-label alert-group-setting-label--flex">
+          <div className="alert-group-setting-label alert-group-setting-label--flex alert-group-setting-label--aligned">
             {t('alert_group_rule.pause')}
             <QuestionMarkTooltip
               tipID="url-pause-tooltip"

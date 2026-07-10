@@ -118,6 +118,8 @@ export interface RuleSpecValues {
   period?: string
 }
 
+export type AlertRuleTrigger = 'threshold' | 'relative' | 'deadman'
+
 export interface AlertRuleSpec {
   id?: string
   alertRuleId?: string
@@ -125,7 +127,7 @@ export interface AlertRuleSpec {
   retentionPolicy: string
   measurement: string
   field: string
-  trigger?: 'threshold' | 'relative' | 'deadman'
+  trigger: AlertRuleTrigger
   every?: string
   urlErrorConfig?: UrlErrorConfig
   conditions?: AlertCondition[]
@@ -395,7 +397,7 @@ export interface AlertTemplate {
   field?: string
   derivative?: DerivativeConfig
   eval?: EvalConfig
-  trigger?: 'threshold' | 'relative' | 'deadman'
+  trigger?: AlertRuleTrigger
   values?: RuleSpecValues
   taskType: string
   every: string

@@ -100,7 +100,9 @@ const AlertGroupTargetSection: React.FC<Props> = ({
     const load = async (): Promise<void> => {
       setItemsLoad(RemoteDataState.Loading)
       try {
-        const loaded = isUrl ? await loadUrlItems() : await loadHostItems(source)
+        const loaded = isUrl
+          ? await loadUrlItems()
+          : await loadHostItems(source)
         if (cancelled) {
           return
         }
@@ -191,7 +193,9 @@ const AlertGroupTargetSection: React.FC<Props> = ({
       <h3 className="rule-section--heading">{text.title}</h3>
       <div className="rule-section--body">
         <div className="alert-group-setting-row rule-section--row-first">
-          <div className="alert-group-setting-label">{text.label}</div>
+          <div className="alert-group-setting-label alert-group-setting-label--aligned">
+            {text.label}
+          </div>
           <div className="alert-group-setting-control">
             <div className="alert-group-setting-inputs">
               {itemsLoad === RemoteDataState.Error ? (

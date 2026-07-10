@@ -4,14 +4,20 @@ import type {URLMonitoringTargetUpsertRequest} from 'src/url_monitoring/apis'
 
 const SHEET_NAME = 'Targets'
 
+type ExcelTargetField =
+  | 'name'
+  | 'url'
+  | 'interval'
+  | 'responseTimeout'
+  | 'method'
+
 /** Normalized header → request field (matches POST/PATCH / bulk API JSON keys). */
-const HEADER_TO_FIELD: Record<string, keyof URLMonitoringTargetUpsertRequest> = {
+const HEADER_TO_FIELD: Record<string, ExcelTargetField> = {
   name: 'name',
   url: 'url',
   interval: 'interval',
   responsetimeout: 'responseTimeout',
   method: 'method',
-  alertruleid: 'alertRuleId',
 }
 
 function normalizeHeaderCell(value: unknown): string {
@@ -39,10 +45,19 @@ export function downloadUrlMonitoringTargetsExcel(
     interval: t.interval ?? '',
     responseTimeout: t.responseTimeout ?? '',
     method: t.method ?? '',
-    alertRuleId: t.alertRuleId ?? '',
   }))
   const ws = XLSX.utils.json_to_sheet(
-    rows.length ? rows : [{name: '', url: '', interval: '', responseTimeout: '', method: '', alertRuleId: ''}]
+    rows.length
+      ? rows
+      : [
+          {
+            name: '',
+            url: '',
+            interval: '',
+            responseTimeout: '',
+            method: '',
+          },
+        ]
   )
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, SHEET_NAME)
@@ -78,7 +93,7 @@ export function parseUrlMonitoringExcelBuffer(
   }
 
   const headerRow = matrix[0] ?? []
-  const fieldByCol: Array<keyof URLMonitoringTargetUpsertRequest | null> = []
+  const fieldByCol: Array<ExcelTargetField | null> = []
   for (let c = 0; c < headerRow.length; c++) {
     const key = normalizeHeaderCell(headerRow[c])
     fieldByCol[c] = HEADER_TO_FIELD[key] ?? null
@@ -101,15 +116,13 @@ export function parseUrlMonitoringExcelBuffer(
     for (let c = 0; c < fieldByCol.length; c++) {
       const field = fieldByCol[c]
       if (!field) continue
-      const raw = row[c]
-      const str = cellToString(raw)
+      const str = cellToString(row[c])
       switch (field) {
         case 'name':
         case 'url':
         case 'interval':
         case 'responseTimeout':
         case 'method':
-        case 'alertRuleId':
           rec[field] = str
           break
         default: {

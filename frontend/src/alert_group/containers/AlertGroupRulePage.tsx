@@ -14,12 +14,7 @@ import {
   Me,
 } from 'src/types'
 import {TimeRange} from 'src/types'
-import {
-  AlertGroupRule,
-  AlertTemplate,
-  UserGroup,
-  DEFAULT_RULE,
-} from 'src/types'
+import {AlertGroupRule, AlertTemplate, UserGroup, DEFAULT_RULE} from 'src/types'
 
 // Components
 import {
@@ -39,10 +34,7 @@ import AlertGroupTargetSection from 'src/alert_group/components/AlertGroupTarget
 import AlertGroupHandlersSection from 'src/alert_group/components/AlertGroupHandlersSection'
 import AlertGroupTestModal from 'src/alert_group/components/AlertGroupTestModal'
 import {applyAlertTemplateToRule} from 'src/alert_group/utils/alertTemplates'
-import {
-  getRuleSpec,
-  patchRuleSpec,
-} from 'src/alert_group/utils/alertRuleSpecs'
+import {getRuleSpec, patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
 
 // APIs
 import {
@@ -109,7 +101,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       isSaving: false,
       isTestModalOpen: false,
       isTestingSend: false,
-      builderMode: 'raw',
+      builderMode: 'template',
       selectedTemplateId: 'custom',
     }
   }
@@ -128,7 +120,9 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         activeKapacitor,
       ] = await Promise.all([
         getUserGroups(),
-        getAlertTemplates().catch(() => [] as AlertTemplate[]),
+        getAlertTemplates({targetType: 'host'}).catch(
+          () => [] as AlertTemplate[]
+        ),
         fetchAvailableMeasurements(this.props.source).catch(
           () => new Set<string>()
         ),
@@ -179,7 +173,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           templates,
           availableMeasurements,
           loading: RemoteDataState.Done,
-          builderMode: 'raw',
+          builderMode: 'template',
           selectedTemplateId: 'custom',
         })
       }
@@ -243,7 +237,8 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       const prevName = this.state.rule.name
       this.setState({
         selectedTemplateId: 'custom',
-        builderMode: 'raw', // 'New' default shows Query Builder (3-panel UI)
+
+        builderMode: 'template',
         rule: {
           ...JSON.parse(JSON.stringify(DEFAULT_RULE)),
           name: prevName,
