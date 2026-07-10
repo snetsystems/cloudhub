@@ -128,7 +128,9 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
         activeKapacitor,
       ] = await Promise.all([
         getUserGroups(),
-        getAlertTemplates().catch(() => [] as AlertTemplate[]),
+        getAlertTemplates({targetType: 'host'}).catch(
+          () => [] as AlertTemplate[]
+        ),
         fetchAvailableMeasurements(this.props.source).catch(
           () => new Set<string>()
         ),
