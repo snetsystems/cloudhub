@@ -415,6 +415,11 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
                 ? selectedTemplate.name
                 : t('alert_group_rule.select_template')}
             </div>
+            {selectedTemplate?.description && (
+              <p className="alert-group-setting-helper">
+                {selectedTemplate.description}
+              </p>
+            )}
           </div>
         </div>
 
