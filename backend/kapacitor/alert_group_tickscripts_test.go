@@ -1,6 +1,7 @@
 package kapacitor
 
 import (
+	"strings"
 	"testing"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -8,8 +9,8 @@ import (
 
 func sampleRule() cloudhub.AlertGroupRule {
 	return cloudhub.AlertGroupRule{
-		ID:              "rule-1",
-		Name:            "cpu high",
+		ID:   "rule-1",
+		Name: "cpu high",
 		Specs: []cloudhub.AlertRuleSpec{
 			{
 				Database:        "Default",
@@ -38,6 +39,22 @@ func TestAlertGroupRuleTICKScriptDropsAlertUdf(t *testing.T) {
 // external notification channel is configured.
 func TestAlertGroupRuleTICKScriptPreservesAlertHistoryWhenNoRecipients(t *testing.T) {
 	t.Skip("Skipping refactored tests")
+}
+
+func TestAlertGroupRuleTICKScriptNormalizesHistoryValueBeforeInfluxOut(t *testing.T) {
+	tick, err := AlertGroupRuleTICKScript(sampleRule(), AlertRecipients{}, "")
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript() error = %v", err)
+	}
+
+	want := `trigger_0
+    |eval(lambda: float("usage_idle"))
+        .as('value')
+        .keep()
+    |influxDBOut()`
+	if !strings.Contains(string(tick), want) {
+		t.Fatalf("generated TICKscript missing history value normalization before influxDBOut:\n%s", tick)
+	}
 }
 
 func TestAlertGroupRuleTICKScriptOmitsHostFilterWhenNoHosts(t *testing.T) {
