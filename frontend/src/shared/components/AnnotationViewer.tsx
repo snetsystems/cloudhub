@@ -1,13 +1,13 @@
 import React, {FunctionComponent} from 'react'
 
-import {DygraphClass, AnnotationViewer} from 'src/types'
+import {DygraphClass, AnnotationViewer as AnnotationViewerType} from 'src/types'
 
 import AnnotationPointViewMode from 'src/shared/components/AnnotationPointViewer'
 
 interface Props {
   //dWidth: number
   xAxisRange: [number, number]
-  annotationViewMode: AnnotationViewer
+  annotationViewMode: AnnotationViewerType
   dygraph: DygraphClass
   staticLegendHeight: number
 }

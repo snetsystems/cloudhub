@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title>CloudHub</title>
+    <link rel="shortcut icon" href="./assets/images/favicon.ico" />
+  </head>
+
+  <body>
+    <script>
+      window.mxLoadResources = false;
+      window.mxForceIncludes = false;
+      window.mxResourceExtension = '.txt';
+      window.mxLoadStylesheets = false;
+    </script>
+    <div id="error-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);color:red;z-index:99999;display:none;padding:20px;font-family:monospace;white-space:pre-wrap;overflow:auto;"></div>
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        var el = document.getElementById('error-overlay');
+        el.style.display = 'block';
+        el.innerHTML += 'Error: ' + msg + '\nURL: ' + url + '\nLine: ' + line + ':' + col + '\n' + (error && error.stack ? error.stack : '') + '\n\n';
+      };
+      window.addEventListener("unhandledrejection", function(event) {
+        var el = document.getElementById('error-overlay');
+        el.style.display = 'block';
+        el.innerHTML += 'Unhandled Rejection: ' + (event.reason && event.reason.stack ? event.reason.stack : event.reason) + '\n\n';
+      });
+    </script>
+    <div id="react-root" data-basepath=""></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>

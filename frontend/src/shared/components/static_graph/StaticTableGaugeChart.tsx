@@ -291,7 +291,8 @@ function StaticTableGaugeChart({
       temVarCell
     )
 
-    const tagNameList: string[] = convertData?.map(item => item[0].name) || []
+    const tagNameList: string[] =
+      convertData?.map(item => item[0]?.name).filter(Boolean) || []
 
     const normalizedFields = buildNormalizedFields(
       originFiledOptions,

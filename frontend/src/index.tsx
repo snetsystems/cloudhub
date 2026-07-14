@@ -1,4 +1,7 @@
 import 'babel-polyfill'
+import process from 'process'
+globalThis.process = process
+globalThis.global = globalThis
 import './i18n' // I18N initialization
 
 import React, {PureComponent} from 'react'

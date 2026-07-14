@@ -15,18 +15,7 @@ import SlideToggle from './components/slide_toggle/SlideToggle'
 import Spinner from './components/spinners/Spinner'
 import PopoverModal from './components/PopoverModal/PopoverModal'
 
-// Import Types
-import {
-  ComponentColor,
-  ComponentSize,
-  ComponentStatus,
-  DropdownMenuColors,
-  DropdownChild,
-  ButtonShape,
-  Greys,
-  IconFont,
-  Columns,
-} from './types'
+export * from './types'
 
 // Fire de lazer
 export {
@@ -46,15 +35,6 @@ export {
   PanelType,
   Radio,
   SlideToggle,
-  ComponentColor,
-  ComponentSize,
-  ComponentStatus,
-  DropdownMenuColors,
-  DropdownChild,
-  ButtonShape,
-  Greys,
-  IconFont,
-  Columns,
   Spinner,
   PopoverModal,
 }

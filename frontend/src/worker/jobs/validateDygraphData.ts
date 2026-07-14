@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import {DygraphValue} from 'src/types/dygraphs'
+import type {DygraphValue} from 'src/types/dygraphs'
 import {fetchData} from 'src/worker/utils'
 
 import {Message} from 'src/worker/types'

@@ -28,7 +28,7 @@ class Form extends Component<Props> {
     FormFooter,
   ]
 
-  public static ValidChildNames: string = _.map(Form.ValidChildTypes, valid => {
+  public static ValidChildNames: string = _.map([FormElement, FormLabel, FormDivider, FormFooter], valid => {
     const name = _.get(valid, 'displayName', '')
       .split('Form')
       .pop()

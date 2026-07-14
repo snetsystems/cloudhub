@@ -19,10 +19,17 @@ import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 
 import 'leaflet/dist/leaflet.css'
 
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import markerIconNormal from 'src/addon/128t/components/assets/marker-icon-normal.png'
+import markerIconNormalShadow from 'src/addon/128t/components/assets/marker-icon-shadow.png'
+import markerIconOver from 'src/addon/128t/components/assets/marker-icon-over.png'
+
 let DefaultIcon = L.icon({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -33,9 +40,9 @@ let DefaultIcon = L.icon({
 L.Marker.prototype.options.icon = DefaultIcon
 
 export const routerIcon = new L.Icon({
-  iconUrl: require('src/addon/128t/components/assets/marker-icon-normal.png'),
-  iconRetinaUrl: require('src/addon/128t/components/assets/marker-icon-normal.png'),
-  shadowUrl: require('src/addon/128t/components/assets/marker-icon-shadow.png'),
+  iconUrl: markerIconNormal,
+  iconRetinaUrl: markerIconNormal,
+  shadowUrl: markerIconNormalShadow,
   iconAnchor: [16, 50],
   popupAnchor: [0, -45],
   iconSize: [40, 50],
@@ -43,9 +50,9 @@ export const routerIcon = new L.Icon({
 })
 
 export const routerIconOver = new L.Icon({
-  iconUrl: require('src/addon/128t/components/assets/marker-icon-over.png'),
-  iconRetinaUrl: require('src/addon/128t/components/assets/marker-icon-over.png'),
-  shadowUrl: require('src/addon/128t/components/assets/marker-icon-shadow.png'),
+  iconUrl: markerIconOver,
+  iconRetinaUrl: markerIconOver,
+  shadowUrl: markerIconNormalShadow,
   iconAnchor: [16, 50],
   popupAnchor: [0, -45],
   iconSize: [40, 50],
