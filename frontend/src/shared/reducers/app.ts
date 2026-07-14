@@ -20,6 +20,7 @@ import {
   ElasticSearchAction,
   ElasticSearchActionTypes,
 } from '../actions/elasticSearch'
+import {AppLanguage, getStoredLanguage} from 'src/shared/utils/language'
 
 interface State {
   ephemeral: {
@@ -32,6 +33,7 @@ interface State {
     timeZone: TimeZones
     cloudTimeRange: CloudTimeRange
     esSource: BaseElasticSearchData | null
+    language: AppLanguage
   }
 }
 
@@ -46,6 +48,7 @@ const initialState: State = {
     timeZone: TimeZones.Local,
     cloudTimeRange: CLOUD_TIME_RANGE,
     esSource: null,
+    language: getStoredLanguage(),
   },
 }
 
@@ -106,6 +109,16 @@ const appPersistedReducer = (
         timeZone,
       }
     }
+
+    case ActionTypes.SetLanguage: {
+      const {language} = action.payload
+
+      return {
+        ...state,
+        language,
+      }
+    }
+
     case CloudActionTypes.SetCloudAutoRefresh: {
       return {
         ...state,
