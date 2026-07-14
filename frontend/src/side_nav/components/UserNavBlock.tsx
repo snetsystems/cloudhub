@@ -10,6 +10,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Actions
 import {meChangeOrganizationAsync} from 'src/shared/actions/auth'
+import {setLanguage} from 'src/shared/actions/app'
 
 // Constants
 import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
@@ -17,6 +18,7 @@ import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 // Types
 import {Me} from 'src/types'
 import {Links, ExternalLink} from 'src/types/auth'
+import {AppLanguage} from 'src/shared/utils/language'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -30,6 +32,7 @@ interface Props extends WithTranslation {
   logoutLink: string
   meChangeOrg: (meLink: string, orgID: OrgID) => void
   sourcePrefix: string
+  setLanguage: typeof setLanguage
 }
 
 @ErrorHandling
@@ -110,14 +113,18 @@ class UserNavBlock extends PureComponent<Props> {
           <div className="sidebar-menu--language-toggle-wrapper">
             <div className="sidebar-menu--language-toggle">
               <div
-                className={`language-toggle--item ${!i18n.language.startsWith('ko') ? 'active' : ''}`}
-                onClick={() => i18n.changeLanguage('en')}
+                className={`language-toggle--item ${
+                  !i18n.language.startsWith('ko') ? 'active' : ''
+                }`}
+                onClick={() => this.handleSetLanguage('en')}
               >
                 EN
               </div>
               <div
-                className={`language-toggle--item ${i18n.language.startsWith('ko') ? 'active' : ''}`}
-                onClick={() => i18n.changeLanguage('ko')}
+                className={`language-toggle--item ${
+                  i18n.language.startsWith('ko') ? 'active' : ''
+                }`}
+                onClick={() => this.handleSetLanguage('ko')}
               >
                 KO
               </div>
@@ -131,6 +138,11 @@ class UserNavBlock extends PureComponent<Props> {
     )
   }
 
+  private handleSetLanguage = (language: AppLanguage) => {
+    this.props.setLanguage(language)
+    this.props.i18n.changeLanguage(language)
+  }
+
   private get customLinks(): ExternalLink[] {
     return this.props.links.external.custom
   }
@@ -142,6 +154,7 @@ class UserNavBlock extends PureComponent<Props> {
 
 const mdtp = {
   meChangeOrg: meChangeOrganizationAsync,
+  setLanguage,
 }
 
 export default withTranslation()(connect(null, mdtp)(UserNavBlock))

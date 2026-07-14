@@ -5,6 +5,7 @@ import {notifyPresentationMode} from 'src/shared/copy/notifications'
 
 import {Dispatch} from 'redux'
 import {TimeZones} from 'src/types'
+import {AppLanguage} from 'src/shared/utils/language'
 
 import {
   ActionTypes,
@@ -14,6 +15,7 @@ import {
   DelayEnablePresentationModeDispatcher,
   SetAutoRefreshActionCreator,
   SetAutoRefreshAction,
+  SetLanguageAction,
 } from 'src/types/actions/app'
 
 // ephemeral state action creators
@@ -53,5 +55,12 @@ export const setTimeZone = (timeZone: TimeZones) => ({
   type: ActionTypes.SetTimeZone,
   payload: {
     timeZone,
+  },
+})
+
+export const setLanguage = (language: AppLanguage): SetLanguageAction => ({
+  type: ActionTypes.SetLanguage,
+  payload: {
+    language,
   },
 })

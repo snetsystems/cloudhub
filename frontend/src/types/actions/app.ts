@@ -1,5 +1,6 @@
 import {Dispatch} from 'redux'
 import {TimeZones} from 'src/types'
+import {AppLanguage} from 'src/shared/utils/language'
 
 export enum ActionTypes {
   EnablePresentationMode = 'ENABLE_PRESENTATION_MODE',
@@ -8,6 +9,7 @@ export enum ActionTypes {
   ToggleTemplateVariableControlBar = 'TOGGLE_TEMPLATE_VARIABLE_CONTROL_BAR',
   Noop = 'NOOP',
   SetTimeZone = 'SET_TIME_ZONE',
+  SetLanguage = 'SET_LANGUAGE',
   SetTelegrafSystemInterval = 'SET_TELEGRAF_SYSTEM_INTERVAL',
 }
 
@@ -18,6 +20,7 @@ export type Action =
   | ToggleTemplateVariableControlBarAction
   | SetTelegrafSystemIntervalAction
   | SetTimeZoneAction
+  | SetLanguageAction
 
 export type EnablePresentationModeActionCreator = () => EnablePresentationModeAction
 
@@ -54,6 +57,13 @@ export interface SetTimeZoneAction {
   type: ActionTypes.SetTimeZone
   payload: {
     timeZone: TimeZones
+  }
+}
+
+export interface SetLanguageAction {
+  type: ActionTypes.SetLanguage
+  payload: {
+    language: AppLanguage
   }
 }
 

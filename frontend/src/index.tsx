@@ -1,5 +1,5 @@
 import 'babel-polyfill'
-import './i18n' // I18N initialization
+import i18n from './i18n' // I18N initialization
 
 import React, {PureComponent} from 'react'
 import {render} from 'react-dom'
@@ -140,6 +140,11 @@ const browserHistory = useRouterHistory(createHistory)({
 
 const store = configureStore(loadLocalStorage(errorsQueue), browserHistory)
 const {dispatch} = store
+
+const persistedLanguage = store.getState().app?.persisted?.language
+if (persistedLanguage === 'en' || persistedLanguage === 'ko') {
+  i18n.changeLanguage(persistedLanguage)
+}
 
 // pathname of last location change
 let lastPathname: Pathname
