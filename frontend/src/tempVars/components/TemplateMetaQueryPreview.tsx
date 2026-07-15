@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import ReactTooltip from 'react-tooltip'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TemplatePreviewList from 'src/tempVars/components/TemplatePreviewList'
@@ -28,6 +29,8 @@ interface State {
 
 @ErrorHandling
 class TemplateMetaQueryPreview extends PureComponent<Props, State> {
+  private tooltipIconRef: HTMLDivElement | null = null
+
   constructor(props: Props) {
     super(props)
     this.state = {
@@ -114,16 +117,18 @@ class TemplateMetaQueryPreview extends PureComponent<Props, State> {
               <label style={{margin: 0}}>
                 {isAllEnabled ? 'Remove "All" Option' : 'Add "All" Option'}
               </label>
-              <QuestionMarkTooltip
-                tipID="all-option-tooltip"
-                tipContent={
-                  isAllEnabled
-                    ? '<h1>All Option Usage:</h1><p>When using All Option, you must use regular expressions.</p><p>You <strong>must include a space</strong> after <code>=~</code>.</p><h1>Examples:</h1><p><strong>Single Query:</strong><br/><code>"host" =~ /^hostName1$/</code></p><p><strong>Compound Query:</strong><br/><code>"host" =~ /^hostName1|hostName2$/</code></p><p><strong>All Query:</strong><br/><code>"host" =~ /.*/</code></p>'
-                    : '<h1>Regular Query Usage:</h1><p>When <strong>not</strong> using the All Option, you must specify exact values or explicit patterns.</p><p>You can use an exact match (<code>=</code>), a negative match (<code>!=</code>).</p><h1>Examples:</h1><p><strong>Single Exact Query:</strong><br/><code>"host" = "hostName1"</code></p><p><strong>Single Negative Query:</strong><br/><code>"host" != "hostName1"</code></p><p><strong>Compound Regex Query:</strong><br/><code>WHERE ("host" = "hostName1" OR "host" = "hostName2")</code></p>'
-                }
-                customClass="all-option-tooltip"
-                clickToClose={true}
-              />
+              <div ref={ref => (this.tooltipIconRef = ref)}>
+                <QuestionMarkTooltip
+                  tipID="all-option-tooltip"
+                  tipContent={
+                    isAllEnabled
+                      ? '<h1>All Option Usage:</h1><p>When using All Option, you must use regular expressions.</p><p>You <strong>must include a space</strong> after <code>=~</code>.</p><h1>Examples:</h1><p><strong>Single Query:</strong><br/><code>"host" =~ /^hostName1$/</code></p><p><strong>Compound Query:</strong><br/><code>"host" =~ /^hostName1|hostName2$/</code></p><p><strong>All Query:</strong><br/><code>"host" =~ /.*/</code></p>'
+                      : '<h1>Regular Query Usage:</h1><p>When <strong>not</strong> using the All Option, you must specify exact values or explicit patterns.</p><p>You can use an exact match (<code>=</code>), a negative match (<code>!=</code>).</p><h1>Examples:</h1><p><strong>Single Exact Query:</strong><br/><code>"host" = "hostName1"</code></p><p><strong>Single Negative Query:</strong><br/><code>"host" != "hostName1"</code></p><p><strong>Compound Regex Query:</strong><br/><code>WHERE ("host" = "hostName1" OR "host" = "hostName2")</code></p>'
+                  }
+                  customClass="all-option-tooltip"
+                  clickToClose={true}
+                />
+              </div>
             </span>
           )}
 
@@ -187,6 +192,25 @@ class TemplateMetaQueryPreview extends PureComponent<Props, State> {
     if (onUpdateAllOption) {
       onUpdateAllOption(newState)
     }
+
+    this.showTooltipForToggle()
+  }
+
+  // Show help tip after All toggle only (not on initial editor open)
+  private showTooltipForToggle = (): void => {
+    setTimeout(() => {
+      if (!this.tooltipIconRef) {
+        return
+      }
+
+      const iconElement = this.tooltipIconRef.querySelector(
+        '.question-mark-tooltip--icon'
+      ) as HTMLElement
+
+      if (iconElement) {
+        ReactTooltip.show(iconElement)
+      }
+    }, 100)
   }
 }
 
