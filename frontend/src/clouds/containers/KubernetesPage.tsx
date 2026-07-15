@@ -1064,8 +1064,7 @@ class KubernetesPage extends PureComponent<Props, State> {
 
       if (validNamespaces.length === 0) {
         this.props.notify(notifySelectedNamespacesAreNotValid())
-        this.setState({remoteDataState: RemoteDataState.Error})
-        return
+        validatedSelectedNamespaces = ['All namespaces']
       } else if (validNamespaces.length < selectedNamespaces.length) {
         validatedSelectedNamespaces = validNamespaces
       }
@@ -2804,10 +2803,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         f => !nodeNamesInK8sObject.includes(f['name'])
       ).map((n: any) => n['name'])
     )
-    const nodeDataMap: Record<
-      string,
-      {cpu: string; memory: string}
-    > = {}
+    const nodeDataMap: Record<string, {cpu: string; memory: string}> = {}
     _.forEach(kubernetesObject, m => {
       if (m['type'] === 'Node') {
         nodeDataMap[m['name']] = {cpu: m['cpu'], memory: m['memory']}
@@ -2825,8 +2821,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       const limitCpu = d3.select(this).attr('data-limit-cpu')
       const limitMemory = d3.select(this).attr('data-limit-memory')
       if (!limitCpu || !limitMemory) return
-      const cpuUsage =
-        (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100.0
+      const cpuUsage = (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100.0
       const memoryUsage =
         (parseFloat(data.memory) / parseFloat(limitMemory)) * 100.0
       const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
@@ -2846,10 +2841,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       f => !podNamesInK8sObject.includes(f['name'])
     )
     const grayPodNames = new Set(podsToPaintGray.map((p: any) => p['name']))
-    const podDataMap: Record<
-      string,
-      {cpu: string; memory: string}
-    > = {}
+    const podDataMap: Record<string, {cpu: string; memory: string}> = {}
     _.forEach(kubernetesObject, m => {
       if (m['type'] !== 'Node' && m['type'] !== 'PV') {
         podDataMap[m['name']] = {cpu: m['cpu'], memory: m['memory']}
@@ -2867,8 +2859,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       const limitCpu = d3.select(this).attr('data-limit-cpu')
       const limitMemory = d3.select(this).attr('data-limit-memory')
       if (!limitCpu || !limitMemory) return
-      const cpuUsage =
-        (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100.0
+      const cpuUsage = (parseFloat(data.cpu) / parseFloat(limitCpu)) * 100.0
       const memoryUsage =
         (parseFloat(data.memory) / parseFloat(limitMemory)) * 100.0
       const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
