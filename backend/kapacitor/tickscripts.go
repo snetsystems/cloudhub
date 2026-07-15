@@ -873,5 +873,9 @@ func buildThresholdExpr(field, operator string, value float64) string {
 	if op == "" {
 		op = ">"
 	}
-	return fmt.Sprintf(`"%s" %s %s`, field, op, strconv.FormatFloat(value, 'f', -1, 64))
+	valStr := strconv.FormatFloat(value, 'f', -1, 64)
+	if !strings.Contains(valStr, ".") {
+		valStr += ".0"
+	}
+	return fmt.Sprintf(`(isPresent("%s") AND "%s" %s %s)`, field, field, op, valStr)
 }

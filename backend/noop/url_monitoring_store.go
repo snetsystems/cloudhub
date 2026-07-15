@@ -29,6 +29,10 @@ func (s *URLMonitoringStore) GetByID(_ context.Context, _ string) (*cloudhub.URL
 	return nil, cloudhub.ErrURLMonitoringNotFound
 }
 
+func (s *URLMonitoringStore) GetTargetURLs(_ context.Context, _ []string) (map[string]string, error) {
+	return nil, cloudhub.ErrURLMonitoringNotFound
+}
+
 func (s *URLMonitoringStore) Update(_ context.Context, _ *cloudhub.URLMonitoring) (*cloudhub.URLMonitoring, error) {
 	return nil, fmt.Errorf("no URLMonitoringStore configured")
 }

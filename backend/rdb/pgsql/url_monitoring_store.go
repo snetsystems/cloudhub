@@ -100,6 +100,36 @@ FROM url_check WHERE org_id = $1 AND delete_yn = false`
 	return &m, nil
 }
 
+// GetTargetURLs retrieves a map of target UUID to URL string.
+func (s *URLMonitoringStore) GetTargetURLs(ctx context.Context, targetIDs []string) (map[string]string, error) {
+	if len(targetIDs) == 0 {
+		return make(map[string]string), nil
+	}
+	const q = `
+SELECT id, url
+FROM url_check_targets
+WHERE id = ANY($1) AND delete_yn = false`
+
+	rows, err := s.client.QueryContext(ctx, q, targetIDs)
+	if err != nil {
+		return nil, fmt.Errorf("url_check_targets get targets by ids: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[string]string)
+	for rows.Next() {
+		var id, url string
+		if err := rows.Scan(&id, &url); err != nil {
+			return nil, fmt.Errorf("url_check_targets scan target by ids: %w", err)
+		}
+		result[id] = url
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("url_check_targets rows error target by ids: %w", err)
+	}
+	return result, nil
+}
+
 // GetByID retrieves the URLMonitoring (with targets) by its UUID.
 func (s *URLMonitoringStore) GetByID(ctx context.Context, id string) (*cloudhub.URLMonitoring, error) {
 	const q = `
