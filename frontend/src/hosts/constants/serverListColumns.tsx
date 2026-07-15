@@ -102,6 +102,7 @@ export const serverListColumns = ({
       parentHeader: 'Server',
       parentHeaderClassName: 'parent-header-server',
       options: {
+        sorting: true,
         thead: {
           align: AlignType.LEFT,
           className: 'server-host',
