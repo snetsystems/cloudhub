@@ -47,4 +47,5 @@ interface DashboardTimeRange {
 interface Persisted {
   autoRefresh: number
   timeZones: TimeZones
+  language?: 'en' | 'ko'
 }

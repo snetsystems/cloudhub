@@ -62,6 +62,7 @@ type alertGroupTickSpecParams struct {
 	Measurement           string
 	GroupByTag            string
 	Field                 string
+	HistoryValueField     string
 	Every                 string
 	Info                  string
 	Warn                  string
@@ -187,7 +188,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 			}
 			field := resolveLambdaField(rule, spec, triggerType, evalActive)
 			expr := buildThresholdExpr(field, conditionOperator(c), c.Value)
-			
+
 			if isUrlLevel(c.Level) {
 				if c.Level == "url_4xx" {
 					expr = `("http_response_code" >= 400 AND "http_response_code" < 500)`
@@ -257,6 +258,7 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 			Measurement:       spec.Measurement,
 			GroupByTag:        groupByTag,
 			Field:             spec.Field,
+			HistoryValueField: resolveLambdaField(rule, spec, triggerType, evalActive),
 			Every:             spec.Every,
 			Info:              info,
 			Warn:              warn,

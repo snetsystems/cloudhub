@@ -135,6 +135,9 @@ trigger_{{$spec.Index}}
 {{end}}
 
 trigger_{{$spec.Index}}
+    |eval(lambda: float("{{$spec.HistoryValueField}}"))
+        .as('value')
+        .keep()
     |influxDBOut()
         .create()
         .database(outputDB)
@@ -230,6 +233,9 @@ trigger_{{$spec.Index}}
 {{end}}
 
 trigger_{{$spec.Index}}
+    |eval(lambda: float("{{$spec.HistoryValueField}}"))
+        .as('value')
+        .keep()
     |influxDBOut()
         .create()
         .database(outputDB)
