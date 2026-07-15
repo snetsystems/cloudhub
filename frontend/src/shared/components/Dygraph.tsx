@@ -193,6 +193,16 @@ class Dygraph extends Component<Props, State> {
       this.dygraphOptions = options
     }
 
+    if (prevProps.timeSeries !== this.props.timeSeries) {
+      // Force MaxMarker to re-calculate its Y coordinates after data update
+      // since pure Y-axis scaling doesn't trigger setState in handleDraw.
+      requestAnimationFrame(() => {
+        if (this.dygraph) {
+          this.forceUpdate()
+        }
+      })
+    }
+
     if (dygraph.isZoomed('x') && timeRangeChanged) {
       dygraph.resetZoom()
     }
@@ -441,11 +451,7 @@ class Dygraph extends Component<Props, State> {
     if (!isEqual(visibilities, newVisibilities)) {
       stateUpdate.visibilities = newVisibilities
     }
-    if (
-      !plotAreaSize ||
-      plotAreaSize.w !== areaW ||
-      plotAreaSize.h !== areaH
-    ) {
+    if (!plotAreaSize || plotAreaSize.w !== areaW || plotAreaSize.h !== areaH) {
       stateUpdate.plotAreaSize = {w: areaW, h: areaH}
     }
 
