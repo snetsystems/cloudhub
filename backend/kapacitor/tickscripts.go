@@ -191,9 +191,9 @@ func AlertGroupRuleTICKScript(rule cloudhub.AlertGroupRule, recipients AlertReci
 
 			if isUrlLevel(c.Level) {
 				if c.Level == "url_4xx" {
-					expr = `("http_response_code" >= 400 AND "http_response_code" < 500)`
+					expr = `(isPresent("http_response_code") AND "http_response_code" >= 400 AND "http_response_code" < 500)`
 				} else if c.Level == "url_5xx" {
-					expr = `("http_response_code" >= 500 AND "http_response_code" < 600)`
+					expr = `(isPresent("http_response_code") AND "http_response_code" >= 500 AND "http_response_code" < 600)`
 				} else if c.Level == "url_unknown" {
 					expr = `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`
 				}
