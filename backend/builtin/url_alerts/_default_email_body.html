@@ -17,8 +17,8 @@
                 <table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;font-size:14px;'>
                   <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;width:160px;'>URL</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;font-weight:600;word-break:break-all;'>{{ index .Tags "url" }}</td></tr>
                   <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Level</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;font-weight:600;'>{{ .Level }}</td></tr>
-                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Response Time</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ index .Fields "response_time" }}s</td></tr>
-                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Response Code</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ index .Fields "http_response_code" }}</td></tr>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Response Time</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ if index .Fields "response_time" }}{{ index .Fields "response_time" }}s{{ else }}Timeout (응답 없음){{ end }}</td></tr>
+                  <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Response Code</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ if index .Fields "http_response_code" }}{{ index .Fields "http_response_code" }}{{ else }}Unknown (알 수 없음){{ end }}</td></tr>
                   <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Time</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ .Time }}</td></tr>
                   <tr><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#6b7280;'>Alert ID</td><td style='padding:10px 0;border-top:1px solid #e5e7eb;color:#111827;'>{{ .ID }}</td></tr>
                 </table>

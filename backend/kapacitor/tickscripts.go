@@ -707,9 +707,9 @@ func buildOccurrenceLambda(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRule
 	parts := make([]string, 0, len(enabled))
 	for _, c := range enabled {
 		if c.Level == "url_4xx" {
-			parts = append(parts, `("http_response_code" >= 400 AND "http_response_code" < 500)`)
+			parts = append(parts, `(isPresent("http_response_code") AND "http_response_code" >= 400 AND "http_response_code" < 500)`)
 		} else if c.Level == "url_5xx" {
-			parts = append(parts, `("http_response_code" >= 500 AND "http_response_code" < 600)`)
+			parts = append(parts, `(isPresent("http_response_code") AND "http_response_code" >= 500 AND "http_response_code" < 600)`)
 		} else if c.Level == "url_unknown" {
 			parts = append(parts, `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`)
 		} else {
@@ -792,9 +792,9 @@ func buildExclusiveLambdas(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRule
 	for _, c := range urlConds {
 		var expr string
 		if c.Level == "url_4xx" {
-			expr = `("http_response_code" >= 400 AND "http_response_code" < 500)`
+			expr = `(isPresent("http_response_code") AND "http_response_code" >= 400 AND "http_response_code" < 500)`
 		} else if c.Level == "url_5xx" {
-			expr = `("http_response_code" >= 500 AND "http_response_code" < 600)`
+			expr = `(isPresent("http_response_code") AND "http_response_code" >= 500 AND "http_response_code" < 600)`
 		} else if c.Level == "url_unknown" {
 			expr = `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`
 		}
@@ -855,9 +855,9 @@ func unionRecipients(r AlertRecipients) []string {
 func buildThresholdExpr(field, operator string, value float64) string {
 	switch operator {
 	case "url_4xx":
-		return `("http_response_code" >= 400 AND "http_response_code" < 500)`
+		return `(isPresent("http_response_code") AND "http_response_code" >= 400 AND "http_response_code" < 500)`
 	case "url_5xx":
-		return `("http_response_code" >= 500 AND "http_response_code" < 600)`
+		return `(isPresent("http_response_code") AND "http_response_code" >= 500 AND "http_response_code" < 600)`
 	case "url_unknown":
 		return `(isPresent("http_response_code") == FALSE OR "http_response_code" == 0 OR "http_response_code" < 200 OR "http_response_code" >= 600)`
 	}
