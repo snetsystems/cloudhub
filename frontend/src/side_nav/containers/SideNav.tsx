@@ -2,6 +2,7 @@ import _ from 'lodash'
 import React, {PureComponent} from 'react'
 import {withRouter, Link} from 'react-router'
 import {connect} from 'react-redux'
+import classnames from 'classnames'
 
 import Authorized, {
   ADMIN_ROLE,
@@ -18,10 +19,7 @@ import {
 } from 'src/side_nav/components/NavItems'
 
 import {DEFAULT_HOME_PAGE, AddonType} from 'src/shared/constants'
-import {
-  SERVER_DETAILS_PAGE_NAME,
-  SERVER_DETAILS_IMPORT_PATH,
-} from 'src/shared/constants/routes'
+import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Params, Location, Me} from 'src/types/sideNav'
@@ -45,10 +43,81 @@ interface Props {
   closeShell: () => Shells
 }
 
+interface State {
+  canScrollUp: boolean
+  canScrollDown: boolean
+}
+
 @ErrorHandling
-class SideNav extends PureComponent<Props> {
-  constructor(props) {
-    super(props)
+class SideNav extends PureComponent<Props, State> {
+  private scrollRef: HTMLDivElement = null
+  private resizeObserver: ResizeObserver = null
+
+  public state: State = {
+    canScrollUp: false,
+    canScrollDown: false,
+  }
+
+  public componentDidMount() {
+    this.updateScrollFade()
+  }
+
+  public componentDidUpdate() {
+    this.updateScrollFade()
+  }
+
+  public componentWillUnmount() {
+    this.teardownScrollObserver()
+  }
+
+  private setScrollRef = (el: HTMLDivElement) => {
+    this.teardownScrollObserver()
+    this.scrollRef = el
+    if (el) {
+      this.observeScrollSize()
+      this.updateScrollFade()
+    }
+  }
+
+  private teardownScrollObserver = () => {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
+      this.resizeObserver = null
+    }
+  }
+
+  private observeScrollSize = () => {
+    if (!this.scrollRef || typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.updateScrollFade()
+    })
+    this.resizeObserver.observe(this.scrollRef)
+  }
+
+  private handleScroll = () => {
+    this.updateScrollFade()
+  }
+
+  private updateScrollFade = () => {
+    const el = this.scrollRef
+    if (!el) {
+      return
+    }
+
+    const threshold = 1
+    const canScrollUp = el.scrollTop > threshold
+    const canScrollDown =
+      el.scrollTop + el.clientHeight < el.scrollHeight - threshold
+
+    if (
+      canScrollUp !== this.state.canScrollUp ||
+      canScrollDown !== this.state.canScrollDown
+    ) {
+      this.setState({canScrollUp, canScrollDown})
+    }
   }
 
   private isExistInLinks = (name: string): boolean => {
@@ -241,11 +310,7 @@ class SideNav extends PureComponent<Props> {
           >
             <NavHeader link={kubernetesNavItems[0].link} title="Kubernetes" />
             {kubernetesNavItems.map(item => (
-              <NavListItem
-                key={item.link}
-                link={item.link}
-                exact={item.exact}
-              >
+              <NavListItem key={item.link} link={item.link} exact={item.exact}>
                 {item.label}
               </NavListItem>
             ))}
@@ -416,6 +481,8 @@ class SideNav extends PureComponent<Props> {
       )
     }
 
+    const {canScrollUp, canScrollDown} = this.state
+
     return isHidden ? null : (
       <nav className="sidebar">
         <div
@@ -429,7 +496,20 @@ class SideNav extends PureComponent<Props> {
           </Link>
         </div>
 
-        {navItem()}
+        <div
+          className={classnames('sidebar--scroll-fade', {
+            'sidebar--scroll-fade__top': canScrollUp,
+            'sidebar--scroll-fade__bottom': canScrollDown,
+          })}
+        >
+          <div
+            className="sidebar--scroll"
+            ref={this.setScrollRef}
+            onScroll={this.handleScroll}
+          >
+            {navItem()}
+          </div>
+        </div>
 
         <div
           className={`sidebar--item align-bottom ${
