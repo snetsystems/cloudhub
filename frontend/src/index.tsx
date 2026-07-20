@@ -1,3 +1,4 @@
+import './init.js'
 import 'babel-polyfill'
 import process from 'process'
 globalThis.process = process
