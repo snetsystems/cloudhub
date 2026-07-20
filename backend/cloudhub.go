@@ -2267,6 +2267,7 @@ type RecipientGroupStore interface {
 	AddMember(ctx context.Context, m RecipientGroupMember) (RecipientGroupMember, error)
 	UpdateMember(ctx context.Context, m RecipientGroupMember) error
 	DeleteMember(ctx context.Context, memberID string) error
+	GetMember(ctx context.Context, memberID string) (RecipientGroupMember, error)
 	Members(ctx context.Context, groupID string) ([]RecipientGroupMember, error)
 	MembersByUserID(ctx context.Context, orgID, userID string) ([]RecipientGroupMember, error)
 }

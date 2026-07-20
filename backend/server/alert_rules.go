@@ -482,6 +482,10 @@ func (s *Service) syncKapacitorTask(ctx context.Context, rule cloudhub.AlertGrou
 		return nil
 	}
 
+	// Kapacitor 1.5+ may update the script text on a PATCH but fail to rebuild the running DAG
+	// if the task is already enabled. We explicitly disable it first to force a clean reload.
+	_, _ = patchKapacitorTask(kapa.URL, taskID, tick, db, rp, "disabled")
+
 	missing, err := patchKapacitorTask(kapa.URL, taskID, tick, db, rp, "enabled")
 	if err != nil {
 		s.Logger.Error(fmt.Sprintf("alert-group sync patch failed task=%s error=%v", taskID, err))
