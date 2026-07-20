@@ -16,13 +16,18 @@ import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
 import {
   AlertGroupRule,
   AlertTemplate,
-  DEFAULT_URL_ERROR_CONFIG,
   UrlErrorConfig,
   getTriggerOperators,
   getPauseSecondsOptions,
   Source,
 } from 'src/types'
 import {patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
+
+const EMPTY_URL_ERROR_CONFIG: UrlErrorConfig = {
+  check4xx: false,
+  check5xx: false,
+  unknown: false,
+}
 
 const LEVEL_ORDER: {[key: string]: number} = {
   critical: 1,
@@ -119,9 +124,10 @@ const URLAlertConditionSection: React.FC<Props> = ({
     )
   }, [source, spec.database, rule, onUpdateRule])
 
+  // Missing config means all off (same as list). Do not inject creation defaults on edit.
   const urlErrorConfig = useMemo(
     (): UrlErrorConfig => ({
-      ...DEFAULT_URL_ERROR_CONFIG,
+      ...EMPTY_URL_ERROR_CONFIG,
       ...spec.urlErrorConfig,
     }),
     [spec.urlErrorConfig]
