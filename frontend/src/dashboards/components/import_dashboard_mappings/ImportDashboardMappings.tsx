@@ -4,6 +4,7 @@ import _ from 'lodash'
 
 // Components
 import Dropdown from 'src/shared/components/Dropdown'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Utils
 import {getDeep} from 'src/utils/wrappers'
@@ -121,10 +122,21 @@ class ImportDashboardMappings extends Component<Props, State> {
     }
 
     return (
-      <table className="table dash-map--table">
-        {this.header}
-        <tbody>{this.tableBody}</tbody>
-      </table>
+      <div className="dash-map--table-container">
+        <table className="table dash-map--table dash-map--table-head">
+          {this.header}
+        </table>
+        <FancyScrollbar
+          autoHeight={true}
+          autoHide={false}
+          maxHeight="calc(100vh - 350px)"
+          className="dash-map--scroll"
+        >
+          <table className="table dash-map--table dash-map--table-body">
+            <tbody>{this.tableBody}</tbody>
+          </table>
+        </FancyScrollbar>
+      </div>
     )
   }
 
