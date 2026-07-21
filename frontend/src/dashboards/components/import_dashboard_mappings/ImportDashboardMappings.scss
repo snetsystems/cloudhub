@@ -3,6 +3,44 @@
    -----------------------------------------------------------------------------
 */
 
+.dash-map--table-container {
+  width: 100%;
+}
+
+.dash-map--table {
+  width: 100%;
+  table-layout: fixed;
+  margin-bottom: 0;
+}
+
+.dash-map--scroll.fancy-scroll--container {
+  width: 100%;
+  overflow: hidden;
+
+  .fancy-scroll--view {
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    padding-bottom: $ix-marg-b;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+  }
+
+  .fancy-scroll--track-h {
+    display: none !important;
+  }
+
+  .fancy-scroll--track-v {
+    padding: 6px;
+    top: 2px !important;
+  }
+}
+
 .dash-map--source,
 .dash-map--header,
 .dash-map--cell {
@@ -50,8 +88,11 @@
   width: 45%;
 }
 
-.dash-map--table-cell.dash-map--table-center {
+.dash-map--table-center {
   width: 10%;
+}
+
+.dash-map--table-cell.dash-map--table-center {
   padding-left: 0;
   padding-right: 0;
 }
@@ -60,6 +101,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
   margin-top: 30px;
 }
 
