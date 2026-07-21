@@ -49,12 +49,10 @@ type FetchIntent = 'mode-switch' | 'refresh'
 const TimeRangeDropdownComponent = TimeRangeDropdown as any
 
 // ─── Alert query ───────────────────────────────────────
-const ALERT_DB = 'Default'
-
-// 각 host별로 모든 알람 발생 이력을 가져옴
-const ALERT_QUERY_TEXT = `SELECT "message", "value", "level", "alertName"
-FROM "${ALERT_DB}"."autogen"."cloudhub_alerts"
-WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host" != ""
+// 각 host별로 모든 알람 발생 이력을 가져옴 (URL Alert 제외)
+const getAlertQueryText = (db: string) => `SELECT "message", "value", "level", "alertName", "url"
+FROM "${db}"."autogen"."cloudhub_alerts"
+WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND "host" != "" AND "url" = ''
 GROUP BY "host"
 ORDER BY time DESC 
 LIMIT 1000`
@@ -453,11 +451,13 @@ export function NewHostsPage({
         upperDashboardTime,
       ]
 
+      const alertDb = source?.telegraf || 'Default'
+
       const querySet = [
         {
           id: 'server-list-alert-status',
-          text: ALERT_QUERY_TEXT,
-          db: ALERT_DB,
+          text: getAlertQueryText(alertDb),
+          db: alertDb,
         },
       ]
 
@@ -473,11 +473,15 @@ export function NewHostsPage({
         const host: string = s?.tags?.host
         if (!host) return
 
+        // URL Alert 관련 태그가 있는 시리즈 제외
+        if (s?.tags?.url || s?.tags?.server) return
+
         const timeIndex = (s.columns ?? []).indexOf('time')
         const messageIndex = (s.columns ?? []).indexOf('message')
         const valueIndex = (s.columns ?? []).indexOf('value')
         const levelIndex = (s.columns ?? []).indexOf('level')
         const alertNameIndex = (s.columns ?? []).indexOf('alertName')
+        const urlIndex = (s.columns ?? []).indexOf('url')
 
         const history: any[] = []
         const latestPerAlert: Record<string, AlertLevel> = {}
@@ -491,8 +495,18 @@ export function NewHostsPage({
           const levelTag: string = levelIndex >= 0 ? row[levelIndex] : ''
           const alertNameStr: string =
             alertNameIndex >= 0 ? row[alertNameIndex] : ''
+          const urlVal: string | null = urlIndex >= 0 ? row[urlIndex] : null
 
           if (!eventTime || !alertNameStr) return
+
+          // URL Alert 데이터 거르기 (url 값 존재 또는 URL 알람 명칭/메시지일 경우)
+          if (
+            urlVal ||
+            alertNameStr.toLowerCase().includes('url') ||
+            messageStr.includes('URL 모니터링')
+          ) {
+            return
+          }
 
           const level = mapInfluxLevel(levelTag)
 
