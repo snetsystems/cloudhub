@@ -499,12 +499,12 @@ export function ServerDetailsCellContent({
                   onZoom={() => {}}
                   onDeleteCell={layoutContext.onDeleteCell ?? (() => {})}
                   onCloneCell={layoutContext.onCloneCell ?? (() => {})}
+                  onShowInformation={() => {}}
                   onSummonOverlayTechnologies={
                     layoutContext.onSummonOverlayTechnologies ?? (() => {})
                   }
                   instance={layoutContext.instance}
                   onPickTemplate={layoutContext.onPickTemplate}
-                  onShowInformation={layoutContext.onShowInformation ?? (() => {})}
                 />
               </div>
             ) : (

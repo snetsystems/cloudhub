@@ -1,6 +1,24 @@
 import moment from 'moment'
-import {Query, TimeRange, CellSummary, CellSummaryItem} from 'src/types'
+import {Query, TimeRange, Cell, CellSummary, CellSummaryItem} from 'src/types'
 import {TimeSeriesServerResponse, TimeSeriesValue} from 'src/types/series'
+
+export const toggleCellShowSummary = (
+  cells: Cell[],
+  cell: Cell,
+  onPositionChange?: (cells: Cell[]) => void
+): void => {
+  if (!onPositionChange) {
+    return
+  }
+
+  onPositionChange(
+    cells.map(c =>
+      String(c.i) === String(cell.i)
+        ? {...c, isShowSummary: !c.isShowSummary}
+        : c
+    )
+  )
+}
 
 interface BuildCellSummaryArgs {
   queries: Query[]

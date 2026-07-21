@@ -94,7 +94,6 @@ $dash-graph-options-arrow: 8px;
   left: 0;
   border-radius: $ix-radius;
   border: $ix-border solid $g3-castle;
-  overflow: hidden;
 }
 
 .dash-graph--container {
@@ -103,6 +102,7 @@ $dash-graph-options-arrow: 8px;
   position: relative;
   height: calc(100% - #{$dash-graph-heading});
   padding: 0;
+  overflow: hidden;
   .dygraph {
     position: absolute;
     left: 0;

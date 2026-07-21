@@ -281,7 +281,6 @@ function DashboardPageWithImport({
     onDeleteCell,
     onHideCell,
     onCloneCell,
-    onShowInformation,
     importModal,
   } = useDashboardPageWithImport({
     pageName,
@@ -758,7 +757,6 @@ function DashboardPageWithImport({
                 manualRefresh={effectiveManualRefresh}
                 onDeleteCell={onHideCell}
                 onCloneCell={onCloneCell}
-                onShowInformation={onShowInformation}
                 getExtraActionsForCell={getExtraActionsForCell}
                 onCustomCellAction={onCustomCellAction}
                 onPositionChange={onPositionChange}

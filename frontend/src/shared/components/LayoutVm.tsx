@@ -40,6 +40,7 @@ interface Props {
   onZoom: () => void
   onDeleteCell: () => void
   onCloneCell: () => void
+  onShowInformation: (cell: Cell) => void
   onSummonOverlayTechnologies: () => void
   vmParam: vmParam
   vmParentChartField: string
@@ -67,6 +68,7 @@ class LayoutVm extends Component<Props, State> {
       isEditable,
       onCloneCell,
       onDeleteCell,
+      onShowInformation,
       onSummonOverlayTechnologies,
     } = this.props
     const {cellData, cellFluxData} = this.state
@@ -83,6 +85,7 @@ class LayoutVm extends Component<Props, State> {
         onDeleteCell={onDeleteCell}
         isFluxQuery={this.isFluxQuery}
         toggleVisType={this.toggleVisType}
+        onShowInformation={onShowInformation}
         onSummonOverlayTechnologies={onSummonOverlayTechnologies}
       >
         {this.visualization}
