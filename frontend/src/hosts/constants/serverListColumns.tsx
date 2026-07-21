@@ -496,11 +496,13 @@ export const serverListColumns = ({
                   suffix: '%',
                 }}
               />
-              <div
-                className="ellipsis-text disk-io-device"
-                title={formatDiskDeviceLabel(rowData.Device) as string}
-              >
-                {formatDiskDeviceLabel(rowData.Device)}
+              <div className="disk-io-device-wrapper">
+                <div
+                  className="ellipsis-text disk-io-device"
+                  title={formatDiskDeviceLabel(rowData.Device) as string}
+                >
+                  {formatDiskDeviceLabel(rowData.Device)}
+                </div>
               </div>
             </>
           )
@@ -508,6 +510,7 @@ export const serverListColumns = ({
         return (
           <div className="disk-io-container">
             <TableGaugeCell options={gaugeOptions} value={value} />
+
             <div
               className="ellipsis-text disk-io-device"
               title={formatDiskDeviceLabel(rowData.Device) as string}
