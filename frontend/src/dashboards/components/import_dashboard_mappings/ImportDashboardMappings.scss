@@ -7,37 +7,24 @@
   width: 100%;
 }
 
-.dash-map--table {
-  width: 100%;
-  table-layout: fixed;
-  margin-bottom: 0;
-}
-
 .dash-map--scroll.fancy-scroll--container {
   width: 100%;
   overflow: hidden;
 
   .fancy-scroll--view {
-    width: 100% !important;
-    margin-bottom: 0 !important;
+    width: 100%;
     padding-bottom: $ix-marg-b;
     scrollbar-width: none;
     -ms-overflow-style: none;
-
-    &::-webkit-scrollbar {
-      width: 0;
-      height: 0;
-      display: none;
-    }
   }
 
   .fancy-scroll--track-h {
-    display: none !important;
+    display: none;
   }
 
   .fancy-scroll--track-v {
     padding: 6px;
-    top: 2px !important;
+    top: 2px;
   }
 }
 
