@@ -78,10 +78,10 @@ class Layout extends Component<Props, State> {
       isEditable,
       onCloneCell,
       onDeleteCell,
+      onShowInformation,
       onSummonOverlayTechnologies,
       getExtraActionsForCell,
       onCustomCellAction,
-      onShowInformation,
     } = this.props
     const {cellData, cellFluxData} = this.state
 

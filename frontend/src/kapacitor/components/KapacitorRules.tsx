@@ -71,7 +71,7 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
         return rules
       case 'AI':
         return rules.filter((r: AlertRule) => r.source.includes('ai'))
-      case 'Server':
+      case 'Group':
         return rules.filter((r: AlertRule) => r.source.includes('alert-group'))
       case 'User':
         return rules.filter((r: AlertRule) => r.source === 'user')
@@ -146,8 +146,8 @@ const KapacitorRules: FunctionComponent<KapacitorRulesProps> = ({
                   <Dropdown.Item id="AI" value={{id: 'AI'}}>
                     AI
                   </Dropdown.Item>
-                  <Dropdown.Item id="Server" value={{id: 'Server'}}>
-                    Server
+                  <Dropdown.Item id="Group" value={{id: 'Group'}}>
+                    Group
                   </Dropdown.Item>
                   <Dropdown.Item id="User" value={{id: 'User'}}>
                     User

@@ -9,6 +9,7 @@ const GridLayout = WidthProvider(ReactGridLayout)
 
 // Utils
 import {fastMap} from 'src/utils/fast'
+import {toggleCellShowSummary} from 'src/shared/utils/cellSummary'
 
 // Constants
 import {
@@ -119,6 +120,13 @@ class HostLayoutRenderer extends PureComponent<Props, State> {
                   isEditable={isEditable}
                   onDeleteCell={onDeleteCell}
                   onCloneCell={onCloneCell}
+                  onShowInformation={cell =>
+                    toggleCellShowSummary(
+                      cells,
+                      cell,
+                      this.props.onPositionChange
+                    )
+                  }
                   manualRefresh={manualRefresh}
                   onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                 />
