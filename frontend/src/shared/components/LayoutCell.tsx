@@ -26,6 +26,7 @@ import {NoteVisibility, CellExtraAction} from 'src/types/dashboards'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {CellType} from 'src/types/dashboards'
 import {VisType} from 'src/types/flux'
+import {isShowInformationSupported} from 'src/shared/utils/cellSummary'
 
 interface Props {
   cell: Cell
@@ -71,6 +72,12 @@ export default class LayoutCell extends Component<Props> {
               cell={cell}
               isEditable={isEditable}
               dataExists={!!(cellData.length || cellFluxData.length)}
+              showInformationSupported={isShowInformationSupported({
+                cellType: cell.type,
+                isFluxQuery,
+                responses: cellData,
+                fieldOptions: cell.fieldOptions,
+              })}
               onEdit={this.handleSummonOverlay}
               onClone={onCloneCell}
               onDelete={onDeleteCell}

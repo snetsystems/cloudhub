@@ -1,7 +1,150 @@
 import moment from 'moment'
-import {Query, TimeRange, Cell, CellSummary, CellSummaryItem} from 'src/types'
-import {TimeSeriesServerResponse, TimeSeriesValue} from 'src/types/series'
+import _ from 'lodash'
+import {Query, TimeRange, Cell, CellSummary, CellSummaryItem, Template} from 'src/types'
+import {TimeSeriesServerResponse, TimeSeriesSeries, TimeSeriesValue} from 'src/types/series'
+import {
+  CellType,
+  FieldOption,
+  GraphOptions,
+  TableOptions,
+} from 'src/types/dashboards'
+import {ColorString} from 'src/types/colors'
+import {groupByTimeSeriesTransform} from 'src/utils/groupByTimeSeriesTransform'
+import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
+import {
+  getFieldOptionsWithGroupByTags,
+  parseIfPositiveNumber,
+  staticGraphDatasets,
+} from 'src/shared/utils/staticGraph'
 
+export type CellSummaryMode =
+  | 'time-series'
+  | 'statistical'
+  | 'statistical-single-field'
+  | 'others'
+
+interface IsShowInformationSupportedOptions {
+  cellType: CellType
+  isFluxQuery: boolean
+  responses: TimeSeriesServerResponse[]
+  fieldOptions: FieldOption[]
+}
+
+interface TimeSeriesSummaryOptions {
+  queries: Query[]
+  responses: TimeSeriesServerResponse[]
+  timeRange?: TimeRange
+}
+
+interface SummaryCandidate extends CellSummaryItem {
+  rawLabel: string
+  detailLabel: string | null
+  aggregation: string | null
+}
+
+interface StatisticalSummaryOptions {
+  cellType: CellType
+  queries: Query[]
+  responses: TimeSeriesServerResponse[]
+  timeRange?: TimeRange
+  fieldOptions: FieldOption[]
+  tableOptions: TableOptions
+  colors: ColorString[]
+  graphOptions: GraphOptions
+  templates: Template[]
+}
+
+interface CellSummaryDisplayOptions {
+  isShowSummaryOverlay?: boolean
+  isFluxQuery: boolean
+  cellType: CellType
+  queries: Query[]
+  responses: TimeSeriesServerResponse[]
+  timeRange?: TimeRange
+  colors: ColorString[]
+  fieldOptions: FieldOption[]
+  tableOptions: TableOptions
+  graphOptions: GraphOptions
+  templates: Template[]
+}
+
+const CELL_SUMMARY_CONFIG: Partial<Record<CellType, CellSummaryMode>> = {
+  // TIME SERIES GRAPH — max regardless of field count
+  [CellType.Line]: 'time-series',
+  [CellType.Stacked]: 'time-series',
+  [CellType.StepPlot]: 'time-series',
+  [CellType.Bar]: 'time-series',
+  [CellType.LinePlusSingleStat]: 'time-series',
+  // STATISTICAL GRAPH — max regardless of field count
+  [CellType.StaticBar]: 'statistical',
+  [CellType.StaticStackedBar]: 'statistical',
+  [CellType.StaticLineChart]: 'statistical',
+  // STATISTICAL GRAPH — max only with a single value field
+  [CellType.StaticPie]: 'statistical-single-field',
+  [CellType.StaticDoughnut]: 'statistical-single-field',
+  // OTHERS GRAPH — unsupported
+  [CellType.StaticScatter]: 'others',
+  [CellType.StaticRadar]: 'others',
+  [CellType.StaticTableGaugeChart]: 'others',
+  [CellType.SingleStat]: 'others',
+  [CellType.Gauge]: 'others',
+  [CellType.Table]: 'others',
+  [CellType.Alerts]: 'others',
+  [CellType.News]: 'others',
+  [CellType.Guide]: 'others',
+  [CellType.Note]: 'others',
+}
+
+// Whether "Show Information" is allowed for this cell type and data.
+export const isShowInformationSupported = ({
+  cellType,
+  isFluxQuery,
+  responses,
+  fieldOptions,
+}: IsShowInformationSupportedOptions): boolean => {
+  if (isFluxQuery) {
+    return false
+  }
+
+  const mode = CELL_SUMMARY_CONFIG[cellType] ?? 'others'
+  if (mode === 'others') {
+    return false
+  }
+
+  if (mode === 'time-series') {
+    return true
+  }
+
+  const rawData: TimeSeriesSeries[] = _.get(
+    responses,
+    ['0', 'response', 'results', '0', 'series'],
+    []
+  )
+
+  if (!rawData.length) {
+    return false
+  }
+
+  if (mode === 'statistical') {
+    return true
+  }
+
+  if (mode === 'statistical-single-field') {
+    const tagKeys = Object.keys(rawData[0].tags || {})
+    const visibleValueFieldCount = fieldOptions.filter(
+      field =>
+        field.internalName !== 'time' &&
+        !tagKeys.includes(field.internalName) &&
+        field.visible !== false
+    ).length
+
+    return visibleValueFieldCount === 1
+  }
+
+  return false
+}
+
+// Toggle isShowSummary on a dashboard cell.
 export const toggleCellShowSummary = (
   cells: Cell[],
   cell: Cell,
@@ -20,18 +163,7 @@ export const toggleCellShowSummary = (
   )
 }
 
-interface BuildCellSummaryArgs {
-  queries: Query[]
-  responses: TimeSeriesServerResponse[]
-  timeRange?: TimeRange
-}
-
-interface SummaryCandidate extends CellSummaryItem {
-  rawLabel: string
-  detailLabel: string | null
-  aggregation: string | null
-}
-
+// Build a chart label used to match a time-series line color.
 const toChartLabel = (
   measurement: string | undefined,
   field: string,
@@ -253,11 +385,12 @@ const getFieldAggregation = (
 ): string | null =>
   query?.queryConfig?.fields?.[fieldIndex]?.value?.toLowerCase() ?? null
 
-export const buildCellSummary = ({
+// Find the highest value across all time-series fields and series.
+export const buildTimeSeriesSummary = ({
   queries,
   responses,
   timeRange,
-}: BuildCellSummaryArgs): CellSummary | null => {
+}: TimeSeriesSummaryOptions): CellSummary | null => {
   const candidates: SummaryCandidate[] = []
 
   responses.forEach((response, responseIndex) => {
@@ -362,6 +495,7 @@ export const buildCellSummary = ({
       interval: getQueryInterval(queries, timeRange),
       aggregation: winner.aggregation ?? getAggregation(queries),
       summaryType: 'Chart Max',
+      showTime: true,
     },
     items: [
       {
@@ -371,5 +505,182 @@ export const buildCellSummary = ({
         chartLabel: winner.chartLabel,
       },
     ],
+  }
+}
+
+// Find the highest visible value from static chart datasets and its color.
+const buildStatisticalSummary = ({
+  cellType,
+  queries,
+  responses,
+  timeRange,
+  fieldOptions,
+  tableOptions,
+  colors,
+  graphOptions,
+  templates,
+}: StatisticalSummaryOptions): {
+  summary: CellSummary | null
+  itemColor?: string
+} => {
+  const rawData: TimeSeriesSeries[] = _.get(
+    responses,
+    ['0', 'response', 'results', '0', 'series'],
+    []
+  )
+
+  const createDatasets = staticGraphDatasets(cellType)
+  if (!createDatasets) {
+    return {summary: null}
+  }
+
+  const {labels, datasets} = createDatasets({
+    rawData,
+    fieldOptions: getFieldOptionsWithGroupByTags(queries, fieldOptions),
+    tableOptions,
+    colors,
+    showCount: parseIfPositiveNumber(templates, graphOptions),
+  })
+
+  if (!labels?.length || !datasets?.length) {
+    return {summary: null}
+  }
+
+  let maxValue = -Infinity
+  let maxLabel = ''
+  let maxColor: string | undefined
+
+  datasets.forEach(dataset => {
+    ;(dataset.data || []).forEach((value, dataIndex) => {
+      const numericValue =
+        typeof value === 'number' && Number.isFinite(value)
+          ? value
+          : typeof value === 'object' &&
+            value !== null &&
+            'y' in value &&
+            typeof (value as {y: unknown}).y === 'number' &&
+            Number.isFinite((value as {y: number}).y)
+          ? (value as {y: number}).y
+          : null
+
+      if (numericValue === null || numericValue <= maxValue) {
+        return
+      }
+
+      maxValue = numericValue
+      maxLabel = labels[dataIndex] ?? ''
+
+      const borderColor = dataset.borderColor
+      const backgroundColor = dataset.backgroundColor
+      maxColor = Array.isArray(borderColor)
+        ? borderColor[dataIndex]
+        : borderColor ??
+          (Array.isArray(backgroundColor)
+            ? backgroundColor[dataIndex]
+            : backgroundColor)
+    })
+  })
+
+  if (!Number.isFinite(maxValue)) {
+    return {summary: null}
+  }
+
+  return {
+    summary: {
+      context: {
+        timeRange: formatTimeRange(timeRange),
+        interval: null,
+        aggregation: getAggregation(queries),
+        summaryType: 'Chart Max',
+        showTime: false,
+      },
+      items: [
+        {
+          label: maxLabel,
+          value: maxValue,
+          time: null,
+        },
+      ],
+    },
+    itemColor: maxColor,
+  }
+}
+
+// Build summary + overlay color for a cell, or return null when hidden/unsupported.
+export const resolveCellSummaryDisplay = ({
+  isShowSummaryOverlay,
+  isFluxQuery,
+  cellType,
+  queries,
+  responses,
+  timeRange,
+  colors,
+  fieldOptions,
+  tableOptions,
+  graphOptions,
+  templates,
+}: CellSummaryDisplayOptions): {
+  summary: CellSummary | null
+  itemColor?: string
+} => {
+  if (
+    !isShowSummaryOverlay ||
+    !isShowInformationSupported({
+      cellType,
+      isFluxQuery,
+      responses,
+      fieldOptions,
+    })
+  ) {
+    return {summary: null}
+  }
+
+  const mode = CELL_SUMMARY_CONFIG[cellType] ?? 'others'
+
+  if (mode === 'statistical' || mode === 'statistical-single-field') {
+    return buildStatisticalSummary({
+      cellType,
+      queries,
+      responses,
+      timeRange,
+      fieldOptions,
+      tableOptions,
+      colors,
+      graphOptions,
+      templates,
+    })
+  }
+
+  const summary = buildTimeSeriesSummary({queries, responses, timeRange})
+  if (!summary?.items[0]) {
+    return {summary}
+  }
+
+  if (!summary.items[0].chartLabel) {
+    return {summary}
+  }
+
+  // Match the max series to the chart line color via chartLabel.
+  try {
+    const transformed = groupByTimeSeriesTransform(responses, false)
+    if (!transformed?.sortedLabels?.length) {
+      return {summary}
+    }
+
+    const idx = transformed.sortedLabels.findIndex(
+      label => label.label === summary.items[0].chartLabel
+    )
+    if (idx < 0) {
+      return {summary}
+    }
+
+    return {
+      summary,
+      itemColor: getLineColorsHexes(colors, transformed.sortedLabels.length)[
+        idx
+      ],
+    }
+  } catch {
+    return {summary}
   }
 }

@@ -13,6 +13,7 @@ export interface CellSummaryContext {
   interval: string | null
   aggregation: string | null
   summaryType: string | null
+  showTime?: boolean
 }
 
 export interface CellSummary {
