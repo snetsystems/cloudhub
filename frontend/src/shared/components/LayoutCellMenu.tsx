@@ -15,6 +15,7 @@ interface Props {
   cell: Cell
   isEditable: boolean
   dataExists: boolean
+  showInformationSupported: boolean
   onEdit: () => void
   onClone: (cell: Cell) => void
   onDelete: (cell: Cell) => void
@@ -138,6 +139,7 @@ class LayoutCellMenu extends Component<Props, State> {
       toggleVisType,
       visType,
       isFluxQuery,
+      showInformationSupported,
     } = this.props
 
     const visTypeItem = {
@@ -159,7 +161,7 @@ class LayoutCellMenu extends Component<Props, State> {
       {
         text: 'Show Information',
         action: this.handleShowInformation,
-        disabled: false,
+        disabled: !showInformationSupported,
       },
       {
         text: 'Download CSV',

@@ -45,12 +45,14 @@ import {
   buildScatterChartDefaultXLabel,
   buildScatterChartDefaultYLabel,
 } from 'src/shared/presenters'
-import {fastMap} from 'src/utils/fast'
 import {
   StatisticalGraphFieldOption,
   TableGaugeChartOptionsInterface,
 } from 'src/types/statisticalgraph'
-import {parseIfPositiveNumber} from 'src/shared/utils/staticGraph'
+import {
+  getFieldOptionsWithGroupByTags,
+  parseIfPositiveNumber,
+} from 'src/shared/utils/staticGraph'
 import StaticTableGaugeChart from './StaticTableGaugeChart'
 
 ChartJS.defaults.font.size = 11
@@ -185,7 +187,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     } = this.props
     const {fillArea, showLine, showPoint} = graphOptions
 
-    const fieldOptionsWithGroupByTag = this.getFieldOptionsWithGroupByTags(
+    const fieldOptionsWithGroupByTag = getFieldOptionsWithGroupByTags(
       queries,
       fieldOptions
     )
@@ -399,19 +401,6 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       return label
     }
     return axis === 'x' ? buildDefaultXLabel(queryConfig) : buildDefaultYLabel(queryConfig)
-  }
-
-  private getFieldOptionsWithGroupByTags = (
-    queries: Query[],
-    fieldOptions: StatisticalGraphFieldOption[]
-  ): StatisticalGraphFieldOption[] => {
-    const groupByTags = queries?.[0]?.groupbys || _.get(queries, '0.queryConfig.groupBy.tags', [])
-    return fastMap(fieldOptions, fieldOption => {
-      const isGroupByTag = (groupByTags || []).indexOf(fieldOption.internalName)
-      return isGroupByTag !== -1
-        ? {...fieldOption, groupByTagOrder: isGroupByTag}
-        : fieldOption
-    })
   }
 }
 
