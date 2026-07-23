@@ -409,13 +409,12 @@ export const createIPMIStatusIcon = function (
     console.error('Invalid graph or cell provided.')
     return
   }
-
-  if (!cell.children || cell.children.length === 0) {
-    console.error('No children in the provided cell.')
+  if (!cell.value.includes('data-type="Server"')) {
     return
   }
 
-  if (!cell.value.includes('data-type="Server"')) {
+  if (!cell.children || cell.children.length === 0) {
+    console.error('No children in the provided cell.')
     return
   }
 
