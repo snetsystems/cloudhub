@@ -51,126 +51,139 @@ export interface UrlMonitoringColumnHandlers {
 
 export const urlMonitoringColumns = (
   handlers?: UrlMonitoringColumnHandlers
-): ColumnInfo[] => [
-  {
-    key: 'last_http_response_code',
-    name: 'Status code',
-    align: AlignType.CENTER,
-    options: {
-      thead: {align: AlignType.CENTER, className: 'url-monitoring-status-th'},
-    },
-    render: (value: StatusCodeCell) => {
-      const code = toNumber(value)
-      return (
-        <div
-          className={classnames(
-            'url-monitoring-status-badge',
-            `url-monitoring-status-badge--${getStatusTone(code)}`
-          )}
-          title={code === null ? MISSING_HTTP_STATUS_TITLE : String(code)}
-        >
-          {code ?? MISSING_HTTP_STATUS_LABEL}
-        </div>
-      )
-    },
-  },
-  {
-    key: 'url',
-    name: 'Request / URL',
-    align: AlignType.LEFT,
-    options: {
-      thead: {align: AlignType.LEFT, className: 'url-monitoring-url-th'},
-    },
-    render: (value: unknown, rowData: any) => {
-      const url = String(value ?? '')
-      const name = String(rowData?.name ?? '')
-      return (
-        <div className="url-monitoring-url-cell">
-          {name && (
-            <div className="url-monitoring-url-cell__name">{name}</div>
-          )}
+): ColumnInfo[] => {
+  const columns: ColumnInfo[] = [
+    {
+      key: 'last_http_response_code',
+      name: 'Status code',
+      align: AlignType.CENTER,
+      options: {
+        thead: {align: AlignType.CENTER, className: 'url-monitoring-status-th'},
+      },
+      render: (value: StatusCodeCell) => {
+        const code = toNumber(value)
+        return (
           <div
-            className={classnames('url-monitoring-url-cell__url', {
-              'url-monitoring-url-cell__url--secondary': !!name,
-            })}
-            title={url}
+            className={classnames(
+              'url-monitoring-status-badge',
+              `url-monitoring-status-badge--${getStatusTone(code)}`
+            )}
+            title={code === null ? MISSING_HTTP_STATUS_TITLE : String(code)}
           >
-            {url || '--'}
+            {code ?? MISSING_HTTP_STATUS_LABEL}
           </div>
-        </div>
-      )
+        )
+      },
     },
-  },
-  {
-    key: 'response_time_ms',
-    name: 'Avg. response time (ms)',
-    align: AlignType.RIGHT,
-    options: {
-      thead: {align: AlignType.RIGHT},
-      sorting: true,
+    {
+      key: 'url',
+      name: 'Request / URL',
+      align: AlignType.LEFT,
+      options: {
+        thead: {align: AlignType.LEFT, className: 'url-monitoring-url-th'},
+      },
+      render: (value: unknown, rowData: any) => {
+        const url = String(value ?? '')
+        const name = String(rowData?.name ?? '')
+        return (
+          <div className="url-monitoring-url-cell">
+            {name && (
+              <div className="url-monitoring-url-cell__name">{name}</div>
+            )}
+            <div
+              className={classnames('url-monitoring-url-cell__url', {
+                'url-monitoring-url-cell__url--secondary': !!name,
+              })}
+              title={url}
+            >
+              {url || '--'}
+            </div>
+          </div>
+        )
+      },
     },
-    render: (value: LatencyCell, rowData, _colIdx, rowIndex, tz) => (
-      <URLMonitoringLatencyCell
-        value={value}
-        rowData={rowData as DataTableObject}
-        rowIndex={rowIndex}
-        timeZone={tz}
-        onChartClick={
-          handlers?.onLatencyChartClick
-            ? () =>
-                handlers.onLatencyChartClick?.(rowData as DataTableObject)
-            : undefined
-        }
-      />
-    ),
-  },
-  {
-    key: '__actions__',
-    name: '',
-    align: AlignType.CENTER,
-    options: {
-      thead: {align: AlignType.CENTER, className: 'url-monitoring-actions-th'},
-    },
-    render: (_value: unknown, rowData: any) => (
-      <div
-        className="url-monitoring-row-actions"
-        onClick={e => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          className="btn btn-xs btn-default url-monitoring-row-actions__btn"
-          title="Edit"
-          onClick={e => {
-            e.stopPropagation()
-            handlers?.onEditRow?.(rowData as DataTableObject)
-          }}
-        >
-          <span className="icon pencil" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className="btn btn-xs btn-default url-monitoring-row-actions__btn"
-          title="Copy"
-          onClick={e => {
-            e.stopPropagation()
-            handlers?.onCopyRow?.(rowData as DataTableObject)
-          }}
-        >
-          <span className="icon duplicate" aria-hidden />
-        </button>
-        <ConfirmButton
-          type="btn-default"
-          size="btn-xs"
-          square={true}
-          icon="trash"
-          isEventStopPropagation={true}
-          confirmText="Confirm"
-          confirmAction={() =>
-            handlers?.onDeleteRow?.(rowData as DataTableObject)
+    {
+      key: 'response_time_ms',
+      name: 'Avg. response time (ms)',
+      align: AlignType.RIGHT,
+      options: {
+        thead: {align: AlignType.RIGHT},
+        sorting: true,
+      },
+      render: (value: LatencyCell, rowData, _colIdx, rowIndex, tz) => (
+        <URLMonitoringLatencyCell
+          value={value}
+          rowData={rowData as DataTableObject}
+          rowIndex={rowIndex}
+          timeZone={tz}
+          onChartClick={
+            handlers?.onLatencyChartClick
+              ? () =>
+                  handlers.onLatencyChartClick?.(rowData as DataTableObject)
+              : undefined
           }
-          customClass="url-monitoring-row-actions__btn"
         />
-      </div>
-    ),
-  },
-]
+      ),
+    },
+  ]
+
+  const showRowActions =
+    !!handlers?.onEditRow || !!handlers?.onCopyRow || !!handlers?.onDeleteRow
+
+  if (showRowActions) {
+    columns.push({
+      key: '__actions__',
+      name: '',
+      align: AlignType.CENTER,
+      options: {
+        thead: {
+          align: AlignType.CENTER,
+          className: 'url-monitoring-actions-th',
+        },
+      },
+      render: (_value: unknown, rowData: any) => (
+        <div
+          className="url-monitoring-row-actions"
+          onClick={e => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="btn btn-xs btn-default url-monitoring-row-actions__btn"
+            title="Edit"
+            onClick={e => {
+              e.stopPropagation()
+              handlers?.onEditRow?.(rowData as DataTableObject)
+            }}
+          >
+            <span className="icon pencil" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="btn btn-xs btn-default url-monitoring-row-actions__btn"
+            title="Copy"
+            onClick={e => {
+              e.stopPropagation()
+              handlers?.onCopyRow?.(rowData as DataTableObject)
+            }}
+          >
+            <span className="icon duplicate" aria-hidden />
+          </button>
+          <ConfirmButton
+            type="btn-default"
+            size="btn-xs"
+            square={true}
+            icon="trash"
+            isEventStopPropagation={true}
+            confirmText="Confirm"
+            confirmAction={() =>
+              handlers?.onDeleteRow?.(rowData as DataTableObject)
+            }
+            customClass="url-monitoring-row-actions__btn"
+          />
+        </div>
+      ),
+    })
+  }
+
+  return columns
+}
