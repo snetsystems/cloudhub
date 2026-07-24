@@ -169,6 +169,8 @@ class SideNav extends PureComponent<Props, State> {
     const isUsingAI = this.isAddonUrlOn(AddonType.ai)
     const isUsingNvidiaGpu = this.isAddonUrlOn(AddonType.nvidia)
     const isUsingLogAnalysis = this.isAddonUrlOn(AddonType.logAnalysis)
+    const isAdminRole =
+      !isUsingAuth || isUserAuthorized(me?.role, ADMIN_ROLE)
     const cloudsNavLink = (() => {
       if (isUsingVMware) {
         return 'vmware'
@@ -340,74 +342,60 @@ class SideNav extends PureComponent<Props, State> {
             </NavBlock>
           )}
 
-          <Authorized
-            requiredRole={ADMIN_ROLE}
-            replaceWithIfNotAuthorized={
-              <NavBlock
-                highlightWhen={['logs']}
-                icon="document"
-                link={`${sourcePrefix}/logs`}
-                location={location}
-              >
-                <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-              </NavBlock>
+          <NavBlock
+            highlightWhen={['log-analysis', 'logs', 'activity-logs']}
+            icon="document"
+            link={
+              isUsingLogAnalysis
+                ? `${sourcePrefix}/log-analysis`
+                : `${sourcePrefix}/logs`
             }
-            replaceWithIfNotUsingAuth={
-              <NavBlock
-                highlightWhen={['logs']}
-                icon="document"
-                link={`${sourcePrefix}/logs`}
-                location={location}
-              >
-                <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-              </NavBlock>
-            }
+            location={location}
           >
-            <NavBlock
-              highlightWhen={['log-analysis', 'logs', 'activity-logs']}
-              icon="document"
+            <NavHeader
               link={
                 isUsingLogAnalysis
                   ? `${sourcePrefix}/log-analysis`
                   : `${sourcePrefix}/logs`
               }
-              location={location}
-            >
-              <NavHeader
-                link={
-                  isUsingLogAnalysis
-                    ? `${sourcePrefix}/log-analysis`
-                    : `${sourcePrefix}/logs`
-                }
-                title="Log Viewer"
-              />
-              {isUsingLogAnalysis && (
-                <NavListItem link={`${sourcePrefix}/log-analysis`}>
-                  Log Analysis
-                </NavListItem>
-              )}
-              <NavListItem link={`${sourcePrefix}/logs`}>
-                Log Viewer
+              title="Log Viewer"
+            />
+            {isUsingLogAnalysis && (
+              <NavListItem link={`${sourcePrefix}/log-analysis`}>
+                Log Analysis
               </NavListItem>
-
-              {_.get(me, 'role', '').includes(SUPERADMIN_ROLE) && (
-                <NavListItem link={`${sourcePrefix}/activity-logs`}>
-                  Activity Logs
-                </NavListItem>
-              )}
-            </NavBlock>
-          </Authorized>
+            )}
+            <NavListItem link={`${sourcePrefix}/logs`}>
+              Log Viewer
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/activity-logs`}>
+              Activity Logs
+            </NavListItem>
+          </NavBlock>
 
           <NavBlock
             highlightWhen={['alerts', 'alert-rules', 'tickscript']}
             icon="bell"
-            link={`${sourcePrefix}/alert-rules`}
+            link={
+              isAdminRole
+                ? `${sourcePrefix}/alert-rules`
+                : `${sourcePrefix}/alerts`
+            }
             location={location}
           >
-            <NavHeader link={`${sourcePrefix}/alert-rules`} title="Alert" />
-            <NavListItem link={`${sourcePrefix}/alert-rules`}>
-              Alert Setting
-            </NavListItem>
+            <NavHeader
+              link={
+                isAdminRole
+                  ? `${sourcePrefix}/alert-rules`
+                  : `${sourcePrefix}/alerts`
+              }
+              title="Alert"
+            />
+            {isAdminRole && (
+              <NavListItem link={`${sourcePrefix}/alert-rules`}>
+                Alert Setting
+              </NavListItem>
+            )}
             <NavListItem link={`${sourcePrefix}/alerts`}>
               Alert History
             </NavListItem>

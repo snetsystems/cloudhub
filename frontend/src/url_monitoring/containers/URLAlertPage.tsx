@@ -22,7 +22,9 @@ import {
   AlertRuleTrigger,
   OPERATOR_SYMBOLS,
   RuleSpecValues,
+  Me,
 } from 'src/types'
+import {EDITOR_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
@@ -42,6 +44,8 @@ import AlertSeverityFilter, {
 interface Props {
   router: InjectedRouter
   source: Source
+  me: Me
+  isUsingAuth: boolean
   notify: (n: any) => void
 }
 
@@ -128,8 +132,16 @@ const renderAlertTriggerCell = (
   return <span>-</span>
 }
 
-export function URLAlertPage({router, source, notify}: Props) {
+export function URLAlertPage({
+  router,
+  source,
+  me,
+  isUsingAuth,
+  notify,
+}: Props) {
   const {t} = useTranslation()
+  const isEditorRole =
+    !isUsingAuth || isUserAuthorized(me?.role, EDITOR_ROLE)
   const [isTableLoading, setIsTableLoading] = useState(true)
   const [rules, setRules] = useState<AlertGroupRule[]>([])
   const [targetsById, setTargetsById] = useState<
@@ -266,19 +278,22 @@ export function URLAlertPage({router, source, notify}: Props) {
     />
   )
 
-  const renderTopRight = () => (
-    <Button
-      text={t('url_alert.add_event', '이벤트 추가')}
-      icon={IconFont.BellAdd}
-      size={ComponentSize.Small}
-      color={ComponentColor.Primary}
-      onClick={() => navigateToAlertSetting()}
-    />
-  )
+  const renderTopRight = () =>
+    isEditorRole ? (
+      <Button
+        text={t('url_alert.add_event', '이벤트 추가')}
+        icon={IconFont.BellAdd}
+        size={ComponentSize.Small}
+        color={ComponentColor.Primary}
+        onClick={() => navigateToAlertSetting()}
+      />
+    ) : null
 
-  const columns: ColumnInfo[] = useMemo(
-    () => [
-      {
+  const columns: ColumnInfo[] = useMemo(() => {
+    const nextColumns: ColumnInfo[] = []
+
+    if (isEditorRole) {
+      nextColumns.push({
         key: 'active',
         name: t('server_alert.active', '활성'),
         render: (value: boolean, row: AlertGroupRule) => (
@@ -290,7 +305,10 @@ export function URLAlertPage({router, source, notify}: Props) {
             />
           </div>
         ),
-      },
+      })
+    }
+
+    nextColumns.push(
       {
         key: 'name',
         name: t('url_alert.event_name', '이벤트 이름'),
@@ -388,8 +406,11 @@ export function URLAlertPage({router, source, notify}: Props) {
               : t('server_alert.not_in_use', '사용 안함')}
           </span>
         ),
-      },
-      {
+      }
+    )
+
+    if (isEditorRole) {
+      nextColumns.push({
         key: 'settings',
         name: '',
         align: AlignType.CENTER,
@@ -425,17 +446,19 @@ export function URLAlertPage({router, source, notify}: Props) {
             />
           </div>
         ),
-      },
-    ],
-    [
-      targetsById,
-      unknownLabel,
-      t,
-      handleDelete,
-      handleToggleActive,
-      navigateToAlertSetting,
-    ]
-  )
+      })
+    }
+
+    return nextColumns
+  }, [
+    isEditorRole,
+    targetsById,
+    unknownLabel,
+    t,
+    handleDelete,
+    handleToggleActive,
+    navigateToAlertSetting,
+  ])
 
   return (
     <Page className="hosts-page url-alert-page">
@@ -473,8 +496,18 @@ export function URLAlertPage({router, source, notify}: Props) {
   )
 }
 
+const mstp = state => {
+  const {
+    auth: {me, isUsingAuth},
+  } = state
+  return {
+    me,
+    isUsingAuth,
+  }
+}
+
 const mdtp = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(null, mdtp, null)(withRouter(URLAlertPage))
+export default connect(mstp, mdtp, null)(withRouter(URLAlertPage))

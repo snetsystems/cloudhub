@@ -1,7 +1,8 @@
 import React, {useState, useEffect, useMemo, useCallback} from 'react'
 import {useTranslation} from 'react-i18next'
-import {withRouter} from 'react-router'
+import {withRouter, InjectedRouter, WithRouterProps} from 'react-router'
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 
 import TableComponent from 'src/device_management/components/TableComponent'
 import {
@@ -22,7 +23,9 @@ import {
   AlertGroupRule,
   AlertCondition,
   OPERATOR_SYMBOLS,
+  Me,
 } from 'src/types'
+import {EDITOR_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import {
   getAlertGroupRules,
   deleteAlertGroupRuleAndFetch,
@@ -31,21 +34,36 @@ import {
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifySuccess, notifyError} from 'src/shared/copy/notifications'
 
-const getOperatorSymbol = (op: string): string => {
+const getOperatorSymbol = (op?: string): string => {
   if (!op) {
     return ''
   }
   return OPERATOR_SYMBOLS[op] || op
 }
 
-function ServerAlertManagementPage({router, location, notify}: any) {
+interface Props {
+  router: InjectedRouter
+  location: WithRouterProps['location']
+  me: Me
+  isUsingAuth: boolean
+  notify: (n: any) => void
+}
+
+function ServerAlertManagementPage({
+  router,
+  location,
+  me,
+  isUsingAuth,
+  notify,
+}: Props) {
   const {t} = useTranslation()
+  const isEditorRole =
+    !isUsingAuth || isUserAuthorized(me?.role, EDITOR_ROLE)
   const [data, setData] = useState<AlertGroupRule[]>([])
   const [activeFilter, setActiveFilter] = useState<AlertSeverityFilterValue>(
     'all'
   )
 
-  // 데이터 가져오기
   const fetchData = async () => {
     try {
       const rules = await getAlertGroupRules({targetType: 'host'})
@@ -110,7 +128,6 @@ function ServerAlertManagementPage({router, location, notify}: any) {
     [notify, t]
   )
 
-  // 카운트 계산 (데이터 기반)
   const totalCount = data.length
   const warningCount = data.filter(rule =>
     rule.specs[0].conditions?.some(c => c.level === 'warning' && c.enabled)
@@ -147,29 +164,37 @@ function ServerAlertManagementPage({router, location, notify}: any) {
     />
   )
 
-  const renderTopRight = () => (
-    <Button
-      text={t('server_alert.add_event', '이벤트 추가')}
-      icon={IconFont.BellAdd}
-      size={ComponentSize.Small}
-      color={ComponentColor.Primary}
-      onClick={() => {
-        if (location && location.pathname) {
-          router.push({
-            pathname: location.pathname.replace(
-              '/server-alert',
-              '/alert-setup'
-            ),
-            state: {returnTo: location.pathname},
-          })
-        }
-      }}
-    />
-  )
+  const renderTopRight = () => {
+    if (!isEditorRole) {
+      return null
+    }
 
-  const columns: ColumnInfo[] = useMemo(
-    () => [
-      {
+    return (
+      <Button
+        text={t('server_alert.add_event', '이벤트 추가')}
+        icon={IconFont.BellAdd}
+        size={ComponentSize.Small}
+        color={ComponentColor.Primary}
+        onClick={() => {
+          if (location && location.pathname) {
+            router.push({
+              pathname: location.pathname.replace(
+                '/server-alert',
+                '/alert-setup'
+              ),
+              state: {returnTo: location.pathname},
+            })
+          }
+        }}
+      />
+    )
+  }
+
+  const columns: ColumnInfo[] = useMemo(() => {
+    const nextColumns: ColumnInfo[] = []
+
+    if (isEditorRole) {
+      nextColumns.push({
         key: 'active',
         name: t('server_alert.active', '활성'),
         render: (value: boolean, row: AlertGroupRule) => (
@@ -179,7 +204,10 @@ function ServerAlertManagementPage({router, location, notify}: any) {
             onChange={() => handleToggleActive(row)}
           />
         ),
-      },
+      })
+    }
+
+    nextColumns.push(
       {
         key: 'name',
         name: t('server_alert.event_name', '이벤트 이름'),
@@ -292,8 +320,11 @@ function ServerAlertManagementPage({router, location, notify}: any) {
               : t('server_alert.not_in_use', '사용 안함')}
           </span>
         ),
-      },
-      {
+      }
+    )
+
+    if (isEditorRole) {
+      nextColumns.push({
         key: 'settings',
         name: '',
         render: (_value: any, row: AlertGroupRule) => (
@@ -326,10 +357,11 @@ function ServerAlertManagementPage({router, location, notify}: any) {
             />
           </div>
         ),
-      },
-    ],
-    [t, handleToggleActive, handleDelete]
-  )
+      })
+    }
+
+    return nextColumns
+  }, [isEditorRole, t, handleToggleActive, handleDelete, location, router])
 
   return (
     <Page>
@@ -361,11 +393,18 @@ function ServerAlertManagementPage({router, location, notify}: any) {
   )
 }
 
-const mapDispatchToProps = {
-  notify: notifyAction,
+const mstp = state => {
+  const {
+    auth: {me, isUsingAuth},
+  } = state
+  return {
+    me,
+    isUsingAuth,
+  }
 }
 
-export default connect(
-  null,
-  mapDispatchToProps
-)(withRouter(ServerAlertManagementPage))
+const mdtp = dispatch => ({
+  notify: bindActionCreators(notifyAction, dispatch),
+})
+
+export default connect(mstp, mdtp)(withRouter(ServerAlertManagementPage))
