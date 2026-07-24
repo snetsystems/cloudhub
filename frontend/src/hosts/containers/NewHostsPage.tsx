@@ -1,6 +1,7 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {useTranslation} from 'react-i18next'
-import {Source, Links, RefreshRate, TimeZones} from 'src/types'
+import {Source, Links, RefreshRate, TimeZones, Me} from 'src/types'
+import {EDITOR_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import {Page} from 'src/reusable_ui'
 import {
   ButtonShape,
@@ -85,6 +86,8 @@ interface Props {
   cloudAutoRefresh: CloudAutoRefresh
   cloudTimeRange: CloudTimeRange
   timeZone: TimeZones
+  me: Me
+  isUsingAuth: boolean
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   setTimeZone: typeof appActions.setTimeZone
@@ -98,6 +101,8 @@ export function NewHostsPage({
   cloudAutoRefresh,
   cloudTimeRange,
   timeZone,
+  me,
+  isUsingAuth,
   onChooseCloudAutoRefresh,
   onChooseCloudTimeRange,
   setTimeZone,
@@ -105,6 +110,8 @@ export function NewHostsPage({
   location,
 }: Props) {
   const {t} = useTranslation()
+  const isEditorRole =
+    !isUsingAuth || isUserAuthorized(me?.role, EDITOR_ROLE)
 
   const [manualRefreshState, setManualRefreshState] = useState<ManualRefresh>({
     key: 'server-list',
@@ -592,25 +599,27 @@ export function NewHostsPage({
                   {isRefreshing && (
                     <LoadingDots className="server-list-loading-dots" />
                   )}
-                  <div className="topright-render-container">
-                    <Button
-                      text={t('server_alert.add_event', '이벤트 추가')}
-                      icon={IconFont.BellAdd}
-                      size={ComponentSize.Small}
-                      color={ComponentColor.Primary}
-                      onClick={() => {
-                        if (location && location.pathname && router) {
-                          router.push({
-                            pathname: location.pathname.replace(
-                              '/server-list',
-                              '/alert-setup'
-                            ),
-                            state: {returnTo: location.pathname},
-                          })
-                        }
-                      }}
-                    />
-                  </div>
+                  {isEditorRole && (
+                    <div className="topright-render-container">
+                      <Button
+                        text={t('server_alert.add_event', '이벤트 추가')}
+                        icon={IconFont.BellAdd}
+                        size={ComponentSize.Small}
+                        color={ComponentColor.Primary}
+                        onClick={() => {
+                          if (location && location.pathname && router) {
+                            router.push({
+                              pathname: location.pathname.replace(
+                                '/server-list',
+                                '/alert-setup'
+                              ),
+                              state: {returnTo: location.pathname},
+                            })
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
                 </>
               }
               topLeftRender={
@@ -715,6 +724,7 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
     },
     links,
+    auth: {me, isUsingAuth},
   } = state
   return {
     links,
@@ -722,6 +732,8 @@ const mstp = state => {
     cloudTimeRange,
     cloudAutoRefresh,
     inPresentationMode,
+    me,
+    isUsingAuth,
   }
 }
 
