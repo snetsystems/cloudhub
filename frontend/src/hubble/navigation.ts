@@ -12,12 +12,12 @@ export const buildKubernetesNavItems = (
   sourcePrefix: string
 ): KubernetesNavItem[] => [
   {
-    label: 'Overview',
+    label: 'Cluster Map',
     link: `${sourcePrefix}/${KUBERNETES_OVERVIEW_ROUTE}`,
     exact: true,
   },
   {
-    label: 'Cilium',
+    label: 'Traffic Map',
     link: `${sourcePrefix}/${KUBERNETES_NETWORK_ROUTE}`,
   },
 ]

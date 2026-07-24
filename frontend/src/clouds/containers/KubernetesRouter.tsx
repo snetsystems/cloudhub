@@ -81,7 +81,7 @@ function KubernetesRouter({
     <Page className="hosts-list-page">
       <Page.Header inPresentationMode={inPresentationMode}>
         <Page.Header.Left>
-          <Page.Title title="Kubernetes" />
+          <Page.Title title="Cluster Map" />
         </Page.Header.Left>
         <Page.Header.Right showSourceIndicator={true}>
           <KubernetesTip />
