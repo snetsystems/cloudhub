@@ -6,6 +6,7 @@ import PropTypes from 'prop-types'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
+import {getMeAsync} from 'src/shared/actions/auth'
 import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 
 class OTPLoginPage extends PureComponent {
@@ -27,6 +28,7 @@ class OTPLoginPage extends PureComponent {
         basicPassword,
         handleOTPChange,
         handleLogin,
+        handleGetMe,
       } = this.props
       const {name, password} = this.state
 
@@ -43,8 +45,10 @@ class OTPLoginPage extends PureComponent {
         handleOTPChange({url: basicPassword, user}).then(res => {
           if (res.status === 200) {
             setTimeout(() => {
-              handleLogin({url: basicauth.login, user}).then(() => {
-                router.go('/')
+              handleLogin({url: basicauth.login, user}).then(async () => {
+                sessionStorage.removeItem('cloudhub:organizationPicked')
+                await handleGetMe({shouldResetMe: true})
+                router.push('/purgatory')
               })
             }, 1000)
           }
@@ -197,6 +201,7 @@ const mapStateToProps = ({
 const mapDispatchToProps = {
   handleLogin: loginAsync,
   handleOTPChange: otpChangeAsync,
+  handleGetMe: getMeAsync,
 }
 
 const {shape, string, func} = PropTypes
@@ -209,6 +214,7 @@ OTPLoginPage.propTypes = {
   handleOTPChange: func.isRequired,
   location: shape().isRequired,
   handleLogin: func.isRequired,
+  handleGetMe: func.isRequired,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(OTPLoginPage)
