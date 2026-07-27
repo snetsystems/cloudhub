@@ -32,6 +32,14 @@
   &.read-only {
     background-color: $g3-castle;
   }
+
+  .CodeMirror {
+    max-height: 20vh;
+  }
+
+  .CodeMirror-scroll {
+    max-height: 20vh;
+  }
 }
 .query-editor--status {
   display: flex;
