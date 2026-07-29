@@ -119,19 +119,7 @@ export class CheckSources extends Component<Props, State> {
       router,
       auth: {isUsingAuth, me},
       links,
-      location,
     } = this.props
-
-    // After login (basic/OAuth), show org picker until the user picks one.
-    if (
-      isUsingAuth &&
-      sessionStorage.getItem('cloudhub:organizationPicked') !== '1' &&
-      location.pathname === '/'
-    ) {
-      router.push('/purgatory')
-      return
-    }
-
     if (!isUsingAuth || isUserAuthorized(me.role, VIEWER_ROLE)) {
       await this.props.getSources()
       await this.props.getOrgAll(links.organizations)

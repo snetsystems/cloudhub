@@ -8,7 +8,6 @@ import Notifications from 'src/shared/components/Notifications'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import SplashPage from 'src/shared/components/SplashPage'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {getMeAsync} from 'src/shared/actions/auth'
 import {loginAsync, createUserAsync} from 'src/auth/actions'
 import {notifyLoginCheck} from 'src/shared/copy/notifications'
 import {LOGIN_AUTH_TYPE, BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
@@ -32,14 +31,7 @@ class Login extends PureComponent {
   }
 
   handleLoginSubmit = _.debounce(() => {
-    const {
-      router,
-      basicauth,
-      retryPolicys,
-      handleLogin,
-      handleGetMe,
-      notify,
-    } = this.props
+    const {router, basicauth, retryPolicys, handleLogin, notify} = this.props
     const {name, password} = this.state
 
     if (_.isEmpty(name) || _.isEmpty(password)) {
@@ -51,11 +43,9 @@ class Login extends PureComponent {
       url: basicauth.login,
       user: {name, password},
       retryPolicys,
-    }).then(async ({data}) => {
+    }).then(({data}) => {
       if (data?.passwordResetFlag === 'N') {
-        sessionStorage.removeItem('cloudhub:organizationPicked')
-        await handleGetMe({shouldResetMe: true})
-        router.push('/purgatory')
+        router.go('/')
       } else {
         router.push({
           pathname: '/otp-login',
@@ -334,9 +324,6 @@ class Login extends PureComponent {
                   key={link.name}
                   className="btn btn-primary auth-form"
                   href={link.login}
-                  onClick={() =>
-                    sessionStorage.removeItem('cloudhub:organizationPicked')
-                  }
                 >
                   <span className={`icon ${link.name}`} />
                   Log in with {link.label}
@@ -370,7 +357,6 @@ const mapStatetoProps = ({
 const mapDispatchToProps = {
   handleLogin: loginAsync,
   handleCreateUser: createUserAsync,
-  handleGetMe: getMeAsync,
   notify: notifyAction,
 }
 const {array, bool, shape, string, func} = PropTypes
@@ -393,7 +379,6 @@ Login.propTypes = {
   }),
   handleLogin: func.isRequired,
   handleCreateUser: func.isRequired,
-  handleGetMe: func.isRequired,
   notify: func.isRequired,
 }
 export default connect(mapStatetoProps, mapDispatchToProps)(Login)

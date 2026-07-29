@@ -20,7 +20,6 @@ const handleClickLogin = props => organization => async e => {
   const {router, links, meChangeOrganization} = props
 
   await meChangeOrganization(links.me, {organization: organization.id})
-  sessionStorage.setItem('cloudhub:organizationPicked', '1')
   router.push('')
 }
 
