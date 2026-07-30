@@ -46,7 +46,7 @@ function PredictionTooltip({
           isCritical
             ? `prediction-tooltip--blink`
             : isWarning
-            ? 'blink-opacity-animation-warning'
+            ? 'prediction-tooltip--blink-warning'
             : ''
         }
       >

@@ -59,7 +59,7 @@ func (s *Service) AlertGroupRulesGet(w http.ResponseWriter, r *http.Request) {
 			s.Logger.Error("AlertGroupRulesGet: resolve recipients:", err)
 			continue
 		}
-		processor := getTargetProcessor(rules[i], s.AlertGroupRules)
+		processor := s.getTargetProcessor(ctx, rules[i])
 		var targets []string
 		if processor.Type() == "url" {
 			targets = rules[i].URLTargetIDs
@@ -137,7 +137,7 @@ func (s *Service) AlertGroupRuleCreate(w http.ResponseWriter, r *http.Request) {
 		internalServerError(w, err, s.Logger)
 		return
 	}
-	processor := getTargetProcessor(rule, s.AlertGroupRules)
+	processor := s.getTargetProcessor(ctx, rule)
 	var targets []string
 	if processor.Type() == "url" {
 		targets = rule.URLTargetIDs
@@ -163,7 +163,7 @@ func (s *Service) AlertGroupRuleIDGet(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.Logger.Error("AlertGroupRuleIDGet: resolve recipients:", err)
 	}
-	processor := getTargetProcessor(rule, s.AlertGroupRules)
+	processor := s.getTargetProcessor(ctx, rule)
 	var targets []string
 	if processor.Type() == "url" {
 		targets = rule.URLTargetIDs
@@ -238,7 +238,7 @@ func (s *Service) AlertGroupRuleUpdate(w http.ResponseWriter, r *http.Request) {
 		internalServerError(w, err, s.Logger)
 		return
 	}
-	processor := getTargetProcessor(req, s.AlertGroupRules)
+	processor := s.getTargetProcessor(ctx, req)
 	var targets []string
 	if processor.Type() == "url" {
 		targets = req.URLTargetIDs
@@ -445,7 +445,7 @@ func (s *Service) syncKapacitorTask(ctx context.Context, rule cloudhub.AlertGrou
 		return fmt.Errorf("syncKapacitorTask: get kapacitor: %w", err)
 	}
 	taskID := "alert-group-" + rule.ID
-	processor := getTargetProcessor(rule, s.AlertGroupRules)
+	processor := s.getTargetProcessor(ctx, rule)
 	var targets []string
 	if processor.Type() == "url" {
 		targets, err = s.AlertGroupRules.URLTargetIDs(ctx, rule.ID)
@@ -481,6 +481,10 @@ func (s *Service) syncKapacitorTask(ctx context.Context, rule cloudhub.AlertGrou
 		}
 		return nil
 	}
+
+	// Kapacitor 1.5+ may update the script text on a PATCH but fail to rebuild the running DAG
+	// if the task is already enabled. We explicitly disable it first to force a clean reload.
+	_, _ = patchKapacitorTask(kapa.URL, taskID, tick, db, rp, "disabled")
 
 	missing, err := patchKapacitorTask(kapa.URL, taskID, tick, db, rp, "enabled")
 	if err != nil {
@@ -1099,9 +1103,9 @@ func createKapacitorTask(kapaURL, taskID, tick, database, retentionPolicy string
 	return nil
 }
 
-func getTargetProcessor(rule cloudhub.AlertGroupRule, store cloudhub.AlertGroupRuleStore) TargetProcessor {
+func (s *Service) getTargetProcessor(ctx context.Context, rule cloudhub.AlertGroupRule) TargetProcessor {
 	if len(rule.URLTargetIDs) > 0 {
-		return &URLTargetProcessor{Store: store}
+		return &URLTargetProcessor{Store: s.AlertGroupRules, URLStore: s.Store.URLMonitoring(serverContext(ctx)), OrgID: rule.OrgID, Ctx: serverContext(ctx)}
 	}
-	return &HostTargetProcessor{Store: store}
+	return &HostTargetProcessor{Store: s.AlertGroupRules}
 }

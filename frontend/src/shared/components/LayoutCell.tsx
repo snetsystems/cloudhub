@@ -26,6 +26,7 @@ import {NoteVisibility, CellExtraAction} from 'src/types/dashboards'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {CellType} from 'src/types/dashboards'
 import {VisType} from 'src/types/flux'
+import {isShowInformationSupported} from 'src/shared/utils/cellSummary'
 
 interface Props {
   cell: Cell
@@ -42,7 +43,7 @@ interface Props {
   toggleVisType: () => void
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   onExtraAction?: (cell: Cell, actionId: string) => void
-  onShowInformation?: (cell: Cell) => void
+  onShowInformation: (cell: Cell) => void
 }
 
 @ErrorHandling
@@ -61,7 +62,6 @@ export default class LayoutCell extends Component<Props> {
       visType,
       toggleVisType,
       isFluxQuery,
-      onShowInformation
     } = this.props
 
     return (
@@ -72,17 +72,23 @@ export default class LayoutCell extends Component<Props> {
               cell={cell}
               isEditable={isEditable}
               dataExists={!!(cellData.length || cellFluxData.length)}
+              showInformationSupported={isShowInformationSupported({
+                cellType: cell.type,
+                isFluxQuery,
+                responses: cellData,
+                fieldOptions: cell.fieldOptions,
+              })}
               onEdit={this.handleSummonOverlay}
               onClone={onCloneCell}
               onDelete={onDeleteCell}
               onCSVDownload={this.handleCSVDownload}
+              onShowInformation={this.handleShowInformation}
               queries={this.queries}
               isFluxQuery={isFluxQuery}
               visType={visType}
               toggleVisType={toggleVisType}
               getExtraActionsForCell={this.props.getExtraActionsForCell}
               onExtraAction={this.props.onExtraAction}
-              onShowInformation={onShowInformation}
             />
           </Authorized>
           <LayoutCellNote
@@ -189,6 +195,11 @@ export default class LayoutCell extends Component<Props> {
   private handleSummonOverlay = (): void => {
     const {cell, onSummonOverlayTechnologies} = this.props
     onSummonOverlayTechnologies(cell)
+  }
+
+  private handleShowInformation = (): void => {
+    const {cell, onShowInformation} = this.props
+    onShowInformation(cell)
   }
 
   private handleCSVDownload = async (): Promise<void> => {

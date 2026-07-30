@@ -1949,6 +1949,8 @@ type URLMonitoringStore interface {
 	Update(ctx context.Context, m *URLMonitoring) (*URLMonitoring, error)
 	// Delete soft-deletes the URLMonitoring by its UUID.
 	Delete(ctx context.Context, id string) error
+	// GetTargetURLs returns a map of target UUID to URL string.
+	GetTargetURLs(ctx context.Context, targetIDs []string) (map[string]string, error)
 }
 
 // RecipientGroup is a Layer 1 (domain-neutral) recipient grouping.
@@ -2265,6 +2267,7 @@ type RecipientGroupStore interface {
 	AddMember(ctx context.Context, m RecipientGroupMember) (RecipientGroupMember, error)
 	UpdateMember(ctx context.Context, m RecipientGroupMember) error
 	DeleteMember(ctx context.Context, memberID string) error
+	GetMember(ctx context.Context, memberID string) (RecipientGroupMember, error)
 	Members(ctx context.Context, groupID string) ([]RecipientGroupMember, error)
 	MembersByUserID(ctx context.Context, orgID, userID string) ([]RecipientGroupMember, error)
 }

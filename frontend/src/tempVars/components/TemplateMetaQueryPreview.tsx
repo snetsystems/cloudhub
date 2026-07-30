@@ -38,21 +38,11 @@ class TemplateMetaQueryPreview extends PureComponent<Props, State> {
     }
   }
 
-  public componentDidMount() {
-    if (this.state.isAllEnabled) {
-      this.showTooltipAutomatically()
-    }
-  }
-
-  public componentDidUpdate(prevProps: Props, prevState: State) {
+  public componentDidUpdate(prevProps: Props) {
     if (prevProps.isAllEnabled !== this.props.isAllEnabled) {
       this.setState({
         isAllEnabled: this.props.isAllEnabled || false,
       })
-    }
-
-    if (prevState.isAllEnabled !== this.state.isAllEnabled) {
-      this.showTooltipAutomatically()
     }
   }
 
@@ -202,18 +192,23 @@ class TemplateMetaQueryPreview extends PureComponent<Props, State> {
     if (onUpdateAllOption) {
       onUpdateAllOption(newState)
     }
+
+    this.showTooltipForToggle()
   }
 
-  private showTooltipAutomatically = (): void => {
+  // Show help tip after All toggle only (not on initial editor open)
+  private showTooltipForToggle = (): void => {
     setTimeout(() => {
-      if (this.tooltipIconRef) {
-        const iconElement = this.tooltipIconRef.querySelector(
-          '.question-mark-tooltip--icon'
-        ) as HTMLElement
-        
-        if (iconElement) {
-          ReactTooltip.show(iconElement)
-        }
+      if (!this.tooltipIconRef) {
+        return
+      }
+
+      const iconElement = this.tooltipIconRef.querySelector(
+        '.question-mark-tooltip--icon'
+      ) as HTMLElement
+
+      if (iconElement) {
+        ReactTooltip.show(iconElement)
       }
     }, 100)
   }

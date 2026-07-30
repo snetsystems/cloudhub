@@ -52,6 +52,7 @@ interface Props extends WithTranslation {
   templates?: AlertTemplate[]
   onUpdateRule: (patch: Partial<AlertGroupRule>) => void
   builderMode?: 'template' | 'raw'
+  selectedTemplateId?: string
   onSwitchToRawMode?: () => void
   children?: React.ReactNode
 }
@@ -149,7 +150,6 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     super(props)
 
     const {source, rule} = props
-    console.log('hwanhoon rule', rule)
     const spec = rule.specs[0]
     // Edit mode: pre-populate from saved rule. New mode: auto-select default DB.
     this.state = {
@@ -687,6 +687,7 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
       me,
       isUsingAuth,
       builderMode,
+      selectedTemplateId = 'custom',
       t,
     } = this.props
     const {queryConfig} = this.state
@@ -696,7 +697,9 @@ class AlertGroupConditionSection extends PureComponent<Props, State> {
     const selectedPause = translatedPauseOptions.find(
       o => o.value === rule.pauseSeconds
     )
-    const isTemplateMode = builderMode !== 'raw'
+    // Template selected → template UI; otherwise query builder
+    const isTemplateMode =
+      selectedTemplateId !== 'custom' && builderMode !== 'raw'
     return (
       <div className="rule-section">
         <div className="alert-group-section-header">

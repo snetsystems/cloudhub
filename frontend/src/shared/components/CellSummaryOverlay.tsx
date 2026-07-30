@@ -46,6 +46,7 @@ function CellSummaryOverlay({
   ).trim()
   const formattedTime = formatSummaryTime(item.time)
   const summaryTypeLabel = summary.context.summaryType || 'Chart Max'
+  const showTime = summary.context.showTime !== false
 
   const line1Parts: (string | null)[] = []
   if (summary.context.timeRange) {
@@ -77,7 +78,8 @@ function CellSummaryOverlay({
         <span className="cell-summary-overlay__item-content">
           {summaryTypeLabel} · Value: {prefix}
           {formattedValue}
-          {suffix} · Time: {formattedTime} · Label: {item.label}
+          {suffix}
+          {showTime ? ` · Time: ${formattedTime}` : ''} · Label: {item.label}
         </span>
       </div>
     </div>

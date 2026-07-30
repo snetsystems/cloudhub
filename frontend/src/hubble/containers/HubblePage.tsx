@@ -440,7 +440,7 @@ const HubblePage: React.FC = () => {
       <Page.Header>
         <Page.Header.Left>
           <div className="hubble-page-title">
-            <Page.Title title="Cilium" />
+            <Page.Title title="Traffic Map" />
             <HubbleBetaBadge />
             {clusters.length > 0 && (
               <StatusBar

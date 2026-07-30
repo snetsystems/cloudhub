@@ -166,6 +166,19 @@ func scanMember(row interface{ Scan(...any) error }) (cloudhub.RecipientGroupMem
 	return m, nil
 }
 
+func (s *RecipientGroupStore) GetMember(ctx context.Context, memberID string) (cloudhub.RecipientGroupMember, error) {
+	q := `SELECT ` + memberCols + ` FROM recipient_group_members WHERE id = $1 AND delete_yn = false`
+	row := s.client.QueryRowContext(ctx, q, memberID)
+	m, err := scanMember(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return cloudhub.RecipientGroupMember{}, fmt.Errorf("recipient_group_member.GetMember: not found")
+		}
+		return cloudhub.RecipientGroupMember{}, fmt.Errorf("recipient_group_member.GetMember: %w", err)
+	}
+	return m, nil
+}
+
 func (s *RecipientGroupStore) Members(ctx context.Context, groupID string) ([]cloudhub.RecipientGroupMember, error) {
 	q := `SELECT ` + memberCols + ` FROM recipient_group_members WHERE recipient_group_id = $1 AND delete_yn = false ORDER BY created_at`
 	rows, err := s.client.QueryContext(ctx, q, groupID)

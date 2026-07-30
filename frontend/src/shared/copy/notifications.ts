@@ -1841,6 +1841,6 @@ export const notifyNamespaceRequired = (): Notification => ({
 
 export const notifySelectedNamespacesAreNotValid = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Selected namespaces are not valid.`,
+  message: `Selected namespaces are no longer available. Selection has been reset to All namespaces.`,
   duration: INFINITE,
 })

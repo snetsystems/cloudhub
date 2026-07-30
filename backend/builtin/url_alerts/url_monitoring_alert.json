@@ -11,7 +11,7 @@
   "occurrenceWindow": "5m",
   "pauseSeconds": 0,
   "notifyRecovery": true,
-  "message": "{{ index .Tags \"server\" }} URL 모니터링 알람 {{ .Level }} (상태 코드 또는 응답시간 지연)",
+  "message": "{{ index .Tags \"url\" }} URL 모니터링 알람 {{ .Level }} (상태 코드 또는 응답시간 지연)",
   "specs": [
     {
       "database": "",

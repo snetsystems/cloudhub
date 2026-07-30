@@ -3,10 +3,17 @@ import React, {
   FunctionComponent,
   ReactNode,
   ReactElement,
+  CSSProperties,
 } from 'react'
+import {createPortal} from 'react-dom'
 import {Link} from 'react-router'
 import classnames from 'classnames'
 import _ from 'lodash'
+
+import {
+  computeSidebarMenuStyle,
+  isSidebarMenuOpeningUpward,
+} from 'src/side_nav/utils/sidebarMenuPosition'
 
 interface NavListItemProps {
   link: string
@@ -77,9 +84,30 @@ interface NavBlockProps {
   highlightWhen: string[]
 }
 
-class NavBlock extends PureComponent<NavBlockProps> {
+interface NavBlockState {
+  isMenuOpen: boolean
+  menuStyle: CSSProperties
+  opensUpward: boolean
+}
+
+class NavBlock extends PureComponent<NavBlockProps, NavBlockState> {
+  private itemRef: HTMLDivElement = null
+  private menuRef: HTMLDivElement = null
+  private scrollParent: Element = null
+
+  public state: NavBlockState = {
+    isMenuOpen: false,
+    menuStyle: {},
+    opensUpward: false,
+  }
+
+  public componentWillUnmount() {
+    this.unbindScrollListener()
+  }
+
   public render() {
     const {location, className, highlightWhen} = this.props
+    const {isMenuOpen, menuStyle, opensUpward} = this.state
     const {length} = _.intersection(_.split(location, '/'), highlightWhen)
     const isActive = !!length
 
@@ -97,12 +125,29 @@ class NavBlock extends PureComponent<NavBlockProps> {
 
     return (
       <div
-        className={classnames('sidebar--item', className, {active: isActive})}
+        ref={this.setItemRef}
+        className={classnames('sidebar--item', className, {
+          active: isActive,
+          'sidebar--item__menu-open': isMenuOpen,
+        })}
+        onMouseEnter={this.handleOpenMenu}
+        onMouseLeave={this.handleItemMouseLeave}
       >
         {this.renderSquare()}
-        <div className="sidebar-menu">
-          {children}
-        </div>
+        {isMenuOpen &&
+          createPortal(
+            <div
+              ref={this.setMenuRef}
+              className={classnames('sidebar-menu', {
+                'sidebar-menu--opens-up': opensUpward,
+              })}
+              style={menuStyle}
+              onMouseLeave={this.handleMenuMouseLeave}
+            >
+              {children}
+            </div>,
+            document.body
+          )}
       </div>
     )
   }
@@ -123,6 +168,92 @@ class NavBlock extends PureComponent<NavBlockProps> {
         <div className={`sidebar--icon icon ${icon}`} />
       </Link>
     )
+  }
+
+  private setItemRef = (el: HTMLDivElement) => {
+    this.itemRef = el
+  }
+
+  private setMenuRef = (el: HTMLDivElement) => {
+    this.menuRef = el
+    if (el) {
+      requestAnimationFrame(() => this.updateMenuPosition())
+    }
+  }
+
+  private isNodeInside = (node: EventTarget, container: HTMLElement) => {
+    return (
+      !!container &&
+      node instanceof Node &&
+      container.contains(node)
+    )
+  }
+
+  private updateMenuPosition = () => {
+    if (!this.itemRef) {
+      return
+    }
+
+    const itemRect = this.itemRef.getBoundingClientRect()
+    const menuHeight = this.menuRef?.offsetHeight ?? 0
+    const opensUpward = isSidebarMenuOpeningUpward(itemRect, menuHeight)
+
+    this.setState({
+      menuStyle: computeSidebarMenuStyle(itemRect, menuHeight),
+      opensUpward,
+    })
+  }
+
+  private bindScrollListener = () => {
+    if (!this.itemRef || this.scrollParent) {
+      return
+    }
+
+    const scrollParent = this.itemRef.closest('.sidebar--scroll')
+    if (scrollParent) {
+      this.scrollParent = scrollParent
+      this.scrollParent.addEventListener('scroll', this.updateMenuPosition)
+    }
+  }
+
+  private unbindScrollListener = () => {
+    if (this.scrollParent) {
+      this.scrollParent.removeEventListener('scroll', this.updateMenuPosition)
+      this.scrollParent = null
+    }
+  }
+
+  private closeMenu = () => {
+    this.unbindScrollListener()
+    this.setState({isMenuOpen: false, opensUpward: false})
+  }
+
+  private handleOpenMenu = () => {
+    if (!this.itemRef) {
+      return
+    }
+
+    const itemRect = this.itemRef.getBoundingClientRect()
+    this.bindScrollListener()
+    this.setState({
+      isMenuOpen: true,
+      menuStyle: computeSidebarMenuStyle(itemRect, 0),
+      opensUpward: false,
+    })
+  }
+
+  private handleItemMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (this.isNodeInside(event.relatedTarget, this.menuRef)) {
+      return
+    }
+    this.closeMenu()
+  }
+
+  private handleMenuMouseLeave = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (this.isNodeInside(event.relatedTarget, this.itemRef)) {
+      return
+    }
+    this.closeMenu()
   }
 }
 

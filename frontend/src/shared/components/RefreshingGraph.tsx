@@ -34,8 +34,6 @@ import {
 // Utils
 import {AutoRefresher, GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getDeep} from 'src/utils/wrappers'
-import {groupByTimeSeriesTransform} from 'src/utils/groupByTimeSeriesTransform'
-import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 
 // Actions
 import {setHoverTime} from 'src/dashboards/actions'
@@ -74,9 +72,9 @@ import StaticGraph from 'src/shared/components/static_graph/StaticGraph'
 import StaticGraphFormat from 'src/shared/components/static_graph/StaticGraphFormat'
 import {TableGaugeChartOptionsInterface} from 'src/types/statisticalgraph'
 import {VisType} from 'src/types/flux'
-import CellSummaryOverlay from 'src/shared/components/CellSummaryOverlay'
-import {buildCellSummary} from 'src/shared/utils/cellSummary'
+import {resolveCellSummaryDisplay} from 'src/shared/utils/cellSummary'
 import {CellSummary} from 'src/types'
+import CellSummaryOverlay from 'src/shared/components/CellSummaryOverlay'
 
 interface TypeAndData {
   dataType: DataType
@@ -288,41 +286,19 @@ class RefreshingGraph extends Component<Props> {
                         )
                       }
 
-                      const summary =
-                        isShowSummaryOverlay && queryType === QueryType.InfluxQL
-                          ? buildCellSummary({
-                              queries: this.queries,
-                              responses: timeSeriesInfluxQL,
-                              timeRange,
-                            })
-                          : null
-
-                      let itemColor: string | undefined
-                      if (
-                        summary?.items[0]?.chartLabel &&
-                        timeSeriesInfluxQL?.length
-                      ) {
-                        try {
-                          const transformed = groupByTimeSeriesTransform(
-                            timeSeriesInfluxQL,
-                            false
-                          )
-                          if (transformed?.sortedLabels?.length) {
-                            const idx = transformed.sortedLabels.findIndex(
-                              l => l.label === summary.items[0].chartLabel
-                            )
-                            if (idx >= 0) {
-                              const hexes = getLineColorsHexes(
-                                colors,
-                                transformed.sortedLabels.length
-                              )
-                              itemColor = hexes[idx]
-                            }
-                          }
-                        } catch {
-                          // Fallback: no color when transform fails
-                        }
-                      }
+                      const {summary, itemColor} = resolveCellSummaryDisplay({
+                        isShowSummaryOverlay,
+                        isFluxQuery: queryType === QueryType.Flux,
+                        cellType: type,
+                        queries: this.queries,
+                        responses: timeSeriesInfluxQL,
+                        timeRange,
+                        colors,
+                        fieldOptions: this.props.fieldOptions,
+                        tableOptions: this.props.tableOptions,
+                        graphOptions: this.props.graphOptions,
+                        templates: this.props.templates,
+                      })
 
                       switch (type) {
                         case CellType.SingleStat:

@@ -199,6 +199,7 @@ class StatusPage extends Component<Props> {
                               isEditable={false}
                               onDeleteCell={() => {}}
                               onCloneCell={() => {}}
+                              onShowInformation={() => {}}
                               manualRefresh={0}
                               onSummonOverlayTechnologies={() => {}}
                             />

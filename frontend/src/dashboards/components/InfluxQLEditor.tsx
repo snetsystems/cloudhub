@@ -445,6 +445,7 @@ class InfluxQLEditor extends Component<Props, State> {
           status={this.isDisabled && ComponentStatus.Disabled}
           onClick={this.handleUpdate}
           text="Submit Query"
+          titleText="Run the query"
         />
       </div>
     )

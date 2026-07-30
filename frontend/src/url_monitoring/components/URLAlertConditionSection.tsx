@@ -16,13 +16,18 @@ import {getOccurrenceTooltip} from 'src/alert_group/utils/occurrenceTooltip'
 import {
   AlertGroupRule,
   AlertTemplate,
-  DEFAULT_URL_ERROR_CONFIG,
   UrlErrorConfig,
   getTriggerOperators,
   getPauseSecondsOptions,
   Source,
 } from 'src/types'
 import {patchRuleSpec} from 'src/alert_group/utils/alertRuleSpecs'
+
+const EMPTY_URL_ERROR_CONFIG: UrlErrorConfig = {
+  check4xx: false,
+  check5xx: false,
+  unknown: false,
+}
 
 const LEVEL_ORDER: {[key: string]: number} = {
   critical: 1,
@@ -119,9 +124,10 @@ const URLAlertConditionSection: React.FC<Props> = ({
     )
   }, [source, spec.database, rule, onUpdateRule])
 
+  // Missing config means all off (same as list). Do not inject creation defaults on edit.
   const urlErrorConfig = useMemo(
     (): UrlErrorConfig => ({
-      ...DEFAULT_URL_ERROR_CONFIG,
+      ...EMPTY_URL_ERROR_CONFIG,
       ...spec.urlErrorConfig,
     }),
     [spec.urlErrorConfig]
@@ -534,39 +540,41 @@ const URLAlertConditionSection: React.FC<Props> = ({
           </div>
         </div>
 
-        <div className="alert-group-setting-row">
-          <div className="alert-group-setting-label alert-group-setting-label--flex alert-group-setting-label--aligned">
-            {t('alert_group_rule.pause')}
-            <QuestionMarkTooltip
-              tipID="url-pause-tooltip"
-              tipContent={t('alert_group_rule.pause_tooltip')}
-            />
-          </div>
-          <div className="alert-group-setting-control">
-            <div className="alert-group-setting-inputs">
-              <Dropdown
-                menuWidth="240px"
-                selected={
-                  selectedPause
-                    ? selectedPause.label
-                    : t('alert_group_rule.do_not_use')
-                }
-                onChoose={(item: any) =>
-                  onUpdateRule({pauseSeconds: parseInt(item.value, 10)})
-                }
-                buttonColor="btn-default"
-                buttonSize="btn-sm"
-                items={translatedPauseOptions.map(o => ({
-                  text: o.label,
-                  value: o.value,
-                }))}
+        {rule.notifyRecovery && (
+          <div className="alert-group-setting-row">
+            <div className="alert-group-setting-label alert-group-setting-label--flex alert-group-setting-label--aligned">
+              {t('alert_group_rule.pause')}
+              <QuestionMarkTooltip
+                tipID="url-pause-tooltip"
+                tipContent={t('alert_group_rule.pause_tooltip')}
               />
             </div>
-            <p className="alert-group-setting-helper">
-              {t('alert_group_rule.pause_desc1')}
-            </p>
+            <div className="alert-group-setting-control">
+              <div className="alert-group-setting-inputs">
+                <Dropdown
+                  menuWidth="240px"
+                  selected={
+                    selectedPause
+                      ? selectedPause.label
+                      : t('alert_group_rule.do_not_use')
+                  }
+                  onChoose={(item: any) =>
+                    onUpdateRule({pauseSeconds: parseInt(item.value, 10)})
+                  }
+                  buttonColor="btn-default"
+                  buttonSize="btn-sm"
+                  items={translatedPauseOptions.map(o => ({
+                    text: o.label,
+                    value: o.value,
+                  }))}
+                />
+              </div>
+              <p className="alert-group-setting-helper">
+                {t('alert_group_rule.pause_desc1')}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

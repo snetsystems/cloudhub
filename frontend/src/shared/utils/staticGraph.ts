@@ -1116,3 +1116,25 @@ export const getShowTemplateVariable = (dashboardTemplates: Template[]) => {
 export const isStaticGraphType = (cellType: CellType) => {
   return cellType?.toString().toLowerCase().startsWith('static') || false
 }
+
+export const getFieldOptionsWithGroupByTags = (
+  queries: Array<{
+    groupbys?: string[]
+    queryConfig?: {groupBy?: {tags?: string[]}}
+  }>,
+  fieldOptions: StatisticalGraphFieldOption[]
+): StatisticalGraphFieldOption[] => {
+  const groupByTags =
+    queries?.[0]?.groupbys ||
+    _.get(queries, '0.queryConfig.groupBy.tags', [])
+
+  return fieldOptions.map(fieldOption => {
+    const groupByTagIndex = (groupByTags || []).indexOf(
+      fieldOption.internalName
+    )
+
+    return groupByTagIndex !== -1
+      ? {...fieldOption, groupByTagOrder: groupByTagIndex}
+      : fieldOption
+  })
+}

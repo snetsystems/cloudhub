@@ -15,17 +15,18 @@ interface Props {
   cell: Cell
   isEditable: boolean
   dataExists: boolean
+  showInformationSupported: boolean
   onEdit: () => void
   onClone: (cell: Cell) => void
   onDelete: (cell: Cell) => void
   onCSVDownload: () => void
+  onShowInformation: () => void
   queries: CellQuery[]
   isFluxQuery: boolean
   visType: VisType
   toggleVisType: () => void
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   onExtraAction?: (cell: Cell, actionId: string) => void
-  onShowInformation?: (cell: Cell) => void
 }
 
 interface State {
@@ -82,7 +83,7 @@ class LayoutCellMenu extends Component<Props, State> {
           </button>
         ))}
         {this.pencilMenu}
-        
+
         <Authorized requiredRole={EDITOR_ROLE}>
           <MenuTooltipButton
             icon="duplicate"
@@ -138,7 +139,7 @@ class LayoutCellMenu extends Component<Props, State> {
       toggleVisType,
       visType,
       isFluxQuery,
-      onShowInformation
+      showInformationSupported,
     } = this.props
 
     const visTypeItem = {
@@ -157,17 +158,17 @@ class LayoutCellMenu extends Component<Props, State> {
         action: this.handleEditCell,
         disabled: false,
       },
-      !!onShowInformation && {
+      {
         text: 'Show Information',
         action: this.handleShowInformation,
-        disabled: false,
+        disabled: !showInformationSupported,
       },
       {
         text: 'Download CSV',
         action: onCSVDownload,
         disabled: !dataExists,
       },
-    ].filter(Boolean) as MenuItem[]
+    ] as MenuItem[]
 
     if (isFluxQuery) {
       menuItems.push(visTypeItem)
@@ -189,15 +190,14 @@ class LayoutCellMenu extends Component<Props, State> {
     return getExtraActionsForCell ? getExtraActionsForCell(cell) : []
   }
 
-
   private handleEditCell = (): void => {
     const {onEdit} = this.props
     onEdit()
   }
 
   private handleShowInformation = (): void => {
-    const {onShowInformation, cell} = this.props
-    onShowInformation(cell)
+    const {onShowInformation} = this.props
+    onShowInformation()
   }
 
   private handleDeleteCell = (): void => {

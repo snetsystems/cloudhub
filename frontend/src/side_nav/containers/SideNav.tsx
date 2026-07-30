@@ -2,6 +2,7 @@ import _ from 'lodash'
 import React, {PureComponent} from 'react'
 import {withRouter, Link} from 'react-router'
 import {connect} from 'react-redux'
+import classnames from 'classnames'
 
 import Authorized, {
   ADMIN_ROLE,
@@ -18,10 +19,7 @@ import {
 } from 'src/side_nav/components/NavItems'
 
 import {DEFAULT_HOME_PAGE, AddonType} from 'src/shared/constants'
-import {
-  SERVER_DETAILS_PAGE_NAME,
-  SERVER_DETAILS_IMPORT_PATH,
-} from 'src/shared/constants/routes'
+import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Params, Location, Me} from 'src/types/sideNav'
@@ -45,10 +43,81 @@ interface Props {
   closeShell: () => Shells
 }
 
+interface State {
+  canScrollUp: boolean
+  canScrollDown: boolean
+}
+
 @ErrorHandling
-class SideNav extends PureComponent<Props> {
-  constructor(props) {
-    super(props)
+class SideNav extends PureComponent<Props, State> {
+  private scrollRef: HTMLDivElement = null
+  private resizeObserver: ResizeObserver = null
+
+  public state: State = {
+    canScrollUp: false,
+    canScrollDown: false,
+  }
+
+  public componentDidMount() {
+    this.updateScrollFade()
+  }
+
+  public componentDidUpdate() {
+    this.updateScrollFade()
+  }
+
+  public componentWillUnmount() {
+    this.teardownScrollObserver()
+  }
+
+  private setScrollRef = (el: HTMLDivElement) => {
+    this.teardownScrollObserver()
+    this.scrollRef = el
+    if (el) {
+      this.observeScrollSize()
+      this.updateScrollFade()
+    }
+  }
+
+  private teardownScrollObserver = () => {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect()
+      this.resizeObserver = null
+    }
+  }
+
+  private observeScrollSize = () => {
+    if (!this.scrollRef || typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.updateScrollFade()
+    })
+    this.resizeObserver.observe(this.scrollRef)
+  }
+
+  private handleScroll = () => {
+    this.updateScrollFade()
+  }
+
+  private updateScrollFade = () => {
+    const el = this.scrollRef
+    if (!el) {
+      return
+    }
+
+    const threshold = 1
+    const canScrollUp = el.scrollTop > threshold
+    const canScrollDown =
+      el.scrollTop + el.clientHeight < el.scrollHeight - threshold
+
+    if (
+      canScrollUp !== this.state.canScrollUp ||
+      canScrollDown !== this.state.canScrollDown
+    ) {
+      this.setState({canScrollUp, canScrollDown})
+    }
   }
 
   private isExistInLinks = (name: string): boolean => {
@@ -100,6 +169,8 @@ class SideNav extends PureComponent<Props> {
     const isUsingAI = this.isAddonUrlOn(AddonType.ai)
     const isUsingNvidiaGpu = this.isAddonUrlOn(AddonType.nvidia)
     const isUsingLogAnalysis = this.isAddonUrlOn(AddonType.logAnalysis)
+    const isAdminRole =
+      !isUsingAuth || isUserAuthorized(me?.role, ADMIN_ROLE)
     const cloudsNavLink = (() => {
       if (isUsingVMware) {
         return 'vmware'
@@ -241,11 +312,7 @@ class SideNav extends PureComponent<Props> {
           >
             <NavHeader link={kubernetesNavItems[0].link} title="Kubernetes" />
             {kubernetesNavItems.map(item => (
-              <NavListItem
-                key={item.link}
-                link={item.link}
-                exact={item.exact}
-              >
+              <NavListItem key={item.link} link={item.link} exact={item.exact}>
                 {item.label}
               </NavListItem>
             ))}
@@ -275,74 +342,60 @@ class SideNav extends PureComponent<Props> {
             </NavBlock>
           )}
 
-          <Authorized
-            requiredRole={ADMIN_ROLE}
-            replaceWithIfNotAuthorized={
-              <NavBlock
-                highlightWhen={['logs']}
-                icon="document"
-                link={`${sourcePrefix}/logs`}
-                location={location}
-              >
-                <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-              </NavBlock>
+          <NavBlock
+            highlightWhen={['log-analysis', 'logs', 'activity-logs']}
+            icon="document"
+            link={
+              isUsingLogAnalysis
+                ? `${sourcePrefix}/log-analysis`
+                : `${sourcePrefix}/logs`
             }
-            replaceWithIfNotUsingAuth={
-              <NavBlock
-                highlightWhen={['logs']}
-                icon="document"
-                link={`${sourcePrefix}/logs`}
-                location={location}
-              >
-                <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-              </NavBlock>
-            }
+            location={location}
           >
-            <NavBlock
-              highlightWhen={['log-analysis', 'logs', 'activity-logs']}
-              icon="document"
+            <NavHeader
               link={
                 isUsingLogAnalysis
                   ? `${sourcePrefix}/log-analysis`
                   : `${sourcePrefix}/logs`
               }
-              location={location}
-            >
-              <NavHeader
-                link={
-                  isUsingLogAnalysis
-                    ? `${sourcePrefix}/log-analysis`
-                    : `${sourcePrefix}/logs`
-                }
-                title="Log Viewer"
-              />
-              {isUsingLogAnalysis && (
-                <NavListItem link={`${sourcePrefix}/log-analysis`}>
-                  Log Analysis
-                </NavListItem>
-              )}
-              <NavListItem link={`${sourcePrefix}/logs`}>
-                Log Viewer
+              title="Log Viewer"
+            />
+            {isUsingLogAnalysis && (
+              <NavListItem link={`${sourcePrefix}/log-analysis`}>
+                Log Analysis
               </NavListItem>
-
-              {_.get(me, 'role', '').includes(SUPERADMIN_ROLE) && (
-                <NavListItem link={`${sourcePrefix}/activity-logs`}>
-                  Activity Logs
-                </NavListItem>
-              )}
-            </NavBlock>
-          </Authorized>
+            )}
+            <NavListItem link={`${sourcePrefix}/logs`}>
+              Log Viewer
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/activity-logs`}>
+              Activity Logs
+            </NavListItem>
+          </NavBlock>
 
           <NavBlock
             highlightWhen={['alerts', 'alert-rules', 'tickscript']}
             icon="bell"
-            link={`${sourcePrefix}/alert-rules`}
+            link={
+              isAdminRole
+                ? `${sourcePrefix}/alert-rules`
+                : `${sourcePrefix}/alerts`
+            }
             location={location}
           >
-            <NavHeader link={`${sourcePrefix}/alert-rules`} title="Alert" />
-            <NavListItem link={`${sourcePrefix}/alert-rules`}>
-              Alert Setting
-            </NavListItem>
+            <NavHeader
+              link={
+                isAdminRole
+                  ? `${sourcePrefix}/alert-rules`
+                  : `${sourcePrefix}/alerts`
+              }
+              title="Alert"
+            />
+            {isAdminRole && (
+              <NavListItem link={`${sourcePrefix}/alert-rules`}>
+                Alert Setting
+              </NavListItem>
+            )}
             <NavListItem link={`${sourcePrefix}/alerts`}>
               Alert History
             </NavListItem>
@@ -416,6 +469,8 @@ class SideNav extends PureComponent<Props> {
       )
     }
 
+    const {canScrollUp, canScrollDown} = this.state
+
     return isHidden ? null : (
       <nav className="sidebar">
         <div
@@ -429,7 +484,20 @@ class SideNav extends PureComponent<Props> {
           </Link>
         </div>
 
-        {navItem()}
+        <div
+          className={classnames('sidebar--scroll-fade', {
+            'sidebar--scroll-fade__top': canScrollUp,
+            'sidebar--scroll-fade__bottom': canScrollDown,
+          })}
+        >
+          <div
+            className="sidebar--scroll"
+            ref={this.setScrollRef}
+            onScroll={this.handleScroll}
+          >
+            {navItem()}
+          </div>
+        </div>
 
         <div
           className={`sidebar--item align-bottom ${

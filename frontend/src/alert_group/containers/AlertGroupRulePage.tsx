@@ -101,7 +101,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       isSaving: false,
       isTestModalOpen: false,
       isTestingSend: false,
-      builderMode: 'template',
+      builderMode: 'raw',
       selectedTemplateId: 'custom',
     }
   }
@@ -173,7 +173,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
           templates,
           availableMeasurements,
           loading: RemoteDataState.Done,
-          builderMode: 'template',
+          builderMode: 'raw',
           selectedTemplateId: 'custom',
         })
       }
@@ -237,8 +237,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
       const prevName = this.state.rule.name
       this.setState({
         selectedTemplateId: 'custom',
-
-        builderMode: 'template',
+        builderMode: 'raw',
         rule: {
           ...JSON.parse(JSON.stringify(DEFAULT_RULE)),
           name: prevName,
@@ -604,6 +603,7 @@ class AlertGroupRulePage extends PureComponent<Props, State> {
                   templates={this.state.templates}
                   onUpdateRule={this.handleUpdateRule}
                   builderMode={builderMode}
+                  selectedTemplateId={selectedTemplateId}
                   onSwitchToRawMode={this.handleSwitchToRawMode}
                 >
                   <AlertGroupPreviewGraph

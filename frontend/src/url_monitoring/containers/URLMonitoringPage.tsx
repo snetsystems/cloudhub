@@ -9,7 +9,9 @@ import {
   TimeZones,
   DataTableObject,
   Notification,
+  Me,
 } from 'src/types'
+import {EDITOR_ROLE, isUserAuthorized} from 'src/auth/Authorized'
 import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import {setCloudAutoRefresh} from 'src/clouds/actions'
 import {setCloudTimeRange} from 'src/clouds/actions/clouds'
@@ -58,6 +60,8 @@ export interface ManualRefresh {
 interface Props {
   source: Source
   links: Links
+  me: Me
+  isUsingAuth: boolean
   cloudAutoRefresh: CloudAutoRefresh
   cloudTimeRange: CloudTimeRange
   timeZone: TimeZones
@@ -69,6 +73,8 @@ interface Props {
 
 export function URLMonitoringPage({
   source,
+  me,
+  isUsingAuth,
   cloudAutoRefresh,
   cloudTimeRange,
   timeZone,
@@ -77,6 +83,8 @@ export function URLMonitoringPage({
   setTimeZone,
   notify,
 }: Props) {
+  const isEditorRole =
+    !isUsingAuth || isUserAuthorized(me?.role, EDITOR_ROLE)
   const [manualRefreshState, setManualRefreshState] = useState<ManualRefresh>({
     key: 'url-monitoring',
     value: Date.now(),
@@ -304,12 +312,16 @@ export function URLMonitoringPage({
   const columns = useMemo(
     () =>
       urlMonitoringColumns({
-        onEditRow: row => openUrlSheet('edit', row),
-        onCopyRow: row => openUrlSheet('copy', row),
-        onDeleteRow: handleDeleteRow,
+        ...(isEditorRole
+          ? {
+              onEditRow: (row: DataTableObject) => openUrlSheet('edit', row),
+              onCopyRow: (row: DataTableObject) => openUrlSheet('copy', row),
+              onDeleteRow: handleDeleteRow,
+            }
+          : {}),
         onLatencyChartClick: openLatencyDetail,
       }),
-    [openUrlSheet, handleDeleteRow, openLatencyDetail]
+    [isEditorRole, openUrlSheet, handleDeleteRow, openLatencyDetail]
   )
 
   const getCodeNumber = (code: any): number | null => {
@@ -622,42 +634,46 @@ export function URLMonitoringPage({
                     }
                     toprightRender={
                       <div className="url-monitoring-panel-toolbar">
-                        <input
-                          ref={importFileInputRef}
-                          type="file"
-                          accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-                          className="url-monitoring-panel-toolbar__file-input"
-                          onChange={handleImportFile}
-                        />
-                        <div className="url-monitoring-panel-toolbar__actions">
-                          <button
-                            type="button"
-                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                            title="Import"
-                            onClick={handleImportPickFile}
-                          >
-                            <span className="icon import" />
-                            Import
-                          </button>
-                          <button
-                            type="button"
-                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
-                            title="Export"
-                            onClick={handleExportTargets}
-                          >
-                            <span className="icon export" />
-                            Export
-                          </button>
-                          <button
-                            type="button"
-                            className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--primary"
-                            title="Add URL"
-                            onClick={() => openUrlSheet('add')}
-                          >
-                            <span className="icon plus" />
-                            Add URL
-                          </button>
-                        </div>
+                        {isEditorRole ? (
+                          <input
+                            ref={importFileInputRef}
+                            type="file"
+                            accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                            className="url-monitoring-panel-toolbar__file-input"
+                            onChange={handleImportFile}
+                          />
+                        ) : null}
+                        {isEditorRole ? (
+                          <div className="url-monitoring-panel-toolbar__actions">
+                            <button
+                              type="button"
+                              className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
+                              title="Import"
+                              onClick={handleImportPickFile}
+                            >
+                              <span className="icon import" />
+                              Import
+                            </button>
+                            <button
+                              type="button"
+                              className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--outline"
+                              title="Export"
+                              onClick={handleExportTargets}
+                            >
+                              <span className="icon export" />
+                              Export
+                            </button>
+                            <button
+                              type="button"
+                              className="url-monitoring-toolbar-btn url-monitoring-toolbar-btn--primary"
+                              title="Add URL"
+                              onClick={() => openUrlSheet('add')}
+                            >
+                              <span className="icon plus" />
+                              Add URL
+                            </button>
+                          </div>
+                        ) : null}
                         {isRefreshing ? (
                           <LoadingDots className="graph-panel__refreshing openstack-dots--loading" />
                         ) : null}
@@ -703,10 +719,13 @@ const mstp = state => {
     app: {
       persisted: {cloudAutoRefresh, cloudTimeRange, timeZone},
     },
+    auth: {me, isUsingAuth},
     links,
   } = state
   return {
     links,
+    me,
+    isUsingAuth,
     timeZone,
     cloudTimeRange,
     cloudAutoRefresh,

@@ -295,7 +295,7 @@ class ReactCodeMirror extends PureComponent<Props, State> {
       if (found) {
         const selected = getSelectedValue(found)
         const localSelected = getLocalSelectedValue(found)
-        const value = selected || localSelected
+        const value = localSelected || selected
 
         const replacedWith: HTMLElement = createMarkerElement(tempVar, value)
 

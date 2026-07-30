@@ -204,6 +204,16 @@ func (s *Service) AlertRecipientMemberPrefsUpsert(w http.ResponseWriter, r *http
 		return
 	}
 
+	m, err := s.RecipientGroups.GetMember(ctx, id)
+	if err == nil {
+		g, err := s.RecipientGroups.Get(ctx, m.RecipientGroupID)
+		if err == nil {
+			if err := s.RegenerateRulesByRecipientGroup(ctx, g.OrgID, g); err != nil {
+				s.Logger.Error(fmt.Sprintf("AlertRecipientMemberPrefsUpsert: failed to regenerate rules: %v", err))
+			}
+		}
+	}
+
 	saved, err := s.AlertRecipientMemberPrefs.Get(ctx, id)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)

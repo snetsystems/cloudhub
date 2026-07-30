@@ -10,6 +10,7 @@ import {defaultTableData, defaultActivityTableData} from 'src/logs/constants'
 import {VERSION, GIT_SHA} from 'src/shared/constants'
 
 import {LocalStorage} from 'src/types/localStorage'
+import {getStoredLanguage} from 'src/shared/utils/language'
 
 export const loadLocalStorage = (
   errorsQueue: any[]
@@ -39,6 +40,12 @@ export const loadLocalStorage = (
 
     delete state.VERSION
     delete state.GIT_SHA
+
+    if (state.app?.persisted) {
+      const language = state.app.persisted.language
+      state.app.persisted.language =
+        language === 'en' || language === 'ko' ? language : getStoredLanguage()
+    }
 
     return state
   } catch (error) {

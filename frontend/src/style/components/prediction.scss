@@ -310,7 +310,7 @@
   animation: blink-opacity-animation 1s infinite;
 }
 .prediction-tooltip--blink-warning {
-  animation: blink-opacity-animation 1s infinite;
+  animation: blink-opacity-animation-warning 1s infinite;
 }
 
 @keyframes blink-opacity-animation {

@@ -42,8 +42,75 @@ $s-sidebar--width: 45px;
   display: flex;
   flex-direction: column;
   width: $s-sidebar--width;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   z-index: 200;
   @include gradient-v($sidebar--gradient-start, $sidebar--gradient-end);
+}
+
+.sidebar--scroll-fade {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+
+  $sidebar-scroll-fade: 28px;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: $sidebar-scroll-fade;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  &::before {
+    top: 0;
+    background: linear-gradient(
+      to bottom,
+      fade-out($s-orange, 0.3),
+      fade-out($s-orange, 1)
+    );
+  }
+
+  &::after {
+    bottom: 0;
+    background: linear-gradient(
+      to top,
+      fade-out($s-orange, 0.3),
+      fade-out($s-orange, 1)
+    );
+  }
+
+  &.sidebar--scroll-fade__top::before {
+    opacity: 1;
+  }
+
+  &.sidebar--scroll-fade__bottom::after {
+    opacity: 1;
+  }
+}
+
+.sidebar--scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
 }
 .sidebar--bottom {
   position: absolute;
@@ -118,7 +185,8 @@ $s-sidebar--width: 45px;
 /*
   Sidebar Item Hover State
 */
-.sidebar--item:hover {
+.sidebar--item:hover,
+.sidebar--item.sidebar--item__menu-open {
   cursor: pointer;
   z-index: 5;
 
@@ -128,17 +196,16 @@ $s-sidebar--width: 45px;
   .sidebar--icon {
     color: $sidebar--icon-hover;
   }
-  .sidebar-menu {
-    display: flex;
-  }
 }
-.sidebar--item.active:hover .sidebar--icon {
+.sidebar--item.active:hover .sidebar--icon,
+.sidebar--item.active.sidebar--item__menu-open .sidebar--icon {
   text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px $s-grapefruit;
 }
 /*
   Sidebar Logo Square
 */
 .sidebar--square.sidebar--logo {
+  min-height: $s-sidebar--width;
   @include gradient-h($sidebar-menu--bg, $s-deepOrange2);
   .sidebar--icon {
     color: #fff;
@@ -169,13 +236,13 @@ $s-sidebar--width: 45px;
     ----------------------------------------------
 */
 .sidebar-menu {
-  position: absolute;
+  position: fixed;
   top: 0;
-  left: 100%;
+  left: 0;
+  z-index: 1000;
   border-radius: 0 $radius $radius 0;
   @include gradient-h($sidebar-menu--bg, $sidebar-menu--bg-accent);
-  transition: opacity 0.25s ease;
-  display: none;
+  display: flex;
   flex-direction: column;
 }
 .sidebar-menu--heading,
@@ -322,12 +389,14 @@ span.icon.sidebar--icon.sidebar--icon__superadmin {
   }
 }
 .sidebar-menu--user-nav {
-  top: initial;
-  bottom: 0;
-  .sidebar-menu--section__custom-links {
+  .sidebar-menu--section__language {
     order: 0;
+
+    &:after {
+      display: none;
+    }
   }
-  .sidebar-menu--item__link-name {
+  .sidebar-menu--language-toggle-wrapper {
     order: 1;
   }
   .sidebar-menu--section__switch-orgs {
@@ -350,12 +419,6 @@ span.icon.sidebar--icon.sidebar--icon__superadmin {
   }
   .sidebar-menu--heading {
     order: 8;
-  }
-
-
-  .sidebar-menu--section__custom-links:after {
-    display: none;
-    border-top-right-radius: $radius;
   }
 }
 
@@ -391,47 +454,5 @@ span.icon.sidebar--icon.sidebar--icon__superadmin {
     &:last-child {
       border-left: 1px solid rgba(255, 255, 255, 0.3);
     }
-  }
-}
-
-@media only screen and (min-height: 1150px) {
-  .sidebar-menu--user-nav {
-    top: 0;
-    bottom: initial;
-    .sidebar-menu--heading {
-      order: 0;
-    }
-    .sidebar-menu--section__account {
-      order: 1;
-    }
-    .sidebar-menu--provider {
-      order: 2;
-    }
-    .sidebar-menu--item__account-change {
-      order: 3;
-    }
-    .sidebar-menu--item__logout {
-      order: 4;
-    }
-    .sidebar-menu--section__switch-orgs {
-      order: 5;
-    }
-    .sidebar-menu--scrollbar {
-      order: 6;
-    }
-    .sidebar-menu--section__custom-links {
-      order: 7;
-    }
-    .sidebar-menu--item__link-name {
-      order: 8;
-    }
-    .sidebar-menu--triangle {
-      order: 9;
-    }
-    .sidebar-menu--section__custom-links:after {
-      display: initial;
-      border-top-right-radius: 0;
-    }
-
   }
 }

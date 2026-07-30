@@ -9,7 +9,7 @@ const GridLayout = WidthProvider(ReactGridLayout)
 
 // Utils
 import {fastMap} from 'src/utils/fast'
-import {shouldShowSummaryOverlay} from 'src/shared/utils/summaryOverlay'
+import {toggleCellShowSummary} from 'src/shared/utils/cellSummary'
 
 // Constants
 import {
@@ -46,7 +46,6 @@ export interface RenderCellContext {
   manualRefresh: number
   onDeleteCell?: (cell: Cell) => void
   onCloneCell?: (cell: Cell) => void
-  onShowInformation?: (cell: Cell) => void
   onSummonOverlayTechnologies?: (cell: Cell) => void
   onPickTemplate?: (template: Template, value: TemplateValue) => void
   instance?: object
@@ -66,7 +65,6 @@ interface Props {
   onZoom?: () => void
   onCloneCell?: (cell: Cell) => void
   onDeleteCell?: (cell: Cell) => void
-  onShowInformation?: (cell: Cell) => void  
   onSummonOverlayTechnologies?: (cell: Cell) => void
   onPositionChange?: (cells: Cell[]) => void
   instance?: object
@@ -122,7 +120,6 @@ class LayoutRenderer extends Component<Props, State> {
       manualRefresh,
       onDeleteCell,
       onCloneCell,
-      onShowInformation,
       onSummonOverlayTechnologies,
       instance,
       onPickTemplate,
@@ -143,7 +140,6 @@ class LayoutRenderer extends Component<Props, State> {
       manualRefresh,
       onDeleteCell,
       onCloneCell,
-      onShowInformation,
       onSummonOverlayTechnologies,
       onPickTemplate,
       instance,
@@ -197,7 +193,13 @@ class LayoutRenderer extends Component<Props, State> {
                       isEditable={isEditable}
                       onDeleteCell={onDeleteCell}
                       onCloneCell={onCloneCell}
-                      onShowInformation={onShowInformation}
+                      onShowInformation={cell =>
+                        toggleCellShowSummary(
+                          cells,
+                          cell,
+                          this.props.onPositionChange
+                        )
+                      }
                       getExtraActionsForCell={getExtraActionsForCell}
                       onCustomCellAction={onCustomCellAction}
                       manualRefresh={manualRefresh}

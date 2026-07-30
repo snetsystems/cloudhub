@@ -688,9 +688,15 @@
     }
   }
 
+  .disk-io-device-wrapper {
+    display: flex;
+    justify-content: flex-end;
+  }
+
   .disk-io-device {
     width: 100%;
     text-align: end;
+    max-width: 150px;
   }
 }
 
