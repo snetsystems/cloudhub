@@ -1,10 +1,11 @@
-import React, {useRef, useState} from 'react'
+import React, {useState} from 'react'
 import GraphOptionsToggleBtn from 'src/dashboards/components/GraphOptionsToggleBtn'
 import DashboardList from 'src/server_details/components/DashboardList'
 import CellList from 'src/server_details/components/CellList'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
+import ImportSelectionPreview from './ImportSelectionPreview'
 
 const emptySelection = (): ImportSelectionPayload => ({
   dashboards: [],
@@ -23,7 +24,9 @@ interface Props {
 /** Mount only while open (`{open && <FixedModal />}`); unmount clears selection state. */
 function FixedModal({onClose, onSelectionChange, width}: Props) {
   const [currentTab, setCurrentTab] = useState('dashboard-list')
-  const selectionRef = useRef<ImportSelectionPayload>(emptySelection())
+  const [selection, setSelection] = useState<ImportSelectionPayload>(
+    emptySelection()
+  )
 
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab)
@@ -34,26 +37,27 @@ function FixedModal({onClose, onSelectionChange, width}: Props) {
     tab: 'dashboard-list' | 'cell-list',
     items: ImportSelectionPayload
   ) => {
-    if (tab === 'dashboard-list') {
-      selectionRef.current = {
-        ...selectionRef.current,
-        dashboards: items.dashboards,
-        cellTypes: items.cellTypes,
-        templates: items.templates,
-        importStrategy: items.importStrategy,
+    setSelection(prev => {
+      if (tab === 'dashboard-list') {
+        return {
+          ...prev,
+          dashboards: items.dashboards,
+          cellTypes: items.cellTypes,
+          templates: items.templates,
+          importStrategy: items.importStrategy,
+        }
       }
-      return
-    }
 
-    selectionRef.current = {
-      ...selectionRef.current,
-      libraryCells: items.libraryCells,
-    }
+      return {
+        ...prev,
+        libraryCells: items.libraryCells,
+      }
+    })
   }
 
   const handleImport = () => {
     if (onSelectionChange) {
-      onSelectionChange(selectionRef.current)
+      onSelectionChange(selection)
     }
     onClose()
   }
@@ -75,6 +79,8 @@ function FixedModal({onClose, onSelectionChange, width}: Props) {
     },
   ]
 
+  const drawerWidth = width || '420px'
+
   return (
     <>
       <div
@@ -82,77 +88,83 @@ function FixedModal({onClose, onSelectionChange, width}: Props) {
         onClick={onClose}
       />
       <div
-        className="modal-content modal-content--open"
-        style={{width: width || '420px'}}
+        className="modal-shell modal-shell--open"
+        style={{['--drawer-width' as string]: drawerWidth}}
       >
-        <div style={{padding: '16px', flexShrink: 0}}>
-          <p
+        <ImportSelectionPreview selection={selection} />
+        <div
+          className="modal-content"
+          style={{width: drawerWidth}}
+        >
+          <div style={{padding: '16px', flexShrink: 0}}>
+            <p
+              style={{
+                margin: '0 0 12px 0',
+                fontSize: '20px',
+                color: '#8b8ba7',
+                fontWeight: 500,
+              }}
+            >
+              From existing resources
+            </p>
+            <GraphOptionsToggleBtn title="" GraphOptionsOptions={tabOptions} />
+          </div>
+          <FancyScrollbar
+            autoHide={true}
             style={{
-              margin: '0 0 12px 0',
-              fontSize: '20px',
-              color: '#8b8ba7',
-              fontWeight: 500,
+              flex: 1,
+              minHeight: 0,
             }}
           >
-            From existing resources
-          </p>
-          <GraphOptionsToggleBtn title="" GraphOptionsOptions={tabOptions} />
-        </div>
-        <FancyScrollbar
-          autoHide={true}
-          style={{
-            flex: 1,
-            minHeight: 0,
-          }}
-        >
-          <div style={{padding: '0 16px 16px 16px'}}>
-            {/* Keep both mounted so checkbox selection survives tab switches. */}
-            <div
-              style={{
-                display: currentTab === 'dashboard-list' ? 'block' : 'none',
-              }}
-            >
-              <DashboardList
-                onSelectionChange={items =>
-                  handleSelectionUpdate('dashboard-list', items)
-                }
-              />
+            <div style={{padding: '0 16px 16px 16px'}}>
+              {/* Keep both mounted so checkbox selection survives tab switches. */}
+              <div
+                style={{
+                  display: currentTab === 'dashboard-list' ? 'block' : 'none',
+                }}
+              >
+                <DashboardList
+                  onSelectionChange={items =>
+                    handleSelectionUpdate('dashboard-list', items)
+                  }
+                />
+              </div>
+              <div
+                style={{
+                  display: currentTab === 'cell-list' ? 'block' : 'none',
+                }}
+              >
+                <CellList
+                  onSelectionChange={items =>
+                    handleSelectionUpdate('cell-list', items)
+                  }
+                />
+              </div>
             </div>
-            <div
-              style={{
-                display: currentTab === 'cell-list' ? 'block' : 'none',
-              }}
-            >
-              <CellList
-                onSelectionChange={items =>
-                  handleSelectionUpdate('cell-list', items)
-                }
-              />
-            </div>
+          </FancyScrollbar>
+          <div
+            style={{
+              padding: '16px',
+              borderTop: '1px solid #383846',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '8px',
+              flexShrink: 0,
+            }}
+          >
+            <Button
+              text="Cancel"
+              color={ComponentColor.Default}
+              size={ComponentSize.Small}
+              onClick={onClose}
+            />
+            <Button
+              text="Import"
+              color={ComponentColor.Primary}
+              size={ComponentSize.Small}
+              onClick={handleImport}
+            />
           </div>
-        </FancyScrollbar>
-        <div
-          style={{
-            padding: '16px',
-            borderTop: '1px solid #383846',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '8px',
-            flexShrink: 0,
-          }}
-        >
-          <Button
-            text="Cancel"
-            color={ComponentColor.Default}
-            size={ComponentSize.Small}
-            onClick={onClose}
-          />
-          <Button
-            text="Import"
-            color={ComponentColor.Primary}
-            size={ComponentSize.Small}
-            onClick={handleImport}
-          />
         </div>
       </div>
     </>
