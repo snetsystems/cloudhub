@@ -15377,6 +15377,7 @@
             "deadman"
           ],
           "description": "Empty means threshold"
+        },
         "every": {
           "type": "string"
         },

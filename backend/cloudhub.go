@@ -2343,3 +2343,65 @@ type HubbleConfig struct {
 	ExcludedNamespaceGlobs []string              `json:"excludedNamespaceGlobs,omitempty"`
 	Clusters               []HubbleClusterConfig `json:"clusters,omitempty"`
 }
+
+// ErrOrgNavMenuNotFound is returned when an org nav menu configuration is not found
+const ErrOrgNavMenuNotFound = Error("organization navigation menu configuration not found")
+
+// OrgNavSubMenuItem represents a 2nd-tier SubNav menu item under a main SideNav block.
+type OrgNavSubMenuItem struct {
+	ID        string `json:"id"`
+	Label     string `json:"label,omitempty"`
+	Enabled   bool   `json:"enabled"`
+	SortOrder int    `json:"sortOrder,omitempty"`
+}
+
+// OrgNavMenuItem represents a 1st-tier main SideNav item containing optional submenus.
+type OrgNavMenuItem struct {
+	ID        string              `json:"id"`
+	Label     string              `json:"label,omitempty"`
+	Icon      string              `json:"icon,omitempty"`
+	Enabled   bool                `json:"enabled"`
+	SortOrder int                 `json:"sortOrder,omitempty"`
+	Children  []OrgNavSubMenuItem `json:"children,omitempty"`
+}
+
+// OrgNavMenu represents an Org's full SideNav menu configuration mapping.
+type OrgNavMenu struct {
+	ID         string           `json:"id,omitempty"`
+	OrgID      string           `json:"orgId"`
+	NavItems   []OrgNavMenuItem `json:"navItems"`
+	IsDegraded bool             `json:"isDegraded"`
+	Warning    string           `json:"warning,omitempty"`
+	CreatedAt  time.Time        `json:"createdAt,omitempty"`
+	UpdatedAt  time.Time        `json:"updatedAt,omitempty"`
+}
+
+// MasterNavSubMenuItem represents a 2nd-tier master SubNav item (SuperAdmin view, includes deleteYN).
+type MasterNavSubMenuItem struct {
+	ID        string `json:"id"`
+	Label     string `json:"label,omitempty"`
+	SortOrder int    `json:"sortOrder"`
+	DeleteYN  bool   `json:"deleteYN"`
+}
+
+// MasterNavMenuItem represents a 1st-tier master SideNav item (SuperAdmin view, includes deleteYN).
+type MasterNavMenuItem struct {
+	ID        string                 `json:"id"`
+	Label     string                 `json:"label,omitempty"`
+	Icon      string                 `json:"icon,omitempty"`
+	SortOrder int                    `json:"sortOrder"`
+	DeleteYN  bool                   `json:"deleteYN"`
+	Children  []MasterNavSubMenuItem `json:"children,omitempty"`
+}
+
+// OrgNavMenuStore defines persistence operations for Org SideNav menu configurations.
+type OrgNavMenuStore interface {
+	GetByOrgID(ctx context.Context, orgID string) (*OrgNavMenu, error)
+	Upsert(ctx context.Context, menu *OrgNavMenu) (*OrgNavMenu, error)
+	Patch(ctx context.Context, orgID string, items []OrgNavMenuItem) (*OrgNavMenu, error)
+	Delete(ctx context.Context, orgID string) error
+	GetMasterMenu(ctx context.Context) ([]MasterNavMenuItem, error)
+	UpdateMasterMenu(ctx context.Context, items []OrgNavMenuItem) error
+	DeleteMasterMenuItem(ctx context.Context, itemID string) error
+}
+

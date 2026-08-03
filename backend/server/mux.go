@@ -385,6 +385,19 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.OrganizationRemoveUser)))
 	router.PATCH("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.OrganizationUpdateUser)))
 
+	// Org SideNav Menu Management Routes (Standard Organization Admin API Pattern)
+	router.GET("/cloudhub/v1/organizations/:oid/nav-menu", EnsureViewer(service.GetOrgNavMenu))
+	router.POST("/cloudhub/v1/organizations/:oid/nav-menu", EnsureSuperAdmin(service.UpdateOrgNavMenu))
+	router.PUT("/cloudhub/v1/organizations/:oid/nav-menu", EnsureSuperAdmin(service.UpdateOrgNavMenu))
+	router.PATCH("/cloudhub/v1/organizations/:oid/nav-menu", EnsureSuperAdmin(service.PatchOrgNavMenu))
+	router.DELETE("/cloudhub/v1/organizations/:oid/nav-menu", EnsureSuperAdmin(service.DeleteOrgNavMenu))
+
+	// System Master SideNav Menu Management (SuperAdmin Global Master Menu Control)
+	router.GET("/cloudhub/v1/nav-menu/master", EnsureSuperAdmin(service.GetMasterNavMenu))
+	router.POST("/cloudhub/v1/nav-menu/master", EnsureSuperAdmin(service.UpdateMasterNavMenu))
+	router.PUT("/cloudhub/v1/nav-menu/master", EnsureSuperAdmin(service.UpdateMasterNavMenu))
+	router.DELETE("/cloudhub/v1/nav-menu/master/:id", EnsureSuperAdmin(service.DeleteMasterNavMenuItem))
+
 	router.GET("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.Users)))
 	router.POST("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.NewUser)))
 
