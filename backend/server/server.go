@@ -1083,6 +1083,11 @@ func openService(
 		urlMonitoringStore = pgsql.NewURLMonitoringStore(pgsqlClient)
 		logger.Info("PostgreSQL URLMonitoringStore initialized")
 	}
+	var orgNavMenuStore cloudhub.OrgNavMenuStore = &noop.OrgNavMenuStore{}
+	if pgsqlClient != nil {
+		orgNavMenuStore = pgsql.NewOrgNavMenuStore(pgsqlClient)
+		logger.Info("PostgreSQL OrgNavMenuStore initialized")
+	}
 
 	var recipientGroupStore cloudhub.RecipientGroupStore
 	var alertRecipientGroupStore cloudhub.AlertRecipientGroupStore
@@ -1132,6 +1137,7 @@ func openService(
 			CellLibraryStore:        svc.CellLibraryStore(),
 			HostStore:               hostStore,
 			URLMonitoringStore:      urlMonitoringStore,
+			OrgNavMenuStore:         orgNavMenuStore,
 		},
 		Logger:                    logger,
 		UseAuth:                   useAuth,

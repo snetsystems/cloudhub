@@ -14,6 +14,7 @@ import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
 import AnnotationControlBar from 'src/shared/components/AnnotationControlBar'
 import AnnotationEditorContainer from 'src/shared/components/AnnotationEditorContainer'
 import {OverlayTechnology, Page} from 'src/reusable_ui'
+import FixedModal from 'src/reusable_ui/components/FixedModal/FixedModal'
 
 // Actions
 import * as dashboardActions from 'src/dashboards/actions'
@@ -42,10 +43,18 @@ import {interval, DASHBOARD_LAYOUT_ROW_HEIGHT} from 'src/shared/constants'
 import {FORMAT_INFLUXQL} from 'src/shared/data/timeRanges'
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
 import {getNewDashboardCell} from 'src/dashboards/utils/cellGetters'
+import {computeNextCells} from 'src/dashboards/utils/importCells'
 import {
   getAutoRefreshOptions,
   AutoRefreshOption,
 } from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+import {
+  notifyCellsImportedAdded,
+  notifyCellsImportedUpdated,
+  notifyCellsImportedMixed,
+} from 'src/shared/copy/notifications'
+import {ImportSelectionPayload} from 'src/shared/types/importModal'
+import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 
 // Types
 import {WithRouterProps} from 'react-router'
@@ -62,7 +71,6 @@ import {NewDefaultCell} from 'src/types/dashboards'
 import {NotificationAction, Me, TimeZones, RefreshRate} from 'src/types'
 import {AnnotationsDisplaySetting} from 'src/types/annotations'
 import {Links} from 'src/types/flux'
-import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 
 interface Props extends ManualRefreshProps, WithRouterProps {
   fluxLinks: Links
@@ -124,6 +132,7 @@ interface State {
   dashboardLinks: DashboardsModels.DashboardSwitcherLinks
   showAnnotationControls: boolean
   showCellEditorOverlay: boolean
+  isImportModalOpen: boolean
 }
 
 @ErrorHandling
@@ -138,6 +147,7 @@ class DashboardPage extends Component<Props, State> {
       dashboardLinks: EMPTY_LINKS,
       showAnnotationControls: false,
       showCellEditorOverlay: false,
+      isImportModalOpen: false,
     }
   }
 
@@ -289,6 +299,7 @@ class DashboardPage extends Component<Props, State> {
       showAnnotationControls,
       selectedCell,
       showCellEditorOverlay,
+      isImportModalOpen,
     } = this.state
 
     return (
@@ -320,6 +331,7 @@ class DashboardPage extends Component<Props, State> {
           autoRefresh={refreshRate}
           isHidden={inPresentationMode}
           onAddCell={this.handleAddCell}
+          onImportCell={this.handleOpenImportModal}
           onManualRefresh={onManualRefresh}
           zoomedTimeRange={zoomedTimeRange}
           onRenameDashboard={this.handleRenameDashboard}
@@ -366,6 +378,12 @@ class DashboardPage extends Component<Props, State> {
           />
         ) : null}
         <AnnotationEditorContainer />
+        {isImportModalOpen && (
+          <FixedModal
+            onClose={() => this.handleSetImportModalOpen(false)}
+            onSelectionChange={this.handleImportSelectionChange}
+          />
+        )}
       </Page>
     )
   }
@@ -496,6 +514,72 @@ class DashboardPage extends Component<Props, State> {
     const emptyCell = getNewDashboardCell(dashboard)
 
     this.setState({selectedCell: emptyCell, showCellEditorOverlay: true})
+  }
+
+  private handleOpenImportModal = (): void => {
+    this.setState(prev => ({isImportModalOpen: !prev.isImportModalOpen}))
+  }
+
+  private handleSetImportModalOpen = (isOpen: boolean): void => {
+    this.setState({isImportModalOpen: isOpen})
+  }
+
+  private handleImportSelectionChange = async (
+    items: ImportSelectionPayload
+  ): Promise<void> => {
+    const {dashboard, updateDashboard, putDashboard, notify} = this.props
+    if (!dashboard) {
+      return
+    }
+
+    const dashboardCells = [
+      ...items.dashboards.flatMap(d => d.cells ?? []),
+      ...(items.libraryCells ?? []).map(lc => lc.content),
+    ].filter((cell): cell is DashboardsModels.Cell => !!cell)
+
+    if (dashboardCells.length === 0) {
+      return
+    }
+
+    const currentCells = dashboard.cells ?? []
+    const {nextCells, mergeMatchedCount} = computeNextCells(
+      currentCells,
+      dashboardCells,
+      items.importStrategy
+    )
+    const count = dashboardCells.length
+
+    // Match handleUpdatePosition: optimistic Redux update then persist.
+    const existingIds = new Set(currentCells.map(c => c.i))
+    const cellsForSave = nextCells.map(cell => {
+      if (existingIds.has(cell.i)) {
+        return cell
+      }
+      const {links: _links, ...rest} = cell as DashboardsModels.Cell & {
+        links?: unknown
+      }
+      return {...rest, hidden: false} as DashboardsModels.Cell
+    })
+    const newDashboard = {...dashboard, cells: cellsForSave}
+
+    updateDashboard(newDashboard)
+    await putDashboard(newDashboard)
+
+    if (count > 0) {
+      if (items.importStrategy === 'mergeByCellId') {
+        const updatedCount = mergeMatchedCount
+        const addedCount = count - updatedCount
+        if (addedCount > 0 && updatedCount > 0) {
+          notify(notifyCellsImportedMixed(addedCount, updatedCount))
+        } else if (updatedCount > 0) {
+          notify(notifyCellsImportedUpdated(updatedCount))
+        } else {
+          notify(notifyCellsImportedAdded(addedCount))
+        }
+      } else {
+        notify(notifyCellsImportedAdded(count))
+      }
+    }
   }
 
   private handleCloneCell = (cell: DashboardsModels.Cell): void => {

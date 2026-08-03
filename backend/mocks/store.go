@@ -32,6 +32,7 @@ type Store struct {
 	CellLibraryStore cloudhub.CellLibraryStore
 	HostStore        cloudhub.HostStore
 	URLMonitoringStore      cloudhub.URLMonitoringStore
+	OrgNavMenuStore         cloudhub.OrgNavMenuStore
 }
 
 // Sources ...
@@ -152,4 +153,9 @@ func (s *Store) Hosts(ctx context.Context) cloudhub.HostStore {
 // URLMonitoring ...
 func (s *Store) URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore {
 	return s.URLMonitoringStore
+}
+
+// OrgNavMenu ...
+func (s *Store) OrgNavMenu(ctx context.Context) cloudhub.OrgNavMenuStore {
+	return s.OrgNavMenuStore
 }

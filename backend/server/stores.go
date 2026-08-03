@@ -107,6 +107,7 @@ type DataStore interface {
 	CellLibrary(ctx context.Context) cloudhub.CellLibraryStore
 	Hosts(ctx context.Context) cloudhub.HostStore
 	URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore
+	OrgNavMenu(ctx context.Context) cloudhub.OrgNavMenuStore
 }
 
 // ensure that Store implements a DataStore
@@ -138,6 +139,7 @@ type Store struct {
 	CellLibraryStore cloudhub.CellLibraryStore
 	HostStore             cloudhub.HostStore
 	URLMonitoringStore    cloudhub.URLMonitoringStore
+	OrgNavMenuStore       cloudhub.OrgNavMenuStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -393,6 +395,14 @@ func (s *Store) URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore {
 	return &noop.URLMonitoringStore{}
 }
 
+// OrgNavMenu returns the OrgNavMenuStore if configured, otherwise falls back to noop.
+func (s *Store) OrgNavMenu(ctx context.Context) cloudhub.OrgNavMenuStore {
+	if s.OrgNavMenuStore != nil {
+		return s.OrgNavMenuStore
+	}
+	return &noop.OrgNavMenuStore{}
+}
+
 // CellLibrary returns a noop.CellLibraryStore if the context has no organization specified
 // and an organization.CellLibraryStore otherwise.
 func (s *Store) CellLibrary(ctx context.Context) cloudhub.CellLibraryStore {
@@ -404,3 +414,4 @@ func (s *Store) CellLibrary(ctx context.Context) cloudhub.CellLibraryStore {
 	}
 	return &noop.CellLibraryStore{}
 }
+

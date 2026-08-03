@@ -45,6 +45,7 @@ interface Props {
   onManualRefresh: () => void
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   onAddCell: () => void
+  onImportCell?: () => void
   showTempVarControls?: boolean
   onToggleShowTempVarControls?: () => void
   showAnnotationControls: boolean
@@ -117,6 +118,7 @@ class DashboardHeader extends Component<Props, State> {
           <GraphTips />
           <TimeZoneToggle timeZone={timeZone} onSetTimeZone={onSetTimeZone} />
           {this.addCellButton}
+          {this.importCellButton}
           {this.toolButtons}
           <AutoRefreshDropdown
             onChoose={handleChooseAutoRefresh}
@@ -164,6 +166,24 @@ class DashboardHeader extends Component<Props, State> {
             icon={IconFont.AddCell}
             onClick={onAddCell}
             titleText="Add a Cell to Dashboard"
+          />
+        </Authorized>
+      )
+    }
+  }
+
+  private get importCellButton(): JSX.Element {
+    const {dashboard, onImportCell} = this.props
+
+    if (dashboard && onImportCell) {
+      return (
+        <Authorized requiredRole={EDITOR_ROLE}>
+          <Button
+            shape={ButtonShape.Square}
+            color={ComponentColor.Default}
+            icon={IconFont.Import}
+            onClick={onImportCell}
+            titleText="Import Cell"
           />
         </Authorized>
       )

@@ -786,12 +786,12 @@ function DashboardPageWithImport({
           )}
         </div>
       </Page.Contents>
-      <FixedModal
-        isOpen={importModal.isOpen}
-        setIsOpen={importModal.setIsOpen}
-        onSelectionChange={importModal.onSelectionChange}
-        fixedCellName={pageName}
-      />
+      {importModal.isOpen && (
+        <FixedModal
+          onClose={() => importModal.setIsOpen(false)}
+          onSelectionChange={importModal.onSelectionChange}
+        />
+      )}
       {/* fixed cell modal */}
       <PopoverModal
         anchorRef={fixedCellBtnRef as React.RefObject<HTMLElement>}

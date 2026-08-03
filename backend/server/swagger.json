@@ -8667,6 +8667,299 @@
           }
         }
       }
+    },
+    "/cloudhub/v1/nav-menu/master": {
+      "get": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Returns all master navigation menu items",
+        "description": "Returns all master navigation menu items.",
+        "responses": {
+          "200": {
+            "description": "Returns all master navigation menu items.",
+            "schema": {
+              "$ref": "#/definitions/MasterNavMenuResponse"
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Updates the master navigation menu items",
+        "description": "Updates the master navigation menu items.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuUpsertRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Updated master navigation menu items successfully"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Updates the master navigation menu items",
+        "description": "Updates the master navigation menu items.",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuUpsertRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Updated master navigation menu items successfully"
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cloudhub/v1/nav-menu/master/{id}": {
+      "delete": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Deletes a master navigation menu item",
+        "description": "Deletes a master navigation menu item.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted master navigation menu item successfully"
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/cloudhub/v1/organizations/{oid}/nav-menu": {
+      "get": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Returns the navigation menu configuration for an organization",
+        "description": "Returns the navigation menu configuration for an organization.",
+        "parameters": [
+          {
+            "name": "oid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the navigation menu configuration.",
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuResponse"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Updates the navigation menu configuration for an organization",
+        "description": "Updates the navigation menu configuration for an organization.",
+        "parameters": [
+          {
+            "name": "oid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuUpsertRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the updated navigation menu configuration.",
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuResponse"
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Updates the navigation menu configuration for an organization",
+        "description": "Updates the navigation menu configuration for an organization.",
+        "parameters": [
+          {
+            "name": "oid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuUpsertRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the updated navigation menu configuration.",
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuResponse"
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Selectively updates the navigation menu configuration for an organization",
+        "description": "Selectively updates the navigation menu configuration for an organization.",
+        "parameters": [
+          {
+            "name": "oid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuUpsertRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the updated navigation menu configuration.",
+            "schema": {
+              "$ref": "#/definitions/OrgNavMenuResponse"
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "nav-menu"
+        ],
+        "summary": "Resets the navigation menu configuration for an organization",
+        "description": "Resets the navigation menu configuration for an organization.",
+        "parameters": [
+          {
+            "name": "oid",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Resets the navigation menu configuration successfully"
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -15377,6 +15670,7 @@
             "deadman"
           ],
           "description": "Empty means threshold"
+        },
         "every": {
           "type": "string"
         },
@@ -15397,6 +15691,172 @@
         "measurement",
         "field"
       ]
+    },
+    "OrgNavSubMenuItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "enabled"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "sortOrder": {
+          "type": "integer"
+        }
+      }
+    },
+    "OrgNavMenuItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "enabled"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrgNavSubMenuItem"
+          }
+        }
+      }
+    },
+    "OrgNavMenuResponse": {
+      "type": "object",
+      "required": [
+        "orgId",
+        "navItems",
+        "isDegraded"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "string"
+        },
+        "navItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrgNavMenuItem"
+          }
+        },
+        "isDegraded": {
+          "type": "boolean"
+        },
+        "warning": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string"
+        }
+      }
+    },
+    "OrgNavMenuUpsertRequest": {
+      "type": "object",
+      "required": [
+        "navItems"
+      ],
+      "properties": {
+        "navItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrgNavMenuItem"
+          }
+        }
+      }
+    },
+    "MasterNavSubMenuItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "sortOrder",
+        "deleteYN"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "deleteYN": {
+          "type": "boolean"
+        }
+      }
+    },
+    "MasterNavMenuItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "sortOrder",
+        "deleteYN"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "deleteYN": {
+          "type": "boolean"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MasterNavSubMenuItem"
+          }
+        }
+      }
+    },
+    "MasterNavMenuResponse": {
+      "type": "object",
+      "required": [
+        "navItems"
+      ],
+      "properties": {
+        "navItems": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/MasterNavMenuItem"
+          }
+        }
+      }
     }
   }
 }

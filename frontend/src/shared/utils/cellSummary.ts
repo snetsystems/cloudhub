@@ -15,13 +15,10 @@ import {
   getFieldOptionsWithGroupByTags,
   parseIfPositiveNumber,
   staticGraphDatasets,
+  isStaticGraphType,
 } from 'src/shared/utils/staticGraph'
 
-export type CellSummaryMode =
-  | 'time-series'
-  | 'statistical'
-  | 'statistical-single-field'
-  | 'others'
+export type CellSummaryMode = 'show' | 'show-single-field' | 'hide'
 
 interface IsShowInformationSupportedOptions {
   cellType: CellType
@@ -69,30 +66,54 @@ interface CellSummaryDisplayOptions {
 }
 
 const CELL_SUMMARY_CONFIG: Partial<Record<CellType, CellSummaryMode>> = {
-  // TIME SERIES GRAPH — max regardless of field count
-  [CellType.Line]: 'time-series',
-  [CellType.Stacked]: 'time-series',
-  [CellType.StepPlot]: 'time-series',
-  [CellType.Bar]: 'time-series',
-  [CellType.LinePlusSingleStat]: 'time-series',
-  // STATISTICAL GRAPH — max regardless of field count
-  [CellType.StaticBar]: 'statistical',
-  [CellType.StaticStackedBar]: 'statistical',
-  [CellType.StaticLineChart]: 'statistical',
-  // STATISTICAL GRAPH — max only with a single value field
-  [CellType.StaticPie]: 'statistical-single-field',
-  [CellType.StaticDoughnut]: 'statistical-single-field',
-  // OTHERS GRAPH — unsupported
-  [CellType.StaticScatter]: 'others',
-  [CellType.StaticRadar]: 'others',
-  [CellType.StaticTableGaugeChart]: 'others',
-  [CellType.SingleStat]: 'others',
-  [CellType.Gauge]: 'others',
-  [CellType.Table]: 'others',
-  [CellType.Alerts]: 'others',
-  [CellType.News]: 'others',
-  [CellType.Guide]: 'others',
-  [CellType.Note]: 'others',
+  // Show Information — always
+  [CellType.Line]: 'show',
+  [CellType.Stacked]: 'show',
+  [CellType.StepPlot]: 'show',
+  [CellType.Bar]: 'show',
+  [CellType.LinePlusSingleStat]: 'show',
+  [CellType.StaticBar]: 'show',
+  [CellType.StaticLineChart]: 'show',
+  // Show Information — only with a single value field
+  [CellType.StaticPie]: 'show-single-field',
+  [CellType.StaticDoughnut]: 'show-single-field',
+  [CellType.StaticStackedBar]: 'show-single-field',
+  // Hide Show Information
+  [CellType.StaticScatter]: 'hide',
+  [CellType.StaticRadar]: 'hide',
+  [CellType.StaticTableGaugeChart]: 'hide',
+  [CellType.SingleStat]: 'hide',
+  [CellType.Gauge]: 'hide',
+  [CellType.Table]: 'hide',
+  [CellType.Alerts]: 'hide',
+  [CellType.News]: 'hide',
+  [CellType.Guide]: 'hide',
+  [CellType.Note]: 'hide',
+}
+
+const getRawSeries = (
+  responses: TimeSeriesServerResponse[]
+): TimeSeriesSeries[] =>
+  _.get(responses, ['0', 'response', 'results', '0', 'series'], [])
+
+const hasVisibleSingleValueField = (
+  responses: TimeSeriesServerResponse[],
+  fieldOptions: FieldOption[]
+): boolean => {
+  const rawData = getRawSeries(responses)
+  if (!rawData.length) {
+    return false
+  }
+
+  const tagKeys = Object.keys(rawData[0].tags || {})
+  const visibleValueFieldCount = fieldOptions.filter(
+    field =>
+      field.internalName !== 'time' &&
+      !tagKeys.includes(field.internalName) &&
+      field.visible !== false
+  ).length
+
+  return visibleValueFieldCount === 1
 }
 
 // Whether "Show Information" is allowed for this cell type and data.
@@ -106,42 +127,21 @@ export const isShowInformationSupported = ({
     return false
   }
 
-  const mode = CELL_SUMMARY_CONFIG[cellType] ?? 'others'
-  if (mode === 'others') {
+  const mode = CELL_SUMMARY_CONFIG[cellType] ?? 'hide'
+  if (mode === 'hide') {
     return false
   }
 
-  if (mode === 'time-series') {
-    return true
+  if (mode === 'show-single-field') {
+    return hasVisibleSingleValueField(responses, fieldOptions)
   }
 
-  const rawData: TimeSeriesSeries[] = _.get(
-    responses,
-    ['0', 'response', 'results', '0', 'series'],
-    []
-  )
-
-  if (!rawData.length) {
-    return false
+  // Static graphs still need at least one series; time-series graphs stay available.
+  if (isStaticGraphType(cellType)) {
+    return getRawSeries(responses).length > 0
   }
 
-  if (mode === 'statistical') {
-    return true
-  }
-
-  if (mode === 'statistical-single-field') {
-    const tagKeys = Object.keys(rawData[0].tags || {})
-    const visibleValueFieldCount = fieldOptions.filter(
-      field =>
-        field.internalName !== 'time' &&
-        !tagKeys.includes(field.internalName) &&
-        field.visible !== false
-    ).length
-
-    return visibleValueFieldCount === 1
-  }
-
-  return false
+  return true
 }
 
 // Toggle isShowSummary on a dashboard cell.
@@ -635,9 +635,12 @@ export const resolveCellSummaryDisplay = ({
     return {summary: null}
   }
 
-  const mode = CELL_SUMMARY_CONFIG[cellType] ?? 'others'
+  const mode = CELL_SUMMARY_CONFIG[cellType] ?? 'hide'
+  if (mode === 'hide') {
+    return {summary: null}
+  }
 
-  if (mode === 'statistical' || mode === 'statistical-single-field') {
+  if (isStaticGraphType(cellType)) {
     return buildStatisticalSummary({
       cellType,
       queries,
