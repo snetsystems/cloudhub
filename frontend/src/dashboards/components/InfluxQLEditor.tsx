@@ -14,6 +14,10 @@ import {Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 // Utils
 import {getDeep} from 'src/utils/wrappers'
 import {makeCancelable} from 'src/utils/promises'
+import {
+  deriveEditorDraftState,
+  QueryEditorDraft,
+} from 'src/dashboards/utils/influxQLEditor'
 
 // Constants
 import {MATCH_INCOMPLETE_TEMPLATES, applyMasks} from 'src/tempVars/constants'
@@ -41,6 +45,7 @@ interface State {
   filteredTemplates: Template[]
   isSubmitted: boolean
   configID: string
+  draftsByConfigID: {[id: string]: QueryEditorDraft}
 }
 
 interface Props {
@@ -64,26 +69,34 @@ const TEMPLATE_VAR = /[:]\w+[:]/g
 @ErrorHandling
 class InfluxQLEditor extends Component<Props, State> {
   public static getDerivedStateFromProps(nextProps: Props, prevState: State) {
-    const {isSubmitted, editedQueryText} = prevState
-
-    const isQueryConfigChanged = nextProps.config.id !== prevState.configID
-    const isQueryTextChanged = editedQueryText.trim() !== nextProps.query.trim()
-
-    if ((isSubmitted && isQueryTextChanged) || isQueryConfigChanged) {
-      return {
-        ...BLURRED_EDITOR_STATE,
-        selectedTemplate: {
-          tempVar: getDeep<string>(nextProps.templates, FIRST_TEMP_VAR, ''),
-        },
-        filteredTemplates: nextProps.templates,
-        templatingQueryText: nextProps.query,
-        editedQueryText: nextProps.query,
-        configID: nextProps.config.id,
-        focused: isQueryConfigChanged,
+    const derived = deriveEditorDraftState(
+      nextProps.query,
+      nextProps.config.id,
+      {
+        configID: prevState.configID,
+        editedQueryText: prevState.editedQueryText,
+        isSubmitted: prevState.isSubmitted,
+        draftsByConfigID: prevState.draftsByConfigID,
       }
+    )
+
+    if (!derived) {
+      return null
     }
 
-    return null
+    return {
+      ...BLURRED_EDITOR_STATE,
+      selectedTemplate: {
+        tempVar: getDeep<string>(nextProps.templates, FIRST_TEMP_VAR, ''),
+      },
+      filteredTemplates: nextProps.templates,
+      templatingQueryText: derived.editedQueryText,
+      editedQueryText: derived.editedQueryText,
+      isSubmitted: derived.isSubmitted,
+      configID: derived.configID,
+      draftsByConfigID: derived.draftsByConfigID,
+      focused: derived.focused,
+    }
   }
 
   private codeMirrorRef: React.RefObject<ReactCodeMirror>
@@ -105,6 +118,7 @@ class InfluxQLEditor extends Component<Props, State> {
       editedQueryText: props.query,
       isSubmitted: true,
       configID: props.config.id,
+      draftsByConfigID: {},
     }
   }
 
@@ -287,7 +301,16 @@ class InfluxQLEditor extends Component<Props, State> {
 
         // prevent changing submitted status when edited while awaiting update
         if (this.state.editedQueryText === editedQueryText) {
-          this.setState({isSubmitted: true})
+          this.setState(state => ({
+            isSubmitted: true,
+            draftsByConfigID: {
+              ...state.draftsByConfigID,
+              [state.configID]: {
+                editedQueryText,
+                isSubmitted: true,
+              },
+            },
+          }))
         }
       } catch (error) {
         if (!error.isCanceled) {

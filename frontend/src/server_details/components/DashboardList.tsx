@@ -30,17 +30,22 @@ interface DashboardListProps {
   onSelectionChange?: (items: ImportSelectionPayload) => void
 }
 
+/** Cloned dashboards reuse cell.i — qualify by dashboard id for selection. */
+const cellSelectionKey = (dashboardId: string, cellId: string): string =>
+  `${dashboardId}::${cellId}`
+
 interface DashboardItemProps {
   dashboard: Dashboard
-  onPreviewClick: (cell: Cell) => void
+  onPreviewClick: (cell: Cell, dashboard: Dashboard) => void
   onToggle: (id: string, checked: boolean) => void
   isSelected: boolean
-  onCellToggle: (cellId: string, checked: boolean) => void
+  onCellToggle: (dashboardId: string, cellId: string, checked: boolean) => void
   selectedCells: Set<string>
 }
 
 interface CellItemProps {
   cell: Cell
+  dashboardId: string
   onPreviewClick: (cell: Cell) => void
   onToggle: (cellId: string, checked: boolean) => void
   isSelected: boolean
@@ -114,10 +119,13 @@ const CellPreviewModal: React.FC<CellPreviewModalProps> = ({
 
 const CellItem: React.FC<CellItemProps> = ({
   cell,
+  dashboardId,
   onPreviewClick,
   onToggle,
   isSelected,
 }) => {
+  const checkboxId = `cell-checkbox-${dashboardId}-${cell.i}`
+
   const handleTypeClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     onPreviewClick(cell)
@@ -143,7 +151,7 @@ const CellItem: React.FC<CellItemProps> = ({
         >
           <input
             type="checkbox"
-            id={`cell-checkbox-${cell.i}`}
+            id={checkboxId}
             checked={isSelected}
             onChange={e => {
               e.stopPropagation()
@@ -152,7 +160,7 @@ const CellItem: React.FC<CellItemProps> = ({
             onClick={e => e.stopPropagation()}
           />
           <label
-            htmlFor={`cell-checkbox-${cell.i}`}
+            htmlFor={checkboxId}
             onClick={e => e.stopPropagation()}
           />
         </div>
@@ -255,11 +263,16 @@ const DashboardItem: React.FC<DashboardItemProps> = ({
         <div className="dashboard-tree-children">
           {dashboard.cells.map(cell => (
             <CellItem
-              key={cell.i}
+              key={cellSelectionKey(dashboard.id, cell.i)}
               cell={cell}
-              onPreviewClick={onPreviewClick}
-              onToggle={onCellToggle}
-              isSelected={selectedCells.has(cell.i)}
+              dashboardId={dashboard.id}
+              onPreviewClick={cell => onPreviewClick(cell, dashboard)}
+              onToggle={(cellId, checked) =>
+                onCellToggle(dashboard.id, cellId, checked)
+              }
+              isSelected={selectedCells.has(
+                cellSelectionKey(dashboard.id, cell.i)
+              )}
             />
           ))}
         </div>
@@ -284,6 +297,46 @@ function DashboardList({
   )
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set())
 
+  const emitSelectionChange = (nextCells: Set<string>) => {
+    if (!onSelectionChange) {
+      return
+    }
+
+    const dashboardsWithSelectedCellsOnly = dashboards
+      .map(d => ({
+        ...d,
+        cells: (d.cells ?? []).filter(c =>
+          nextCells.has(cellSelectionKey(d.id, c.i))
+        ),
+      }))
+      .filter(d => d.cells.length > 0)
+
+    const allTemplates: Template[] = []
+    const templateMap = new Map<string, Template>()
+
+    dashboardsWithSelectedCellsOnly.forEach(dashboard => {
+      if (dashboard.templates && dashboard.templates.length > 0) {
+        dashboard.templates.forEach(template => {
+          const queryKey = getTemplateQueryKey(template)
+          const fullKey = `${template.tempVar}::${queryKey}`
+
+          if (!templateMap.has(fullKey)) {
+            templateMap.set(fullKey, template)
+            allTemplates.push(template)
+          }
+        })
+      }
+    })
+
+    onSelectionChange({
+      dashboards: dashboardsWithSelectedCellsOnly,
+      cellTypes: [],
+      libraryCells: [],
+      templates: detectTemplateConflicts(allTemplates),
+      importStrategy: 'append',
+    })
+  }
+
   const handleDashboardToggle = (dashboardId: string, checked: boolean) => {
     const newSelected = new Set(selectedDashboards)
     const newSelectedCells = new Set(selectedCells)
@@ -294,124 +347,52 @@ function DashboardList({
       newSelected.add(dashboardId)
       if (dashboard?.cells) {
         dashboard.cells.forEach(cell => {
-          newSelectedCells.add(cell.i)
+          newSelectedCells.add(cellSelectionKey(dashboardId, cell.i))
         })
       }
     } else {
       newSelected.delete(dashboardId)
       if (dashboard?.cells) {
         dashboard.cells.forEach(cell => {
-          newSelectedCells.delete(cell.i)
+          newSelectedCells.delete(cellSelectionKey(dashboardId, cell.i))
         })
       }
     }
 
     setSelectedDashboards(newSelected)
     setSelectedCells(newSelectedCells)
-
-    if (onSelectionChange) {
-      const selected = dashboards.filter(d => newSelected.has(d.id))
-      const selectedCellsList: Cell[] = []
-      dashboards.forEach(d => {
-        d.cells?.forEach(cell => {
-          if (newSelectedCells.has(cell.i)) {
-            selectedCellsList.push(cell)
-          }
-        })
-      })
-
-      const allTemplates: Template[] = []
-      const templateMap = new Map<string, Template>()
-
-      selected.forEach(dashboard => {
-        if (dashboard.templates && dashboard.templates.length > 0) {
-          dashboard.templates.forEach(template => {
-            const queryKey = getTemplateQueryKey(template)
-            const fullKey = `${template.tempVar}::${queryKey}`
-
-            if (!templateMap.has(fullKey)) {
-              templateMap.set(fullKey, template)
-              allTemplates.push(template)
-            }
-          })
-        }
-      })
-
-      const templatesWithConflict = detectTemplateConflicts(allTemplates)
-
-      const dashboardsWithSelectedCellsOnly = selected
-        .map(d => ({
-          ...d,
-          cells: (d.cells ?? []).filter(c => newSelectedCells.has(c.i)),
-        }))
-        .filter(d => d.cells.length > 0)
-
-      onSelectionChange({
-        dashboards: dashboardsWithSelectedCellsOnly,
-        cellTypes: [],
-        libraryCells: [],
-        templates: templatesWithConflict,
-        importStrategy: 'append',
-      })
-    }
+    emitSelectionChange(newSelectedCells)
   }
 
-  const handleCellToggle = (cellId: string, checked: boolean) => {
+  const handleCellToggle = (
+    dashboardId: string,
+    cellId: string,
+    checked: boolean
+  ) => {
+    const key = cellSelectionKey(dashboardId, cellId)
     const newSelected = new Set(selectedCells)
     if (checked) {
-      newSelected.add(cellId)
+      newSelected.add(key)
     } else {
-      newSelected.delete(cellId)
+      newSelected.delete(key)
     }
     setSelectedCells(newSelected)
 
-    if (onSelectionChange) {
-      // 현재 선택된 셀을 기준으로, 하나 이상의 셀이 선택된 대시보드를 모두 payload에 포함한다.
-      const selectedDashboardsByCells = dashboards.filter(dashboard =>
-        dashboard.cells?.some(cell => newSelected.has(cell.i))
+    const dashboard = dashboards.find(d => d.id === dashboardId)
+    const newSelectedDashboards = new Set(selectedDashboards)
+    if (dashboard?.cells?.length) {
+      const allSelected = dashboard.cells.every(cell =>
+        newSelected.has(cellSelectionKey(dashboardId, cell.i))
       )
-
-      const selectedDashboardIds = new Set<string>([
-        ...Array.from(selectedDashboards),
-        ...selectedDashboardsByCells.map(d => d.id),
-      ])
-
-      const selected = dashboards.filter(d => selectedDashboardIds.has(d.id))
-
-      const allTemplates: Template[] = []
-      const templateMap = new Map<string, Template>()
-
-      selected.forEach(dashboard => {
-        if (dashboard.templates && dashboard.templates.length > 0) {
-          dashboard.templates.forEach(template => {
-            const queryKey = getTemplateQueryKey(template)
-            const fullKey = `${template.tempVar}::${queryKey}`
-
-            if (!templateMap.has(fullKey)) {
-              templateMap.set(fullKey, template)
-              allTemplates.push(template)
-            }
-          })
-        }
-      })
-
-      const templatesWithConflict = detectTemplateConflicts(allTemplates)
-
-      const dashboardsWithSelectedCellsOnly = selected
-        .map(d => ({
-          ...d,
-          cells: (d.cells ?? []).filter(c => newSelected.has(c.i)),
-        }))
-        .filter(d => d.cells.length > 0)
-
-      onSelectionChange({
-        dashboards: dashboardsWithSelectedCellsOnly,
-        cellTypes: [],
-        libraryCells: [],
-        templates: templatesWithConflict,
-        importStrategy: 'append',
-      })
+      if (allSelected) {
+        newSelectedDashboards.add(dashboardId)
+      } else {
+        newSelectedDashboards.delete(dashboardId)
+      }
+      setSelectedDashboards(newSelectedDashboards)
     }
+
+    emitSelectionChange(newSelected)
   }
 
   useEffect(() => {
@@ -429,11 +410,9 @@ function DashboardList({
     loadDashboards()
   }, [handleGetDashboards])
 
-  const handlePreviewClick = (cell: Cell) => {
-    const dashboard = dashboards.find(d => d.cells?.some(c => c.i === cell.i))
-
+  const handlePreviewClick = (cell: Cell, dashboard: Dashboard) => {
     setPreviewCell(cell)
-    setPreviewTemplates(dashboard?.templates || [])
+    setPreviewTemplates(dashboard.templates || [])
     setIsPreviewOpen(true)
   }
 

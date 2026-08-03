@@ -18,18 +18,37 @@
   opacity: 0;
 }
 
-.modal-content {
+.modal-shell {
   position: fixed;
   top: 0;
   right: 0;
   height: 100%;
-  background-color: $g1-raven;
-  box-shadow: -4px 0 16px $g1-raven;
   z-index: 1000;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: visible;
   transform: translateX(100%);
-  transition: transform 0.25s ease-out;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.modal-shell--open {
+  transform: translateX(0);
+}
+
+.modal-shell--closing {
+  transform: translateX(100%);
+}
+
+.modal-content {
+  position: relative;
+  height: 100%;
+  flex-shrink: 0;
+  background-color: $g1-raven;
+  box-shadow: -4px 0 16px $g1-raven;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 
   .radio-button {
@@ -400,18 +419,94 @@
   overflow: auto;
 }
 
-.modal-content--open {
-  transform: translateX(0);
-}
-
-.modal-content--closing {
-  transform: translateX(100%);
-}
-
 .fixed-modal-msg {
   color: #8b8f99;
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Sits flush left of the side sheet; slides out from under it. */
+.import-selection-preview {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  width: #{'min(560px, calc(100vw - var(--drawer-width, 420px) - 24px))'};
+  height: 100%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  border-left: $ix-border solid $g5-pepper;
+  border-right: none;
+  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+  transform: translateX(100%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.35s;
+
+  > .fancy-scroll--container {
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+.import-selection-preview--open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+.import-selection-preview__header {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: $g13-mist;
+  border-bottom: $ix-border solid $g5-pepper;
+}
+
+.import-selection-preview__scroll {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import-selection-preview-card {
+  background-color: $g2-kevlar;
+  border: $ix-border solid $g5-pepper;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.import-selection-preview-card__title {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: $g18-cloud;
+  border-bottom: $ix-border solid $g5-pepper;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.import-selection-preview-card__body {
+  height: 220px;
+  position: relative;
+  background-color: $g1-raven;
+}
+
+.import-selection-preview-card__placeholder,
+.import-selection-preview-card__unavailable {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $g11-sidewalk;
+  font-size: 12px;
 }

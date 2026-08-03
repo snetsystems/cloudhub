@@ -187,6 +187,21 @@ $dash-graph-options-arrow: 8px;
 .cell-summary-overlay__item-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
+.cell-summary-overlay__meta {
+  flex-shrink: 0;
+}
+
+.cell-summary-overlay__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 50ch;
 }
 
 .dash-graph--note {
