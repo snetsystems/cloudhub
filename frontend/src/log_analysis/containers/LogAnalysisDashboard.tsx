@@ -1,4 +1,5 @@
 // Library
+import 'src/log_analysis/util/setupOUIIcons'
 import React, {useEffect, useMemo, useCallback, useState} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import _ from 'lodash'

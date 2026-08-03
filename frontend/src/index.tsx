@@ -5,7 +5,7 @@ globalThis.process = process
 globalThis.global = globalThis
 import i18n from './i18n' // I18N initialization
 
-import React, {PureComponent} from 'react'
+import React, {PureComponent, Suspense} from 'react'
 import {render} from 'react-dom'
 import {Provider as ReduxProvider} from 'react-redux'
 import {Redirect, Router, Route, useRouterHistory} from 'react-router'
@@ -31,26 +31,7 @@ import {
   OTPLoginPage,
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
-import {StatusPage} from 'src/status'
-import DataExplorerPage from 'src/data_explorer'
-import {DashboardsPage, DashboardPage} from 'src/dashboards'
-import {Infrastructure, HostPage} from 'src/hosts'
-import {Clouds} from 'src/clouds'
-import {Applications} from 'src/applications'
-import {LogsPage} from 'src/logs'
-import {ActivityLogsPage} from 'src/activitylogs'
-import LogAnalysisDashboard from 'src/log_analysis/containers/LogAnalysisDashboard'
-import AlertsApp from 'src/alerts'
-import {
-  KapacitorPage,
-  KapacitorRulePage,
-  KapacitorRulesPage,
-  TickscriptPage,
-} from 'src/kapacitor'
-import {AdminCloudHubPage, AdminInfluxDBPage} from 'src/admin'
-import {ManageSources, OnboardingWizard} from 'src/sources'
-import {AgentAdminPage} from 'src/agent_admin'
-import {GraphqlProvider} from 'src/addon/128t'
+import OnboardingWizard from 'src/sources/containers/OnboardingWizard'
 
 import NotFound from 'src/shared/components/NotFound'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -89,39 +70,137 @@ import {setCustomAutoRefreshOptions} from './shared/components/dropdown_auto_ref
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
 import {reducerVSphere, ResponseVSphere} from './clouds/types'
-import PredictionRouter from 'src/device_management/containers/PredictionRouter'
-import PredictionRulePage from 'src/device_management/containers/PredictionRulePage'
 import {getElasticSearchInfoAsync} from 'src/shared/actions/elasticSearch'
-import ManagementRouter from 'src/device_management/containers/ManagementRouter'
-import 'src/log_analysis/util/setupOUIIcons'
-import TopologyRouter from 'src/hosts/containers/TopologyRouter'
-import OverviewPage from 'src/overview/containers/OverviewPage'
-import NewHostsPage from 'src/hosts/containers/NewHostsPage'
-import ServerDetailsWrapper from 'src/server_details/containers/ServerDetailsWrapper'
-import GPUMonitoringPage from 'src/gpu_monitoring/containers/GPUMonitoringPage'
-import URLMonitoringPage from 'src/url_monitoring/containers/URLMonitoringPage'
-import URLAlertSettingPage from 'src/url_monitoring/containers/URLAlertSettingPage'
-import URLAlertPage from 'src/url_monitoring/containers/URLAlertPage'
-import DBMonitoringPage from 'src/db_monitoring/containers/DBMonitoringPage'
-import AlertGroupRulePage from 'src/alert_group/containers/AlertGroupRulePage'
-import AppPerformanceMonitoringPage from 'src/app_monitoring/containers/AppPerformanceMonitoringPage'
-import KubernetesRouter from 'src/clouds/containers/KubernetesRouter'
-import HubblePage from 'src/hubble/containers/HubblePage'
 import {
   KUBERNETES_NETWORK_ROUTE,
   KUBERNETES_OVERVIEW_ROUTE,
   LEGACY_HUBBLE_ROUTE,
 } from 'src/hubble/navigation'
-import OpenStackRouter from 'src/clouds/containers/OpenStackRouter'
-import VMHostRouter from './clouds/containers/VMHostRouter'
-import NutanixPage from './nutanix/containers/NutanixPage'
 import {
   SERVER_DETAILS_PAGE_NAME,
   SERVER_DETAILS_IMPORT_PATH,
 } from './shared/constants/routes'
-import MainOverviewPage from 'src/main/OverviewPage'
-import GroupDetailPage from 'src/admin/containers/cloudhub/GroupDetailPage'
-import ServerAlertManagementPage from 'src/server_alert/containers/ServerAlertManagementPage'
+
+// Lazy-loaded routes: these pull in heavy libraries (mxgraph, opensearch-oui,
+// codemirror, d3) that unrelated routes shouldn't have to fetch on every load.
+const TopologyRouter = React.lazy(
+  () => import('src/hosts/containers/TopologyRouter')
+)
+const NewHostsPage = React.lazy(
+  () => import('src/hosts/containers/NewHostsPage')
+)
+const HostPage = React.lazy(() =>
+  import('src/hosts').then(m => ({default: m.HostPage}))
+)
+const LogAnalysisDashboard = React.lazy(
+  () => import('src/log_analysis/containers/LogAnalysisDashboard')
+)
+const DashboardsPage = React.lazy(() =>
+  import('src/dashboards').then(m => ({default: m.DashboardsPage}))
+)
+const DashboardPage = React.lazy(() =>
+  import('src/dashboards').then(m => ({default: m.DashboardPage}))
+)
+const Clouds = React.lazy(() =>
+  import('src/clouds').then(m => ({default: m.Clouds}))
+)
+const AgentAdminPage = React.lazy(() =>
+  import('src/agent_admin').then(m => ({default: m.AgentAdminPage}))
+)
+const KapacitorPage = React.lazy(() =>
+  import('src/kapacitor').then(m => ({default: m.KapacitorPage}))
+)
+const KapacitorRulePage = React.lazy(() =>
+  import('src/kapacitor').then(m => ({default: m.KapacitorRulePage}))
+)
+const KapacitorRulesPage = React.lazy(() =>
+  import('src/kapacitor').then(m => ({default: m.KapacitorRulesPage}))
+)
+const TickscriptPage = React.lazy(() =>
+  import('src/kapacitor').then(m => ({default: m.TickscriptPage}))
+)
+
+// Experiment: lazy-load every remaining route to measure the ceiling of this approach.
+const StatusPage = React.lazy(() =>
+  import('src/status').then(m => ({default: m.StatusPage}))
+)
+const DataExplorerPage = React.lazy(() => import('src/data_explorer'))
+const Applications = React.lazy(() =>
+  import('src/applications').then(m => ({default: m.Applications}))
+)
+const LogsPage = React.lazy(() =>
+  import('src/logs').then(m => ({default: m.LogsPage}))
+)
+const ActivityLogsPage = React.lazy(() =>
+  import('src/activitylogs').then(m => ({default: m.ActivityLogsPage}))
+)
+const AlertsApp = React.lazy(() => import('src/alerts'))
+const AdminCloudHubPage = React.lazy(() =>
+  import('src/admin').then(m => ({default: m.AdminCloudHubPage}))
+)
+const AdminInfluxDBPage = React.lazy(() =>
+  import('src/admin').then(m => ({default: m.AdminInfluxDBPage}))
+)
+const ManageSources = React.lazy(
+  () => import('src/sources/containers/ManageSources')
+)
+const GraphqlProvider = React.lazy(() =>
+  import('src/addon/128t').then(m => ({default: m.GraphqlProvider}))
+)
+const PredictionRouter = React.lazy(
+  () => import('src/device_management/containers/PredictionRouter')
+)
+const PredictionRulePage = React.lazy(
+  () => import('src/device_management/containers/PredictionRulePage')
+)
+const ManagementRouter = React.lazy(
+  () => import('src/device_management/containers/ManagementRouter')
+)
+const OverviewPage = React.lazy(
+  () => import('src/overview/containers/OverviewPage')
+)
+const ServerDetailsWrapper = React.lazy(
+  () => import('src/server_details/containers/ServerDetailsWrapper')
+)
+const GPUMonitoringPage = React.lazy(
+  () => import('src/gpu_monitoring/containers/GPUMonitoringPage')
+)
+const URLMonitoringPage = React.lazy(
+  () => import('src/url_monitoring/containers/URLMonitoringPage')
+)
+const URLAlertSettingPage = React.lazy(
+  () => import('src/url_monitoring/containers/URLAlertSettingPage')
+)
+const URLAlertPage = React.lazy(
+  () => import('src/url_monitoring/containers/URLAlertPage')
+)
+const DBMonitoringPage = React.lazy(
+  () => import('src/db_monitoring/containers/DBMonitoringPage')
+)
+const AlertGroupRulePage = React.lazy(
+  () => import('src/alert_group/containers/AlertGroupRulePage')
+)
+const AppPerformanceMonitoringPage = React.lazy(
+  () => import('src/app_monitoring/containers/AppPerformanceMonitoringPage')
+)
+const KubernetesRouter = React.lazy(
+  () => import('src/clouds/containers/KubernetesRouter')
+)
+const HubblePage = React.lazy(() => import('src/hubble/containers/HubblePage'))
+const OpenStackRouter = React.lazy(
+  () => import('src/clouds/containers/OpenStackRouter')
+)
+const VMHostRouter = React.lazy(
+  () => import('./clouds/containers/VMHostRouter')
+)
+const NutanixPage = React.lazy(() => import('./nutanix/containers/NutanixPage'))
+const MainOverviewPage = React.lazy(() => import('src/main/OverviewPage'))
+const GroupDetailPage = React.lazy(
+  () => import('src/admin/containers/cloudhub/GroupDetailPage')
+)
+const ServerAlertManagementPage = React.lazy(
+  () => import('src/server_alert/containers/ServerAlertManagementPage')
+)
 
 const errorsQueue = []
 
@@ -265,130 +344,134 @@ class Root extends PureComponent<Record<string, never>, State> {
     return this.state.ready ? (
       <ReduxProvider store={store}>
         <TimeMachineContextProvider>
-          <Router history={history}>
-            <Route path="/" component={UserIsAuthenticated(CheckSources)} />
-            <Route path="/login" component={UserIsNotAuthenticated(Login)} />
-            <Route
-              path="/password-reset"
-              component={UserIsNotAuthenticated(PasswordReset)}
-            />
-            <Route
-              path="/otp-login"
-              component={UserIsNotAuthenticated(OTPLoginPage)}
-            />
-            <Route
-              path="/purgatory"
-              component={UserIsAuthenticated(Purgatory)}
-            />
-            <Route
-              path="/sources/new"
-              component={UserIsAuthenticated(OnboardingWizard)}
-            />
-            <Route
-              path="/sources/:sourceID"
-              component={UserIsAuthenticated(App)}
-            >
-              <Route component={CheckSources}>
-                {/* network monitoring */}
-                <Route
-                  path="network-monitoring/anomaly-prediction"
-                  component={PredictionRouter}
-                />
-                <Route
-                  path="network-monitoring/:tab/prediction-rule"
-                  component={PredictionRulePage}
-                />
-                <Route
-                  path="network-monitoring/management"
-                  component={ManagementRouter}
-                />
-                {/* server monitoring */}
-                <Route
-                  path="server-monitoring/topology"
-                  component={props => (
-                    <TopologyRouter
-                      {...props}
-                      handleClearTimeout={this.handleClearTimeout}
-                    />
-                  )}
-                />
-                <Route
-                  path="server-monitoring/overview"
-                  component={OverviewPage}
-                />
-                <Route
-                  path="server-monitoring/server-list"
-                  // component={HostPageRouter}
-                  component={NewHostsPage}
-                />
-                <Route
-                  path="server-monitoring/server-list/:hostID"
-                  component={HostPage}
-                />
-                <Route
-                  path={`server-monitoring/${SERVER_DETAILS_PAGE_NAME}`}
-                  component={ServerDetailsWrapper}
-                />
-                <Route
-                  path={`server-monitoring/${SERVER_DETAILS_IMPORT_PATH}`}
-                  component={ServerDetailsWrapper}
-                />
-                <Route
-                  path="server-monitoring/gpu-monitoring"
-                  component={GPUMonitoringPage}
-                />
-                <Route
-                  path="server-monitoring/server-alert"
-                  component={ServerAlertManagementPage}
-                />
-                <Route
-                  path="server-monitoring/alert-setup"
-                  component={AlertGroupRulePage}
-                />
-                {/* url monitoring */}
-                <Route
-                  path="url-monitoring/url-alert-setting"
-                  component={URLAlertSettingPage}
-                />
-                <Route path="url-monitoring" component={URLMonitoringPage} />
-                <Route
-                  path="url-monitoring/url-list"
-                  component={URLMonitoringPage}
-                />
-                <Route
-                  path="url-monitoring/url-alert"
-                  component={URLAlertPage}
-                />
-                {/* db monitoring */}
-                <Route path="db-monitoring" component={DBMonitoringPage} />
+          <Suspense fallback={<PageSpinner />}>
+            <Router history={history}>
+              <Route path="/" component={UserIsAuthenticated(CheckSources)} />
+              <Route path="/login" component={UserIsNotAuthenticated(Login)} />
+              <Route
+                path="/password-reset"
+                component={UserIsNotAuthenticated(PasswordReset)}
+              />
+              <Route
+                path="/otp-login"
+                component={UserIsNotAuthenticated(OTPLoginPage)}
+              />
+              <Route
+                path="/purgatory"
+                component={UserIsAuthenticated(Purgatory)}
+              />
+              <Route
+                path="/sources/new"
+                component={UserIsAuthenticated(OnboardingWizard)}
+              />
+              <Route
+                path="/sources/:sourceID"
+                component={UserIsAuthenticated(App)}
+              >
+                <Route component={CheckSources}>
+                  {/* network monitoring */}
+                  <Route
+                    path="network-monitoring/anomaly-prediction"
+                    component={PredictionRouter}
+                  />
+                  <Route
+                    path="network-monitoring/:tab/prediction-rule"
+                    component={PredictionRulePage}
+                  />
+                  <Route
+                    path="network-monitoring/management"
+                    component={ManagementRouter}
+                  />
+                  {/* server monitoring */}
+                  <Route
+                    path="server-monitoring/topology"
+                    component={props => (
+                      <TopologyRouter
+                        {...props}
+                        handleClearTimeout={this.handleClearTimeout}
+                      />
+                    )}
+                  />
+                  <Route
+                    path="server-monitoring/overview"
+                    component={OverviewPage}
+                  />
+                  <Route
+                    path="server-monitoring/server-list"
+                    // component={HostPageRouter}
+                    component={NewHostsPage}
+                  />
+                  <Route
+                    path="server-monitoring/server-list/:hostID"
+                    component={HostPage}
+                  />
+                  <Route
+                    path={`server-monitoring/${SERVER_DETAILS_PAGE_NAME}`}
+                    component={ServerDetailsWrapper}
+                  />
+                  <Route
+                    path={`server-monitoring/${SERVER_DETAILS_IMPORT_PATH}`}
+                    component={ServerDetailsWrapper}
+                  />
+                  <Route
+                    path="server-monitoring/gpu-monitoring"
+                    component={GPUMonitoringPage}
+                  />
+                  <Route
+                    path="server-monitoring/server-alert"
+                    component={ServerAlertManagementPage}
+                  />
+                  <Route
+                    path="server-monitoring/alert-setup"
+                    component={AlertGroupRulePage}
+                  />
+                  {/* url monitoring */}
+                  <Route
+                    path="url-monitoring/url-alert-setting"
+                    component={URLAlertSettingPage}
+                  />
+                  <Route path="url-monitoring" component={URLMonitoringPage} />
+                  <Route
+                    path="url-monitoring/url-list"
+                    component={URLMonitoringPage}
+                  />
+                  <Route
+                    path="url-monitoring/url-alert"
+                    component={URLAlertPage}
+                  />
+                  {/* db monitoring */}
+                  <Route path="db-monitoring" component={DBMonitoringPage} />
 
-                {/* app performance monitoring */}
-                <Route
-                  path="app-performance-monitoring"
-                  component={AppPerformanceMonitoringPage}
-                />
+                  {/* app performance monitoring */}
+                  <Route
+                    path="app-performance-monitoring"
+                    component={AppPerformanceMonitoringPage}
+                  />
 
-                {/* kubernetes */}
-                <Route path={KUBERNETES_NETWORK_ROUTE} component={HubblePage} />
-                <Route
-                  path={KUBERNETES_OVERVIEW_ROUTE}
-                  component={KubernetesRouter}
-                />
-                <Redirect
-                  from={LEGACY_HUBBLE_ROUTE}
-                  to={KUBERNETES_NETWORK_ROUTE}
-                />
+                  {/* kubernetes */}
+                  <Route
+                    path={KUBERNETES_NETWORK_ROUTE}
+                    component={HubblePage}
+                  />
+                  <Route
+                    path={KUBERNETES_OVERVIEW_ROUTE}
+                    component={KubernetesRouter}
+                  />
+                  <Redirect
+                    from={LEGACY_HUBBLE_ROUTE}
+                    to={KUBERNETES_NETWORK_ROUTE}
+                  />
 
-                {/* openstack */}
-                <Route path="openstack" component={OpenStackRouter} />
+                  {/* openstack */}
+                  <Route path="openstack" component={OpenStackRouter} />
 
-                {/* vmware */}
-                <Route path="vmware" component={VMHostRouter} />
+                  {/* vmware */}
+                  <Route path="vmware" component={VMHostRouter} />
 
-                {/* nutanix */}
-                <Route path="nutanix" component={NutanixPage} />
+                  {/* nutanix */}
+                  <Route path="nutanix" component={NutanixPage} />
 
-                {/* <Route
+                  {/* <Route
                   path="ai/:tab"
                   component={props => (
                     <AiRoutePage
@@ -402,15 +485,15 @@ class Root extends PureComponent<Record<string, never>, State> {
                   component={PredictionRulePage}
                 /> */}
 
-                <Route path="overview" component={MainOverviewPage} />
-                <Route path="status" component={StatusPage} />
-                <Route path="visualize" component={DataExplorerPage} />
-                <Route path="dashboards" component={DashboardsPage} />
-                <Route
-                  path="dashboards/:dashboardID"
-                  component={DashboardPage}
-                />
-                {/* <Route
+                  <Route path="overview" component={MainOverviewPage} />
+                  <Route path="status" component={StatusPage} />
+                  <Route path="visualize" component={DataExplorerPage} />
+                  <Route path="dashboards" component={DashboardsPage} />
+                  <Route
+                    path="dashboards/:dashboardID"
+                    component={DashboardPage}
+                  />
+                  {/* <Route
                   path="infrastructure/:infraTab"
                   component={props => (
                     <Infrastructure
@@ -419,92 +502,93 @@ class Root extends PureComponent<Record<string, never>, State> {
                     />
                   )}
                 /> */}
-                {/* <Route
+                  {/* <Route
                   path="infrastructure/details/:hostID"
                   component={HostPage}
                 /> */}
-                <Route
-                  path="clouds/:cloud"
-                  component={props => (
-                    <Clouds
-                      {...props}
-                      handleClearTimeout={this.handleClearTimeout}
-                    />
-                  )}
-                />
-                <Route path="applications" component={Applications} />
-                <Route path="alerts" component={AlertsApp} />
-                <Route path="alert-rules" component={KapacitorRulesPage} />
-                <Route
-                  path="kapacitors/:kid/alert-rules/:ruleID" // ruleID can be "new"
-                  component={KapacitorRulePage}
-                />
-                <Route
-                  path="alert-rules/:ruleID"
-                  component={KapacitorRulePage}
-                />
-                <Route
-                  path="alert-group-rules/new"
-                  component={AlertGroupRulePage}
-                />
-                <Route
-                  path="alert-group-rules/:id/edit"
-                  component={AlertGroupRulePage}
-                />
-                <Route path="log-analysis" component={LogAnalysisDashboard} />
-                <Route path="activity-logs" component={ActivityLogsPage} />
-                <Route path="logs" component={LogsPage} />
-                <Route
-                  path="kapacitors/:kid/tickscripts/:ruleID" // ruleID can be "new"
-                  component={TickscriptPage}
-                />
-                <Route path="kapacitors/new" component={KapacitorPage} />
-                <Route path="kapacitors/:id/edit" component={KapacitorPage} />
-                <Route
-                  path="kapacitors/:id/edit:hash"
-                  component={KapacitorPage}
-                />
-                <Route
-                  path="group-management/detail(/:groupId)"
-                  component={GroupDetailPage}
-                />
-                <Route
-                  path="admin-cloudhub/:tab"
-                  component={AdminCloudHubPage}
-                />
-                <Route
-                  path="admin-influxdb/:tab"
-                  component={AdminInfluxDBPage}
-                />
-                <Route path="manage-sources" component={ManageSources} />
-                <Route path="agent-admin/:tab" component={AgentAdminPage} />
-                <Route
-                  path="add-on/swan-status"
-                  component={props => {
-                    return (
-                      <GraphqlProvider
+                  <Route
+                    path="clouds/:cloud"
+                    component={props => (
+                      <Clouds
                         {...props}
-                        page={'SwanSdplexStatusPage'}
+                        handleClearTimeout={this.handleClearTimeout}
                       />
-                    )
-                  }}
-                />
-                <Route
-                  path="add-on/swan-setting"
-                  component={props => {
-                    return (
-                      <GraphqlProvider
-                        {...props}
-                        page={'SwanSdplexSettingPage'}
-                      />
-                    )
-                  }}
-                />
-                <Route path="account-change" component={UpdateUser} />
+                    )}
+                  />
+                  <Route path="applications" component={Applications} />
+                  <Route path="alerts" component={AlertsApp} />
+                  <Route path="alert-rules" component={KapacitorRulesPage} />
+                  <Route
+                    path="kapacitors/:kid/alert-rules/:ruleID" // ruleID can be "new"
+                    component={KapacitorRulePage}
+                  />
+                  <Route
+                    path="alert-rules/:ruleID"
+                    component={KapacitorRulePage}
+                  />
+                  <Route
+                    path="alert-group-rules/new"
+                    component={AlertGroupRulePage}
+                  />
+                  <Route
+                    path="alert-group-rules/:id/edit"
+                    component={AlertGroupRulePage}
+                  />
+                  <Route path="log-analysis" component={LogAnalysisDashboard} />
+                  <Route path="activity-logs" component={ActivityLogsPage} />
+                  <Route path="logs" component={LogsPage} />
+                  <Route
+                    path="kapacitors/:kid/tickscripts/:ruleID" // ruleID can be "new"
+                    component={TickscriptPage}
+                  />
+                  <Route path="kapacitors/new" component={KapacitorPage} />
+                  <Route path="kapacitors/:id/edit" component={KapacitorPage} />
+                  <Route
+                    path="kapacitors/:id/edit:hash"
+                    component={KapacitorPage}
+                  />
+                  <Route
+                    path="group-management/detail(/:groupId)"
+                    component={GroupDetailPage}
+                  />
+                  <Route
+                    path="admin-cloudhub/:tab"
+                    component={AdminCloudHubPage}
+                  />
+                  <Route
+                    path="admin-influxdb/:tab"
+                    component={AdminInfluxDBPage}
+                  />
+                  <Route path="manage-sources" component={ManageSources} />
+                  <Route path="agent-admin/:tab" component={AgentAdminPage} />
+                  <Route
+                    path="add-on/swan-status"
+                    component={props => {
+                      return (
+                        <GraphqlProvider
+                          {...props}
+                          page={'SwanSdplexStatusPage'}
+                        />
+                      )
+                    }}
+                  />
+                  <Route
+                    path="add-on/swan-setting"
+                    component={props => {
+                      return (
+                        <GraphqlProvider
+                          {...props}
+                          page={'SwanSdplexSettingPage'}
+                        />
+                      )
+                    }}
+                  />
+                  <Route path="account-change" component={UpdateUser} />
+                </Route>
               </Route>
-            </Route>
-            <Route path="*" component={NotFound} />
-          </Router>
+              <Route path="*" component={NotFound} />
+            </Router>
+          </Suspense>
         </TimeMachineContextProvider>
       </ReduxProvider>
     ) : (
