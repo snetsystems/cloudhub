@@ -13,6 +13,7 @@ import OrganizationsPage from 'src/admin/containers/cloudhub/OrganizationsPage'
 import ProvidersPage from 'src/admin/containers/ProvidersPage'
 import ProviderConfPage from 'src/admin/containers/cloudhub/ProviderConfPage'
 import DevicesMappingPage from 'src/admin/components/DevicesMappingPage'
+import OrgMenusPage from 'src/admin/containers/cloudhub/OrgMenusPage'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
 import GroupManagementPage from 'src/admin/containers/cloudhub/GroupManagementPage'
 
@@ -89,6 +90,12 @@ const sections = (me, providers, cspProviders = [], source, router) => {
       name: 'Devices Mapping',
       enabled: isUserAuthorized(me.role, ADMIN_ROLE),
       component: <DevicesMappingPage me={me} source={source} router={router} />,
+    },
+    {
+      url: 'org-menus',
+      name: 'Org Menus',
+      enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+      component: <OrgMenusPage />,
     },
   ]
 

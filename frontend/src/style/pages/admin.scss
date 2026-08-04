@@ -230,3 +230,115 @@ pre.admin-table--query {
     left: 0;
   }
 }
+
+.org-menus-editor {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 16px;
+}
+
+.org-menus-editor--orgs {
+  flex: 0 0 240px;
+}
+
+.org-menus-editor--menus {
+  flex: 1;
+  border-left: 1px solid $g5-pepper;
+  padding-left: 16px;
+}
+
+.org-menus-editor--menus-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.org-menus-editor--section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: $g15-platinum;
+}
+
+.org-menus-editor--orgs {
+  .org-menus-editor--section-title {
+    margin-bottom: 12px;
+  }
+}
+
+.org-menus-editor--bulk-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.org-menus-editor--org-item {
+  padding: 8px 12px;
+  border-radius: $radius;
+  color: $g11-sidewalk;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  &:hover {
+    color: $g18-cloud;
+    background-color: $g3-castle;
+  }
+
+  &.active {
+    color: $g18-cloud;
+    background-color: $g3-castle;
+  }
+}
+
+.org-menus-editor--menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+  padding-left: 2px;
+
+  .slide-toggle.active + .org-menus-editor--menu-label {
+    font-style: normal;
+    color: $g13-mist;
+  }
+}
+
+.org-menus-editor--menu-group .org-menus-editor--menu-group {
+  .org-menus-editor--menu-item {
+    padding-left: 28px;
+  }
+}
+
+.org-menus-editor--menu-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: $g10-wolf;
+  font-style: italic;
+  cursor: pointer;
+  transition: color 0.25s ease;
+
+  &:hover {
+    color: $g18-cloud;
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.org-menus-editor--menu-icon {
+  background-color: $g7-graphite;
+  padding: 3px;
+  border-radius: $radius;
+}
+
+.org-menus-editor--empty {
+  margin: 0;
+  color: $g9-mountain;
+}
