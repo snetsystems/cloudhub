@@ -23,7 +23,10 @@ import {SERVER_DETAILS_PAGE_NAME} from 'src/shared/constants/routes'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Params, Location, Me} from 'src/types/sideNav'
-import {Source, Links, Shells, Env} from 'src/types'
+import {Source} from 'src/types/sources'
+import {Links} from 'src/types/links'
+import {Shells} from 'src/types/shell'
+import {Env} from 'src/types/env'
 
 import {openShell, closeShell} from 'src/shared/actions/shell'
 import {buildKubernetesNavItems} from 'src/hubble/navigation'

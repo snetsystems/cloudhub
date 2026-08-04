@@ -78,6 +78,23 @@ export default defineConfig({
     fixDslBuilder(),
     fixGraphql(),
   ],
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router',
+      'redux',
+      'react-redux',
+      'lodash',
+      'classnames',
+      'axios',
+      'moment',
+      'i18next',
+      'react-i18next',
+      'recharts',
+      'd3',
+    ],
+  },
   resolve: {
     alias: {
       src: path.resolve(__dirname, './src'),

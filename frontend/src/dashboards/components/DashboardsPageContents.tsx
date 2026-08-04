@@ -113,7 +113,7 @@ class DashboardsPageContents extends Component<Props, State> {
     const {dashboards} = this.props
     const {searchTerm} = this.state
 
-    return dashboards.filter(d =>
+    return (dashboards || []).filter(d =>
       d.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }
@@ -121,7 +121,7 @@ class DashboardsPageContents extends Component<Props, State> {
   private get panelTitle(): string {
     const {dashboards} = this.props
 
-    const filtered = dashboards.filter(d => d.type === 'normal')
+    const filtered = (dashboards || []).filter(d => d.type === 'normal')
     if (filtered === null) {
       return 'Loading Dashboards...'
     } else if (filtered.length === 1) {

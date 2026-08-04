@@ -54,7 +54,7 @@ import {
   RequestPauseVcenterAction,
   getVSphereInfoSaltApiAsync,
   ActionTypes as vmHostActionType,
-} from 'src/clouds/actions'
+} from 'src/clouds/actions/vspheres'
 
 import {TimeMachineContextProvider} from 'src/shared/utils/TimeMachineContext'
 
@@ -89,17 +89,17 @@ const TopologyRouter = React.lazy(
 const NewHostsPage = React.lazy(
   () => import('src/hosts/containers/NewHostsPage')
 )
-const HostPage = React.lazy(() =>
-  import('src/hosts').then(m => ({default: m.HostPage}))
+const HostPage = React.lazy(
+  () => import('src/hosts/containers/HostPage')
 )
 const LogAnalysisDashboard = React.lazy(
   () => import('src/log_analysis/containers/LogAnalysisDashboard')
 )
-const DashboardsPage = React.lazy(() =>
-  import('src/dashboards').then(m => ({default: m.DashboardsPage}))
+const DashboardsPage = React.lazy(
+  () => import('src/dashboards/containers/DashboardsPage')
 )
-const DashboardPage = React.lazy(() =>
-  import('src/dashboards').then(m => ({default: m.DashboardPage}))
+const DashboardPage = React.lazy(
+  () => import('src/dashboards/containers/DashboardPage')
 )
 const Clouds = React.lazy(() =>
   import('src/clouds').then(m => ({default: m.Clouds}))

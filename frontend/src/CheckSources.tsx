@@ -26,14 +26,11 @@ import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
 
 import * as copy from 'src/shared/copy/notifications'
 
-import {
-  Source,
-  Me,
-  Links,
-  Notification,
-  NotificationFunc,
-  BaseElasticSearchData,
-} from 'src/types'
+import {Source} from 'src/types/sources'
+import {Me} from 'src/types/auth'
+import {Links} from 'src/types/links'
+import {Notification, NotificationFunc} from 'src/types/notifications'
+import {BaseElasticSearchData} from 'src/types/elasticSearch'
 import {connectedSourceAction, connectedSource} from 'src/sources/actions'
 import {
   connectElasticSearch,
