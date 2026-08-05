@@ -95,7 +95,9 @@ const sections = (me, providers, cspProviders = [], source, router) => {
       url: 'org-menus',
       name: 'Org Menus',
       enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-      component: <OrgMenusPage />,
+      component: (
+        <OrgMenusPage meCurrentOrganization={me.currentOrganization} />
+      ),
     },
   ]
 

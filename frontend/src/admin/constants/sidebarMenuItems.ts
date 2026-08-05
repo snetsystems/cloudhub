@@ -1,4 +1,4 @@
-import {MasterNavMenuItem, OrgNavMenuItem} from 'src/admin/apis/orgNavMenu'
+import {MasterNavMenuItem, OrgNavMenuItem} from 'src/types/orgNavMenu'
 
 export interface SidebarMenuItem {
   id: string
@@ -73,19 +73,6 @@ export const createDefaultMenuSelection = (
   return collectSidebarMenuIds(items).reduce<Record<string, boolean>>(
     (acc, id) => {
       acc[id] = true
-      return acc
-    },
-    {}
-  )
-}
-
-export const createBulkMenuSelection = (
-  items: SidebarMenuItem[],
-  enabled: boolean
-): Record<string, boolean> => {
-  return collectSidebarMenuIds(items).reduce<Record<string, boolean>>(
-    (acc, id) => {
-      acc[id] = enabled
       return acc
     },
     {}

@@ -219,6 +219,15 @@ import {
   DeviceToOrgMapping,
   DeviceAlias,
 } from './devicesMapping'
+import {
+  MasterNavSubMenuItem,
+  MasterNavMenuItem,
+  MasterNavMenuResponse,
+  OrgNavSubMenuItem,
+  OrgNavMenuItem,
+  OrgNavMenuResponse,
+  OrgNavMenuUpsertRequest,
+} from './orgNavMenu'
 import {RecipientMember, GroupInfo} from './recipientGroups'
 import {
   AlertConditionOperator,
@@ -460,6 +469,13 @@ export {
   DeviceType,
   DeviceToOrgMapping,
   DeviceAlias,
+  MasterNavSubMenuItem,
+  MasterNavMenuItem,
+  MasterNavMenuResponse,
+  OrgNavSubMenuItem,
+  OrgNavMenuItem,
+  OrgNavMenuResponse,
+  OrgNavMenuUpsertRequest,
   ChartOptions,
   Column,
   GaugeOptions,

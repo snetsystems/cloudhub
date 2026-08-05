@@ -247,30 +247,11 @@ pre.admin-table--query {
   padding-left: 16px;
 }
 
-.org-menus-editor--menus-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
 .org-menus-editor--section-title {
   font-size: 14px;
   font-weight: 600;
   color: $g15-platinum;
-}
-
-.org-menus-editor--orgs {
-  .org-menus-editor--section-title {
-    margin-bottom: 12px;
-  }
-}
-
-.org-menus-editor--bulk-actions {
-  display: flex;
-  flex: 0 0 auto;
-  gap: 6px;
-  align-items: center;
+  margin-bottom: 12px;
 }
 
 .org-menus-editor--org-item {
