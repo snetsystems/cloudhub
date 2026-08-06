@@ -382,6 +382,7 @@ class DashboardPage extends Component<Props, State> {
           <FixedModal
             onClose={() => this.handleSetImportModalOpen(false)}
             onSelectionChange={this.handleImportSelectionChange}
+            excludeDashboardId={dashboardID}
           />
         )}
       </Page>

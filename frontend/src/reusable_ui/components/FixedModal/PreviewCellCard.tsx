@@ -43,9 +43,6 @@ function PreviewCellCard({
 
   return (
     <div className="import-selection-preview-card" ref={rootRef}>
-      <div className="import-selection-preview-card__title">
-        {cell.name || 'Untitled cell'}
-      </div>
       <div className="import-selection-preview-card__body">
         {!source ? (
           <div className="import-selection-preview-card__unavailable">

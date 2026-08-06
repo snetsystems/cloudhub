@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import GraphOptionsToggleBtn from 'src/dashboards/components/GraphOptionsToggleBtn'
 import DashboardList from 'src/server_details/components/DashboardList'
 import CellList from 'src/server_details/components/CellList'
@@ -15,18 +15,38 @@ const emptySelection = (): ImportSelectionPayload => ({
   importStrategy: 'append',
 })
 
+/** Matches .modal-shell / .modal-wrapper transition duration. */
+const SLIDE_MS = 300
+
 interface Props {
   onClose: () => void
   onSelectionChange?: (items: ImportSelectionPayload) => void
   width?: string
+  /** Active dashboard id — omitted from Dashboards import list. */
+  excludeDashboardId?: string | number
 }
 
 /** Mount only while open (`{open && <FixedModal />}`); unmount clears selection state. */
-function FixedModal({onClose, onSelectionChange, width}: Props) {
+function FixedModal({
+  onClose,
+  onSelectionChange,
+  width,
+  excludeDashboardId,
+}: Props) {
   const [currentTab, setCurrentTab] = useState('dashboard-list')
   const [selection, setSelection] = useState<ImportSelectionPayload>(
     emptySelection()
   )
+  const [entered, setEntered] = useState(false)
+  const [exiting, setExiting] = useState(false)
+
+  useEffect(() => {
+    // Enter from off-screen: paint closed state first, then open.
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setEntered(true))
+    })
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab)
@@ -55,11 +75,22 @@ function FixedModal({onClose, onSelectionChange, width}: Props) {
     })
   }
 
+  const requestClose = () => {
+    if (exiting) {
+      return
+    }
+    setExiting(true)
+    setEntered(false)
+    window.setTimeout(() => {
+      onClose()
+    }, SLIDE_MS)
+  }
+
   const handleImport = () => {
     if (onSelectionChange) {
       onSelectionChange(selection)
     }
-    onClose()
+    requestClose()
   }
 
   const tabOptions = [
@@ -80,59 +111,61 @@ function FixedModal({onClose, onSelectionChange, width}: Props) {
   ]
 
   const drawerWidth = width || '420px'
+  const openClass = entered && !exiting
 
   return (
     <>
       <div
-        className="modal-wrapper modal-wrapper--open"
-        onClick={onClose}
+        className={
+          openClass
+            ? 'modal-wrapper modal-wrapper--open'
+            : exiting
+              ? 'modal-wrapper modal-wrapper--closing'
+              : 'modal-wrapper'
+        }
+        onClick={requestClose}
       />
       <div
-        className="modal-shell modal-shell--open"
+        className={
+          openClass
+            ? 'modal-shell modal-shell--open'
+            : exiting
+              ? 'modal-shell modal-shell--closing'
+              : 'modal-shell'
+        }
         style={{['--drawer-width' as string]: drawerWidth}}
       >
         <ImportSelectionPreview selection={selection} />
-        <div
-          className="modal-content"
-          style={{width: drawerWidth}}
-        >
-          <div style={{padding: '16px', flexShrink: 0}}>
-            <p
-              style={{
-                margin: '0 0 12px 0',
-                fontSize: '20px',
-                color: '#8b8ba7',
-                fontWeight: 500,
-              }}
-            >
-              From existing resources
-            </p>
+        <div className="modal-content">
+          <div className="modal-content__header">
+            <p className="modal-content__title">From existing resources</p>
+          </div>
+          <div className="modal-content__tabs">
             <GraphOptionsToggleBtn title="" GraphOptionsOptions={tabOptions} />
           </div>
-          <FancyScrollbar
-            autoHide={true}
-            style={{
-              flex: 1,
-              minHeight: 0,
-            }}
-          >
-            <div style={{padding: '0 16px 16px 16px'}}>
+          <FancyScrollbar autoHide={true}>
+            <div className="modal-content__body">
               {/* Keep both mounted so checkbox selection survives tab switches. */}
               <div
-                style={{
-                  display: currentTab === 'dashboard-list' ? 'block' : 'none',
-                }}
+                className={
+                  currentTab === 'dashboard-list'
+                    ? 'modal-content__panel'
+                    : 'modal-content__panel modal-content__panel--hidden'
+                }
               >
                 <DashboardList
                   onSelectionChange={items =>
                     handleSelectionUpdate('dashboard-list', items)
                   }
+                  excludeDashboardId={excludeDashboardId}
                 />
               </div>
               <div
-                style={{
-                  display: currentTab === 'cell-list' ? 'block' : 'none',
-                }}
+                className={
+                  currentTab === 'cell-list'
+                    ? 'modal-content__panel'
+                    : 'modal-content__panel modal-content__panel--hidden'
+                }
               >
                 <CellList
                   onSelectionChange={items =>
@@ -142,21 +175,12 @@ function FixedModal({onClose, onSelectionChange, width}: Props) {
               </div>
             </div>
           </FancyScrollbar>
-          <div
-            style={{
-              padding: '16px',
-              borderTop: '1px solid #383846',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '8px',
-              flexShrink: 0,
-            }}
-          >
+          <div className="modal-content__footer">
             <Button
               text="Cancel"
               color={ComponentColor.Default}
               size={ComponentSize.Small}
-              onClick={onClose}
+              onClick={requestClose}
             />
             <Button
               text="Import"

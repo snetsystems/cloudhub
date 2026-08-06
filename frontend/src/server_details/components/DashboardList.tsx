@@ -21,6 +21,7 @@ import {
   detectTemplateConflicts,
   getTemplateQueryKey,
 } from 'src/server_details/utils/templateConflict'
+import {hasRunnableQuery} from 'src/reusable_ui/components/FixedModal/importSelectionPreview'
 
 interface DashboardListProps {
   dashboards: Dashboard[]
@@ -28,6 +29,8 @@ interface DashboardListProps {
   source?: Source
   timeRange?: TimeRange
   onSelectionChange?: (items: ImportSelectionPayload) => void
+  /** Hide this dashboard from the import source list (usually the active one). */
+  excludeDashboardId?: string | number
 }
 
 /** Cloned dashboards reuse cell.i — qualify by dashboard id for selection. */
@@ -287,6 +290,7 @@ function DashboardList({
   source,
   timeRange,
   onSelectionChange,
+  excludeDashboardId,
 }: DashboardListProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [previewCell, setPreviewCell] = useState<Cell | null>(null)
@@ -297,12 +301,36 @@ function DashboardList({
   )
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set())
 
+  // Importable cells only (no query → “Add Data” cells are excluded from the list).
+  const importableDashboards = _.sortBy(
+    dashboards,
+    d => d.name?.toLowerCase() || ''
+  )
+    .filter(dashboard => {
+      if (dashboard.type !== DashboardType.Normal) {
+        return false
+      }
+      if (
+        excludeDashboardId != null &&
+        excludeDashboardId !== '' &&
+        String(dashboard.id) === String(excludeDashboardId)
+      ) {
+        return false
+      }
+      return true
+    })
+    .map(dashboard => ({
+      ...dashboard,
+      cells: (dashboard.cells ?? []).filter(hasRunnableQuery),
+    }))
+    .filter(dashboard => (dashboard.cells?.length ?? 0) > 0)
+
   const emitSelectionChange = (nextCells: Set<string>) => {
     if (!onSelectionChange) {
       return
     }
 
-    const dashboardsWithSelectedCellsOnly = dashboards
+    const dashboardsWithSelectedCellsOnly = importableDashboards
       .map(d => ({
         ...d,
         cells: (d.cells ?? []).filter(c =>
@@ -341,7 +369,7 @@ function DashboardList({
     const newSelected = new Set(selectedDashboards)
     const newSelectedCells = new Set(selectedCells)
 
-    const dashboard = dashboards.find(d => d.id === dashboardId)
+    const dashboard = importableDashboards.find(d => d.id === dashboardId)
 
     if (checked) {
       newSelected.add(dashboardId)
@@ -378,7 +406,7 @@ function DashboardList({
     }
     setSelectedCells(newSelected)
 
-    const dashboard = dashboards.find(d => d.id === dashboardId)
+    const dashboard = importableDashboards.find(d => d.id === dashboardId)
     const newSelectedDashboards = new Set(selectedDashboards)
     if (dashboard?.cells?.length) {
       const allSelected = dashboard.cells.every(cell =>
@@ -424,10 +452,7 @@ function DashboardList({
     )
   }
 
-  const sortedDashboards = _.sortBy(
-    dashboards,
-    d => d.name?.toLowerCase() || ''
-  ).filter(dashboard => dashboard.type === DashboardType.Normal)
+  const sortedDashboards = importableDashboards
 
   return (
     <div className="fixedmodal-list">
