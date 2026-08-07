@@ -7,7 +7,8 @@
   @include gradient-diag-down($c-pool, $c-comet);
   z-index: 999;
   opacity: 0;
-  transition: opacity 0.25s ease-out;
+  // Match shell slide timing so fade does not finish early
+  transition: opacity 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .modal-wrapper--open {
@@ -168,7 +169,9 @@
   transform: translateX(100%);
 }
 
-/* Import Cell: shell holds drawer + preview as one sheet. */
+/* Import Cell: shell holds drawer + preview as one sheet.
+ * Use 100vw (not 100%) so absolute preview to the left still exits fully —
+ * shell's layout width is only the drawer; % is relative to that box. */
 .modal-shell {
   position: fixed;
   top: 0;
@@ -179,10 +182,11 @@
   flex-direction: row;
   align-items: stretch;
   overflow: visible;
-  transform: translateX(100%);
+  transform: translate3d(100vw, 0, 0);
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   // Single elevation for both panes
   filter: drop-shadow(-8px 0 24px rgba(0, 0, 0, 0.4));
+  will-change: transform;
 
   .modal-content {
     position: relative;
@@ -201,11 +205,11 @@
 }
 
 .modal-shell--open {
-  transform: translateX(0);
+  transform: translate3d(0, 0, 0);
 }
 
 .modal-shell--closing {
-  transform: translateX(100%);
+  transform: translate3d(100vw, 0, 0);
 }
 
 /* Cell List: constrain graph-type-selector graphic to icon box and apply colored fills */
@@ -502,7 +506,9 @@
   white-space: nowrap;
 }
 
-/* Flush left of resources drawer; same surface so the pair reads as one panel. */
+/* Flush left of resources drawer; same surface so the pair reads as one panel.
+ * When the shell closes, this slides with the shell — do not animate transform
+ * relative to the shell on parent exit (keep --open while selection is open). */
 .import-selection-preview {
   position: absolute;
   top: 0;
@@ -517,11 +523,12 @@
   border-left: $ix-border solid $g5-pepper;
   border-right: none;
   box-shadow: none;
-  transform: translateX(100%);
+  transform: translate3d(100%, 0, 0);
   visibility: hidden;
   pointer-events: none;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 0.35s;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.3s;
+  will-change: transform;
 
   > .fancy-scroll--container {
     flex: 1;
@@ -530,11 +537,19 @@
 }
 
 .import-selection-preview--open {
-  transform: translateX(0);
+  transform: translate3d(0, 0, 0);
   visibility: visible;
   pointer-events: auto;
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
     visibility 0s linear 0s;
+}
+
+// While the whole import drawer exits, freeze preview layout so it rides the shell motion only.
+.modal-shell--closing .import-selection-preview,
+.modal-shell--closing .import-selection-preview--open {
+  transition: none;
+  transform: translate3d(0, 0, 0);
+  visibility: visible;
 }
 
 // Match From existing resources header bar (padding, type, bottom rule)
