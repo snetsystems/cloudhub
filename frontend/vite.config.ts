@@ -78,23 +78,7 @@ export default defineConfig({
     fixDslBuilder(),
     fixGraphql(),
   ],
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react-router',
-      'redux',
-      'react-redux',
-      'lodash',
-      'classnames',
-      'axios',
-      'moment',
-      'i18next',
-      'react-i18next',
-      'recharts',
-      'd3',
-    ],
-  },
+
   resolve: {
     alias: {
       src: path.resolve(__dirname, './src'),
@@ -131,6 +115,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/api': {
+        target: 'http://127.0.0.1:18789',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
   build: {
@@ -150,7 +139,11 @@ export default defineConfig({
       'react-router',
       'react-router-redux',
       'redux',
-      'graphql'
+      'graphql',
+      'classnames',
+      'i18next',
+      'react-i18next',
+      'recharts',
     ],
     exclude: ['react/jsx-dev-runtime', 'react/jsx-runtime'],
     esbuildOptions: {
