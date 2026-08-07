@@ -790,6 +790,7 @@ function DashboardPageWithImport({
         <FixedModal
           onClose={() => importModal.setIsOpen(false)}
           onSelectionChange={importModal.onSelectionChange}
+          excludeDashboardId={dashboard?.id}
         />
       )}
       {/* fixed cell modal */}
