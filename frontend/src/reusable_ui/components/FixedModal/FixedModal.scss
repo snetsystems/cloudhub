@@ -18,37 +18,18 @@
   opacity: 0;
 }
 
-.modal-shell {
+.modal-content {
   position: fixed;
   top: 0;
   right: 0;
   height: 100%;
-  z-index: 1000;
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  overflow: visible;
-  transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.modal-shell--open {
-  transform: translateX(0);
-}
-
-.modal-shell--closing {
-  transform: translateX(100%);
-}
-
-.modal-content {
-  position: relative;
-  height: 100%;
-  flex-shrink: 0;
   background-color: $g1-raven;
   box-shadow: -4px 0 16px $g1-raven;
-  z-index: 2;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.25s ease-out;
   overflow: hidden;
 
   .radio-button {
@@ -137,6 +118,96 @@
   }
 }
 
+.modal-content__header {
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-height: 57px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  border-bottom: $ix-border solid $g5-pepper;
+  background-color: $g1-raven;
+}
+
+.modal-content__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: $g13-mist;
+}
+
+.modal-content__tabs {
+  flex-shrink: 0;
+  padding: 12px 16px 0;
+}
+
+.modal-content__body {
+  padding: 12px 16px 16px;
+}
+
+.modal-content__panel--hidden {
+  display: none;
+}
+
+.modal-content__footer {
+  flex-shrink: 0;
+  padding: 16px;
+  border-top: $ix-border solid $g5-pepper;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  background-color: $g1-raven;
+}
+
+.modal-content--open {
+  transform: translateX(0);
+}
+
+.modal-content--closing {
+  transform: translateX(100%);
+}
+
+/* Import Cell: shell holds drawer + preview as one sheet. */
+.modal-shell {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  overflow: visible;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  // Single elevation for both panes
+  filter: drop-shadow(-8px 0 24px rgba(0, 0, 0, 0.4));
+
+  .modal-content {
+    position: relative;
+    top: auto;
+    right: auto;
+    height: 100%;
+    width: var(--drawer-width, 420px);
+    flex-shrink: 0;
+    z-index: 2;
+    transform: none;
+    transition: none;
+    // Seam between preview and resources (one line only)
+    border-left: $ix-border solid $g5-pepper;
+    box-shadow: none;
+  }
+}
+
+.modal-shell--open {
+  transform: translateX(0);
+}
+
+.modal-shell--closing {
+  transform: translateX(100%);
+}
+
 /* Cell List: constrain graph-type-selector graphic to icon box and apply colored fills */
 .cell-list-icon-wrapper {
   .graph-type-selector--graphic {
@@ -182,6 +253,10 @@
 .fixedmodal-list {
   padding: 0 8px 8px 8px;
   font-size: 13px;
+
+  &--message {
+    padding: 8px;
+  }
 
   &__loading {
     padding: 8px;
@@ -427,7 +502,7 @@
   white-space: nowrap;
 }
 
-/* Sits flush left of the side sheet; slides out from under it. */
+/* Flush left of resources drawer; same surface so the pair reads as one panel. */
 .import-selection-preview {
   position: absolute;
   top: 0;
@@ -438,9 +513,10 @@
   display: flex;
   flex-direction: column;
   background-color: $g1-raven;
+  // Outer edge only — join uses modal-content border-left
   border-left: $ix-border solid $g5-pepper;
   border-right: none;
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
   transform: translateX(100%);
   visibility: hidden;
   pointer-events: none;
@@ -461,17 +537,24 @@
     visibility 0s linear 0s;
 }
 
+// Match From existing resources header bar (padding, type, bottom rule)
 .import-selection-preview__header {
   flex-shrink: 0;
-  padding: 12px 16px;
-  font-size: 14px;
+  box-sizing: border-box;
+  min-height: 57px; // 16 + 24 line + 16 + 1 border — titles align across seam
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
   font-weight: 500;
+  line-height: 24px;
   color: $g13-mist;
   border-bottom: $ix-border solid $g5-pepper;
+  background-color: $g1-raven;
 }
 
 .import-selection-preview__scroll {
-  padding: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -485,20 +568,24 @@
   flex-shrink: 0;
 }
 
-.import-selection-preview-card__title {
-  padding: 8px 12px;
-  font-size: 13px;
-  color: $g18-cloud;
-  border-bottom: $ix-border solid $g5-pepper;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .import-selection-preview-card__body {
+  // Fill container: LayoutRenderer cell h/rowHeight leaves a gap under fixed heights.
   height: 220px;
   position: relative;
   background-color: $g1-raven;
+
+  .react-grid-layout {
+    height: 100% !important;
+    min-height: 100% !important;
+  }
+
+  .react-grid-item {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    transform: none !important;
+  }
 }
 
 .import-selection-preview-card__placeholder,

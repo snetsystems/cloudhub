@@ -1,10 +1,11 @@
-import React, {useEffect, useState} from 'react'
+import React, {useEffect, useMemo, useState} from 'react'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import {LibraryCell} from 'src/types/dashboards'
 import {getLibraryCells} from 'src/dashboards/apis'
 import {CellTypeIcon} from 'src/server_details/components/CellListIcons'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {Button, ComponentSize, IconFont} from 'src/reusable_ui'
+import {hasRunnableQuery} from 'src/reusable_ui/components/FixedModal/importSelectionPreview'
 
 interface CellListProps {
   onSelectionChange?: (items: ImportSelectionPayload) => void
@@ -60,6 +61,23 @@ function CellList({
     setSelectedIds(new Set([selectedItemId]))
   }, [mode, selectedItemId])
 
+  // Select mode: only cells that already have a query (same as dashboard list).
+  const visibleItems = useMemo(() => {
+    if (mode !== 'select') {
+      return items
+    }
+    return items.filter(item => {
+      const content = (item.content || {}) as {
+        queries?: Array<{
+          query?: string
+          text?: string
+          queryConfig?: {rawText?: string}
+        }>
+      }
+      return hasRunnableQuery(content)
+    })
+  }, [items, mode])
+
   const handleToggle = (item: LibraryCell, checked: boolean) => {
     const newSelected = new Set(selectedIds)
     if (checked) {
@@ -70,7 +88,7 @@ function CellList({
     setSelectedIds(newSelected)
 
     if (onSelectionChange) {
-      const selectedItems = items.filter(i => newSelected.has(i.id))
+      const selectedItems = visibleItems.filter(i => newSelected.has(i.id))
       onSelectionChange({
         dashboards: [],
         cellTypes: [],
@@ -83,15 +101,15 @@ function CellList({
 
   if (loading) {
     return (
-      <div className="fixedmodal-list" style={{padding: '8px'}}>
+      <div className="fixedmodal-list fixedmodal-list--message">
         <p className="fixed-modal-msg">Loading...</p>
       </div>
     )
   }
 
-  if (items.length === 0) {
+  if (visibleItems.length === 0) {
     return (
-      <div className="fixedmodal-list" style={{padding: '8px'}}>
+      <div className="fixedmodal-list fixedmodal-list--message">
         <p className="fixed-modal-msg">No library cells found.</p>
       </div>
     )
@@ -99,7 +117,7 @@ function CellList({
 
   return (
     <div className="fixedmodal-list">
-      {items.map(item => {
+      {visibleItems.map(item => {
         const isSelected =
           mode === 'manage'
             ? selectedItemId === item.id

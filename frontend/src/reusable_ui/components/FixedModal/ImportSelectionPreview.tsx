@@ -73,13 +73,7 @@ function ImportSelectionPreview({selection, source, timeRange}: Props) {
       <div className="import-selection-preview__header">
         Preview ({cells.length})
       </div>
-      <FancyScrollbar
-        autoHide={true}
-        style={{
-          flex: 1,
-          minHeight: 0,
-        }}
-      >
+      <FancyScrollbar autoHide={true}>
         <div className="import-selection-preview__scroll">
           {cells.map(({key, cell}) => (
             <PreviewCellCard
