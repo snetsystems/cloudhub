@@ -32,7 +32,6 @@ const MenuItemRow = ({
           active={isChecked}
           disabled={isSaving}
           onChange={() => onToggleMenu(item.id)}
-          tooltipText={item.label}
         />
         <span
           className={`org-menus-editor--menu-label${

@@ -130,6 +130,7 @@ $s-sidebar--width: 45px;
   width: $s-sidebar--width;
   height: $s-sidebar--width;
   position: relative;
+  transition: height 0.2s ease, opacity 0.2s ease;
 
   &.cursor-default {
     cursor: default !important;
@@ -146,6 +147,11 @@ $s-sidebar--width: 45px;
 
   &.align-bottom {
     margin-top: auto;
+  }
+
+  &.sidebar--item__hidden {
+    height: 0;
+    opacity: 0;
   }
 }
 .sidebar--square {

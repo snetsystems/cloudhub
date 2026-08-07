@@ -27,6 +27,7 @@ import predictionDashboard from 'src/device_management/reducers/predictionDashbo
 import gpuMonitoringDashboard from 'src/gpu_monitoring/reducers/gpuMonitoringDashboard'
 import esSourcesReducer from 'src/shared/reducers/esSources'
 import sidePanelReducer from 'src/shared/reducers/sidePanel'
+import orgNavMenuReducer from 'src/shared/reducers/orgNavMenu'
 import logAnalysisDashboard from 'src/log_analysis/reducers/logAnalysis'
 import selectedDeviceReducer from 'src/log_analysis/reducers/deviceMeta'
 
@@ -58,6 +59,7 @@ const rootReducer = combineReducers({
   gpuMonitoringDashboard,
   esSources: esSourcesReducer,
   sidePanel: sidePanelReducer,
+  orgNavMenu: orgNavMenuReducer,
   logAnalysisDashboard,
   selectedDevice: selectedDeviceReducer,
 })

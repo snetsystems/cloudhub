@@ -23,6 +23,7 @@ import {
 import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 import {ForceSessionAbortInputRole as ForceSessionAbortInputRoleAsync} from 'src/shared/actions/session'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {setOrgNavMenu} from 'src/shared/actions/orgNavMenu'
 import {notifyError, notifySuccess} from 'src/shared/copy/notifications'
 import {Links, Notification, NotificationFunc, Organization} from 'src/types'
 
@@ -35,6 +36,10 @@ interface Props {
   }
   ForceSessionAbortInputRole: (role: string) => void
   notify: (message: Notification | NotificationFunc) => void
+  setOrgNavMenuSelection: (payload: {
+    orgId: string
+    selection: Record<string, boolean>
+  }) => void
 }
 
 const resolvePreferredOrgId = (
@@ -70,6 +75,7 @@ const OrgMenusPage = ({
   actionsAdmin: {loadOrganizationsAsync},
   ForceSessionAbortInputRole,
   notify,
+  setOrgNavMenuSelection,
 }: Props) => {
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   const [menuItems, setMenuItems] = useState<SidebarMenuItem[]>([])
@@ -84,6 +90,8 @@ const OrgMenusPage = ({
   const isDirtyRef = useRef(false)
   const didAutoSelectOrgRef = useRef(false)
   const prevOrganizationsRef = useRef(organizations)
+  const meCurrentOrgIdRef = useRef(meCurrentOrganization?.id || null)
+  const setOrgNavMenuSelectionRef = useRef(setOrgNavMenuSelection)
   const saveSnapshotRef = useRef<SaveSnapshot>({
     selectedOrgId: null,
     menuItems: [],
@@ -99,6 +107,17 @@ const OrgMenusPage = ({
     isSaving,
   }
   notifyRef.current = notify
+  meCurrentOrgIdRef.current = meCurrentOrganization?.id || null
+  setOrgNavMenuSelectionRef.current = setOrgNavMenuSelection
+
+  const syncSideNavIfCurrentOrg = (
+    orgId: string,
+    selection: Record<string, boolean>
+  ) => {
+    if (orgId && orgId === meCurrentOrgIdRef.current) {
+      setOrgNavMenuSelectionRef.current({orgId, selection})
+    }
+  }
 
   const flushPendingSave = async ({
     silent = true,
@@ -143,6 +162,7 @@ const OrgMenusPage = ({
         ...prev,
         [currentOrgId]: savedSelection,
       }))
+      syncSideNavIfCurrentOrg(currentOrgId, savedSelection)
 
       if (!silent) {
         notifyRef.current(notifySuccess('Organization menu settings saved.'))
@@ -193,6 +213,7 @@ const OrgMenusPage = ({
         ...prev,
         [orgId]: selection,
       }))
+      syncSideNavIfCurrentOrg(orgId, selection)
     } catch (error) {
       console.error(error)
       if (!isMountedRef.current) {
@@ -249,10 +270,7 @@ const OrgMenusPage = ({
   }, [])
 
   useEffect(() => {
-    if (
-      prevOrganizationsRef.current !== organizations &&
-      !selectedOrgId
-    ) {
+    if (prevOrganizationsRef.current !== organizations && !selectedOrgId) {
       didAutoSelectOrgRef.current = false
     }
     prevOrganizationsRef.current = organizations
@@ -274,12 +292,7 @@ const OrgMenusPage = ({
       void handleSelectOrganization(preferredOrgId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    organizations,
-    meCurrentOrganization,
-    selectedOrgId,
-    isMenuItemsLoading,
-  ])
+  }, [organizations, meCurrentOrganization, selectedOrgId, isMenuItemsLoading])
 
   const handleToggleMenu = (menuId: string) => {
     if (!selectedOrgId || isSaving) {
@@ -310,10 +323,19 @@ const OrgMenusPage = ({
     }
 
     isDirtyRef.current = true
-    setMenuSelectionsByOrg(prev => ({
-      ...prev,
+    const nextSelectionsByOrg = {
+      ...menuSelectionsByOrg,
       [selectedOrgId]: nextSelection,
-    }))
+    }
+    setMenuSelectionsByOrg(nextSelectionsByOrg)
+    // Keep snapshot in sync so flush reads the latest toggle immediately.
+    saveSnapshotRef.current = {
+      ...saveSnapshotRef.current,
+      menuSelectionsByOrg: nextSelectionsByOrg,
+    }
+    // Immediately reflect on the live SideNav when editing the active org.
+    syncSideNavIfCurrentOrg(selectedOrgId, nextSelection)
+    void flushPendingSave({silent: true})
   }
 
   ForceSessionAbortInputRole(SUPERADMIN_ROLE)
@@ -358,6 +380,7 @@ const mapDispatchToProps = (dispatch: any) => ({
     dispatch
   ),
   notify: bindActionCreators(notifyAction, dispatch),
+  setOrgNavMenuSelection: bindActionCreators(setOrgNavMenu, dispatch),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(OrgMenusPage)
