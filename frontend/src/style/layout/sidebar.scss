@@ -44,7 +44,7 @@ $s-sidebar--width: 45px;
   width: $s-sidebar--width;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  // overflow: hidden;
   z-index: 200;
   @include gradient-v($sidebar--gradient-start, $sidebar--gradient-end);
 }

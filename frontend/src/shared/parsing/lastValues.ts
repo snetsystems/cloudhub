@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import {Data} from 'src/types/dygraphs'
+import type {Data} from 'src/types/dygraphs'
 import {TimeSeriesServerResponse} from 'src/types/series'
 
 interface LastValues {

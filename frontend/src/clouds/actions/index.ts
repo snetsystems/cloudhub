@@ -1,5 +1,5 @@
+import type { Action } from 'src/clouds/actions/vspheres'
 import {
-  Action,
   ActionTypes,
   loadMinionKeyAcceptedList,
   loadVcentersList,
@@ -22,8 +22,9 @@ import {
 } from 'src/clouds/actions/vspheres'
 import {setCloudAutoRefresh} from 'src/clouds/actions/clouds'
 
+export type { Action }
+
 export {
-  Action,
   ActionTypes,
   loadMinionKeyAcceptedList,
   loadVcentersList,

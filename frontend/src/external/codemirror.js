@@ -12,7 +12,7 @@ import 'codemirror/addon/hint/show-hint'
 import modeXML from 'codemirror/mode/xml/xml'
 
 /* eslint-disable */
-const CodeMirror = require('codemirror')
+import CodeMirror from 'codemirror'
 
 CodeMirror.defineSimpleMode = function (name, states) {
   CodeMirror.defineMode(name, function (config) {
