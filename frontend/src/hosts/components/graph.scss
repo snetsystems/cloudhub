@@ -216,40 +216,40 @@
     background-repeat: no-repeat;
     background-position: center;
     &-server {
-      background-image: url('../../assets/images/stencils/clipart/Server_Tower_128x128.png');
+      background-image: url('../../../assets/images/stencils/clipart/Server_Tower_128x128.png');
     }
     &-internet {
-      background-image: url('../../assets/images/stencils/clipart/Earth_globe_128x128.png');
+      background-image: url('../../../assets/images/stencils/clipart/Earth_globe_128x128.png');
     }
     &-workstation {
-      background-image: url('../../assets/images/stencils/clipart/Monitor_Tower_128x128.png');
+      background-image: url('../../../assets/images/stencils/clipart/Monitor_Tower_128x128.png');
     }
     &-email {
-      background-image: url(../../assets/images/stencils/clipart/Email_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Email_128x128.png);
     }
     &-firewall {
-      background-image: url(../../assets/images/stencils/clipart/Firewall_02_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Firewall_02_128x128.png);
     }
     &-router {
-      background-image: url(../../assets/images/stencils/clipart/Router_Icon_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Router_Icon_128x128.png);
     }
     &-wirelessrouter {
-      background-image: url(../../assets/images/stencils/clipart/Wireless_Router_N_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Wireless_Router_N_128x128.png);
     }
     &-database {
-      background-image: url(../../assets/images/stencils/clipart/Database_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Database_128x128.png);
     }
     &-virtualmachine {
-      background-image: url(../../assets/images/stencils/clipart/Virtual_Machine_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Virtual_Machine_128x128.png);
     }
     &-cloud {
-      background-image: url(../../assets/images/stencils/clipart/Cloud_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Cloud_128x128.png);
     }
     &-switch {
-      background-image: url(../../assets/images/stencils/clipart/Switch_128x128.png);
+      background-image: url(../../../assets/images/stencils/clipart/Switch_128x128.png);
     }
     &-elb {
-      background-image: url('../../assets/images/Elastic-Load-Balancing-ELB.svg');
+      background-image: url('../../../assets/images/Elastic-Load-Balancing-ELB.svg');
     }
   }
 }

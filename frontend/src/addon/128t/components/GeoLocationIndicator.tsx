@@ -1,6 +1,7 @@
 import React, {FunctionComponent} from 'react'
 import ReactTooltip from 'react-tooltip'
 import {RouterNode} from 'src/addon/128t/types'
+import imgUrl from 'src/addon/128t/components/assets/marker-icon-normal.png'
 
 interface Props {
   locationCoordinates: RouterNode['locationCoordinates']
@@ -11,7 +12,6 @@ const GeoLocationIndicator: FunctionComponent<Props> = locationCoordinates => {
     '/',
     ''
   )}</p>`
-  const imgUrl = require('src/addon/128t/components/assets/marker-icon-normal.png')
 
   return (
     <div

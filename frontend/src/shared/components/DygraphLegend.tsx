@@ -22,7 +22,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {NO_CELL} from 'src/shared/constants'
 
 // Types
-import {SeriesLegendData} from 'src/types/dygraphs'
+import type {SeriesLegendData} from 'src/types/dygraphs'
 import {DygraphClass} from 'src/types'
 
 interface Props {

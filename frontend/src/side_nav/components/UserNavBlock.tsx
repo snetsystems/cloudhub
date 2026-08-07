@@ -18,8 +18,7 @@ import {setLanguage} from 'src/shared/actions/app'
 import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
-import {Me} from 'src/types'
-import {Links} from 'src/types/auth'
+import {Me, Links} from 'src/types/auth'
 import {AppLanguage} from 'src/shared/utils/language'
 import {
   computeSidebarMenuStyle,

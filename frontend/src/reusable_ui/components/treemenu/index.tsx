@@ -5,9 +5,9 @@ export default TreeMenu
 export {defaultChildren, ItemComponent} from './TreeMenu/renderProps'
 
 // export definitions
-export {TreeMenuProps} from './TreeMenu'
-export {TreeMenuItem, TreeMenuChildren} from './TreeMenu/renderProps'
-export {
+export type {TreeMenuProps} from './TreeMenu'
+export type {TreeMenuItem, TreeMenuChildren} from './TreeMenu/renderProps'
+export type {
   TreeNodeObject,
   TreeNode,
   TreeNodeInArray,

@@ -31,6 +31,8 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 //type
 import {RouterNode, GroupRouterNodeData} from 'src/addon/128t/types'
+import imgTopNodeUrlImport from 'src/addon/128t/components/assets/topology-cloudhub.svg'
+import iconCooldinateImport from 'src/addon/128t/components/assets/icon_cooldinate.svg'
 
 interface SwanTopology {
   id: string
@@ -77,8 +79,8 @@ interface State {
 class TopologyRenderer extends PureComponent<Props, State> {
   private useRef = React.createRef<HTMLDivElement>()
 
-  private imgTopNodeUrl = require('src/addon/128t/components/assets/topology-cloudhub.svg')
-  private iconCooldinate = require('src/addon/128t/components/assets/icon_cooldinate.svg')
+  private imgTopNodeUrl = imgTopNodeUrlImport
+  private iconCooldinate = iconCooldinateImport
 
   private defaultMargin = {left: 100, right: 100, top: 100, bottom: 400}
   private config = {
