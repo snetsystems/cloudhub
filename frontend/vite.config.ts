@@ -91,6 +91,7 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
+        api: 'legacy',
         logger: {
           warn: () => {},
         },
