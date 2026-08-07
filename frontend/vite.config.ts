@@ -80,6 +80,7 @@ export default defineConfig({
   ],
 
   resolve: {
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
     alias: {
       src: path.resolve(__dirname, './src'),
       shared: path.resolve(__dirname, './src/shared'),
