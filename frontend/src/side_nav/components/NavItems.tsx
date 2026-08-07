@@ -82,6 +82,7 @@ interface NavBlockProps {
   location?: string
   className?: string
   highlightWhen: string[]
+  visible?: boolean
 }
 
 interface NavBlockState {
@@ -106,7 +107,7 @@ class NavBlock extends PureComponent<NavBlockProps, NavBlockState> {
   }
 
   public render() {
-    const {location, className, highlightWhen} = this.props
+    const {location, className, highlightWhen, visible = true} = this.props
     const {isMenuOpen, menuStyle, opensUpward} = this.state
     const {length} = _.intersection(_.split(location, '/'), highlightWhen)
     const isActive = !!length
@@ -128,13 +129,15 @@ class NavBlock extends PureComponent<NavBlockProps, NavBlockState> {
         ref={this.setItemRef}
         className={classnames('sidebar--item', className, {
           active: isActive,
-          'sidebar--item__menu-open': isMenuOpen,
+          'sidebar--item__menu-open': isMenuOpen && visible,
+          'sidebar--item__hidden': !visible,
         })}
-        onMouseEnter={this.handleOpenMenu}
-        onMouseLeave={this.handleItemMouseLeave}
+        onMouseEnter={visible ? this.handleOpenMenu : undefined}
+        onMouseLeave={visible ? this.handleItemMouseLeave : undefined}
       >
         {this.renderSquare()}
-        {isMenuOpen &&
+        {visible &&
+          isMenuOpen &&
           createPortal(
             <div
               ref={this.setMenuRef}
@@ -182,11 +185,7 @@ class NavBlock extends PureComponent<NavBlockProps, NavBlockState> {
   }
 
   private isNodeInside = (node: EventTarget, container: HTMLElement) => {
-    return (
-      !!container &&
-      node instanceof Node &&
-      container.contains(node)
-    )
+    return !!container && node instanceof Node && container.contains(node)
   }
 
   private updateMenuPosition = () => {
