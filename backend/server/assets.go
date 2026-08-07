@@ -2,6 +2,8 @@ package server
 
 import (
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/dist"
@@ -30,18 +32,31 @@ type AssetsOpts struct {
 
 // Assets creates a middleware that will serve a single page app.
 func Assets(opts AssetsOpts) http.Handler {
-	var assets cloudhub.Assets
 	if opts.Develop {
-		assets = &dist.DebugAssets{
-			Dir:     DebugDir,
-			Default: DebugDefault,
+		viteURL, _ := url.Parse("http://127.0.0.1:5174")
+		proxy := httputil.NewSingleHostReverseProxy(viteURL)
+		proxy.Transport = &http.Transport{
+			MaxIdleConns:        1000,
+			MaxIdleConnsPerHost: 1000,
 		}
-	} else {
-		assets = &dist.BindataAssets{
-			Prefix:             Dir,
-			Default:            Default,
-			DefaultContentType: DefaultContentType,
-		}
+
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if opts.Logger != nil {
+				opts.Logger.
+					WithField("component", "server").
+					WithField("remote_addr", r.RemoteAddr).
+					WithField("method", r.Method).
+					WithField("url", r.URL).
+					Info("Proxying assets to Vite Dev Server")
+			}
+			proxy.ServeHTTP(w, r)
+		})
+	}
+
+	assets := &dist.BindataAssets{
+		Prefix:             Dir,
+		Default:            Default,
+		DefaultContentType: DefaultContentType,
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

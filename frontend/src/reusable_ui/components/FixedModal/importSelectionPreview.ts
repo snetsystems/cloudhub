@@ -6,6 +6,21 @@ export interface PreviewCellItem {
   cell: Cell
 }
 
+/** LayoutCell shows “Add Data” when there is no runnable query. */
+export function hasRunnableQuery(cell: {
+  queries?: Array<{
+    query?: string
+    text?: string
+    queryConfig?: {rawText?: string}
+  }>
+}): boolean {
+  const queries = cell.queries ?? []
+  return queries.some(q => {
+    const text = (q.query || q.text || q.queryConfig?.rawText || '').trim()
+    return text.length > 0
+  })
+}
+
 export function getPreviewCellsFromSelection(
   selection: ImportSelectionPayload
 ): PreviewCellItem[] {
@@ -39,7 +54,8 @@ export function normalizeCellForPreview(cell: Cell): Cell {
     x: 0,
     y: 0,
     w: 96,
-    h: 14,
+    // Single-cell preview; CSS stretches the grid item to the card height.
+    h: 1,
     queries: (cell.queries ?? []).map(q => ({
       ...q,
       text: q.query || q.text,

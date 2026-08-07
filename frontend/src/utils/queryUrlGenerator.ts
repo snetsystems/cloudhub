@@ -23,3 +23,5 @@ export async function proxy<T = any>({
     throw error
   }
 }
+
+export const buildInfluxUrl = (args: any) => args;

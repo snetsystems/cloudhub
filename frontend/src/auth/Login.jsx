@@ -368,7 +368,6 @@ Login.propTypes = {
     isLoading: bool,
   }),
   links: shape({
-    basicauth: shape(),
     basicauth: string,
     passwordPolicy: string,
     passwordPolicyMessage: string,

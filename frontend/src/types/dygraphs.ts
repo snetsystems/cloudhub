@@ -459,37 +459,37 @@ export type Axis = 'x' | 'y' | 'y2'
 
 export declare class DygraphClass {
   // Tick granularities (passed to ticker).
-  public static SECONDLY: number
-  public static TWO_SECONDLY: number
-  public static FIVE_SECONDLY: number
-  public static TEN_SECONDLY: number
-  public static THIRTY_SECONDLY: number
-  public static MINUTELY: number
-  public static TWO_MINUTELY: number
-  public static FIVE_MINUTELY: number
-  public static TEN_MINUTELY: number
-  public static THIRTY_MINUTELY: number
-  public static HOURLY: number
-  public static TWO_HOURLY: number
-  public static SIX_HOURLY: number
-  public static DAILY: number
-  public static TWO_DAILY: number
-  public static WEEKLY: number
-  public static MONTHLY: number
-  public static QUARTERLY: number
-  public static BIANNUAL: number
-  public static ANNUAL: number
-  public static DECADAL: number
-  public static CENTENNIAL: number
-  public static NUM_GRANULARITIES: number
+  SECONDLY: number
+  TWO_SECONDLY: number
+  FIVE_SECONDLY: number
+  TEN_SECONDLY: number
+  THIRTY_SECONDLY: number
+  MINUTELY: number
+  TWO_MINUTELY: number
+  FIVE_MINUTELY: number
+  TEN_MINUTELY: number
+  THIRTY_MINUTELY: number
+  HOURLY: number
+  TWO_HOURLY: number
+  SIX_HOURLY: number
+  DAILY: number
+  TWO_DAILY: number
+  WEEKLY: number
+  MONTHLY: number
+  QUARTERLY: number
+  BIANNUAL: number
+  ANNUAL: number
+  DECADAL: number
+  CENTENNIAL: number
+  NUM_GRANULARITIES: number
 
-  public static defaultInteractionModel: any
+  defaultInteractionModel: any
 
-  public static DOTTED_LINE: number[]
-  public static DASHED_LINE: number[]
-  public static DOT_DASH_LINE: number[]
+  DOTTED_LINE: number[]
+  DASHED_LINE: number[]
+  DOT_DASH_LINE: number[]
 
-  public static Plotters: {
+  Plotters: {
     errorPlotter: any
     linePlotter: any
     fillPlotter: any
