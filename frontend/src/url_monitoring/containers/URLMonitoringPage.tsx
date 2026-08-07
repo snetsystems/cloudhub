@@ -429,7 +429,7 @@ export function URLMonitoringPage({
           setIsError(true)
         }
       } finally {
-        if (isSubscribed && requestId === requestIdRef.current && !silent) {
+        if (isSubscribed && !silent) {
           setIsTableLoading(false)
           setIsRefreshing(false)
         }
