@@ -8668,6 +8668,378 @@
         }
       }
     },
+    "../v2/openclaw/sessions": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "List the OpenClaw chat sessions the caller owns",
+        "description": "Returns only the sessions belonging to the authenticated user in the current organization. The Gateway session key and agent ID are never part of the response.",
+        "responses": {
+          "200": {
+            "description": "OpenClaw sessions",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSessions"
+            },
+            "examples": {
+              "application/json": {
+                "sessions": [
+                  {
+                    "id": "12e3a677-2386-4b2c-a6ec-b169f27a99e0",
+                    "title": "Investigate latency",
+                    "createdAt": "2026-08-10T07:09:22.993304Z",
+                    "updatedAt": "2026-08-10T07:09:22.993304Z"
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "No session store configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Create an OpenClaw chat session",
+        "description": "CloudHub generates the session ID, and derives the owner and the Gateway session key from the authenticated user and organization. A sessionKey or agentId in the request body is ignored.",
+        "parameters": [
+          {
+            "name": "session",
+            "in": "body",
+            "description": "Session to create",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OpenClawSessionCreateRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created session",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSession"
+            },
+            "examples": {
+              "application/json": {
+                "id": "12e3a677-2386-4b2c-a6ec-b169f27a99e0",
+                "title": "Investigate latency",
+                "createdAt": "2026-08-10T07:09:22.993304Z",
+                "updatedAt": "2026-08-10T07:09:22.993304Z"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Title exceeds 512 bytes, or the body is not a single JSON object",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "The session could not be stored",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "No session store configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/sessions/{id}/messages": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Get the message history of one owned session",
+        "description": "Reads the history from the OpenClaw Gateway using the stored session mapping. Gateway-internal identifiers are stripped from the response.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "Session ID"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "default": 50,
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Maximum number of messages to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "default": 0,
+            "minimum": 0,
+            "description": "Number of messages to skip"
+          },
+          {
+            "name": "maxChars",
+            "in": "query",
+            "type": "integer",
+            "required": false,
+            "default": 100000,
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "Character budget for the returned messages"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Message history",
+            "schema": {
+              "$ref": "#/definitions/OpenClawHistory"
+            },
+            "examples": {
+              "application/json": {
+                "offset": 0,
+                "hasMore": false,
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Why is web-01 slow?"
+                      }
+                    ],
+                    "timestamp": 1786343596790
+                  },
+                  {
+                    "role": "assistant",
+                    "content": [
+                      {
+                        "type": "text",
+                        "text": "Load average has been above 8 for an hour."
+                      }
+                    ],
+                    "timestamp": 1786343614166
+                  }
+                ]
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "The session belongs to another user",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such session in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "A query parameter is out of range, or the session ID is missing",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "The Gateway request failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "No Gateway or session store configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "504": {
+            "description": "The Gateway request timed out",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Send a message to one owned session",
+        "description": "Accepts the message and returns immediately; the reply arrives over ../v2/openclaw/events/ws. The Gateway session key and agent are taken from the stored session, so a sessionKey or agentId in the body is ignored.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "Session ID"
+          },
+          {
+            "name": "message",
+            "in": "body",
+            "required": true,
+            "description": "Message to send",
+            "schema": {
+              "$ref": "#/definitions/OpenClawMessageRequest"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The Gateway accepted the message",
+            "schema": {
+              "$ref": "#/definitions/OpenClawMessageStatus"
+            },
+            "examples": {
+              "application/json": {
+                "status": "started"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "The session belongs to another user",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such session in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "The session is already running a turn",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "413": {
+            "description": "The request body exceeds 64 KiB",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "message or idempotencyKey is missing, or timeoutMs is out of range",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "The Gateway request failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "No Gateway or session store configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "504": {
+            "description": "The Gateway request timed out",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/events/ws": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Subscribe to OpenClaw chat events (WebSocket)",
+        "description": "Upgrades to a WebSocket. This is not a JSON request/response operation, so the frames are described here rather than in a schema.\n\nSend `{\"sessionId\": \"...\"}` as the first frame, and again for every further session to subscribe to on the same socket; a session the caller does not own closes the socket with code 1008.\n\nFrames carry `type`, `sessionId`, and then either `deltaText` for a streamed fragment or `message` for the committed reply, with `state: \"final\"`. Check `deltaText` first: a delta frame also carries the cumulative `message`. A `sessions.changed` frame means the history should be re-read.",
+        "responses": {
+          "101": {
+            "description": "Switching protocols"
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "No Gateway configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/cloudhub/v1/nav-menu/master": {
       "get": {
         "tags": [
@@ -15855,6 +16227,168 @@
           "items": {
             "$ref": "#/definitions/MasterNavMenuItem"
           }
+        }
+      }
+    },
+    "OpenClawSession": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "CloudHub-generated session ID"
+        },
+        "title": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "example": {
+        "id": "12e3a677-2386-4b2c-a6ec-b169f27a99e0",
+        "title": "Investigate latency",
+        "createdAt": "2026-08-10T07:09:22.993304Z",
+        "updatedAt": "2026-08-10T07:09:22.993304Z"
+      }
+    },
+    "OpenClawSessions": {
+      "type": "object",
+      "properties": {
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawSession"
+          }
+        }
+      }
+    },
+    "OpenClawSessionCreateRequest": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "Display title. Trimmed; may be empty."
+        }
+      },
+      "example": {
+        "title": "Investigate latency"
+      }
+    },
+    "OpenClawMessage": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "description": "user or assistant"
+        },
+        "content": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "timestamp": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Unix milliseconds"
+        }
+      }
+    },
+    "OpenClawHistory": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer"
+        },
+        "nextOffset": {
+          "type": "integer",
+          "description": "Absent on the last page"
+        },
+        "hasMore": {
+          "type": "boolean"
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawMessage"
+          }
+        }
+      },
+      "example": {
+        "offset": 0,
+        "hasMore": false,
+        "messages": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "text",
+                "text": "Why is web-01 slow?"
+              }
+            ],
+            "timestamp": 1786343596790
+          },
+          {
+            "role": "assistant",
+            "content": [
+              {
+                "type": "text",
+                "text": "Load average has been above 8 for an hour."
+              }
+            ],
+            "timestamp": 1786343614166
+          }
+        ]
+      }
+    },
+    "OpenClawMessageRequest": {
+      "type": "object",
+      "required": [
+        "message",
+        "idempotencyKey"
+      ],
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Trimmed; must not be empty"
+        },
+        "idempotencyKey": {
+          "type": "string",
+          "description": "Caller-generated key that makes a retried send safe"
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "default": 10000,
+          "minimum": 1,
+          "maximum": 90000,
+          "description": "Gateway turn timeout"
+        }
+      },
+      "example": {
+        "message": "Why is web-01 slow?",
+        "idempotencyKey": "01J9Z2F7Q8R3S4T5U6V7W8X9Y0"
+      }
+    },
+    "OpenClawMessageStatus": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Gateway-reported status, e.g. started"
         }
       }
     }

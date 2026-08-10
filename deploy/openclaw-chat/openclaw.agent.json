@@ -1,0 +1,28 @@
+{
+  "id": "cloudhub-chat",
+  "workspace": "/opt/cloudhub-openclaw/agents/cloudhub-chat",
+  "model": {
+    "primary": "ollama/gpt-oss:20b"
+  },
+  "sandbox": {
+    "mode": "off",
+    "scope": "session",
+    "workspaceAccess": "none"
+  },
+  "tools": {
+    "deny": [
+      "group:runtime",
+      "group:fs",
+      "browser",
+      "message",
+      "web_fetch",
+      "web_search"
+    ],
+    "elevated": {
+      "enabled": false
+    },
+    "exec": {
+      "mode": "deny"
+    }
+  }
+}

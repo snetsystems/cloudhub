@@ -37,6 +37,7 @@ import (
 	clog "github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/noop"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/openclaw"
 	"github.com/snetsystems/cloudhub/backend/platform/baremetal"
 	"github.com/snetsystems/cloudhub/backend/platform/k8s"
 	"github.com/snetsystems/cloudhub/backend/rdb/pgsql"
@@ -184,6 +185,11 @@ type Server struct {
 	DeployPlatform string            `long:"deploy-platform" description:"Deployment topology: k8s (in-cluster) or host — Linux/VM/docker/systemd direct install, not orchestrated by Kubernetes." env:"DEPLOY_PLATFORM"`
 
 	CollectorAuthToken string `long:"collector-auth-token" description:"Shared secret token for Collector Sidecar authentication" env:"COLLECTOR_AUTH_TOKEN"`
+
+	OpenClawGatewayURL           string `long:"openclaw-gateway-url" description:"WebSocket URL for the OpenClaw Gateway chat relay" env:"OPENCLAW_GATEWAY_URL"`
+	OpenClawDevicePrivateKeyFile string `long:"openclaw-device-private-key-file" description:"Path to the paired OpenClaw device Ed25519 private key" env:"OPENCLAW_DEVICE_PRIVATE_KEY_FILE"`
+	OpenClawDeviceTokenFile      string `long:"openclaw-device-token-file" description:"Path to the paired OpenClaw device token" env:"OPENCLAW_DEVICE_TOKEN_FILE"`
+
 	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
 	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
 	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
@@ -734,6 +740,24 @@ func (s *Server) Serve(ctx context.Context) {
 		osp,
 		s.pgsqlDSN(),
 	)
+	// The errors returned here are safe to log: LoadDeviceCredentials
+	// reports file paths only, and the client's connect errors carry
+	// protocol/scope detail but never the device token, private key, or
+	// signature. The device ID is a public SHA-256 of the public key.
+	openClawGateway, openClawDeviceID, err := s.newOpenClawGatewayManager(ctx)
+	if err != nil {
+		logger.
+			WithField("component", "openclaw-gateway").
+			WithField("error", err.Error()).
+			Error("OpenClaw gateway initialization failed; continuing without the OpenClaw integration")
+	} else if openClawGateway != nil {
+		service.OpenClawGateway = openClawGateway
+		defer openClawGateway.Close()
+		logger.
+			WithField("component", "openclaw-gateway").
+			WithField("device_id", openClawDeviceID).
+			Info("OpenClaw gateway connected as a paired operator device")
+	}
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -991,6 +1015,39 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
+var newOpenClawGatewayClient = func(ctx context.Context, config openclaw.GatewayConfig) (openClawGatewayLifecycle, error) {
+	return openclaw.NewGatewayClient(ctx, config)
+}
+
+// newOpenClawGatewayManager returns the Gateway lifecycle manager along with
+// the paired device ID, which is public (a SHA-256 of the device public key)
+// and safe to log.
+func (s *Server) newOpenClawGatewayManager(ctx context.Context) (*openClawGatewayManager, string, error) {
+	url := strings.TrimSpace(s.OpenClawGatewayURL)
+	if url == "" {
+		return nil, "", nil
+	}
+	keyPath := strings.TrimSpace(s.OpenClawDevicePrivateKeyFile)
+	tokenPath := strings.TrimSpace(s.OpenClawDeviceTokenFile)
+	if keyPath == "" || tokenPath == "" {
+		return nil, "", errors.New("OpenClaw gateway device private key file and device token file must both be configured")
+	}
+	devicePrivateKey, deviceToken, err := openclaw.LoadDeviceCredentials(keyPath, tokenPath)
+	if err != nil {
+		return nil, "", err
+	}
+	gateway, err := newOpenClawGatewayClient(ctx, openclaw.GatewayConfig{
+		URL:              url,
+		Token:            deviceToken,
+		DevicePrivateKey: devicePrivateKey,
+		RequiredScopes:   openclaw.RequiredOperatorScopes,
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	return newOpenClawGatewayManager(ctx, gateway), openclaw.DeviceID(devicePrivateKey), nil
+}
+
 func openService(
 	ctx context.Context,
 	db kv.Store,
@@ -1105,6 +1162,11 @@ func openService(
 		alertGroupRuleStore = pgsql.NewAlertRuleStore(pgsqlClient)
 		logger.Info("PostgreSQL AlertGrouping stores initialized")
 	}
+	var openClawSessionStore cloudhub.OpenClawSessionStore = &noop.OpenClawSessionStore{}
+	if pgsqlClient != nil {
+		openClawSessionStore = pgsql.NewOpenClawSessionStore(pgsqlClient)
+		logger.Info("PostgreSQL OpenClawSessionStore initialized")
+	}
 
 	// Builtin alert templates are file-embedded (go-bindata) and have no
 	// runtime dependency on PG or any external service.
@@ -1138,6 +1200,7 @@ func openService(
 			HostStore:               hostStore,
 			URLMonitoringStore:      urlMonitoringStore,
 			OrgNavMenuStore:         orgNavMenuStore,
+			OpenClawSessionStore: openClawSessionStore,
 		},
 		Logger:                    logger,
 		UseAuth:                   useAuth,

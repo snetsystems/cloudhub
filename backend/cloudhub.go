@@ -2405,3 +2405,28 @@ type OrgNavMenuStore interface {
 	DeleteMasterMenuItem(ctx context.Context, itemID string) error
 }
 
+// ErrOpenClawSessionNotFound is returned when an OpenClaw session cannot be found.
+const ErrOpenClawSessionNotFound = Error("OpenClaw session not found")
+
+// OpenClawSession is CloudHub's owner-scoped record of one OpenClaw agent
+// session. SessionKey is the key the Gateway knows the session by; the
+// remaining fields are CloudHub's own, and they decide who may reach it.
+type OpenClawSession struct {
+	ID             string    `json:"id"`
+	OrganizationID string    `json:"organizationId"`
+	UserID         string    `json:"userId"`
+	AgentID        string    `json:"agentId"`
+	SessionKey     string    `json:"sessionKey"`
+	Title          string    `json:"title"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+}
+
+// OpenClawSessionStore persists OpenClaw session and session mappings.
+type OpenClawSessionStore interface {
+	Create(ctx context.Context, session *OpenClawSession) (*OpenClawSession, error)
+	Get(ctx context.Context, id string) (*OpenClawSession, error)
+	List(ctx context.Context, organizationID string) ([]OpenClawSession, error)
+	Touch(ctx context.Context, id string, updatedAt time.Time) error
+}
+

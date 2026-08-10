@@ -184,6 +184,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// websocket
 	router.GET("/cloudhub/v1/WebTerminalHandler", EnsureAdmin(service.WebTerminalHandler))
+	router.GET("/cloudhub/v2/openclaw/events/ws", EnsureViewer(service.OpenClawEvents))
 
 	/* Health */
 	router.GET("/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
@@ -362,6 +363,13 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Builtin alert templates (read-only)
 	router.GET("/cloudhub/v2/alert-templates", EnsureViewer(service.AlertTemplatesGet))
 	router.GET("/cloudhub/v2/alert-templates/:id", EnsureViewer(service.AlertTemplateID))
+
+	// OpenClaw chat relay. The handlers derive the Gateway mapping from the
+	// authenticated user and organization rather than client request fields.
+	router.POST("/cloudhub/v2/openclaw/sessions", EnsureMember(service.OpenClawSessions))
+	router.GET("/cloudhub/v2/openclaw/sessions", EnsureViewer(service.OpenClawSessions))
+	router.GET("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureViewer(service.OpenClawSessionMessages))
+	router.POST("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureMember(service.OpenClawSessionMessage))
 
 	// Layouts
 	router.GET("/cloudhub/v1/layouts", EnsureViewer(service.Layouts))

@@ -33,6 +33,7 @@ type Store struct {
 	HostStore        cloudhub.HostStore
 	URLMonitoringStore      cloudhub.URLMonitoringStore
 	OrgNavMenuStore         cloudhub.OrgNavMenuStore
+	OpenClawSessionStore cloudhub.OpenClawSessionStore
 }
 
 // Sources ...
@@ -158,4 +159,9 @@ func (s *Store) URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore {
 // OrgNavMenu ...
 func (s *Store) OrgNavMenu(ctx context.Context) cloudhub.OrgNavMenuStore {
 	return s.OrgNavMenuStore
+}
+
+// OpenClawSessions ...
+func (s *Store) OpenClawSessions(ctx context.Context) cloudhub.OpenClawSessionStore {
+	return s.OpenClawSessionStore
 }

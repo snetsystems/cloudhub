@@ -108,6 +108,7 @@ type DataStore interface {
 	Hosts(ctx context.Context) cloudhub.HostStore
 	URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore
 	OrgNavMenu(ctx context.Context) cloudhub.OrgNavMenuStore
+	OpenClawSessions(ctx context.Context) cloudhub.OpenClawSessionStore
 }
 
 // ensure that Store implements a DataStore
@@ -140,6 +141,7 @@ type Store struct {
 	HostStore             cloudhub.HostStore
 	URLMonitoringStore    cloudhub.URLMonitoringStore
 	OrgNavMenuStore       cloudhub.OrgNavMenuStore
+	OpenClawSessionStore  cloudhub.OpenClawSessionStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -413,5 +415,18 @@ func (s *Store) CellLibrary(ctx context.Context) cloudhub.CellLibraryStore {
 		return organizations.NewCellLibraryStore(s.CellLibraryStore, org)
 	}
 	return &noop.CellLibraryStore{}
+}
+
+// OpenClawSessions returns a noop.OpenClawSessionStore if the context
+// has no organization specified and an organizations.OpenClawSessionStore
+// otherwise.
+func (s *Store) OpenClawSessions(ctx context.Context) cloudhub.OpenClawSessionStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.OpenClawSessionStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewOpenClawSessionStore(s.OpenClawSessionStore, org)
+	}
+	return &noop.OpenClawSessionStore{}
 }
 
