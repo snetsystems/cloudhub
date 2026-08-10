@@ -1,6 +1,10 @@
 import React from 'react'
+import classnames from 'classnames'
 
-import {SidebarMenuItem} from 'src/admin/constants/sidebarMenuItems'
+import {
+  isOrgMenuLocked,
+  SidebarMenuItem,
+} from 'src/admin/constants/sidebarMenuItems'
 import SlideToggle from 'src/reusable_ui/components/slide_toggle/SlideToggle'
 import {ComponentColor, ComponentSize} from 'src/reusable_ui/types'
 
@@ -9,7 +13,6 @@ interface Props {
   menuSelection: Record<string, boolean>
   isSaving: boolean
   onToggleMenu: (menuId: string) => void
-  /** Top-level items show SideNav icons before the label. */
   depth?: number
 }
 
@@ -20,45 +23,67 @@ const MenuItemRow = ({
   onToggleMenu,
   depth = 0,
 }: Props) => {
-  const isChecked = menuSelection[item.id] !== false
-  const showIcon = depth === 0 && !!item.icon
+  const isLocked = isOrgMenuLocked(item.id)
+  const isChecked = isLocked || menuSelection[item.id] !== false
+  const isNested = depth > 0
+  const canToggle = !isSaving && !isLocked
 
   return (
-    <div className="org-menus-editor--menu-group">
+    <div
+      className={classnames(
+        'org-menus-editor--menu-group',
+        !isNested && 'org-menus-editor--menu-group__parent',
+        !isNested && !isChecked && 'org-menus-editor--menu-group__off'
+      )}
+    >
       <div className="org-menus-editor--menu-item">
-        <SlideToggle
-          color={ComponentColor.Success}
-          size={ComponentSize.ExtraSmall}
-          active={isChecked}
-          disabled={isSaving}
-          onChange={() => onToggleMenu(item.id)}
-        />
-        <span
-          className={`org-menus-editor--menu-label${
-            isSaving ? ' is-disabled' : ''
-          }`}
-          onClick={() => {
-            if (!isSaving) {
-              onToggleMenu(item.id)
-            }
-          }}
-        >
-          {showIcon ? (
-            <span className={`icon org-menus-editor--menu-icon ${item.icon}`} />
-          ) : null}
-          {item.label}
-        </span>
+        <div className="org-menus-editor--menu-toggle">
+          <SlideToggle
+            color={ComponentColor.Success}
+            size={ComponentSize.ExtraSmall}
+            active={isChecked}
+            disabled={!canToggle}
+            onChange={() => onToggleMenu(item.id)}
+          />
+        </div>
+        <div className="org-menus-editor--menu-body">
+          <span
+            className={classnames(
+              'org-menus-editor--menu-label',
+              isChecked && 'is-active',
+              isSaving && 'is-disabled'
+            )}
+            onClick={() => {
+              if (canToggle) {
+                onToggleMenu(item.id)
+              }
+            }}
+          >
+            {!isNested && item.icon ? (
+              <span
+                className={`icon org-menus-editor--menu-icon ${item.icon}`}
+                aria-hidden={true}
+              />
+            ) : null}
+            {item.label}
+          </span>
+        </div>
       </div>
-      {item.children?.map(child => (
-        <MenuItemRow
-          key={child.id}
-          item={child}
-          menuSelection={menuSelection}
-          isSaving={isSaving}
-          onToggleMenu={onToggleMenu}
-          depth={depth + 1}
-        />
-      ))}
+
+      {!isNested && item.children?.length ? (
+        <div className="org-menus-editor--menu-children">
+          {item.children.map(child => (
+            <MenuItemRow
+              key={child.id}
+              item={child}
+              menuSelection={menuSelection}
+              isSaving={isSaving}
+              onToggleMenu={onToggleMenu}
+              depth={1}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }

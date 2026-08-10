@@ -1,11 +1,12 @@
-/**
- * Whether a sidebar menu id should be shown for the current organization.
- * Missing keys default to visible (fail-open / menus not yet in master).
- */
+import {isOrgMenuLocked} from 'src/admin/constants/sidebarMenuItems'
+
 export const isOrgNavMenuEnabled = (
   selection: Record<string, boolean> | null | undefined,
   menuId: string
 ): boolean => {
+  if (isOrgMenuLocked(menuId)) {
+    return true
+  }
   if (!selection || !(menuId in selection)) {
     return true
   }

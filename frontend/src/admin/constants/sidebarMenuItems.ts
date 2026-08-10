@@ -7,6 +7,29 @@ export interface SidebarMenuItem {
   children?: SidebarMenuItem[]
 }
 
+/**
+ * Required system menus — always enabled; cannot be turned off in Org Menus.
+ * Add new ids here (and/or resolve from API later) when more required menus appear.
+ */
+export const LOCKED_ORG_MENU_IDS = new Set([
+  'admin',
+  'admin-cloudhub',
+  'admin-influxdb',
+])
+
+export const isOrgMenuLocked = (menuId: string): boolean =>
+  LOCKED_ORG_MENU_IDS.has(menuId)
+
+const enforceLockedMenuSelection = (
+  selection: Record<string, boolean>
+): Record<string, boolean> => {
+  const next = {...selection}
+  LOCKED_ORG_MENU_IDS.forEach(id => {
+    next[id] = true
+  })
+  return next
+}
+
 export const mapMasterNavItemsToSidebarMenuItems = (
   navItems: MasterNavMenuItem[] = []
 ): SidebarMenuItem[] => {
@@ -48,13 +71,14 @@ export const mapOrgNavItemsToSidebarMenuItems = (
 export const mapOrgNavItemsToSelection = (
   navItems: OrgNavMenuItem[] = []
 ): Record<string, boolean> => {
-  return navItems.reduce<Record<string, boolean>>((acc, item) => {
+  const selection = navItems.reduce<Record<string, boolean>>((acc, item) => {
     acc[item.id] = !!item.enabled
     ;(item.children || []).forEach(child => {
       acc[child.id] = !!child.enabled
     })
     return acc
   }, {})
+  return enforceLockedMenuSelection(selection)
 }
 
 const collectSidebarMenuIds = (items: SidebarMenuItem[]): string[] => {
@@ -87,11 +111,11 @@ export const buildOrgNavMenuUpsertPayload = (
     id: item.id,
     label: item.label,
     icon: item.icon,
-    enabled: selection[item.id] !== false,
+    enabled: isOrgMenuLocked(item.id) || selection[item.id] !== false,
     children: (item.children || []).map(child => ({
       id: child.id,
       label: child.label,
-      enabled: selection[child.id] !== false,
+      enabled: isOrgMenuLocked(child.id) || selection[child.id] !== false,
     })),
   }))
 }

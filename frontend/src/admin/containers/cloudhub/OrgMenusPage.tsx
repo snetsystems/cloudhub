@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react'
+import {useTranslation} from 'react-i18next'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
@@ -15,6 +16,7 @@ import {
   collectAncestorMenuIds,
   collectDescendantMenuIds,
   findSidebarMenuItem,
+  isOrgMenuLocked,
   mapMasterNavItemsToSidebarMenuItems,
   mapOrgNavItemsToSelection,
   mapOrgNavItemsToSidebarMenuItems,
@@ -24,7 +26,7 @@ import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 import {ForceSessionAbortInputRole as ForceSessionAbortInputRoleAsync} from 'src/shared/actions/session'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {setOrgNavMenu} from 'src/shared/actions/orgNavMenu'
-import {notifyError, notifySuccess} from 'src/shared/copy/notifications'
+import {notifyError} from 'src/shared/copy/notifications'
 import {Links, Notification, NotificationFunc, Organization} from 'src/types'
 
 interface Props {
@@ -77,6 +79,7 @@ const OrgMenusPage = ({
   notify,
   setOrgNavMenuSelection,
 }: Props) => {
+  const {t} = useTranslation()
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   const [menuItems, setMenuItems] = useState<SidebarMenuItem[]>([])
   const [isMenuItemsLoading, setIsMenuItemsLoading] = useState(true)
@@ -119,9 +122,7 @@ const OrgMenusPage = ({
     }
   }
 
-  const flushPendingSave = async ({
-    silent = true,
-  }: {silent?: boolean} = {}): Promise<boolean> => {
+  const flushPendingSave = async (): Promise<boolean> => {
     const {
       selectedOrgId: currentOrgId,
       menuItems: currentMenuItems,
@@ -163,10 +164,6 @@ const OrgMenusPage = ({
         [currentOrgId]: savedSelection,
       }))
       syncSideNavIfCurrentOrg(currentOrgId, savedSelection)
-
-      if (!silent) {
-        notifyRef.current(notifySuccess('Organization menu settings saved.'))
-      }
       return true
     } catch (error) {
       console.error(error)
@@ -175,7 +172,12 @@ const OrgMenusPage = ({
         setIsSaving(false)
       }
       notifyRef.current(
-        notifyError('Failed to save organization menu settings.')
+        notifyError(
+          t(
+            'org_menus.save_failed',
+            'Failed to save organization menu settings.'
+          )
+        )
       )
       return false
     }
@@ -187,7 +189,7 @@ const OrgMenusPage = ({
     }
 
     if (isDirtyRef.current) {
-      const saved = await flushPendingSave({silent: true})
+      const saved = await flushPendingSave()
       if (!saved) {
         return
       }
@@ -227,7 +229,9 @@ const OrgMenusPage = ({
         }
         return {
           ...prev,
-          [orgId]: createDefaultMenuSelection(saveSnapshotRef.current.menuItems),
+          [orgId]: createDefaultMenuSelection(
+            saveSnapshotRef.current.menuItems
+          ),
         }
       })
     }
@@ -256,7 +260,12 @@ const OrgMenusPage = ({
         }
         setMenuItems([])
         setIsMenuItemsLoading(false)
-        setMenuLoadError('Failed to load master navigation menus.')
+        setMenuLoadError(
+          t(
+            'org_menus.load_failed',
+            'Failed to load master navigation menus.'
+          )
+        )
       }
     }
 
@@ -264,7 +273,7 @@ const OrgMenusPage = ({
 
     return () => {
       isMountedRef.current = false
-      void flushPendingSave({silent: true})
+      void flushPendingSave()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -295,7 +304,7 @@ const OrgMenusPage = ({
   }, [organizations, meCurrentOrganization, selectedOrgId, isMenuItemsLoading])
 
   const handleToggleMenu = (menuId: string) => {
-    if (!selectedOrgId || isSaving) {
+    if (!selectedOrgId || isSaving || isOrgMenuLocked(menuId)) {
       return
     }
 
@@ -317,7 +326,9 @@ const OrgMenusPage = ({
       const menuItem = findSidebarMenuItem(menuId, menuItems)
       if (menuItem) {
         collectDescendantMenuIds(menuItem).forEach(childId => {
-          nextSelection[childId] = false
+          if (!isOrgMenuLocked(childId)) {
+            nextSelection[childId] = false
+          }
         })
       }
     }
@@ -335,7 +346,7 @@ const OrgMenusPage = ({
     }
     // Immediately reflect on the live SideNav when editing the active org.
     syncSideNavIfCurrentOrg(selectedOrgId, nextSelection)
-    void flushPendingSave({silent: true})
+    void flushPendingSave()
   }
 
   ForceSessionAbortInputRole(SUPERADMIN_ROLE)
