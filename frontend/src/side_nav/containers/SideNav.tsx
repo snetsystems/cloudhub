@@ -190,7 +190,6 @@ class SideNav extends PureComponent<Props, State> {
     const sourcePrefix = `/sources/${id}`
     const kubernetesNavItems = buildKubernetesNavItems(sourcePrefix)
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
-    const isUsing128T = this.isExistInLinks(AddonType.router128T)
     const isUsingVMware = this.isExistInLinks(AddonType.vsphere)
     const isUsingOsp = this.isExistInLinks(AddonType.osp)
     const isUsingLogAnalysis = this.isAddonUrlOn(AddonType.logAnalysis)
@@ -517,6 +516,7 @@ class SideNav extends PureComponent<Props, State> {
               sourcePrefix={sourcePrefix}
             />
           )}
+          {/* SWAN/Oncue nav hidden — not in use
           {isUsing128T && (
             <NavBlock
               highlightWhen={['swan-status', 'swan-setting']}
@@ -533,6 +533,7 @@ class SideNav extends PureComponent<Props, State> {
               </NavListItem>
             </NavBlock>
           )}
+          */}
         </>
       )
     }

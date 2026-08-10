@@ -43,9 +43,11 @@ INSERT INTO nav_menu_items (id, parent_id, label, icon, sort_order) VALUES
 ('db-monitoring', NULL, 'DB Monitoring', 'disks', 6),
 ('app-performance-monitoring', NULL, 'App. Performance Monitoring', 'tachometer', 7),
 ('kubernetes', NULL, 'Kubernetes', 'kubernetes', 8),
-('log-viewer', NULL, 'Log Viewer', 'document', 9),
-('alert', NULL, 'Alert', 'bell', 10),
-('admin', NULL, 'Admin', 'crown-outline', 11),
+('openstack', NULL, 'OpenStack', 'openstack', 9),
+('vmware', NULL, 'VMware', 'vmware', 10),
+('log-viewer', NULL, 'Log Viewer', 'document', 11),
+('alert', NULL, 'Alert', 'bell', 12),
+('admin', NULL, 'Admin', 'crown-outline', 13),
 
 -- Depth 2 서브 메뉴 (Icon은 NULL)
 ('network-management', 'network-monitoring', 'Device Management', NULL, 1),
@@ -60,9 +62,8 @@ INSERT INTO nav_menu_items (id, parent_id, label, icon, sort_order) VALUES
 ('url-list', 'url-monitoring', 'URL List', NULL, 1),
 ('url-alert', 'url-monitoring', 'URL Alert', NULL, 2),
 
-('k8s-clusters', 'kubernetes', 'Clusters', NULL, 1),
-('k8s-nodes', 'kubernetes', 'Nodes', NULL, 2),
-('k8s-pods', 'kubernetes', 'Pods', NULL, 3),
+('k8s-cluster-map', 'kubernetes', 'Cluster Map', NULL, 1),
+('k8s-traffic-map', 'kubernetes', 'Traffic Map', NULL, 2),
 
 ('log-analysis', 'log-viewer', 'Log Analysis', NULL, 1),
 ('logs', 'log-viewer', 'Log Viewer', NULL, 2),

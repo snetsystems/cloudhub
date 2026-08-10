@@ -232,65 +232,163 @@ pre.admin-table--query {
 }
 
 .org-menus-editor {
+  padding-top: 0;
+}
+
+.org-menus-editor--heading-left {
   display: flex;
-  align-items: flex-start;
-  padding-top: 16px;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 }
 
-.org-menus-editor--orgs {
-  flex: 0 0 240px;
+.org-menus-editor--title {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin: 0;
 }
 
-.org-menus-editor--menus {
-  flex: 1;
-  border-left: 1px solid $g5-pepper;
-  padding-left: 16px;
+.org-menus-editor--org-dropdown {
+  width: 200px;
+  max-width: 280px;
+  flex: 0 0 auto;
 }
 
-.org-menus-editor--section-title {
-  font-size: 14px;
+.org-menus-editor--heading-meta {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 32px;
+  min-height: 18px;
+  flex: 0 0 auto;
+}
+
+.org-menus-editor--saving-dots.loading-dots {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.org-menus-editor--table-head {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-bottom: 2px solid $g5-pepper;
   font-weight: 600;
-  color: $g15-platinum;
-  margin-bottom: 12px;
+  color: $g11-sidewalk;
 }
 
-.org-menus-editor--org-item {
-  padding: 8px 12px;
-  border-radius: $radius;
-  color: $g11-sidewalk;
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+.org-menus-editor--col-enabled {
+  flex: 0 0 88px;
+  width: 88px;
+}
 
-  &:hover {
-    color: $g18-cloud;
-    background-color: $g3-castle;
+.org-menus-editor--table-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.org-menus-editor--menu-group__parent {
+  border-bottom: 1px solid $g5-pepper;
+
+  &:last-child {
+    border-bottom: 0;
   }
 
-  &.active {
-    color: $g18-cloud;
-    background-color: $g3-castle;
+  > .org-menus-editor--menu-item {
+    min-height: 44px;
+    background-color: fade-out($g4-onyx, 0.55);
   }
+
+  &.org-menus-editor--menu-group__off {
+    > .org-menus-editor--menu-item {
+      opacity: 0.75;
+    }
+  }
+
+  .org-menus-editor--menu-label {
+    font-size: 14px;
+    font-weight: 500;
+
+    &.is-active {
+      color: $g18-cloud;
+    }
+  }
+}
+
+.org-menus-editor--menu-toggle {
+  flex: 0 0 88px;
+  width: 88px;
+  display: flex;
+  align-items: center;
 }
 
 .org-menus-editor--menu-item {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 32px;
-  padding-left: 2px;
+  align-items: stretch;
+  min-height: 40px;
+  padding: 0 12px;
+  position: relative;
+  transition: background-color 0.15s ease;
 
-  .slide-toggle.active + .org-menus-editor--menu-label {
-    font-style: normal;
-    color: $g13-mist;
+  &:hover {
+    background-color: fade-out($g5-pepper, 0.45);
   }
 }
 
-.org-menus-editor--menu-group .org-menus-editor--menu-group {
-  .org-menus-editor--menu-item {
-    padding-left: 28px;
+.org-menus-editor--menu-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 4px 0 4px 4px;
+  position: relative;
+}
+
+.org-menus-editor--menu-children {
+  background-color: $g3-castle;
+
+  > .org-menus-editor--menu-group {
+    > .org-menus-editor--menu-item {
+      min-height: 38px;
+
+      .org-menus-editor--menu-body {
+        padding-left: 30px;
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 10px;
+          top: 0;
+          bottom: 0;
+          width: 1px;
+          background-color: $g7-graphite;
+          pointer-events: none;
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          left: 10px;
+          top: 50%;
+          width: 12px;
+          height: 1px;
+          background-color: $g7-graphite;
+          pointer-events: none;
+        }
+      }
+    }
+
+    &:last-child
+      > .org-menus-editor--menu-item
+      .org-menus-editor--menu-body::before {
+      bottom: 50%;
+    }
   }
 }
 
@@ -300,11 +398,17 @@ pre.admin-table--query {
   gap: 8px;
   color: $g10-wolf;
   font-style: italic;
+  font-size: 13px;
   cursor: pointer;
   transition: color 0.25s ease;
 
   &:hover {
     color: $g18-cloud;
+  }
+
+  &.is-active {
+    font-style: normal;
+    color: $g15-platinum;
   }
 
   &.is-disabled {
@@ -314,12 +418,19 @@ pre.admin-table--query {
 }
 
 .org-menus-editor--menu-icon {
-  background-color: $g7-graphite;
-  padding: 3px;
-  border-radius: $radius;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+  color: $g13-mist;
+  background-color: $g2-kevlar;
+  border-radius: $radius-small;
 }
 
 .org-menus-editor--empty {
   margin: 0;
+  padding: 20px 12px;
   color: $g9-mountain;
 }
