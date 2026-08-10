@@ -18,6 +18,25 @@ export interface MasterNavMenuResponse {
   navItems: MasterNavMenuItem[]
 }
 
+/** PUT master nav-menu body (create/update/restore). Omit soft-deleted nodes. */
+export interface MasterNavMenuUpsertSubItem {
+  id: string
+  label?: string
+  sortOrder?: number
+}
+
+export interface MasterNavMenuUpsertItem {
+  id: string
+  label?: string
+  icon?: string
+  sortOrder?: number
+  children?: MasterNavMenuUpsertSubItem[]
+}
+
+export interface MasterNavMenuUpsertRequest {
+  navItems: MasterNavMenuUpsertItem[]
+}
+
 export interface OrgNavSubMenuItem {
   id: string
   label?: string

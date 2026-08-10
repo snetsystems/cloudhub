@@ -17,6 +17,12 @@ import OrgMenusPage from 'src/admin/containers/cloudhub/OrgMenusPage'
 import SourceIndicator from 'src/shared/components/SourceIndicator'
 import GroupManagementPage from 'src/admin/containers/cloudhub/GroupManagementPage'
 
+// Nav Menu tab/route hidden for now (sources kept):
+// - frontend/src/admin/containers/cloudhub/NavMenuPage.tsx
+// - frontend/src/admin/components/cloudhub/NavMenuEditor.tsx
+// - frontend/src/admin/components/cloudhub/NavMenuItemRow.tsx
+// Re-enable: import the page component and add section { url: 'nav-menu', ... }.
+
 // actions
 import {
   isUserAuthorized,
@@ -106,7 +112,7 @@ const sections = (me, providers, cspProviders = [], source, router) => {
       return false
     }
     return component
-  })
+  }).filter(Boolean)
 
   return sections
 }

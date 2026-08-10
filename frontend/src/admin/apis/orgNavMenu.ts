@@ -1,10 +1,13 @@
 import AJAX from 'src/utils/ajax'
-import {OrgNavMenuUpsertRequest} from 'src/types/orgNavMenu'
+import {
+  MasterNavMenuUpsertRequest,
+  OrgNavMenuUpsertRequest,
+} from 'src/types/orgNavMenu'
 
 const MASTER_NAV_MENU_URL = '/cloudhub/v1/nav-menu/master'
 
 const orgNavMenuUrl = (orgId: string) =>
-  `/cloudhub/v1/organizations/${orgId}/nav-menu`
+  `/cloudhub/v1/organizations/${encodeURIComponent(orgId)}/nav-menu`
 
 export const getMasterNavMenu = async () => {
   return AJAX({
@@ -13,7 +16,7 @@ export const getMasterNavMenu = async () => {
   })
 }
 
-export const createMasterNavMenu = async (data: OrgNavMenuUpsertRequest) => {
+export const createMasterNavMenu = async (data: MasterNavMenuUpsertRequest) => {
   return AJAX({
     method: 'POST',
     url: MASTER_NAV_MENU_URL,
@@ -21,7 +24,7 @@ export const createMasterNavMenu = async (data: OrgNavMenuUpsertRequest) => {
   })
 }
 
-export const updateMasterNavMenu = async (data: OrgNavMenuUpsertRequest) => {
+export const updateMasterNavMenu = async (data: MasterNavMenuUpsertRequest) => {
   return AJAX({
     method: 'PUT',
     url: MASTER_NAV_MENU_URL,
@@ -32,7 +35,7 @@ export const updateMasterNavMenu = async (data: OrgNavMenuUpsertRequest) => {
 export const deleteMasterNavMenuItem = async (itemId: string) => {
   return AJAX({
     method: 'DELETE',
-    url: `${MASTER_NAV_MENU_URL}/${itemId}`,
+    url: `${MASTER_NAV_MENU_URL}/${encodeURIComponent(itemId)}`,
   })
 }
 

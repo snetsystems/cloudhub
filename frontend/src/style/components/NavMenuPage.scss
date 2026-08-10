@@ -1,0 +1,445 @@
+.nav-menu-page {
+  .panel-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}
+
+.nav-menu-page--heading-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+}
+
+.nav-menu-page--heading-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.nav-menu-page--subtitle {
+  margin: 0;
+  color: $g13-mist;
+  font-size: 13px;
+}
+
+.nav-menu-page--error {
+  margin: 0;
+  color: $c-dreamsicle;
+  font-size: 13px;
+}
+
+.nav-menu-editor--toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.nav-menu-editor--toolbar-left {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-menu-editor--section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-menu-editor--section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.nav-menu-editor--section-title {
+  min-width: 0;
+  flex: 1 1 240px;
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 700;
+    color: $g15-platinum;
+  }
+
+  p {
+    margin: 0;
+    color: $g13-mist;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+}
+
+.nav-menu-editor--section-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-menu-editor--hint {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  background: rgba($g2-kevlar, 0.65);
+  color: $g13-mist;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.nav-menu-editor--list {
+  border: 1px solid $g5-pepper;
+  border-radius: 4px;
+  overflow: visible;
+}
+
+// One shared height for icon / dropdown / label / actions
+$nav-menu-row-h: $form-sm-height; // 30px
+$nav-menu-drag-w: 22px;
+$nav-menu-icon-w: 160px;
+
+.nav-menu-editor--header {
+  display: grid;
+  grid-template-columns: $nav-menu-drag-w $nav-menu-icon-w minmax(0, 1fr) 140px;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: $g3-castle;
+  color: $g11-sidewalk;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 4px 4px 0 0;
+}
+
+.nav-menu-editor--col-drag {
+  width: $nav-menu-drag-w;
+}
+
+.nav-menu-row {
+  background: $g2-kevlar;
+
+  &:hover > .nav-menu-row--main {
+    background: lighten($g2-kevlar, 2.5%);
+  }
+}
+
+.nav-menu-row--dragging {
+  opacity: 0.55;
+
+  > .nav-menu-row--main {
+    background: lighten($g2-kevlar, 4%) !important;
+    outline: 1px dashed $g7-graphite;
+  }
+}
+
+.nav-menu-row--top {
+  border-top: 1px solid $g5-pepper;
+
+  &:first-of-type {
+    border-top: 0;
+  }
+}
+
+.nav-menu-row--locked > .nav-menu-row--main {
+  background: darken($g2-kevlar, 1%);
+}
+
+.nav-menu-row--deleted {
+  // Dim content but keep Restore button fully opaque (parent opacity would wash it out)
+  > .nav-menu-row--main > *:not(.nav-menu-row--meta) {
+    opacity: 0.5;
+  }
+
+  .nav-menu-row--label-input .input-field {
+    text-decoration: line-through;
+  }
+
+  .nav-menu-row--meta {
+    .slide-toggle,
+    .button:not(.nav-menu-row--restore-btn) {
+      opacity: 0.45;
+    }
+
+    .nav-menu-row--restore-btn {
+      opacity: 1;
+    }
+  }
+}
+
+.nav-menu-row--hidden {
+  .nav-menu-row--icon-cell {
+    opacity: 0.45;
+  }
+}
+
+.nav-menu-row--main {
+  display: grid;
+  grid-template-columns: $nav-menu-drag-w $nav-menu-icon-w minmax(0, 1fr) 140px;
+  column-gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  box-sizing: border-box;
+}
+
+.nav-menu-row--drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $nav-menu-drag-w;
+  height: $nav-menu-row-h;
+  cursor: grab;
+  color: $g9-mountain;
+  flex-shrink: 0;
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &.is-disabled {
+    cursor: default;
+    opacity: 0.25;
+    pointer-events: none;
+  }
+
+  .hamburger {
+    position: relative;
+    width: 10px;
+    height: 2px;
+    background-color: currentColor;
+    border-radius: 1px;
+
+    &:before,
+    &:after {
+      position: absolute;
+      display: block;
+      content: '';
+      width: 100%;
+      height: 100%;
+      background-color: currentColor;
+      border-radius: 1px;
+      left: 0;
+    }
+    &:before {
+      top: -4px;
+    }
+    &:after {
+      top: 4px;
+    }
+  }
+}
+
+.nav-menu-row--icon-cell,
+.nav-menu-row--label-cell,
+.nav-menu-row--meta {
+  min-width: 0;
+  height: $nav-menu-row-h;
+  display: flex;
+  align-items: center;
+}
+
+.nav-menu-row--icon-cell {
+  width: $nav-menu-icon-w;
+  min-width: 0;
+  justify-content: stretch;
+  color: $g13-mist;
+  position: relative;
+}
+
+.dropdown.nav-menu-row--icon-dropdown {
+  width: 100%;
+  height: $nav-menu-row-h;
+
+  > .dropdown--button {
+    box-sizing: border-box;
+    width: 100%;
+    height: $nav-menu-row-h !important;
+    min-height: $nav-menu-row-h !important;
+    max-height: $nav-menu-row-h !important;
+    margin: 0;
+    padding: 0 24px 0 8px !important;
+    line-height: $nav-menu-row-h !important;
+    display: flex !important;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .dropdown--selected {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+    height: $nav-menu-row-h;
+  }
+
+  .nav-menu-row--icon-option {
+    height: $nav-menu-row-h;
+  }
+}
+
+.nav-menu-row--icon-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+
+  > .icon {
+    display: inline-block;
+    flex: 0 0 auto;
+    font-size: 14px;
+    width: 16px;
+    height: 16px;
+    line-height: 16px;
+    text-align: center;
+    color: $g18-cloud;
+  }
+
+  > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.nav-menu-row--label-cell {
+  gap: 8px;
+}
+
+// Tree nesting — flux-schema-explorer style (indent + node lines, tight to labels)
+$nav-menu-tree-indent: 26px;
+$nav-menu-tree-line: 2px;
+// Align subtree under parent content (drag + icon columns)
+$nav-menu-tree-offset: 206px;
+
+.nav-menu-row--children {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 0;
+  // Start tree under parent row, left of label area
+  padding: 0 12px 4px $nav-menu-tree-offset;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.nav-menu-row--child {
+  position: relative;
+  padding-left: $nav-menu-tree-indent;
+  background: transparent;
+
+  // Vertical tree line
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: $nav-menu-tree-indent / 2;
+    width: $nav-menu-tree-line;
+    height: 100%;
+    background-color: $g4-onyx;
+  }
+
+  // Last child: stop at row mid
+  &:last-child:before {
+    height: calc(#{$nav-menu-row-h} / 2 + 6px);
+  }
+
+  // Horizontal elbow — reaches the label row
+  &:after {
+    content: '';
+    position: absolute;
+    top: calc(#{$nav-menu-row-h} / 2 + 6px);
+    left: $nav-menu-tree-indent / 2;
+    width: $nav-menu-tree-indent / 2;
+    height: $nav-menu-tree-line;
+    background-color: $g4-onyx;
+  }
+
+  > .nav-menu-row--main {
+    // drag + label + meta (no icon column)
+    grid-template-columns: $nav-menu-drag-w minmax(0, 1fr) 140px;
+    padding: 6px 0 6px 4px;
+    border-radius: 4px 0 0 4px;
+  }
+
+  &:hover > .nav-menu-row--main {
+    background: $g4-onyx;
+  }
+}
+
+.nav-menu-row--label-input.input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 280px;
+  height: $nav-menu-row-h !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+
+  .input-field {
+    height: $nav-menu-row-h !important;
+    line-height: $nav-menu-row-h !important;
+    box-sizing: border-box;
+  }
+}
+
+.nav-menu-row--child .nav-menu-row--label-input.input {
+  max-width: 260px;
+}
+
+.nav-menu-row--id {
+  flex: 0 1 auto;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: $nav-menu-row-h;
+  color: $ix-link-default; // orange link tone — same for main & submenu
+  font-family: Menlo, Monaco, Consolas, monospace;
+}
+
+.nav-menu-row--meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: nowrap;
+  height: $nav-menu-row-h;
+
+  .button {
+    height: $form-xs-height !important;
+    min-height: $form-xs-height !important;
+    width: $form-xs-height !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .slide-toggle {
+    margin: 0;
+  }
+}
+
+.nav-menu-row--lock {
+  display: inline-flex;
+  align-items: center;
+  color: $c-pineapple;
+  margin-right: 2px;
+
+  .icon {
+    font-size: 12px;
+  }
+}

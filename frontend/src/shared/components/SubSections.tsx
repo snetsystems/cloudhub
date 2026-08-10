@@ -52,8 +52,45 @@ class SubSections extends Component<Props> {
 
   private get activeSectionComponent(): ReactNode {
     const {sections, activeSection} = this.props
-    const {component} = sections.find(section => section.url === activeSection)
-    return component
+    const active = sections.find(
+      section => section && section.url === activeSection
+    )
+    if (active) {
+      return active.component
+    }
+
+    const fallback = sections.find(section => section && section.enabled)
+    return fallback ? fallback.component : null
+  }
+
+  public componentDidMount() {
+    this.redirectIfSectionMissing()
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    if (
+      prevProps.activeSection !== this.props.activeSection ||
+      prevProps.sections !== this.props.sections
+    ) {
+      this.redirectIfSectionMissing()
+    }
+  }
+
+  private redirectIfSectionMissing = () => {
+    const {sections, activeSection, router, sourceID, parentUrl} = this.props
+    const active = sections.find(
+      section => section && section.url === activeSection
+    )
+    if (active && active.enabled) {
+      return
+    }
+
+    const fallback = sections.find(section => section && section.enabled)
+    if (!fallback || fallback.url === activeSection) {
+      return
+    }
+
+    router.replace(`/sources/${sourceID}/${parentUrl}/${fallback.url}`)
   }
 
   public handleTabClick = url => () => {

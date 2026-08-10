@@ -35,6 +35,6 @@ export * from './cellDashboard'
 export * from './logAnalysis'
 
 export * from './devicesMapping'
+export * from './orgNavMenu'
 export * from './recipientGroups'
 export * from './alertGroup'
-export * from './orgNavMenu'
