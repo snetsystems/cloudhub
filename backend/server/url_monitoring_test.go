@@ -68,6 +68,23 @@ func (s *urlMonitoringStoreStub) GetByID(ctx context.Context, id string) (*cloud
 	return &cp, nil
 }
 
+func (s *urlMonitoringStoreStub) GetTargetURLs(ctx context.Context, targetIDs []string) (map[string]string, error) {
+	result := make(map[string]string)
+	if s.monitoring == nil {
+		return result, nil
+	}
+	wanted := make(map[string]bool, len(targetIDs))
+	for _, id := range targetIDs {
+		wanted[id] = true
+	}
+	for _, target := range s.monitoring.Targets {
+		if wanted[target.ID] {
+			result[target.ID] = target.URL
+		}
+	}
+	return result, nil
+}
+
 func (s *urlMonitoringStoreStub) Update(ctx context.Context, m *cloudhub.URLMonitoring) (*cloudhub.URLMonitoring, error) {
 	cp := *m
 	cp.Targets = append([]cloudhub.URLMonitoringTarget(nil), m.Targets...)

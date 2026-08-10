@@ -230,6 +230,7 @@ type fakeRecipientGroupStore struct {
 	addMemberFunc       func(context.Context, cloudhub.RecipientGroupMember) (cloudhub.RecipientGroupMember, error)
 	updateMemberFunc    func(context.Context, cloudhub.RecipientGroupMember) error
 	deleteMemberFunc    func(context.Context, string) error
+	getMemberFunc       func(context.Context, string) (cloudhub.RecipientGroupMember, error)
 	membersFunc         func(context.Context, string) ([]cloudhub.RecipientGroupMember, error)
 	membersByUserIDFunc func(context.Context, string, string) ([]cloudhub.RecipientGroupMember, error)
 }
@@ -292,6 +293,13 @@ func (f *fakeRecipientGroupStore) DeleteMember(ctx context.Context, memberID str
 		return f.deleteMemberFunc(ctx, memberID)
 	}
 	return nil
+}
+
+func (f *fakeRecipientGroupStore) GetMember(ctx context.Context, memberID string) (cloudhub.RecipientGroupMember, error) {
+	if f.getMemberFunc != nil {
+		return f.getMemberFunc(ctx, memberID)
+	}
+	return cloudhub.RecipientGroupMember{}, errors.New("not found")
 }
 
 func (f *fakeRecipientGroupStore) Members(ctx context.Context, groupID string) ([]cloudhub.RecipientGroupMember, error) {

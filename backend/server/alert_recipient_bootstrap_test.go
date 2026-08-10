@@ -112,6 +112,17 @@ func (s *memRecipientGroupStore) DeleteMember(ctx context.Context, memberID stri
 	return nil
 }
 
+func (s *memRecipientGroupStore) GetMember(ctx context.Context, memberID string) (cloudhub.RecipientGroupMember, error) {
+	for _, members := range s.members {
+		for _, m := range members {
+			if m.ID == memberID {
+				return m, nil
+			}
+		}
+	}
+	return cloudhub.RecipientGroupMember{}, errors.New("not found")
+}
+
 func (s *memRecipientGroupStore) Members(ctx context.Context, groupID string) ([]cloudhub.RecipientGroupMember, error) {
 	return append([]cloudhub.RecipientGroupMember(nil), s.members[groupID]...), nil
 }
