@@ -29,6 +29,13 @@ const (
 	gatewayClientDisplayName = "CloudHub"
 )
 
+// gatewayToolEventsCap opts this connection into tool result events. The Gateway
+// broadcasts a run's progress items to every operator, but sends the "tool"
+// stream only to connections that asked for it at connect time, so without this
+// capability an activity never reports what a tool returned. It is not part of
+// the device proof payload, so advertising it does not affect pairing.
+const gatewayToolEventsCap = "tool-events"
+
 var (
 	ErrClosed         = errors.New("openclaw gateway client closed")
 	ErrDisconnected   = errors.New("openclaw gateway disconnected")
@@ -118,6 +125,21 @@ type RPCError struct {
 
 func (e *RPCError) Error() string {
 	return fmt.Sprintf("openclaw RPC %s: %s", e.Code, e.Message)
+}
+
+// AgentList is the Gateway's configured agent set. DefaultID is the agent a
+// caller reaches by leaving the agent out of a session key, and it is not
+// always "main": the Gateway picks the agent flagged default, else the first
+// configured one. Read it rather than assuming either.
+type AgentList struct {
+	DefaultID string  `json:"defaultId"`
+	MainKey   string  `json:"mainKey"`
+	Agents    []Agent `json:"agents"`
+}
+
+type Agent struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type ListSessionsParams struct {
@@ -219,8 +241,28 @@ type EventKind string
 const (
 	EventUnknown         EventKind = "unknown"
 	EventChat            EventKind = "chat"
+	EventActivity        EventKind = "activity"
 	EventSessionsChanged EventKind = "sessions.changed"
 )
+
+// Activity is one step the agent took while producing a reply: a tool call, a
+// command, or a patch. The Gateway reports each step twice — a UI-shaped
+// progress item and the raw tool result — so both are folded into one struct,
+// joined by ToolCallID. Phase moves start → update → end for the same ItemID.
+type Activity struct {
+	ItemID     string
+	ToolCallID string
+	Phase      string
+	Kind       string
+	Name       string
+	Title      string
+	Status     string
+	Summary    string
+	Error      string
+	Output     string
+	StartedAt  int64
+	EndedAt    int64
+}
 
 type GatewayEvent struct {
 	Kind             EventKind
@@ -232,9 +274,11 @@ type GatewayEvent struct {
 	ErrorKind        string
 	ErrorMessage     string
 	StopReason       string
+	SpawnedBy        string
 	Sequence         int
 	EnvelopeSequence int
 	Message          *Message
+	Activity         *Activity
 }
 
 func NewGatewayClient(ctx context.Context, config GatewayConfig) (*GatewayClient, error) {
@@ -256,6 +300,18 @@ func NewGatewayClient(ctx context.Context, config GatewayConfig) (*GatewayClient
 		return nil, err
 	}
 	return client, nil
+}
+
+func (c *GatewayClient) ListAgents(ctx context.Context) (AgentList, error) {
+	payload, err := c.call(ctx, "agents.list", struct{}{})
+	if err != nil {
+		return AgentList{}, err
+	}
+	var list AgentList
+	if err := json.Unmarshal(payload, &list); err != nil {
+		return AgentList{}, fmt.Errorf("%w: decode agents.list response: %v", ErrProtocol, err)
+	}
+	return list, nil
 }
 
 func (c *GatewayClient) ListSessions(ctx context.Context, params ListSessionsParams) (SessionPage, error) {
@@ -466,7 +522,7 @@ func (c *GatewayClient) connectParams(nonce string) (map[string]interface{}, err
 			"platform":    runtime.GOOS,
 			"mode":        gatewayClientMode,
 		},
-		"caps":   []string{},
+		"caps":   []string{gatewayToolEventsCap},
 		"role":   "operator",
 		"auth":   map[string]string{"token": c.config.Token},
 		"scopes": scopes,
@@ -732,7 +788,125 @@ func normalizeEvent(frame eventFrame) (GatewayEvent, bool) {
 			return GatewayEvent{}, false
 		}
 		return GatewayEvent{Kind: EventSessionsChanged, SessionKey: payload.SessionKey, Reason: payload.Reason, EnvelopeSequence: frame.Sequence}, true
+	case "agent":
+		var payload struct {
+			SessionKey string          `json:"sessionKey"`
+			RunID      string          `json:"runId"`
+			SpawnedBy  string          `json:"spawnedBy"`
+			Stream     string          `json:"stream"`
+			Sequence   int             `json:"seq"`
+			Data       json.RawMessage `json:"data"`
+		}
+		if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+			return GatewayEvent{}, false
+		}
+		activity := normalizeActivity(payload.Stream, payload.Data)
+		if activity == nil {
+			return GatewayEvent{Kind: EventUnknown, EnvelopeSequence: frame.Sequence}, true
+		}
+		return GatewayEvent{Kind: EventActivity, SessionKey: payload.SessionKey, RunID: payload.RunID, SpawnedBy: payload.SpawnedBy, Sequence: payload.Sequence, EnvelopeSequence: frame.Sequence, Activity: activity}, true
 	default:
 		return GatewayEvent{Kind: EventUnknown, EnvelopeSequence: frame.Sequence}, true
 	}
+}
+
+// normalizeActivity keeps the two agent streams that describe a run's steps and
+// drops the rest. The "item" stream is the Gateway's own display projection —
+// title, status, timings — so it carries progress, while the "tool" stream is
+// taken only for its result, reported as an "output" phase against the same
+// item. Every other stream reports internals no chat client can act on, and a
+// nil return leaves them unknown to callers.
+func normalizeActivity(stream string, data json.RawMessage) *Activity {
+	if len(data) == 0 {
+		return nil
+	}
+	switch stream {
+	case "item":
+		var raw struct {
+			ItemID       string `json:"itemId"`
+			ToolCallID   string `json:"toolCallId"`
+			Phase        string `json:"phase"`
+			Kind         string `json:"kind"`
+			Name         string `json:"name"`
+			Title        string `json:"title"`
+			Status       string `json:"status"`
+			Summary      string `json:"summary"`
+			ProgressText string `json:"progressText"`
+			Error        string `json:"error"`
+			StartedAt    int64  `json:"startedAt"`
+			EndedAt      int64  `json:"endedAt"`
+		}
+		if err := json.Unmarshal(data, &raw); err != nil || raw.ItemID == "" || raw.Phase == "" {
+			return nil
+		}
+		summary := raw.Summary
+		if summary == "" {
+			summary = raw.ProgressText
+		}
+		return &Activity{
+			ItemID:     raw.ItemID,
+			ToolCallID: raw.ToolCallID,
+			Phase:      raw.Phase,
+			Kind:       raw.Kind,
+			Name:       raw.Name,
+			Title:      raw.Title,
+			Status:     raw.Status,
+			Summary:    summary,
+			Error:      raw.Error,
+			StartedAt:  raw.StartedAt,
+			EndedAt:    raw.EndedAt,
+		}
+	case "tool":
+		var raw struct {
+			Phase            string          `json:"phase"`
+			Name             string          `json:"name"`
+			ToolCallID       string          `json:"toolCallId"`
+			IsError          bool            `json:"isError"`
+			ToolErrorSummary string          `json:"toolErrorSummary"`
+			Result           json.RawMessage `json:"result"`
+		}
+		if err := json.Unmarshal(data, &raw); err != nil || raw.Phase != "result" || raw.ToolCallID == "" {
+			return nil
+		}
+		return &Activity{
+			ItemID:     "tool:" + raw.ToolCallID,
+			ToolCallID: raw.ToolCallID,
+			Phase:      "output",
+			Kind:       "tool",
+			Name:       raw.Name,
+			Error:      raw.ToolErrorSummary,
+			Output:     activityOutput(raw.Result),
+		}
+	default:
+		return nil
+	}
+}
+
+// activityOutput renders a tool result as the text a reader sees. The Gateway
+// returns either a bare string or content blocks; anything else is passed
+// through as its own JSON rather than dropped, because a result the agent acted
+// on is evidence even when its shape is unfamiliar.
+func activityOutput(result json.RawMessage) string {
+	if len(result) == 0 || string(result) == "null" {
+		return ""
+	}
+	var text string
+	if err := json.Unmarshal(result, &text); err == nil {
+		return text
+	}
+	var blocks struct {
+		Content []ContentPart `json:"content"`
+	}
+	if err := json.Unmarshal(result, &blocks); err == nil && len(blocks.Content) > 0 {
+		texts := make([]string, 0, len(blocks.Content))
+		for _, part := range blocks.Content {
+			if part.Text != "" {
+				texts = append(texts, part.Text)
+			}
+		}
+		if len(texts) > 0 {
+			return strings.Join(texts, "\n")
+		}
+	}
+	return string(result)
 }

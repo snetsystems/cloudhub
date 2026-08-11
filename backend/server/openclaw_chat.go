@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/bouk/httprouter"
 	"github.com/gorilla/websocket"
@@ -28,6 +29,7 @@ const (
 	maxOpenClawHistoryMaxChars     = 100000
 	defaultOpenClawTimeoutMs       = 10000
 	maxOpenClawTimeoutMs           = 90000
+	maxOpenClawActivityOutputBytes = 16 * 1024
 )
 
 type openClawSessionCreateRequest struct {
@@ -76,16 +78,37 @@ type openClawEventSubscription struct {
 	SessionID string `json:"sessionId"`
 }
 
+// openClawActivityDTO is one step of an agent run as the chat UI shows it: a
+// tool call or command, identified across its phases by itemId. Output is
+// capped, so a reader must treat a truncated block as a preview.
+type openClawActivityDTO struct {
+	ItemID     string `json:"itemId"`
+	ToolCallID string `json:"toolCallId,omitempty"`
+	Phase      string `json:"phase"`
+	Kind       string `json:"kind,omitempty"`
+	Name       string `json:"name,omitempty"`
+	Title      string `json:"title,omitempty"`
+	Status     string `json:"status,omitempty"`
+	Summary    string `json:"summary,omitempty"`
+	Error      string `json:"error,omitempty"`
+	Output     string `json:"output,omitempty"`
+	Truncated  bool   `json:"truncated,omitempty"`
+	StartedAt  int64  `json:"startedAt,omitempty"`
+	EndedAt    int64  `json:"endedAt,omitempty"`
+}
+
 type openClawEventDTO struct {
-	Type         openclaw.EventKind  `json:"type"`
-	SessionID    string              `json:"sessionId"`
-	State        string              `json:"state,omitempty"`
-	DeltaText    string              `json:"deltaText,omitempty"`
-	Reason       string              `json:"reason,omitempty"`
-	ErrorKind    string              `json:"errorKind,omitempty"`
-	ErrorMessage string              `json:"errorMessage,omitempty"`
-	StopReason   string              `json:"stopReason,omitempty"`
-	Message      *openClawMessageDTO `json:"message,omitempty"`
+	Type         openclaw.EventKind   `json:"type"`
+	SessionID    string               `json:"sessionId"`
+	State        string               `json:"state,omitempty"`
+	DeltaText    string               `json:"deltaText,omitempty"`
+	Reason       string               `json:"reason,omitempty"`
+	ErrorKind    string               `json:"errorKind,omitempty"`
+	ErrorMessage string               `json:"errorMessage,omitempty"`
+	StopReason   string               `json:"stopReason,omitempty"`
+	SpawnedBy    string               `json:"spawnedBy,omitempty"`
+	Message      *openClawMessageDTO  `json:"message,omitempty"`
+	Activity     *openClawActivityDTO `json:"activity,omitempty"`
 }
 
 // OpenClawSessions creates or lists only sessions owned by the
@@ -113,6 +136,10 @@ func (s *Service) OpenClawSessions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		agentID, ok := s.openClawAgentID(w, r.Context())
+		if !ok {
+			return
+		}
 		sessionID, err := (&idgen.UUID{}).Generate()
 		if err != nil {
 			internalServerError(w, err, s.Logger)
@@ -123,8 +150,8 @@ func (s *Service) OpenClawSessions(w http.ResponseWriter, r *http.Request) {
 			ID:             sessionID,
 			OrganizationID: orgID,
 			UserID:         strconv.FormatUint(user.ID, 10),
-			AgentID:        "cloudhub-chat",
-			SessionKey:     fmt.Sprintf("agent:cloudhub-chat:cloudhub:%s:%d:%s", orgID, user.ID, sessionID),
+			AgentID:        agentID,
+			SessionKey:     fmt.Sprintf("agent:%s:cloudhub:%s:%d:%s", agentID, orgID, user.ID, sessionID),
 			Title:          strings.TrimSpace(request.Title),
 			CreatedAt:      now,
 			UpdatedAt:      now,
@@ -497,6 +524,32 @@ func (s *Service) openClawOwnerContext(r *http.Request) (context.Context, *cloud
 	return ctx, user, orgID, userOK && orgOK
 }
 
+// openClawAgentID resolves the agent a new session binds to. The configured ID
+// wins; empty means "whatever this Gateway calls default", which only the
+// Gateway can answer — its default is the agent flagged default, else the first
+// configured one, so it is not reliably "main". The ID is baked into the session
+// key, so it is resolved once here at creation and never again: re-resolving
+// later would point an existing conversation at a different agent's history.
+func (s *Service) openClawAgentID(w http.ResponseWriter, ctx context.Context) (string, bool) {
+	if s.OpenClawAgentID != "" {
+		return s.OpenClawAgentID, true
+	}
+	if s.OpenClawGateway == nil {
+		Error(w, http.StatusServiceUnavailable, "OpenClaw gateway is not configured, so its default agent cannot be resolved", s.Logger)
+		return "", false
+	}
+	agents, err := s.OpenClawGateway.ListAgents(ctx)
+	if err != nil {
+		s.openClawGatewayError(w, err)
+		return "", false
+	}
+	if strings.TrimSpace(agents.DefaultID) == "" {
+		Error(w, http.StatusBadGateway, "OpenClaw gateway reported no default agent", s.Logger)
+		return "", false
+	}
+	return strings.TrimSpace(agents.DefaultID), true
+}
+
 func (s *Service) openClawSessionStore(w http.ResponseWriter, ctx context.Context) (cloudhub.OpenClawSessionStore, bool) {
 	if s.Store == nil {
 		if w != nil {
@@ -639,6 +692,7 @@ func openClawEventResponse(sessionID string, event openclaw.GatewayEvent) openCl
 		ErrorKind:    event.ErrorKind,
 		ErrorMessage: event.ErrorMessage,
 		StopReason:   event.StopReason,
+		SpawnedBy:    event.SpawnedBy,
 	}
 	if event.Message != nil {
 		response.Message = &openClawMessageDTO{
@@ -647,7 +701,39 @@ func openClawEventResponse(sessionID string, event openclaw.GatewayEvent) openCl
 			Timestamp: event.Message.Timestamp,
 		}
 	}
+	if event.Activity != nil {
+		output, truncated := truncateOpenClawActivityOutput(event.Activity.Output)
+		response.Activity = &openClawActivityDTO{
+			ItemID:     event.Activity.ItemID,
+			ToolCallID: event.Activity.ToolCallID,
+			Phase:      event.Activity.Phase,
+			Kind:       event.Activity.Kind,
+			Name:       event.Activity.Name,
+			Title:      event.Activity.Title,
+			Status:     event.Activity.Status,
+			Summary:    event.Activity.Summary,
+			Error:      event.Activity.Error,
+			Output:     output,
+			Truncated:  truncated,
+			StartedAt:  event.Activity.StartedAt,
+			EndedAt:    event.Activity.EndedAt,
+		}
+	}
 	return response
+}
+
+// truncateOpenClawActivityOutput caps a tool output so one command reading a
+// large file cannot flood the socket. It cuts on a rune boundary, because a
+// half-written rune would make the whole frame invalid JSON.
+func truncateOpenClawActivityOutput(output string) (string, bool) {
+	if len(output) <= maxOpenClawActivityOutputBytes {
+		return output, false
+	}
+	cut := maxOpenClawActivityOutputBytes
+	for cut > 0 && !utf8.RuneStart(output[cut]) {
+		cut--
+	}
+	return output[:cut], true
 }
 
 func withOpenClawParam(r *http.Request, id string) *http.Request {

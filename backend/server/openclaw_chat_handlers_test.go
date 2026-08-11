@@ -11,6 +11,7 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/bouk/httprouter"
 	"github.com/gorilla/websocket"
@@ -52,6 +53,79 @@ func TestOpenClawSessionsCreateUsesAuthenticatedOwnerAndServerSession(t *testing
 	}
 	if strings.Contains(rr.Body.String(), "sessionKey") || strings.Contains(rr.Body.String(), "agentId") {
 		t.Fatalf("create response exposed internal gateway mapping: %s", rr.Body.String())
+	}
+}
+
+func TestOpenClawSessionsCreateBindsConfiguredAgentIntoTheSessionKey(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	svc := newOpenClawChatService(store, nil)
+	svc.OpenClawAgentID = "main"
+	rr := httptest.NewRecorder()
+
+	svc.OpenClawSessions(rr, openClawRequest(http.MethodPost, "/cloudhub/v2/openclaw/sessions", `{"title":"x"}`, 42, "org-a"))
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	for _, session := range store.items {
+		if session.AgentID != "main" {
+			t.Fatalf("agent ID = %q, want main", session.AgentID)
+		}
+		if want := "agent:main:cloudhub:org-a:42:" + session.ID; session.SessionKey != want {
+			t.Fatalf("session key = %q, want %q", session.SessionKey, want)
+		}
+	}
+}
+
+func TestOpenClawSessionsCreateResolvesGatewayDefaultAgentWhenUnconfigured(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	gateway := &fakeOpenClawGateway{agents: openclaw.AgentList{DefaultID: "  gateway-default  "}}
+	svc := newOpenClawChatService(store, gateway)
+	svc.OpenClawAgentID = ""
+	rr := httptest.NewRecorder()
+
+	svc.OpenClawSessions(rr, openClawRequest(http.MethodPost, "/cloudhub/v2/openclaw/sessions", `{"title":"x"}`, 42, "org-a"))
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if gateway.ListAgentsCalls() != 1 {
+		t.Fatalf("agents.list calls = %d, want 1", gateway.ListAgentsCalls())
+	}
+	for _, session := range store.items {
+		if session.AgentID != "gateway-default" {
+			t.Fatalf("agent ID = %q, want gateway-default", session.AgentID)
+		}
+		if want := "agent:gateway-default:cloudhub:org-a:42:" + session.ID; session.SessionKey != want {
+			t.Fatalf("session key = %q, want %q", session.SessionKey, want)
+		}
+	}
+}
+
+func TestOpenClawSessionsCreateRejectsUnresolvableDefaultAgent(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		gateway  openClawGateway
+		wantCode int
+	}{
+		{"no gateway to ask", nil, http.StatusServiceUnavailable},
+		{"gateway reports no default", &fakeOpenClawGateway{agents: openclaw.AgentList{DefaultID: "   "}}, http.StatusBadGateway},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newOpenClawSessionStoreContract()
+			svc := newOpenClawChatService(store, tt.gateway)
+			svc.OpenClawAgentID = ""
+			rr := httptest.NewRecorder()
+
+			svc.OpenClawSessions(rr, openClawRequest(http.MethodPost, "/cloudhub/v2/openclaw/sessions", `{"title":"x"}`, 42, "org-a"))
+
+			if rr.Code != tt.wantCode {
+				t.Fatalf("status = %d, want %d: %s", rr.Code, tt.wantCode, rr.Body.String())
+			}
+			if len(store.items) != 0 {
+				t.Fatalf("created %d sessions, want none stored without a resolved agent", len(store.items))
+			}
+		})
 	}
 }
 
@@ -281,6 +355,72 @@ func TestOpenClawEventsFilterToOwnedSubscribedSession(t *testing.T) {
 	}
 }
 
+func TestOpenClawEventsForwardActivityWithCappedOutput(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned"})
+	events := make(chan openclaw.GatewayEvent, 2)
+	defer close(events)
+	svc := newOpenClawChatService(store, &fakeOpenClawGateway{events: events})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		svc.OpenClawEvents(w, openClawRequestWithContext(r, 42, "org-a"))
+	}))
+	defer server.Close()
+	wsURL, err := url.Parse(server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wsURL.Scheme = "ws"
+	conn, _, err := websocket.DefaultDialer.Dial(wsURL.String(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	if err := conn.WriteJSON(map[string]string{"sessionId": "owned"}); err != nil {
+		t.Fatal(err)
+	}
+	events <- openclaw.GatewayEvent{
+		Kind:       openclaw.EventActivity,
+		SessionKey: "session-owned",
+		SpawnedBy:  "session-parent",
+		Activity: &openclaw.Activity{
+			ItemID: "tool:call-1", ToolCallID: "call-1", Phase: "output", Kind: "tool", Name: "read",
+			Output: strings.Repeat("가", maxOpenClawActivityOutputBytes),
+		},
+	}
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	var got struct {
+		Type      string `json:"type"`
+		SessionID string `json:"sessionId"`
+		SpawnedBy string `json:"spawnedBy"`
+		Activity  struct {
+			ItemID    string `json:"itemId"`
+			Phase     string `json:"phase"`
+			Name      string `json:"name"`
+			Output    string `json:"output"`
+			Truncated bool   `json:"truncated"`
+		} `json:"activity"`
+	}
+	if err := conn.ReadJSON(&got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Type != string(openclaw.EventActivity) || got.SessionID != "owned" || got.SpawnedBy != "session-parent" {
+		t.Fatalf("event = %#v, want an owned activity event", got)
+	}
+	if got.Activity.ItemID != "tool:call-1" || got.Activity.Phase != "output" || got.Activity.Name != "read" {
+		t.Fatalf("activity = %#v, want the forwarded run step", got.Activity)
+	}
+	if !got.Activity.Truncated {
+		t.Fatalf("activity was not marked truncated: %#v", got.Activity)
+	}
+	if len(got.Activity.Output) > maxOpenClawActivityOutputBytes {
+		t.Fatalf("output = %d bytes, want at most %d", len(got.Activity.Output), maxOpenClawActivityOutputBytes)
+	}
+	if !utf8.ValidString(got.Activity.Output) {
+		t.Fatalf("output was cut mid-rune")
+	}
+}
+
 func TestOpenClawEventsRegistersSubscriberBeforeWebSocketUpgrade(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
 	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned"})
@@ -471,6 +611,7 @@ func newOpenClawChatService(store cloudhub.OpenClawSessionStore, gateway openCla
 		Store:           &Store{OpenClawSessionStore: store},
 		Logger:          &mocks.TestLogger{},
 		OpenClawGateway: gateway,
+		OpenClawAgentID: "cloudhub-chat",
 	}
 }
 
@@ -556,6 +697,22 @@ type fakeOpenClawGateway struct {
 	subscribeCalls   int
 	subscribeStarted chan<- struct{}
 	subscribeRelease <-chan struct{}
+	agents           openclaw.AgentList
+	agentsErr        error
+	agentsCalls      int
+}
+
+func (g *fakeOpenClawGateway) ListAgents(context.Context) (openclaw.AgentList, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.agentsCalls++
+	return g.agents, g.agentsErr
+}
+
+func (g *fakeOpenClawGateway) ListAgentsCalls() int {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.agentsCalls
 }
 
 func (g *fakeOpenClawGateway) History(_ context.Context, params openclaw.HistoryParams) (openclaw.HistoryPage, error) {

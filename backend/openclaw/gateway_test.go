@@ -785,6 +785,78 @@ func TestGatewayPreservesTerminalChatDetails(t *testing.T) {
 	}
 }
 
+func TestNormalizeAgentEventKeepsRunStepsAndDropsInternalStreams(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		payload  string
+		wantKind EventKind
+		want     *Activity
+	}{
+		{
+			name:     "item start carries display fields",
+			payload:  `{"sessionKey":"session-1","runId":"run-1","seq":4,"stream":"item","data":{"itemId":"tool:call-1","toolCallId":"call-1","phase":"start","kind":"tool","name":"read","title":"read AGENTS.md","status":"running","startedAt":17}}`,
+			wantKind: EventActivity,
+			want:     &Activity{ItemID: "tool:call-1", ToolCallID: "call-1", Phase: "start", Kind: "tool", Name: "read", Title: "read AGENTS.md", Status: "running", StartedAt: 17},
+		},
+		{
+			name:     "item update falls back to progress text",
+			payload:  `{"sessionKey":"session-1","stream":"item","data":{"itemId":"tool:call-1","phase":"update","status":"running","progressText":"scanning"}}`,
+			wantKind: EventActivity,
+			want:     &Activity{ItemID: "tool:call-1", Phase: "update", Status: "running", Summary: "scanning"},
+		},
+		{
+			name:     "tool result becomes an output phase on the same item",
+			payload:  `{"sessionKey":"session-1","stream":"tool","data":{"phase":"result","name":"read","toolCallId":"call-1","isError":false,"result":{"content":[{"type":"text","text":"line one"},{"type":"text","text":"line two"}]}}}`,
+			wantKind: EventActivity,
+			want:     &Activity{ItemID: "tool:call-1", ToolCallID: "call-1", Phase: "output", Kind: "tool", Name: "read", Output: "line one\nline two"},
+		},
+		{
+			name:     "tool start is left to the item stream",
+			payload:  `{"sessionKey":"session-1","stream":"tool","data":{"phase":"start","name":"read","toolCallId":"call-1"}}`,
+			wantKind: EventUnknown,
+		},
+		{
+			name:     "unrelated streams stay unknown",
+			payload:  `{"sessionKey":"session-1","stream":"stdout","data":{"text":"noise"}}`,
+			wantKind: EventUnknown,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			event, keep := normalizeEvent(eventFrame{Type: "event", Event: "agent", Payload: json.RawMessage(tt.payload)})
+			if !keep {
+				t.Fatalf("normalizeEvent dropped the frame")
+			}
+			if event.Kind != tt.wantKind {
+				t.Fatalf("kind = %q, want %q", event.Kind, tt.wantKind)
+			}
+			if tt.want == nil {
+				if event.Activity != nil {
+					t.Fatalf("activity = %#v, want none", event.Activity)
+				}
+				return
+			}
+			if event.Activity == nil {
+				t.Fatalf("activity = nil, want %#v", tt.want)
+			}
+			if *event.Activity != *tt.want {
+				t.Fatalf("activity = %#v, want %#v", *event.Activity, *tt.want)
+			}
+		})
+	}
+}
+
+func TestActivityOutputPassesThroughUnfamiliarResults(t *testing.T) {
+	if got := activityOutput(json.RawMessage(`"plain text"`)); got != "plain text" {
+		t.Fatalf("string result = %q, want %q", got, "plain text")
+	}
+	if got := activityOutput(json.RawMessage(`{"exitCode":0,"stdout":"ok"}`)); got != `{"exitCode":0,"stdout":"ok"}` {
+		t.Fatalf("structured result = %q, want the raw JSON", got)
+	}
+	if got := activityOutput(json.RawMessage(`null`)); got != "" {
+		t.Fatalf("null result = %q, want empty", got)
+	}
+}
+
 type gatewayTestRequest struct {
 	Type   string          `json:"type"`
 	ID     string          `json:"id"`

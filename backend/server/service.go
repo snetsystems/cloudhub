@@ -44,6 +44,7 @@ type Service struct {
 	AlertGroupRules           cloudhub.AlertGroupRuleStore
 	AlertTemplates            cloudhub.AlertTemplatesStore
 	OpenClawGateway           openClawGateway
+	OpenClawAgentID           string
 }
 
 // KafkaProducer defines the interface for publishing configuration updates
@@ -103,6 +104,7 @@ type openClawGateway interface {
 	History(context.Context, openclaw.HistoryParams) (openclaw.HistoryPage, error)
 	SendMessage(context.Context, openclaw.SendMessageParams) (openclaw.SendMessageResult, error)
 	Subscribe(context.Context) (<-chan openclaw.GatewayEvent, error)
+	ListAgents(context.Context) (openclaw.AgentList, error)
 }
 
 var _ openClawGateway = (*openclaw.GatewayClient)(nil)
@@ -163,6 +165,10 @@ func (m *openClawGatewayManager) History(ctx context.Context, params openclaw.Hi
 
 func (m *openClawGatewayManager) SendMessage(ctx context.Context, params openclaw.SendMessageParams) (openclaw.SendMessageResult, error) {
 	return m.gateway.SendMessage(ctx, params)
+}
+
+func (m *openClawGatewayManager) ListAgents(ctx context.Context) (openclaw.AgentList, error) {
+	return m.gateway.ListAgents(ctx)
 }
 
 func (m *openClawGatewayManager) Subscribe(ctx context.Context) (<-chan openclaw.GatewayEvent, error) {

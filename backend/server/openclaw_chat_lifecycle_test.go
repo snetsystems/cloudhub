@@ -247,6 +247,10 @@ func (g *lifecycleGateway) History(context.Context, openclaw.HistoryParams) (ope
 	return openclaw.HistoryPage{}, nil
 }
 
+func (g *lifecycleGateway) ListAgents(context.Context) (openclaw.AgentList, error) {
+	return openclaw.AgentList{}, nil
+}
+
 func (g *lifecycleGateway) SendMessage(context.Context, openclaw.SendMessageParams) (openclaw.SendMessageResult, error) {
 	return openclaw.SendMessageResult{}, nil
 }

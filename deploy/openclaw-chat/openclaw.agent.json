@@ -7,12 +7,21 @@
   "sandbox": {
     "mode": "off",
     "scope": "session",
-    "workspaceAccess": "none"
+    "workspaceAccess": "ro"
   },
   "tools": {
+    "allow": [
+      "read",
+      "sessions_list",
+      "sessions_history",
+      "session_status",
+      "update_plan"
+    ],
     "deny": [
       "group:runtime",
-      "group:fs",
+      "write",
+      "edit",
+      "apply_patch",
       "browser",
       "message",
       "web_fetch",

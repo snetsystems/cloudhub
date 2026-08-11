@@ -21,8 +21,14 @@ CloudHub generates every session key as
 agent with exactly that ID. Without it, sending a message fails.
 
 Merge `openclaw.agent.json` into the `agents` array of your Gateway's
-`openclaw.json`. The agent denies every tool and takes no workspace access —
-that isolation from the investigations agent is deliberate, so keep it.
+`openclaw.json`.
+
+The agent carries a deliberately small read-only toolset — `read` plus the
+session-reading tools — so the chat page has real tool activity to display.
+`tools.allow` is an exclusive allowlist: nothing outside it is callable, and
+writes, `exec`, the browser, and network fetches stay denied on top of that.
+Widen the allowlist only knowing that every allowed tool runs on the Gateway
+host and its output is relayed to the browser.
 
 ## 2. Mount the workspace
 
@@ -73,6 +79,17 @@ provisioner used:
 --openclaw-device-private-key-file=<repo>/.secrets/openclaw-device/private.key
 --openclaw-device-token-file=<repo>/.secrets/openclaw-device/device.token
 ```
+
+`--openclaw-agent-id` picks the agent new sessions bind to, and defaults to
+`cloudhub-chat` — the agent registered above. Pass it empty to bind whatever the
+Gateway calls its default instead, which is how a stock OpenClaw install works
+without step 1 at all. Be aware the Gateway's default is the agent flagged
+`default`, else the *first* one configured, so on a Gateway with several agents
+it is worth checking which one that is rather than assuming `main`.
+
+The agent is resolved once, when a session is created, and stored with it: an
+existing conversation keeps its agent even if this flag changes later, because
+the agent is part of the Gateway session key that holds its history.
 
 `OPENCLAW_GATEWAY_URL`, `OPENCLAW_DEVICE_PRIVATE_KEY_FILE`, and
 `OPENCLAW_DEVICE_TOKEN_FILE` work too. Startup should log:
