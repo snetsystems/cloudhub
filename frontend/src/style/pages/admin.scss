@@ -251,8 +251,6 @@ pre.admin-table--query {
 }
 
 .org-menus-editor--org-dropdown {
-  width: 200px;
-  max-width: 280px;
   flex: 0 0 auto;
 }
 
@@ -277,15 +275,14 @@ pre.admin-table--query {
   display: flex;
   align-items: center;
   min-height: 36px;
-  padding: 0 12px;
+  padding: 0 32px;
   border-bottom: 2px solid $g5-pepper;
   font-weight: 600;
   color: $g11-sidewalk;
 }
 
 .org-menus-editor--col-enabled {
-  flex: 0 0 88px;
-  width: 88px;
+  width: 140px;
 }
 
 .org-menus-editor--table-body {
@@ -322,8 +319,7 @@ pre.admin-table--query {
 }
 
 .org-menus-editor--menu-toggle {
-  flex: 0 0 88px;
-  width: 88px;
+  width: 140px;
   display: flex;
   align-items: center;
 }
@@ -332,7 +328,7 @@ pre.admin-table--query {
   display: flex;
   align-items: stretch;
   min-height: 40px;
-  padding: 0 12px;
+  padding: 0 32px;
   position: relative;
   transition: background-color 0.15s ease;
 
@@ -342,11 +338,7 @@ pre.admin-table--query {
 }
 
 .org-menus-editor--menu-body {
-  flex: 1;
-  min-width: 0;
   display: flex;
-  align-items: center;
-  padding: 4px 0 4px 4px;
   position: relative;
 }
 
@@ -356,14 +348,15 @@ pre.admin-table--query {
   > .org-menus-editor--menu-group {
     > .org-menus-editor--menu-item {
       min-height: 38px;
+      padding-left: 60px;
 
       .org-menus-editor--menu-body {
-        padding-left: 30px;
+        padding-left: 28px;
 
         &::before {
           content: '';
           position: absolute;
-          left: 10px;
+          left: 8px;
           top: 0;
           bottom: 0;
           width: 1px;
@@ -374,7 +367,7 @@ pre.admin-table--query {
         &::after {
           content: '';
           position: absolute;
-          left: 10px;
+          left: 8px;
           top: 50%;
           width: 12px;
           height: 1px;
@@ -395,7 +388,7 @@ pre.admin-table--query {
 .org-menus-editor--menu-label {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   color: $g10-wolf;
   font-style: italic;
   font-size: 13px;

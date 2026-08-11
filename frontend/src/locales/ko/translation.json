@@ -416,8 +416,8 @@
     "restore_failed": "메뉴 항목 복원에 실패했습니다."
   },
   "org_menus": {
-    "title": "조직 메뉴",
-    "col_enabled": "사용",
+    "title": "조직명",
+    "col_enabled": "활성화",
     "col_sidebar_menus": "사이드바 메뉴",
     "empty_no_menus": "네비게이션 메뉴가 없습니다. nav_menu_items 마이그레이션을 확인하세요.",
     "empty_choose_org": "사이드바 메뉴를 설정할 조직을 선택하세요.",

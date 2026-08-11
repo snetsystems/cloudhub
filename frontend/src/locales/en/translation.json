@@ -419,8 +419,8 @@
     "restore_failed": "Failed to restore menu item."
   },
   "org_menus": {
-    "title": "Org Menus",
-    "col_enabled": "Enabled",
+    "title": "Organization",
+    "col_enabled": "Visible",
     "col_sidebar_menus": "Sidebar Menus",
     "empty_no_menus": "No navigation menus found. Check nav_menu_items migration.",
     "empty_choose_org": "Choose an organization to configure its sidebar menus.",
