@@ -57,7 +57,7 @@ const OrgMenusEditor = ({
       <div className="panel-heading">
         <div className="org-menus-editor--heading-left">
           <h2 className="panel-title org-menus-editor--title">
-            {t('org_menus.title', 'Org Menus')}
+            {t('org_menus.title', 'Organization')}
           </h2>
           {selectedOrgId ? (
             <Dropdown
@@ -65,6 +65,7 @@ const OrgMenusEditor = ({
               onChange={onSelectOrganization}
               buttonColor={ComponentColor.Default}
               buttonSize={ComponentSize.Small}
+              widthPixels={220}
               status={
                 isSaving ? ComponentStatus.Disabled : ComponentStatus.Default
               }
