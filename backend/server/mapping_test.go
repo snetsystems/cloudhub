@@ -277,7 +277,8 @@ func TestMappings_Update(t *testing.T) {
 
 func TestMappings_Remove(t *testing.T) {
 	type fields struct {
-		MappingsStore cloudhub.MappingsStore
+		MappingsStore      cloudhub.MappingsStore
+		OrganizationsStore cloudhub.OrganizationsStore
 	}
 	type args struct {
 		id string
@@ -297,6 +298,15 @@ func TestMappings_Remove(t *testing.T) {
 		{
 			name: "remove mapping",
 			fields: fields{
+				OrganizationsStore: &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
+							ID:          "0",
+							Name:        "The Gnarly Default",
+							DefaultRole: roles.ViewerRoleName,
+						}, nil
+					},
+				},
 				MappingsStore: &mocks.MappingsStore{
 					GetF: func(ctx context.Context, id string) (*cloudhub.Mapping, error) {
 						return &cloudhub.Mapping{
@@ -323,7 +333,8 @@ func TestMappings_Remove(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					MappingsStore: tt.fields.MappingsStore,
+					MappingsStore:      tt.fields.MappingsStore,
+					OrganizationsStore: tt.fields.OrganizationsStore,
 				},
 				Logger: log.New(log.DebugLevel),
 			}

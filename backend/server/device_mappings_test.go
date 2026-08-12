@@ -18,6 +18,16 @@ import (
 // newTestService creates a new service for testing.
 func newTestService(t *testing.T, store *mocks.Store) *Service {
 	t.Helper()
+	if store.SourcesStore == nil {
+		// logRegistration reads the InfluxDB source to write its audit point.
+		// These tests do not exercise that path, so report no source and let it
+		// bail out instead of dereferencing a nil store.
+		store.SourcesStore = &mocks.SourcesStore{
+			GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+				return cloudhub.Source{}, cloudhub.ErrSourceNotFound
+			},
+		}
+	}
 	s := &Service{
 		Logger: mocks.NewLogger(),
 	}

@@ -86,6 +86,9 @@ func TestNewDevices(t *testing.T) {
 					NetworkDeviceStore: tt.fields.NetworkDeviceStore,
 				},
 				Logger: tt.fields.Logger,
+				InternalENV: cloudhub.InternalEnvironment{
+					Platform: &mocks.MockPlatform{},
+				},
 			}
 
 			buf, _ := json.Marshal(tt.args.devices)
