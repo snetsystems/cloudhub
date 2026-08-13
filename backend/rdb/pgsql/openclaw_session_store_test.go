@@ -24,8 +24,49 @@ func setupOpenClawSessionStore(t *testing.T) (*pgsql.Client, *pgsql.OpenClawSess
 		cleanup()
 		t.Fatalf("run session migration: %v", err)
 	}
+	softDeleteSQL, err := os.ReadFile("migrations/007_soft_delete_openclaw_sessions.sql")
+	if err != nil {
+		cleanup()
+		t.Fatalf("read soft-delete migration: %v", err)
+	}
+	if _, err := client.ExecContext(context.Background(), string(softDeleteSQL)); err != nil {
+		cleanup()
+		t.Fatalf("run soft-delete migration: %v", err)
+	}
 
 	return client, pgsql.NewOpenClawSessionStore(client), cleanup
+}
+
+func TestOpenClawSessionStoreSoftDeletesSessions(t *testing.T) {
+	client, store, cleanup := setupOpenClawSessionStore(t)
+	defer cleanup()
+	defer cleanupOpenClawSession(t, client, "openclaw-soft-delete-session")
+
+	ctx := context.Background()
+	session := &cloudhub.OpenClawSession{
+		ID:             "openclaw-soft-delete-session",
+		OrganizationID: "openclaw-soft-delete-org",
+		UserID:         "openclaw-soft-delete-user",
+		AgentID:        "main",
+		SessionKey:     "agent:main:cloudhub:openclaw-soft-delete-session",
+		CreatedAt:      time.Now().UTC(),
+		UpdatedAt:      time.Now().UTC(),
+	}
+	if _, err := store.Create(ctx, session); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if err := store.Delete(ctx, session.ID); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if _, err := store.Get(ctx, session.ID); !errors.Is(err, cloudhub.ErrOpenClawSessionNotFound) {
+		t.Fatalf("Get(deleted) error = %v, want ErrOpenClawSessionNotFound", err)
+	}
+	if sessions, err := store.List(ctx, session.OrganizationID); err != nil || len(sessions) != 0 {
+		t.Fatalf("List() = %#v, %v; want no deleted sessions", sessions, err)
+	}
+	if err := store.Touch(ctx, session.ID, time.Now().UTC()); !errors.Is(err, cloudhub.ErrOpenClawSessionNotFound) {
+		t.Fatalf("Touch(deleted) error = %v, want ErrOpenClawSessionNotFound", err)
+	}
 }
 
 func cleanupOpenClawSession(t *testing.T, client *pgsql.Client, id string) {

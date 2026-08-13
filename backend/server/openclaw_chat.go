@@ -181,6 +181,33 @@ func (s *Service) OpenClawSessions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// OpenClawSessionDelete soft-deletes one session owned by the authenticated
+// user. It removes CloudHub access only; the Gateway history is not deleted.
+func (s *Service) OpenClawSessionDelete(w http.ResponseWriter, r *http.Request) {
+	ctx, _, _, ok := s.openClawOwnerContext(r)
+	if !ok {
+		Error(w, http.StatusUnauthorized, "authenticated organization context required", s.Logger)
+		return
+	}
+	session, ok := s.openClawOwnedSession(w, r, ctx)
+	if !ok {
+		return
+	}
+	store, ok := s.openClawSessionStore(w, ctx)
+	if !ok {
+		return
+	}
+	if err := store.Delete(ctx, session.ID); err != nil {
+		if errors.Is(err, cloudhub.ErrOpenClawSessionNotFound) {
+			notFound(w, session.ID, s.Logger)
+			return
+		}
+		Error(w, http.StatusBadGateway, "unable to delete session", s.Logger)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // OpenClawSessionMessages returns the raw message history for one
 // owned session.
 func (s *Service) OpenClawSessionMessages(w http.ResponseWriter, r *http.Request) {

@@ -93,3 +93,21 @@ func (s *OpenClawSessionStore) Touch(ctx context.Context, id string, updatedAt t
 
 	return s.store.Touch(ctx, id, updatedAt)
 }
+
+// Delete soft-deletes a session belonging to the organization that is set.
+func (s *OpenClawSessionStore) Delete(ctx context.Context, id string) error {
+	err := validOrganization(ctx)
+	if err != nil {
+		return err
+	}
+
+	session, err := s.Get(ctx, id)
+	if err != nil {
+		return err
+	}
+	if session == nil {
+		return cloudhub.ErrOpenClawSessionNotFound
+	}
+
+	return s.store.Delete(ctx, id)
+}

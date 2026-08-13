@@ -367,6 +367,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// authenticated user and organization rather than client request fields.
 	router.POST("/cloudhub/v2/openclaw/sessions", EnsureMember(service.OpenClawSessions))
 	router.GET("/cloudhub/v2/openclaw/sessions", EnsureViewer(service.OpenClawSessions))
+	router.DELETE("/cloudhub/v2/openclaw/sessions/:id", EnsureMember(service.OpenClawSessionDelete))
 	router.GET("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureViewer(service.OpenClawSessionMessages))
 	router.POST("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureMember(service.OpenClawSessionMessage))
 	router.POST("/cloudhub/v2/openclaw/rpc", EnsureMember(service.OpenClawRPC))
