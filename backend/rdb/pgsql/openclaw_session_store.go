@@ -73,7 +73,7 @@ func (s *OpenClawSessionStore) Get(ctx context.Context, id string) (*cloudhub.Op
 	session, err := scanOpenClawSession(s.db.QueryRowContext(ctx, `
 		SELECT `+openClawSessionColumns+`
 		FROM openclaw_sessions
-		WHERE id = $1`, id))
+		WHERE id = $1 AND delete_yn = false`, id))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, cloudhub.ErrOpenClawSessionNotFound
@@ -88,7 +88,7 @@ func (s *OpenClawSessionStore) List(ctx context.Context, organizationID string) 
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT `+openClawSessionColumns+`
 		FROM openclaw_sessions
-		WHERE organization_id = $1
+		WHERE organization_id = $1 AND delete_yn = false
 		ORDER BY updated_at DESC`, organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("pgsql:openclaw session list: %w", err)
@@ -114,9 +114,24 @@ func (s *OpenClawSessionStore) Touch(ctx context.Context, id string, updatedAt t
 	result, err := s.db.ExecContext(ctx, `
 		UPDATE openclaw_sessions
 		SET updated_at = $2
-		WHERE id = $1`, id, updatedAt)
+		WHERE id = $1 AND delete_yn = false`, id, updatedAt)
 	if err != nil {
 		return fmt.Errorf("pgsql:openclaw session touch: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return cloudhub.ErrOpenClawSessionNotFound
+	}
+	return nil
+}
+
+// Delete soft-deletes a session mapping without deleting Gateway history.
+func (s *OpenClawSessionStore) Delete(ctx context.Context, id string) error {
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE openclaw_sessions
+		SET delete_yn = true, updated_at = now()
+		WHERE id = $1 AND delete_yn = false`, id)
+	if err != nil {
+		return fmt.Errorf("pgsql:openclaw session delete: %w", err)
 	}
 	if result.RowsAffected() == 0 {
 		return cloudhub.ErrOpenClawSessionNotFound

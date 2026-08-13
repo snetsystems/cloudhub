@@ -172,6 +172,66 @@ func TestOpenClawSessionsListScopesToAuthenticatedUser(t *testing.T) {
 	}
 }
 
+func TestOpenClawSessionDeleteSoftDeletesOwnedSession(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{
+		ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "server-session",
+	})
+	svc := newOpenClawChatService(store, nil)
+	rr := httptest.NewRecorder()
+	req := withOpenClawSessionID(openClawRequest(http.MethodDelete, "/cloudhub/v2/openclaw/sessions/owned", "", 42, "org-a"), "owned")
+
+	svc.OpenClawSessionDelete(rr, req)
+
+	if rr.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusNoContent, rr.Body.String())
+	}
+	if _, err := store.Get(context.Background(), "owned"); err != cloudhub.ErrOpenClawSessionNotFound {
+		t.Fatalf("Get(deleted) error = %v, want ErrOpenClawSessionNotFound", err)
+	}
+}
+
+func TestOpenClawSessionDeleteRejectsOtherOwners(t *testing.T) {
+	for _, tt := range []struct {
+		name       string
+		session    cloudhub.OpenClawSession
+		requestOrg string
+		wantStatus int
+	}{
+		{
+			name:       "other user",
+			session:    cloudhub.OpenClawSession{ID: "other-user", OrganizationID: "org-a", UserID: "43"},
+			requestOrg: "org-a",
+			wantStatus: http.StatusForbidden,
+		},
+		{
+			name:       "other organization",
+			session:    cloudhub.OpenClawSession{ID: "other-org", OrganizationID: "org-b", UserID: "42"},
+			requestOrg: "org-a",
+			wantStatus: http.StatusNotFound,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newOpenClawSessionStoreContract()
+			if _, err := store.Create(context.Background(), &tt.session); err != nil {
+				t.Fatal(err)
+			}
+			svc := newOpenClawChatService(store, nil)
+			rr := httptest.NewRecorder()
+			req := withOpenClawSessionID(openClawRequest(http.MethodDelete, "/cloudhub/v2/openclaw/sessions/"+tt.session.ID, "", 42, tt.requestOrg), tt.session.ID)
+
+			svc.OpenClawSessionDelete(rr, req)
+
+			if rr.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d: %s", rr.Code, tt.wantStatus, rr.Body.String())
+			}
+			if _, err := store.Get(context.Background(), tt.session.ID); err != nil {
+				t.Fatalf("Get() after rejected Delete = %v, want active session", err)
+			}
+		})
+	}
+}
+
 func TestOpenClawSessionHistoryRejectsCrossUserAndCrossOrganization(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
 	for _, session := range []*cloudhub.OpenClawSession{

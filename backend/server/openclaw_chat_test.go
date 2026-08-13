@@ -67,6 +67,28 @@ func TestOpenClawChatSessionStoreContract(t *testing.T) {
 	}
 }
 
+func TestOpenClawChatSessionStoreContractSoftDeletesSessions(t *testing.T) {
+	ctx := context.Background()
+	store := newOpenClawSessionStoreContract()
+	session := &cloudhub.OpenClawSession{ID: "deleted", OrganizationID: "org-a"}
+	if _, err := store.Create(ctx, session); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := store.Delete(ctx, session.ID); err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if _, err := store.Get(ctx, session.ID); err != cloudhub.ErrOpenClawSessionNotFound {
+		t.Fatalf("Get(deleted) error = %v, want ErrOpenClawSessionNotFound", err)
+	}
+	if sessions, err := store.List(ctx, session.OrganizationID); err != nil || len(sessions) != 0 {
+		t.Fatalf("List() = %#v, %v; want no deleted sessions", sessions, err)
+	}
+	if err := store.Touch(ctx, session.ID, time.Now().UTC()); err != cloudhub.ErrOpenClawSessionNotFound {
+		t.Fatalf("Touch(deleted) error = %v, want ErrOpenClawSessionNotFound", err)
+	}
+}
+
 type openClawSessionStoreContract struct {
 	items map[string]*cloudhub.OpenClawSession
 }
@@ -104,6 +126,14 @@ func (s *openClawSessionStoreContract) Touch(_ context.Context, id string, updat
 		return err
 	}
 	session.UpdatedAt = updatedAt
+	return nil
+}
+
+func (s *openClawSessionStoreContract) Delete(_ context.Context, id string) error {
+	if _, ok := s.items[id]; !ok {
+		return cloudhub.ErrOpenClawSessionNotFound
+	}
+	delete(s.items, id)
 	return nil
 }
 
