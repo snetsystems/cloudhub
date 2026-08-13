@@ -640,13 +640,17 @@ func buildHostFilters(hostnames []string) (lambda, sqlAnd string) {
 // reference. Order of precedence:
 //  1. relative trigger → `relative_value` (eval/derivative are ignored — relative
 //     handles its own derived value via shift+join+eval into `relative_value`).
-//  2. eval active → the eval alias (`EvalConfig.As`). `.keep()` preserves the
+//  2. deadman trigger → `emitted` (deadman node emits points with an `emitted` field).
+//  3. eval active → the eval alias (`EvalConfig.As`). `.keep()` preserves the
 //     raw field but the alert pipeline targets the derived value.
-//  3. otherwise → `spec.Field` (raw or post-derivative; derivative keeps the
+//  4. otherwise → `spec.Field` (raw or post-derivative; derivative keeps the
 //     same field name by default).
 func resolveLambdaField(rule cloudhub.AlertGroupRule, spec cloudhub.AlertRuleSpec, triggerType string, evalActive bool) string {
 	if triggerType == cloudhub.AlertGroupRuleTriggerRelative {
 		return "relative_value"
+	}
+	if triggerType == cloudhub.AlertGroupRuleTriggerDeadman {
+		return "emitted"
 	}
 	if evalActive {
 		return rule.Eval.As
