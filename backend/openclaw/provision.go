@@ -18,10 +18,14 @@ import (
 // connections must request identical scopes.
 var RequiredOperatorScopes = []string{"operator.read", "operator.write"}
 
-// pairingRequiredCode is the Gateway RPC error code returned from the
+// pairingRequiredCodes are the Gateway RPC error codes returned from the
 // "connect" method when a device has been registered but is still waiting
-// on operator approval (e.g. local auto-approval is disabled).
-const pairingRequiredCode = "PAIRING_REQUIRED"
+// on operator approval (e.g. local auto-approval is disabled). A Gateway
+// reached over a tunnel answers NOT_PAIRED rather than PAIRING_REQUIRED.
+var pairingRequiredCodes = map[string]bool{
+	"PAIRING_REQUIRED": true,
+	"NOT_PAIRED":       true,
+}
 
 // ProvisionConfig configures provisioning of this CloudHub process as a
 // paired OpenClaw operator device.
@@ -86,7 +90,7 @@ func ProvisionDevice(ctx context.Context, config ProvisionConfig) (ProvisionResu
 	})
 	if err != nil {
 		var rpcErr *RPCError
-		if errors.As(err, &rpcErr) && rpcErr.Code == pairingRequiredCode {
+		if errors.As(err, &rpcErr) && pairingRequiredCodes[rpcErr.Code] {
 			return ProvisionResult{DeviceID: deviceID, CreatedKey: createdKey, PendingApproval: true}, nil
 		}
 		return ProvisionResult{}, fmt.Errorf("openclaw: pair with gateway: %w", err)

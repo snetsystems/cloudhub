@@ -187,48 +187,54 @@ func TestProvisionDeviceIdempotent(t *testing.T) {
 }
 
 func TestProvisionDevicePendingApproval(t *testing.T) {
-	server := newRawFakeGateway(t, func(conn *websocket.Conn, _ int) error {
-		if err := conn.WriteJSON(map[string]interface{}{
-			"type": "event", "event": "connect.challenge", "payload": map[string]interface{}{"nonce": "nonce-1", "ts": 1},
-		}); err != nil {
-			return err
-		}
-		req, err := readGatewayRequest(conn)
-		if err != nil {
-			return err
-		}
-		return writeGatewayResponse(conn, req.ID, false, nil, map[string]interface{}{
-			"code":    "PAIRING_REQUIRED",
-			"message": "device registered; awaiting operator approval",
+	// Both codes mean the same thing: the device is registered and waiting on
+	// an operator. A Gateway reached over a tunnel answers NOT_PAIRED.
+	for _, code := range []string{"PAIRING_REQUIRED", "NOT_PAIRED"} {
+		t.Run(code, func(t *testing.T) {
+			server := newRawFakeGateway(t, func(conn *websocket.Conn, _ int) error {
+				if err := conn.WriteJSON(map[string]interface{}{
+					"type": "event", "event": "connect.challenge", "payload": map[string]interface{}{"nonce": "nonce-1", "ts": 1},
+				}); err != nil {
+					return err
+				}
+				req, err := readGatewayRequest(conn)
+				if err != nil {
+					return err
+				}
+				return writeGatewayResponse(conn, req.ID, false, nil, map[string]interface{}{
+					"code":    code,
+					"message": "device registered; awaiting operator approval",
+				})
+			})
+
+			dir := t.TempDir()
+			keyPath := filepath.Join(dir, "device.key")
+			tokenPath := filepath.Join(dir, "device.token")
+
+			result, err := ProvisionDevice(context.Background(), ProvisionConfig{
+				GatewayURL:      server.URL(),
+				BootstrapToken:  "super-secret-bootstrap-token",
+				PrivateKeyPath:  keyPath,
+				DeviceTokenPath: tokenPath,
+				RequiredScopes:  []string{"operator.read", "operator.write"},
+			})
+			if err != nil {
+				t.Fatalf("provision device: %v", err)
+			}
+			if !result.PendingApproval {
+				t.Fatal("result.PendingApproval = false, want true")
+			}
+			if result.CreatedToken {
+				t.Fatal("result.CreatedToken = true, want false")
+			}
+			if _, statErr := os.Stat(tokenPath); !os.IsNotExist(statErr) {
+				t.Fatalf("device token file exists after pending approval: err = %v", statErr)
+			}
+			formatted := fmt.Sprintf("%+v", result)
+			if strings.Contains(formatted, "super-secret-bootstrap-token") {
+				t.Fatalf("provisioning result leaked bootstrap token: %s", formatted)
+			}
 		})
-	})
-
-	dir := t.TempDir()
-	keyPath := filepath.Join(dir, "device.key")
-	tokenPath := filepath.Join(dir, "device.token")
-
-	result, err := ProvisionDevice(context.Background(), ProvisionConfig{
-		GatewayURL:      server.URL(),
-		BootstrapToken:  "super-secret-bootstrap-token",
-		PrivateKeyPath:  keyPath,
-		DeviceTokenPath: tokenPath,
-		RequiredScopes:  []string{"operator.read", "operator.write"},
-	})
-	if err != nil {
-		t.Fatalf("provision device: %v", err)
-	}
-	if !result.PendingApproval {
-		t.Fatal("result.PendingApproval = false, want true")
-	}
-	if result.CreatedToken {
-		t.Fatal("result.CreatedToken = true, want false")
-	}
-	if _, statErr := os.Stat(tokenPath); !os.IsNotExist(statErr) {
-		t.Fatalf("device token file exists after pending approval: err = %v", statErr)
-	}
-	formatted := fmt.Sprintf("%+v", result)
-	if strings.Contains(formatted, "super-secret-bootstrap-token") {
-		t.Fatalf("provisioning result leaked bootstrap token: %s", formatted)
 	}
 }
 

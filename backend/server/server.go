@@ -189,7 +189,7 @@ type Server struct {
 	OpenClawGatewayURL           string `long:"openclaw-gateway-url" description:"WebSocket URL for the OpenClaw Gateway chat relay" env:"OPENCLAW_GATEWAY_URL"`
 	OpenClawDevicePrivateKeyFile string `long:"openclaw-device-private-key-file" description:"Path to the paired OpenClaw device Ed25519 private key" env:"OPENCLAW_DEVICE_PRIVATE_KEY_FILE"`
 	OpenClawDeviceTokenFile      string `long:"openclaw-device-token-file" description:"Path to the paired OpenClaw device token" env:"OPENCLAW_DEVICE_TOKEN_FILE"`
-	OpenClawAgentID              string `long:"openclaw-agent-id" description:"OpenClaw agent new chat sessions are bound to; empty resolves the Gateway's default agent" env:"OPENCLAW_AGENT_ID" default:"cloudhub-chat"`
+	OpenClawAgentID              string `long:"openclaw-agent-id" description:"OpenClaw agent new chat sessions are bound to; empty resolves the Gateway's default agent" env:"OPENCLAW_AGENT_ID"`
 
 	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
 	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`

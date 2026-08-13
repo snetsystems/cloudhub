@@ -15,11 +15,22 @@ import (
 
 	"github.com/bouk/httprouter"
 	"github.com/gorilla/websocket"
+	"github.com/jessevdk/go-flags"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/mocks"
 	"github.com/snetsystems/cloudhub/backend/openclaw"
 	"github.com/snetsystems/cloudhub/backend/organizations"
 )
+
+func TestOptionsOpenClawAgentIDDefaultsToGatewaySelection(t *testing.T) {
+	var opts Server
+	if _, err := flags.NewParser(&opts, flags.Default).ParseArgs([]string{}); err != nil {
+		t.Fatal(err)
+	}
+	if opts.OpenClawAgentID != "" {
+		t.Fatalf("OpenClawAgentID = %q, want empty", opts.OpenClawAgentID)
+	}
+}
 
 func TestOpenClawSessionsCreateUsesAuthenticatedOwnerAndServerSession(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
