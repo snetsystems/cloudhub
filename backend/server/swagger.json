@@ -9043,6 +9043,58 @@
         }
       }
     },
+    "../v2/openclaw/rpc": {
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Call an allowlisted OpenClaw RPC method",
+        "description": "Relays only `agents.list`, `chat.history`, and `chat.send`. `chat.history` and `chat.send` require an owned CloudHub session ID; CloudHub injects the stored Gateway session mapping, so Gateway `sessionKey` and `agentId` cannot be supplied by the caller. Successful responses are the complete Gateway payload. `chat.send` requires Member access; the other allowlisted methods require authenticated access.",
+        "parameters": [
+          {
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OpenClawRPCRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Complete OpenClaw Gateway payload"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "403": {
+            "description": "Insufficient role or session access denied",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "404": {
+            "description": "No such session in this organization",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "422": {
+            "description": "Method is not allowlisted or request parameters are invalid",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "502": {
+            "description": "Gateway request failed",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "503": {
+            "description": "No Gateway or session store configured",
+            "schema": {"$ref": "#/definitions/Error"}
+          },
+          "504": {
+            "description": "Gateway request timed out",
+            "schema": {"$ref": "#/definitions/Error"}
+          }
+        }
+      }
+    },
     "/cloudhub/v1/nav-menu/master": {
       "get": {
         "tags": [
@@ -16408,6 +16460,29 @@
           "type": "string",
           "description": "Gateway-reported status, e.g. started"
         }
+      }
+    },
+    "OpenClawRPCRequest": {
+      "type": "object",
+      "required": ["method"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["agents.list", "chat.history", "chat.send"]
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Required for chat.history and chat.send; CloudHub session ID, not a Gateway session key"
+        },
+        "params": {
+          "type": "object",
+          "description": "agents.list: {}. chat.history: limit, offset, maxChars. chat.send: message, timeoutMs, idempotencyKey. Gateway mapping fields are rejected."
+        }
+      },
+      "example": {
+        "method": "chat.history",
+        "sessionId": "cloudhub-session-id",
+        "params": {"limit": 50, "offset": 0, "maxChars": 100000}
       }
     }
   }

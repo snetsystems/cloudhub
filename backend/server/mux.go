@@ -92,7 +92,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 			next,
 		)
 	}
-	_ = EnsureMember
 
 	EnsureViewer := func(next http.HandlerFunc) http.HandlerFunc {
 		return AuthorizedUser(
@@ -370,6 +369,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v2/openclaw/sessions", EnsureViewer(service.OpenClawSessions))
 	router.GET("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureViewer(service.OpenClawSessionMessages))
 	router.POST("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureMember(service.OpenClawSessionMessage))
+	router.POST("/cloudhub/v2/openclaw/rpc", EnsureMember(service.OpenClawRPC))
 
 	// Layouts
 	router.GET("/cloudhub/v1/layouts", EnsureViewer(service.Layouts))

@@ -439,6 +439,47 @@ func TestGatewayReturnsTypedRPCError(t *testing.T) {
 	}
 }
 
+func TestGatewayCallReturnsRawPayload(t *testing.T) {
+	source := []byte(`{"agents":[{"id":"main"}],"opaque":{"keep":true}}`)
+	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
+		req, err := readGatewayRequest(conn)
+		if err != nil {
+			return err
+		}
+		if req.Method != "agents.list" {
+			return fmt.Errorf("method = %q, want agents.list", req.Method)
+		}
+		if err := writeGatewayResponse(conn, req.ID, true, json.RawMessage(source), nil); err != nil {
+			return err
+		}
+		source[0] = '['
+
+		req, err = readGatewayRequest(conn)
+		if err != nil {
+			return err
+		}
+		if req.Method != "agents.fail" {
+			return fmt.Errorf("method = %q, want agents.fail", req.Method)
+		}
+		return writeGatewayResponse(conn, req.ID, false, nil, map[string]interface{}{
+			"code":    "UNAVAILABLE",
+			"message": "gateway warming up",
+		})
+	})
+	client := newTestGatewayClient(t, server.URL(), 500*time.Millisecond)
+
+	payload, err := client.Call(context.Background(), "agents.list", map[string]interface{}{})
+	if err != nil || !jsonEqual(payload, []byte(`{"agents":[{"id":"main"}],"opaque":{"keep":true}}`)) {
+		t.Fatalf("payload = %s, err = %v", payload, err)
+	}
+
+	_, err = client.Call(context.Background(), "agents.fail", map[string]interface{}{})
+	var rpcErr *RPCError
+	if !errors.As(err, &rpcErr) {
+		t.Fatalf("error = %T %v, want *RPCError", err, err)
+	}
+}
+
 func TestGatewayMalformedFrameRejectsPendingCall(t *testing.T) {
 	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
 		if _, err := readGatewayRequest(conn); err != nil {

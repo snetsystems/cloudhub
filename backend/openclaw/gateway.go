@@ -355,6 +355,14 @@ func NewGatewayClient(ctx context.Context, config GatewayConfig) (*GatewayClient
 	return client, nil
 }
 
+func (c *GatewayClient) Call(ctx context.Context, method string, params interface{}) (json.RawMessage, error) {
+	payload, err := c.call(ctx, method, params)
+	if err != nil {
+		return nil, err
+	}
+	return append(json.RawMessage(nil), payload...), nil
+}
+
 func (c *GatewayClient) ListAgents(ctx context.Context) (AgentList, error) {
 	payload, err := c.call(ctx, "agents.list", struct{}{})
 	if err != nil {

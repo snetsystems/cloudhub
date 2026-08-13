@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 	"time"
 
@@ -101,6 +102,7 @@ func (c *InfluxClient) New(src cloudhub.Source, logger cloudhub.Logger) (cloudhu
 // openClawGateway is the narrow Gateway client surface used by chat handlers.
 // The concrete client is wired during server startup.
 type openClawGateway interface {
+	Call(context.Context, string, interface{}) (json.RawMessage, error)
 	History(context.Context, openclaw.HistoryParams) (openclaw.HistoryPage, error)
 	SendMessage(context.Context, openclaw.SendMessageParams) (openclaw.SendMessageResult, error)
 	Subscribe(context.Context) (<-chan openclaw.GatewayEvent, error)
@@ -161,6 +163,10 @@ func newOpenClawGatewayManager(ctx context.Context, gateway openClawGatewayLifec
 
 func (m *openClawGatewayManager) History(ctx context.Context, params openclaw.HistoryParams) (openclaw.HistoryPage, error) {
 	return m.gateway.History(ctx, params)
+}
+
+func (m *openClawGatewayManager) Call(ctx context.Context, method string, params interface{}) (json.RawMessage, error) {
+	return m.gateway.Call(ctx, method, params)
 }
 
 func (m *openClawGatewayManager) SendMessage(ctx context.Context, params openclaw.SendMessageParams) (openclaw.SendMessageResult, error) {
