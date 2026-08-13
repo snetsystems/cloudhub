@@ -81,6 +81,22 @@ FROM ":db:".":rp:"."disk"
 WHERE time >= :dashboardTime: AND time <= :upperDashboardTime: AND "host" = ':host:' AND path !~ /^\\/boot/ AND path !~ /^\\/run/
 GROUP BY "path", time(10s) FILL(null)`,
   },
+  // Disk I/O (Linux)
+  {
+    id: 'alert-disk-io',
+    text: `SELECT non_negative_derivative(max("io_time"),1s) / 10 AS "Disk I/O %"
+FROM ":db:".":rp:"."diskio"
+WHERE time >= :dashboardTime: AND time <= :upperDashboardTime: AND "host" = ':host:' AND "mount_path" != ''
+GROUP BY "mount_path", time(10s) FILL(null)`,
+  },
+  // Disk I/O (Windows)
+  {
+    id: 'alert-win-disk-io',
+    text: `SELECT mean("Percent_Disk_Time") AS "Disk I/O %"
+FROM ":db:".":rp:"."win_diskio"
+WHERE time >= :dashboardTime: AND time <= :upperDashboardTime: AND "host" = ':host:' AND "instance" !~ /^_Total/
+GROUP BY "instance", time(10s) FILL(null)`,
+  },
   // Network (Linux)
   {
     id: 'alert-net',

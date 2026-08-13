@@ -97,7 +97,7 @@ export const serverListColumns = ({
     },
     {
       key: 'host',
-      name: '서버 호스트',
+      name: 'Server Host',
       align: AlignType.LEFT,
       parentHeader: 'Server',
       parentHeaderClassName: 'parent-header-server',
@@ -454,7 +454,7 @@ export const serverListColumns = ({
     },
     {
       key: 'Disk I/O %',
-      name: 'Disk I/O % (Max)',
+      name: 'Disk I/O (Max)',
       parentHeader: 'Disk',
       align: AlignType.CENTER,
       options: {

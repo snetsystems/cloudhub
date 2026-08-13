@@ -18,7 +18,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
       name: 'CPU',
       align: AlignType.LEFT,
       options: {
-        thead: {align: AlignType.LEFT, style: {width: '27%'}},
+        thead: {align: AlignType.LEFT, style: {width: '26%'}},
       },
       render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
@@ -68,10 +68,10 @@ export const alertStatusColumns = (): ColumnInfo[] => {
     },
     {
       key: 'memory',
-      name: 'Memory Used %',
+      name: 'Memory Used',
       align: AlignType.LEFT,
       options: {
-        thead: {align: AlignType.LEFT, style: {width: '27%'}},
+        thead: {align: AlignType.LEFT, style: {width: '26%'}},
       },
       render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
@@ -104,7 +104,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
           <div className="alert-column--container">
             {memUsedPercent !== null && (
               <div>
-                <div className="alert-column--header">Memory Usage (%)</div>
+                <div className="alert-column--header">Memory Usage</div>
                 <TableGaugeCell
                   options={gaugeOptsPercent}
                   value={memUsedPercent}
@@ -123,7 +123,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
 
             {swapUsedPercent !== null && (
               <div>
-                <div className="alert-column--header">Swap Used %</div>
+                <div className="alert-column--header">Swap Used</div>
                 <TableGaugeCell
                   options={gaugeOptsPercent}
                   value={swapUsedPercent}
@@ -137,10 +137,10 @@ export const alertStatusColumns = (): ColumnInfo[] => {
     },
     {
       key: 'disk',
-      name: '디스크',
+      name: 'Disk',
       align: AlignType.LEFT,
       options: {
-        thead: {align: AlignType.LEFT, style: {width: '27%'}},
+        thead: {align: AlignType.LEFT, style: {width: '26%'}},
       },
       render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
@@ -160,20 +160,38 @@ export const alertStatusColumns = (): ColumnInfo[] => {
           decimalPlaces: 0,
         }
 
+        const diskIo = rowData.diskIo as
+          | {device: string; usage: number}
+          | null
+          | undefined
+
         return (
           <div className="alert-column--container">
-            {disks.length === 0 && (
+            {disks.length === 0 && !diskIo && (
               <span className="alert-status-modal--empty-state">N/A</span>
             )}
             {disks.length > 0 && (
-              <div className="alert-column--disk-item">
-                <div className="gauge-wrapper">
-                  <TableGaugeCell
-                    options={gaugeOptsPercent}
-                    value={disks[0].usage}
-                  />
-                </div>
-                <span className="alert-column--disk-path">{disks[0].path}</span>
+              <div>
+                <div className="alert-column--header">Disk Usage</div>
+                <TableGaugeCell
+                  options={gaugeOptsPercent}
+                  value={disks[0].usage}
+                />
+                <span className="alert-column--disk-path" title={disks[0].path}>
+                  {disks[0].path}
+                </span>
+              </div>
+            )}
+            {diskIo && (
+              <div>
+                <div className="alert-column--header">Disk I/O (Max)</div>
+                <TableGaugeCell
+                  options={gaugeOptsPercent}
+                  value={diskIo.usage}
+                />
+                <span className="alert-column--disk-path" title={diskIo.device}>
+                  {diskIo.device}
+                </span>
               </div>
             )}
           </div>
@@ -182,10 +200,10 @@ export const alertStatusColumns = (): ColumnInfo[] => {
     },
     {
       key: 'network',
-      name: '네트워크',
+      name: 'Network',
       align: AlignType.LEFT,
       options: {
-        thead: {align: AlignType.LEFT, style: {width: '19%'}},
+        thead: {align: AlignType.LEFT, style: {width: '22%'}},
       },
       render: (_value: any, rowData: DataTableObject) => {
         if (!rowData) return null
@@ -212,7 +230,7 @@ export const alertStatusColumns = (): ColumnInfo[] => {
               <span className="alert-status-modal--empty-state">N/A</span>
             )}
             {networks.map((n, i) => (
-              <div key={i} className="alert-column--net-item">
+              <div key={i}>
                 <div className="alert-column--header">{n.interface}</div>
                 <TableGaugeCell options={gaugeOptsNetwork} value={n.traffic} />
               </div>

@@ -209,17 +209,6 @@
     text-align: right;
   }
 
-  &--disk-item {
-    display: flex;
-    align-items: center;
-    gap: $ix-marg-b;
-    margin-bottom: $ix-marg-a;
-
-    .gauge-wrapper {
-      width: 60%;
-    }
-  }
-
   &--disk-path {
     font-size: $ix-text-tiny;
     color: $g20-white;

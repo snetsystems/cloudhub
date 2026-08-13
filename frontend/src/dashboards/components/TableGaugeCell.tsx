@@ -76,25 +76,44 @@ function TableGaugeCell({options, value}: Props) {
       return
     }
 
+    let frameId: number | null = null
+
     const updateSegmentCount = () => {
       const width = element.getBoundingClientRect().width
-      setSegmentCount(getSegmentCountForWidth(width))
+      const nextCount = getSegmentCountForWidth(width)
+      setSegmentCount(prev => (prev === nextCount ? prev : nextCount))
+    }
+
+    const scheduleUpdate = () => {
+      if (frameId !== null) {
+        return
+      }
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null
+        updateSegmentCount()
+      })
     }
 
     updateSegmentCount()
 
     if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(updateSegmentCount)
+      const resizeObserver = new ResizeObserver(scheduleUpdate)
       resizeObserver.observe(element)
 
       return () => {
         resizeObserver.disconnect()
+        if (frameId !== null) {
+          window.cancelAnimationFrame(frameId)
+        }
       }
     }
 
-    window.addEventListener('resize', updateSegmentCount)
+    window.addEventListener('resize', scheduleUpdate)
     return () => {
-      window.removeEventListener('resize', updateSegmentCount)
+      window.removeEventListener('resize', scheduleUpdate)
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId)
+      }
     }
   }, [])
 

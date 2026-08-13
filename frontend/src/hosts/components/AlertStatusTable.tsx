@@ -111,11 +111,13 @@ const AlertStatusTable = ({source, host, time}: Props) => {
 
       let parsedRow: any = {host}
       let disksArray: any[] = []
+      let diskIosArray: any[] = []
       let netsArray: any[] = []
 
       let validCpuQuery = ''
       let validMemQuery = ''
       let validDiskQuery = ''
+      let validDiskIoQuery = ''
       let validNetQuery = ''
       let isWinOs = false
 
@@ -224,6 +226,22 @@ const AlertStatusTable = ({source, host, time}: Props) => {
             validDiskQuery = qOriginal.text
           }
 
+          if (id === 'alert-disk-io' || id === 'alert-win-disk-io') {
+            const device =
+              s.tags?.mount_path ||
+              s.tags?.instance ||
+              s.tags?.name ||
+              'Unknown'
+            const diskIo = getVal(closestRow, 'Disk I/O %')
+            if (diskIo !== null) {
+              if (!diskIosArray.some(d => d.device === device)) {
+                diskIosArray.push({device, usage: diskIo})
+              }
+            }
+            validDiskIoQuery = qOriginal.text
+            if (id.includes('win')) isWinOs = true
+          }
+
           if (id === 'alert-net' || id === 'alert-win-net') {
             const iface = s.tags?.interface || s.tags?.instance || 'Unknown'
             const traff = getVal(closestRow, 'traffic')
@@ -238,10 +256,22 @@ const AlertStatusTable = ({source, host, time}: Props) => {
       })
 
       parsedRow.disks = disksArray
+
+      const maxDiskIo =
+        diskIosArray.sort((a, b) => b.usage - a.usage)[0] ?? null
+      parsedRow.diskIo = maxDiskIo
       const top5Nets = netsArray
         .sort((a, b) => b.traffic - a.traffic)
         .slice(0, 5)
       parsedRow.networks = top5Nets
+
+      if (maxDiskIo && validDiskIoQuery) {
+        const tagKey = isWinOs ? 'instance' : 'mount_path'
+        validDiskIoQuery = validDiskIoQuery.replace(
+          'GROUP BY',
+          `AND "${tagKey}"='${maxDiskIo.device}'\nGROUP BY`
+        )
+      }
 
       // Filter line chart queries for Network to only show top 5
       if (top5Nets.length > 0 && validNetQuery) {
@@ -331,16 +361,23 @@ const AlertStatusTable = ({source, host, time}: Props) => {
           createCell('c-cpu', 'CPU Usage (Total)', validCpuQuery, 0)
         )
       if (validMemQuery)
-        newTrendCells.push(
-          createCell('c-mem', 'Memory Used %', validMemQuery, 1)
-        )
+        newTrendCells.push(createCell('c-mem', 'Memory Used', validMemQuery, 1))
       if (validDiskQuery)
         newTrendCells.push(
           createCell('c-disk', 'Disk Usage', validDiskQuery, 2)
         )
+      if (validDiskIoQuery)
+        newTrendCells.push(
+          createCell('c-disk-io', 'Disk I/O', validDiskIoQuery, 3)
+        )
       if (validNetQuery)
         newTrendCells.push(
-          createCell('c-net', 'Network Traffic', validNetQuery, 3)
+          createCell(
+            'c-net',
+            'Network Traffic',
+            validNetQuery,
+            validDiskIoQuery ? 4 : 3
+          )
         )
 
       setTrendCells(newTrendCells)
