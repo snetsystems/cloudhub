@@ -128,6 +128,9 @@ const DataExplorerPage = React.lazy(() => import('src/data_explorer'))
 const Applications = React.lazy(() =>
   import('src/applications').then(m => ({default: m.Applications}))
 )
+const AiChatTestPage = React.lazy(() =>
+  import('src/reusable_ui/components/cloudhub_ai_chat/AiChatTestPage').then(m => ({default: m.AiChatTestPage}))
+)
 const LogsPage = React.lazy(() =>
   import('src/logs').then(m => ({default: m.LogsPage}))
 )
@@ -516,6 +519,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                     )}
                   />
                   <Route path="applications" component={Applications} />
+                  <Route path="ai-chat-test" component={AiChatTestPage} />
                   <Route path="alerts" component={AlertsApp} />
                   <Route path="alert-rules" component={KapacitorRulesPage} />
                   <Route
