@@ -367,16 +367,10 @@ func (s *Service) OpenClawEvents(w http.ResponseWriter, r *http.Request) {
 			if !subscribed {
 				continue
 			}
-			if event.Kind == openclaw.EventChat || event.Kind == openclaw.EventActivity {
-				if len(event.Payload) == 0 {
-					continue
-				}
-				writeMu.Lock()
-				err := ws.WriteJSON(event.Payload)
-				writeMu.Unlock()
-				if err != nil {
-					return
-				}
+			if event.Kind == openclaw.EventChat && event.Message == nil && len(event.Payload) == 0 {
+				continue
+			}
+			if event.Kind == openclaw.EventActivity && event.Activity == nil && len(event.Payload) == 0 {
 				continue
 			}
 			writeMu.Lock()
