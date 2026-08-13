@@ -181,7 +181,7 @@ func (s *Service) OpenClawSessions(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// OpenClawSessionMessages returns the normalized message history for one
+// OpenClawSessionMessages returns the raw message history for one
 // owned session.
 func (s *Service) OpenClawSessionMessages(w http.ResponseWriter, r *http.Request) {
 	ctx, _, _, ok := s.openClawOwnerContext(r)
@@ -213,20 +213,11 @@ func (s *Service) OpenClawSessionMessages(w http.ResponseWriter, r *http.Request
 		s.openClawGatewayError(w, err)
 		return
 	}
-	response := openClawHistoryResponse{
-		Offset:     page.Offset,
-		NextOffset: page.NextOffset,
-		HasMore:    page.HasMore,
-		Messages:   make([]openClawMessageDTO, 0, len(page.Messages)),
+	if len(page.Raw) == 0 {
+		s.openClawGatewayError(w, fmt.Errorf("%w: chat.history response missing payload", openclaw.ErrProtocol))
+		return
 	}
-	for _, message := range page.Messages {
-		response.Messages = append(response.Messages, openClawMessageDTO{
-			Role:      message.Role,
-			Content:   message.Content,
-			Timestamp: message.Timestamp,
-		})
-	}
-	encodeJSON(w, http.StatusOK, response, s.Logger)
+	encodeJSON(w, http.StatusOK, page.Raw, s.Logger)
 }
 
 // OpenClawSessionMessage sends a message through the stored Gateway
@@ -374,6 +365,18 @@ func (s *Service) OpenClawEvents(w http.ResponseWriter, r *http.Request) {
 			sessionID, subscribed := subscriptions[event.SessionKey]
 			subscriptionsMu.RUnlock()
 			if !subscribed {
+				continue
+			}
+			if event.Kind == openclaw.EventChat || event.Kind == openclaw.EventActivity {
+				if len(event.Payload) == 0 {
+					continue
+				}
+				writeMu.Lock()
+				err := ws.WriteJSON(event.Payload)
+				writeMu.Unlock()
+				if err != nil {
+					return
+				}
 				continue
 			}
 			writeMu.Lock()

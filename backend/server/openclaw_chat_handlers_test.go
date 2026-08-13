@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -11,7 +12,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-	"unicode/utf8"
 
 	"github.com/bouk/httprouter"
 	"github.com/gorilla/websocket"
@@ -201,11 +201,19 @@ func TestOpenClawSessionHistoryRejectsCrossUserAndCrossOrganization(t *testing.T
 	}
 }
 
-func TestOpenClawSessionHistoryUsesStoredMappingAndNormalizesResponse(t *testing.T) {
+func TestOpenClawSessionHistoryUsesStoredMappingAndRelaysRawResponse(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
 	session := &cloudhub.OpenClawSession{ID: "owned", OrganizationID: "org-a", UserID: "42", AgentID: "main", SessionKey: "server-session"}
 	_, _ = store.Create(context.Background(), session)
 	gateway := &fakeOpenClawGateway{history: openclaw.HistoryPage{
+		Raw: json.RawMessage(`{
+			"sessionKey":"server-session",
+			"sessionId":"internal-1",
+			"totalMessages":1,
+			"messages":[{"id":"internal-message","role":"assistant","content":[{"type":"text","text":"hello"}],"timestamp":1234}],
+			"__openclaw":{"source":"gateway"},
+			"opaque":{"keep":true}
+		}`),
 		Offset:        0,
 		NextOffset:    intPointer(50),
 		HasMore:       true,
@@ -233,8 +241,8 @@ func TestOpenClawSessionHistoryUsesStoredMappingAndNormalizesResponse(t *testing
 	if gateway.historyParams.Limit != 50 || gateway.historyParams.MaxChars != 100000 {
 		t.Fatalf("history limits = %#v, want limit 50/max chars 100000", gateway.historyParams)
 	}
-	if strings.Contains(rr.Body.String(), "server-session") || strings.Contains(rr.Body.String(), "internal-message") {
-		t.Fatalf("history response exposed gateway IDs: %s", rr.Body.String())
+	if equal, err := jsonEqual(rr.Body.String(), string(gateway.history.Raw)); err != nil || !equal {
+		t.Fatalf("history response = %s, want raw gateway payload %s", rr.Body.Bytes(), gateway.history.Raw)
 	}
 }
 
@@ -315,7 +323,7 @@ func TestOpenClawEventsFilterToOwnedSubscribedSession(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
 	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned"})
 	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "foreign", OrganizationID: "org-b", UserID: "99", SessionKey: "session-foreign"})
-	events := make(chan openclaw.GatewayEvent, 2)
+	events := make(chan openclaw.GatewayEvent, 3)
 	defer close(events)
 	gateway := &fakeOpenClawGateway{events: events}
 	svc := newOpenClawChatService(store, gateway)
@@ -337,27 +345,34 @@ func TestOpenClawEventsFilterToOwnedSubscribedSession(t *testing.T) {
 	if err := conn.WriteJSON(map[string]string{"sessionId": "owned"}); err != nil {
 		t.Fatal(err)
 	}
-	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-foreign", State: "delta", DeltaText: "do not send"}
-	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-owned", State: "delta", DeltaText: "send this"}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-owned"}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-foreign", Payload: json.RawMessage(`{"sessionKey":"session-foreign","runId":"run-foreign","opaque":{"keep":false},"__openclaw":{"source":"gateway"}}`)}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-owned", Payload: json.RawMessage(`{"sessionKey":"session-owned","runId":"run-1","opaque":{"keep":true},"__openclaw":{"source":"gateway"}}`)}
 	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	var got map[string]interface{}
-	if err := conn.ReadJSON(&got); err != nil {
+	_, received, err := conn.ReadMessage()
+	if err != nil {
 		t.Fatal(err)
 	}
-	if got["sessionId"] != "owned" || got["deltaText"] != "send this" {
-		t.Fatalf("event = %#v, want owned normalized event", got)
+	if equal, err := jsonEqual(string(received), `{"sessionKey":"session-owned","runId":"run-1","opaque":{"keep":true},"__openclaw":{"source":"gateway"}}`); err != nil || !equal {
+		t.Fatalf("websocket payload = %s, want raw owned gateway payload", received)
 	}
-	if _, ok := got["sessionKey"]; ok {
-		t.Fatalf("event exposed session key: %#v", got)
+	_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	if _, _, err := conn.ReadMessage(); err == nil {
+		t.Fatal("received an event for the foreign session")
+	} else if !websocket.IsUnexpectedCloseError(err) {
+		if _, ok := err.(net.Error); !ok || !err.(net.Error).Timeout() {
+			t.Fatalf("reading after owned event = %v, want timeout", err)
+		}
 	}
 	if gateway.SubscribeCalls() != 1 {
 		t.Fatalf("gateway subscribe calls = %d, want 1", gateway.SubscribeCalls())
 	}
 }
 
-func TestOpenClawEventsForwardActivityWithCappedOutput(t *testing.T) {
+func TestOpenClawEventsRelayActivityForOwnedSession(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
 	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned"})
+	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "foreign", OrganizationID: "org-b", UserID: "99", SessionKey: "session-foreign"})
 	events := make(chan openclaw.GatewayEvent, 2)
 	defer close(events)
 	svc := newOpenClawChatService(store, &fakeOpenClawGateway{events: events})
@@ -379,45 +394,24 @@ func TestOpenClawEventsForwardActivityWithCappedOutput(t *testing.T) {
 	if err := conn.WriteJSON(map[string]string{"sessionId": "owned"}); err != nil {
 		t.Fatal(err)
 	}
-	events <- openclaw.GatewayEvent{
-		Kind:       openclaw.EventActivity,
-		SessionKey: "session-owned",
-		SpawnedBy:  "session-parent",
-		Activity: &openclaw.Activity{
-			ItemID: "tool:call-1", ToolCallID: "call-1", Phase: "output", Kind: "tool", Name: "read",
-			Output: strings.Repeat("가", maxOpenClawActivityOutputBytes),
-		},
-	}
+	ownedPayload := json.RawMessage(`{"sessionKey":"session-owned","runId":"run-1","stream":"tool","data":{"phase":"result","opaque":{"keep":true}}}`)
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventActivity, SessionKey: "session-owned", Payload: ownedPayload}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventActivity, SessionKey: "session-foreign", Payload: json.RawMessage(`{"sessionKey":"session-foreign","runId":"run-foreign","stream":"tool","data":{"phase":"result","opaque":{"keep":false}}}`)}
 	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
-	var got struct {
-		Type      string `json:"type"`
-		SessionID string `json:"sessionId"`
-		SpawnedBy string `json:"spawnedBy"`
-		Activity  struct {
-			ItemID    string `json:"itemId"`
-			Phase     string `json:"phase"`
-			Name      string `json:"name"`
-			Output    string `json:"output"`
-			Truncated bool   `json:"truncated"`
-		} `json:"activity"`
-	}
-	if err := conn.ReadJSON(&got); err != nil {
+	_, received, err := conn.ReadMessage()
+	if err != nil {
 		t.Fatal(err)
 	}
-	if got.Type != string(openclaw.EventActivity) || got.SessionID != "owned" || got.SpawnedBy != "session-parent" {
-		t.Fatalf("event = %#v, want an owned activity event", got)
+	if equal, err := jsonEqual(string(received), string(ownedPayload)); err != nil || !equal {
+		t.Fatalf("agent websocket payload = %s, want %s", received, ownedPayload)
 	}
-	if got.Activity.ItemID != "tool:call-1" || got.Activity.Phase != "output" || got.Activity.Name != "read" {
-		t.Fatalf("activity = %#v, want the forwarded run step", got.Activity)
-	}
-	if !got.Activity.Truncated {
-		t.Fatalf("activity was not marked truncated: %#v", got.Activity)
-	}
-	if len(got.Activity.Output) > maxOpenClawActivityOutputBytes {
-		t.Fatalf("output = %d bytes, want at most %d", len(got.Activity.Output), maxOpenClawActivityOutputBytes)
-	}
-	if !utf8.ValidString(got.Activity.Output) {
-		t.Fatalf("output was cut mid-rune")
+	_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	if _, _, err := conn.ReadMessage(); err == nil {
+		t.Fatal("received an event for the foreign session")
+	} else if !websocket.IsUnexpectedCloseError(err) {
+		if _, ok := err.(net.Error); !ok || !err.(net.Error).Timeout() {
+			t.Fatalf("reading after owned event = %v, want timeout", err)
+		}
 	}
 }
 
@@ -477,7 +471,7 @@ func TestOpenClawEventsRegistersSubscriberBeforeWebSocketUpgrade(t *testing.T) {
 	if err := result.conn.WriteJSON(map[string]string{"sessionId": "owned"}); err != nil {
 		t.Fatal(err)
 	}
-	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-owned", State: "delta", DeltaText: "first event"}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-owned", Payload: json.RawMessage(`{"sessionId":"owned","deltaText":"first event"}`)}
 	got := readOpenClawEvent(t, result.conn)
 	if got["sessionId"] != "owned" || got["deltaText"] != "first event" {
 		t.Fatalf("event = %#v, want first owned event", got)
@@ -535,7 +529,7 @@ func TestOpenClawEventsFanOutToSameSessionSubscribers(t *testing.T) {
 	}
 	waitForOpenClawEventSubscribers(t, svc, 2)
 
-	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-owned", State: "delta", DeltaText: "send to both"}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-owned", Payload: json.RawMessage(`{"sessionId":"owned","deltaText":"send to both"}`)}
 	for _, conn := range []*websocket.Conn{first, second} {
 		got := readOpenClawEvent(t, conn)
 		if got["sessionId"] != "owned" || got["deltaText"] != "send to both" {
@@ -576,7 +570,7 @@ func TestOpenClawEventsDoNotConsumeOtherSessionEvents(t *testing.T) {
 	}
 	waitForOpenClawEventSubscribers(t, svc, 2)
 
-	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-second", State: "delta", DeltaText: "only second"}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventChat, SessionKey: "session-second", Payload: json.RawMessage(`{"sessionId":"second","deltaText":"only second"}`)}
 	got := readOpenClawEvent(t, second)
 	if got["sessionId"] != "second" || got["deltaText"] != "only second" {
 		t.Fatalf("event = %#v, want second session event", got)

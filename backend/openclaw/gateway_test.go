@@ -512,6 +512,7 @@ func TestGatewayTypedWrappersAndNormalizedEvents(t *testing.T) {
 		}
 		if err := writeGatewayResponse(conn, history.ID, true, map[string]interface{}{
 			"sessionKey": "session-1", "sessionId": "internal-1", "offset": 0, "nextOffset": 50, "hasMore": true, "totalMessages": 75,
+			"opaque": map[string]interface{}{"nested": []interface{}{1, true}},
 			"messages": []interface{}{map[string]interface{}{
 				"role": "user", "timestamp": 20,
 				"content":    []interface{}{map[string]interface{}{"type": "text", "text": "inspect cpu"}},
@@ -546,6 +547,7 @@ func TestGatewayTypedWrappersAndNormalizedEvents(t *testing.T) {
 			"type": "event", "event": "chat", "seq": 9,
 			"payload": map[string]interface{}{
 				"state": "delta", "runId": "run-1", "sessionKey": "session-1", "seq": 3, "deltaText": "working",
+				"opaque":  map[string]interface{}{"nested": []interface{}{1, true}},
 				"message": map[string]interface{}{"role": "assistant", "content": []interface{}{map[string]interface{}{"type": "text", "text": "working"}}, "timestamp": 30},
 			},
 		})
@@ -559,6 +561,9 @@ func TestGatewayTypedWrappersAndNormalizedEvents(t *testing.T) {
 	history, err := client.History(context.Background(), HistoryParams{SessionKey: "session-1", Limit: 50, MaxChars: 100000})
 	if err != nil || history.TotalMessages != 75 || history.Messages[0].ID != "message-1" {
 		t.Fatalf("history = %#v, error = %v", history, err)
+	}
+	if !jsonEqual(history.Raw, []byte(`{"sessionKey":"session-1","sessionId":"internal-1","offset":0,"nextOffset":50,"hasMore":true,"totalMessages":75,"opaque":{"nested":[1,true]},"messages":[{"role":"user","timestamp":20,"content":[{"type":"text","text":"inspect cpu"}],"__openclaw":{"id":"message-1"}}]}`)) {
+		t.Fatalf("history raw payload = %s", history.Raw)
 	}
 	sent, err := client.SendMessage(context.Background(), SendMessageParams{SessionKey: "session-1", AgentID: "main", Message: "hello", IdempotencyKey: "send-1"})
 	if err != nil || sent.RunID != "run-1" || sent.Status != "started" {
@@ -575,6 +580,9 @@ func TestGatewayTypedWrappersAndNormalizedEvents(t *testing.T) {
 		}
 		if event.Message == nil || event.Message.Content[0].Text != "working" {
 			t.Fatalf("unexpected event message: %#v", event.Message)
+		}
+		if !jsonEqual(event.Payload, []byte(`{"state":"delta","runId":"run-1","sessionKey":"session-1","seq":3,"deltaText":"working","opaque":{"nested":[1,true]},"message":{"role":"assistant","content":[{"type":"text","text":"working"}],"timestamp":30}}`)) {
+			t.Fatalf("event raw payload = %s", event.Payload)
 		}
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for normalized event")
@@ -845,6 +853,19 @@ func TestNormalizeAgentEventKeepsRunStepsAndDropsInternalStreams(t *testing.T) {
 	}
 }
 
+func TestGatewayNormalizesAgentActivity(t *testing.T) {
+	event, ok := normalizeEvent(eventFrame{
+		Event:   "agent",
+		Payload: json.RawMessage(`{"sessionKey":"session-1","stream":"tool","data":{"phase":"result","toolCallId":"call-1","opaque":{"keep":true}}}`),
+	})
+	if !ok || event.Kind != EventActivity || event.SessionKey != "session-1" {
+		t.Fatalf("event = %#v, ok = %v", event, ok)
+	}
+	if !jsonEqual(event.Payload, []byte(`{"sessionKey":"session-1","stream":"tool","data":{"phase":"result","toolCallId":"call-1","opaque":{"keep":true}}}`)) {
+		t.Fatalf("raw payload = %s", event.Payload)
+	}
+}
+
 func TestActivityOutputPassesThroughUnfamiliarResults(t *testing.T) {
 	if got := activityOutput(json.RawMessage(`"plain text"`)); got != "plain text" {
 		t.Fatalf("string result = %q, want %q", got, "plain text")
@@ -1008,6 +1029,18 @@ func jsonObjectContains(raw json.RawMessage, fragments ...string) bool {
 	return true
 }
 
+func jsonEqual(left, right []byte) bool {
+	var leftValue interface{}
+	if err := json.Unmarshal(left, &leftValue); err != nil {
+		return false
+	}
+	var rightValue interface{}
+	if err := json.Unmarshal(right, &rightValue); err != nil {
+		return false
+	}
+	return reflect.DeepEqual(leftValue, rightValue)
+}
+
 func newTestGatewayClient(t *testing.T, url string, timeout time.Duration) *GatewayClient {
 	t.Helper()
 	client, err := NewGatewayClient(context.Background(), GatewayConfig{
@@ -1024,4 +1057,82 @@ func newTestGatewayClient(t *testing.T, url string, timeout time.Duration) *Gate
 		}
 	})
 	return client
+}
+
+func TestContentPartPreservesNonTextParts(t *testing.T) {
+	raw := `{"role":"assistant","timestamp":7,"content":[
+		{"type":"text","text":"reading the file"},
+		{"type":"tool_use","id":"call-1","name":"read","input":{"path":"/etc/hosts"}},
+		{"type":"tool_result","tool_use_id":"call-1","content":"127.0.0.1 localhost"}
+	],"__openclaw":{"id":"message-1"}}`
+
+	var message Message
+	if err := json.Unmarshal([]byte(raw), &message); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+
+	if len(message.Content) != 3 {
+		t.Fatalf("decoded %d parts, want 3", len(message.Content))
+	}
+	if message.Content[0].Type != "text" || message.Content[0].Text != "reading the file" {
+		t.Fatalf("text part = %#v", message.Content[0])
+	}
+	if message.Content[1].Type != "tool_use" || message.Content[2].Type != "tool_result" {
+		t.Fatalf("non-text parts lost their type: %#v", message.Content)
+	}
+
+	// Fields this package does not model must survive a round trip, so a
+	// caller can render a tool call without the Gateway's shape being
+	// duplicated here.
+	encoded, err := json.Marshal(message.Content)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	for _, fragment := range []string{
+		`"name":"read"`, `"path":"/etc/hosts"`, `"tool_use_id":"call-1"`, `"127.0.0.1 localhost"`,
+	} {
+		if !strings.Contains(string(encoded), fragment) {
+			t.Fatalf("round trip dropped %s: %s", fragment, encoded)
+		}
+	}
+}
+
+func TestContentPartKeepsTextOnlyShapeUnchanged(t *testing.T) {
+	// A text part still serializes as {type,text}, and the string shortcut for
+	// a whole message still becomes one text part.
+	var message Message
+	if err := json.Unmarshal([]byte(`{"role":"user","content":"hello","timestamp":1}`), &message); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	encoded, err := json.Marshal(message.Content)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	if string(encoded) != `[{"type":"text","text":"hello"}]` {
+		t.Fatalf("text shape changed: %s", encoded)
+	}
+}
+
+func TestContentPartTruncatesAnOversizedPart(t *testing.T) {
+	huge := strings.Repeat("a", maxContentPartBytes+1)
+	raw := `{"role":"assistant","timestamp":1,"content":[{"type":"tool_result","content":"` + huge + `"}]}`
+
+	var message Message
+	if err := json.Unmarshal([]byte(raw), &message); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	encoded, err := json.Marshal(message.Content)
+	if err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+
+	if len(encoded) > maxContentPartBytes {
+		t.Fatalf("oversized part was emitted whole: %d bytes", len(encoded))
+	}
+	if !strings.Contains(string(encoded), `"truncated":true`) {
+		t.Fatalf("truncation was not reported: %s", encoded)
+	}
+	if !strings.Contains(string(encoded), `"type":"tool_result"`) {
+		t.Fatalf("a truncated part must still name its type: %s", encoded)
+	}
 }

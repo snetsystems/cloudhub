@@ -173,13 +173,14 @@ type HistoryParams struct {
 }
 
 type HistoryPage struct {
-	SessionKey    string    `json:"sessionKey"`
-	SessionID     string    `json:"sessionId"`
-	Offset        int       `json:"offset"`
-	NextOffset    *int      `json:"nextOffset"`
-	HasMore       bool      `json:"hasMore"`
-	TotalMessages int       `json:"totalMessages"`
-	Messages      []Message `json:"messages"`
+	SessionKey    string          `json:"sessionKey"`
+	SessionID     string          `json:"sessionId"`
+	Offset        int             `json:"offset"`
+	NextOffset    *int            `json:"nextOffset"`
+	HasMore       bool            `json:"hasMore"`
+	TotalMessages int             `json:"totalMessages"`
+	Messages      []Message       `json:"messages"`
+	Raw           json.RawMessage `json:"-"`
 }
 
 type Message struct {
@@ -189,9 +190,60 @@ type Message struct {
 	Timestamp int64         `json:"timestamp"`
 }
 
+// maxContentPartBytes caps one preserved part. A tool result can carry a whole
+// file, and history is read in pages of many messages, so an unbounded part
+// would let one command's output dominate a response.
+const maxContentPartBytes = 16 * 1024
+
+// ContentPart is one block of a message. Text is the common case, but a run's
+// tool calls arrive as parts this package does not model; rather than drop
+// them, the original JSON is kept and replayed verbatim so a caller can render
+// a tool call without the Gateway's shape being duplicated here.
 type ContentPart struct {
 	Type string `json:"type"`
 	Text string `json:"text"`
+	// Raw is the part exactly as the Gateway sent it, set for every decoded
+	// part and empty for parts this package constructs.
+	Raw json.RawMessage `json:"-"`
+	// Truncated reports that Raw exceeded the cap and was replaced by a
+	// type-only stub, so a reader knows the block is not the whole story.
+	Truncated bool `json:"-"`
+}
+
+func (p *ContentPart) UnmarshalJSON(data []byte) error {
+	var shape struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal(data, &shape); err != nil {
+		return err
+	}
+	p.Type = shape.Type
+	p.Text = shape.Text
+	if len(data) > maxContentPartBytes {
+		p.Raw = nil
+		p.Truncated = true
+		return nil
+	}
+	p.Raw = append(json.RawMessage(nil), data...)
+	p.Truncated = false
+	return nil
+}
+
+func (p ContentPart) MarshalJSON() ([]byte, error) {
+	if p.Truncated {
+		return json.Marshal(struct {
+			Type      string `json:"type"`
+			Truncated bool   `json:"truncated"`
+		}{Type: p.Type, Truncated: true})
+	}
+	if len(p.Raw) > 0 {
+		return p.Raw, nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+		Text string `json:"text"`
+	}{Type: p.Type, Text: p.Text})
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {
@@ -279,6 +331,7 @@ type GatewayEvent struct {
 	EnvelopeSequence int
 	Message          *Message
 	Activity         *Activity
+	Payload          json.RawMessage `json:"-"`
 }
 
 func NewGatewayClient(ctx context.Context, config GatewayConfig) (*GatewayClient, error) {
@@ -335,6 +388,7 @@ func (c *GatewayClient) History(ctx context.Context, params HistoryParams) (Hist
 	if err := json.Unmarshal(payload, &page); err != nil {
 		return HistoryPage{}, fmt.Errorf("%w: decode chat.history response: %v", ErrProtocol, err)
 	}
+	page.Raw = append(json.RawMessage(nil), payload...)
 	return page, nil
 }
 
@@ -778,7 +832,8 @@ func normalizeEvent(frame eventFrame) (GatewayEvent, bool) {
 		if err := json.Unmarshal(frame.Payload, &payload); err != nil {
 			return GatewayEvent{}, false
 		}
-		return GatewayEvent{Kind: EventChat, SessionKey: payload.SessionKey, RunID: payload.RunID, State: payload.State, DeltaText: payload.DeltaText, ErrorKind: payload.ErrorKind, ErrorMessage: payload.ErrorMessage, StopReason: payload.StopReason, Sequence: payload.Sequence, EnvelopeSequence: frame.Sequence, Message: payload.Message}, true
+		rawPayload := append(json.RawMessage(nil), frame.Payload...)
+		return GatewayEvent{Kind: EventChat, SessionKey: payload.SessionKey, RunID: payload.RunID, State: payload.State, DeltaText: payload.DeltaText, ErrorKind: payload.ErrorKind, ErrorMessage: payload.ErrorMessage, StopReason: payload.StopReason, Sequence: payload.Sequence, EnvelopeSequence: frame.Sequence, Message: payload.Message, Payload: rawPayload}, true
 	case "sessions.changed":
 		var payload struct {
 			SessionKey string `json:"sessionKey"`
@@ -804,7 +859,8 @@ func normalizeEvent(frame eventFrame) (GatewayEvent, bool) {
 		if activity == nil {
 			return GatewayEvent{Kind: EventUnknown, EnvelopeSequence: frame.Sequence}, true
 		}
-		return GatewayEvent{Kind: EventActivity, SessionKey: payload.SessionKey, RunID: payload.RunID, SpawnedBy: payload.SpawnedBy, Sequence: payload.Sequence, EnvelopeSequence: frame.Sequence, Activity: activity}, true
+		rawPayload := append(json.RawMessage(nil), frame.Payload...)
+		return GatewayEvent{Kind: EventActivity, SessionKey: payload.SessionKey, RunID: payload.RunID, SpawnedBy: payload.SpawnedBy, Sequence: payload.Sequence, EnvelopeSequence: frame.Sequence, Activity: activity, Payload: rawPayload}, true
 	default:
 		return GatewayEvent{Kind: EventUnknown, EnvelopeSequence: frame.Sequence}, true
 	}
