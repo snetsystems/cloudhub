@@ -8785,7 +8785,7 @@
           "openclaw"
         ],
         "summary": "Get the message history of one owned session",
-        "description": "Reads the history from the OpenClaw Gateway using the stored session mapping. Gateway-internal identifiers are stripped from the response.",
+        "description": "Reads history from the OpenClaw Gateway using the stored session mapping, then returns the complete Gateway payload unchanged. Gateway-provided identifiers and content-part fields are included.",
         "parameters": [
           {
             "name": "id",
@@ -8832,8 +8832,11 @@
             },
             "examples": {
               "application/json": {
+                "sessionKey": "agent:main:cloudhub:org-a:42:session-id",
+                "sessionId": "gateway-session-id",
                 "offset": 0,
                 "hasMore": false,
+                "totalMessages": 1,
                 "messages": [
                   {
                     "role": "user",
@@ -9013,8 +9016,8 @@
         "tags": [
           "openclaw"
         ],
-        "summary": "Subscribe to OpenClaw chat events (WebSocket)",
-        "description": "Upgrades to a WebSocket. This is not a JSON request/response operation, so the frames are described here rather than in a schema.\n\nSend `{\"sessionId\": \"...\"}` as the first frame, and again for every further session to subscribe to on the same socket; a session the caller does not own closes the socket with code 1008.\n\nFrames carry `type`, `sessionId`, and then either `deltaText` for a streamed fragment or `message` for the committed reply, with `state: \"final\"`. Check `deltaText` first: a delta frame also carries the cumulative `message`. A `sessions.changed` frame means the history should be re-read.\n\nAn `activity` frame reports one step of the run under `activity`: a tool call or a command the agent ran. Group frames by `activity.itemId` and read `activity.phase`: `start`, `update`, and `end` carry `title`, `status`, and timings, while `output` carries the step's own output, capped at 16 KiB with `truncated: true` marking a preview. `spawnedBy` marks a step a subagent performed. Activity frames appear only for agents whose tools are permitted, and `output` additionally requires the Gateway session's `verboseLevel` to be `full`.",
+        "summary": "Subscribe to OpenClaw events (WebSocket)",
+        "description": "Upgrades to a WebSocket. This is not a JSON request/response operation, so frames are described here rather than in a schema.\n\nSend `{\"sessionId\": \"...\"}` as the first frame, and again for every further session to subscribe to on the same socket; a session the caller does not own closes the socket with code 1008.\n\nFor authorized subscriptions, OpenClaw `chat` and `agent` event payloads are forwarded as the complete Gateway JSON payload, without CloudHub reshaping or truncation. The payload includes `sessionKey` and may include any Gateway-defined fields. A chat payload commonly contains `state`, `deltaText`, and `message`; tool activity uses an agent payload with `stream: \"item\"` or `stream: \"tool\"` and Gateway-defined `data`.\n\nA `sessions.changed` frame remains a CloudHub frame with `type: \"sessions.changed\"`; re-read history when it arrives.",
         "responses": {
           "101": {
             "description": "Switching protocols"
@@ -16310,7 +16313,16 @@
     },
     "OpenClawHistory": {
       "type": "object",
+      "description": "Complete OpenClaw chat.history Gateway payload. Additional Gateway-defined fields are returned unchanged.",
       "properties": {
+        "sessionKey": {
+          "type": "string",
+          "description": "Gateway session key"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Gateway internal session identifier"
+        },
         "offset": {
           "type": "integer"
         },
@@ -16321,6 +16333,9 @@
         "hasMore": {
           "type": "boolean"
         },
+        "totalMessages": {
+          "type": "integer"
+        },
         "messages": {
           "type": "array",
           "items": {
@@ -16329,8 +16344,11 @@
         }
       },
       "example": {
+        "sessionKey": "agent:main:cloudhub:org-a:42:session-id",
+        "sessionId": "gateway-session-id",
         "offset": 0,
         "hasMore": false,
+        "totalMessages": 1,
         "messages": [
           {
             "role": "user",
