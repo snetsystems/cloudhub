@@ -1,4 +1,5 @@
 import React, {useMemo, useRef} from 'react'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {HubbleFlowRecord} from 'src/hubble/types'
 import {
   PodOption,
@@ -107,23 +108,27 @@ const PodConnectionsPanel: React.FC<Props> = ({
           <span>{selectedPod.workload || 'unknown workload'}</span>
           <span>{connections.length} peers</span>
         </div>
-        {connections.length === 0 && (
-          <div className="hubble-panel-empty">
-            No peer connections in the current flow window.
+        <FancyScrollbar autoHide={true} className="hubble-pod-connections-scroll">
+          <div className="hubble-pod-connections-scroll-content">
+            {connections.length === 0 && (
+              <div className="hubble-panel-empty">
+                No peer connections in the current flow window.
+              </div>
+            )}
+            {connections.length > 0 && (
+              <ul className="hubble-pod-peer-list">
+                {connections.map(peer => (
+                  <PeerRow
+                    key={peer.key}
+                    peer={peer}
+                    focused={peer.key === focusedPeerKey}
+                    onClick={() => onFocusPeer(selectedPod, peer)}
+                  />
+                ))}
+              </ul>
+            )}
           </div>
-        )}
-        {connections.length > 0 && (
-          <ul className="hubble-pod-peer-list">
-            {connections.map(peer => (
-              <PeerRow
-                key={peer.key}
-                peer={peer}
-                focused={peer.key === focusedPeerKey}
-                onClick={() => onFocusPeer(selectedPod, peer)}
-              />
-            ))}
-          </ul>
-        )}
+        </FancyScrollbar>
       </div>
     )
   }
@@ -133,46 +138,50 @@ const PodConnectionsPanel: React.FC<Props> = ({
       <div className="hubble-panel-header">
         <h4 className="hubble-panel-title">Pod connections</h4>
       </div>
-      {orderedPods.length === 0 && (
-        <div className="hubble-panel-empty">
-          No pod-level flows observed in this namespace.
-        </div>
-      )}
-      {orderedPods.length > 0 && (
-        <>
-          <div className="hubble-pod-list">
-            {orderedPods.slice(0, 8).map(pod => (
-              <button
-                type="button"
-                key={pod.key}
-                className="hubble-pod-chip"
-                onClick={() => onSelectPod(pod)}
-                title={`${pod.key} connections`}
-              >
-                <span className="hubble-pod-chip-header">
-                  <span className="hubble-pod-chip-name">{pod.pod}</span>
-                  {pod.deniedFlows > 0 && (
-                    <span className="hubble-pod-chip-badge">
-                      Dropped {pod.deniedFlows}
-                    </span>
-                  )}
-                </span>
-                <span className="hubble-pod-chip-meta">
-                  {pod.workload || 'unknown'} · {pod.flowCount}
-                </span>
-              </button>
-            ))}
-          </div>
-          {orderedPods.length > 8 && (
-            <div className="hubble-pod-more">
-              +{orderedPods.length - 8} more pods
+      <FancyScrollbar autoHide={true} className="hubble-pod-connections-scroll">
+        <div className="hubble-pod-connections-scroll-content">
+          {orderedPods.length === 0 && (
+            <div className="hubble-panel-empty">
+              No pod-level flows observed in this namespace.
             </div>
           )}
-          <div className="hubble-panel-empty">
-            Select a pod to open inbound and outbound peers.
-          </div>
-        </>
-      )}
+          {orderedPods.length > 0 && (
+            <>
+              <div className="hubble-pod-list">
+                {orderedPods.slice(0, 8).map(pod => (
+                  <button
+                    type="button"
+                    key={pod.key}
+                    className="hubble-pod-chip"
+                    onClick={() => onSelectPod(pod)}
+                    title={`${pod.key} connections`}
+                  >
+                    <span className="hubble-pod-chip-header">
+                      <span className="hubble-pod-chip-name">{pod.pod}</span>
+                      {pod.deniedFlows > 0 && (
+                        <span className="hubble-pod-chip-badge">
+                          Dropped {pod.deniedFlows}
+                        </span>
+                      )}
+                    </span>
+                    <span className="hubble-pod-chip-meta">
+                      {pod.workload || 'unknown'} · {pod.flowCount}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              {orderedPods.length > 8 && (
+                <div className="hubble-pod-more">
+                  +{orderedPods.length - 8} more pods
+                </div>
+              )}
+              <div className="hubble-panel-empty">
+                Select a pod to open inbound and outbound peers.
+              </div>
+            </>
+          )}
+        </div>
+      </FancyScrollbar>
     </div>
   )
 }
