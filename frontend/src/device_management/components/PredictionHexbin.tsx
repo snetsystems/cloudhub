@@ -104,6 +104,7 @@ const PredictionHexbin = ({
   useEffect(() => {
     if (!isMouseInComponent) {
       setIsTooltipActive(false)
+      setIsMouseOn(false)
     }
   }, [isMouseInComponent])
 
@@ -142,6 +143,7 @@ const PredictionHexbin = ({
           .attr('transform', d => `translate(${d.x},${d.y})`)
           .style('cursor', 'default')
         setIsMouseOn(false)
+        setIsTooltipActive(false)
       })
       .on('click', function () {
         d3.select(this).attr('x', d => {
