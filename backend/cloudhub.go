@@ -2428,5 +2428,5 @@ type OpenClawSessionStore interface {
 	Get(ctx context.Context, id string) (*OpenClawSession, error)
 	List(ctx context.Context, organizationID string) ([]OpenClawSession, error)
 	Touch(ctx context.Context, id string, updatedAt time.Time) error
+	Delete(ctx context.Context, id string) error
 }
-

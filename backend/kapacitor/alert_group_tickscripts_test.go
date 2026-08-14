@@ -228,7 +228,42 @@ func TestAlertGroupRuleTICKScriptRelativePercentChangeSkipsZeroPastValue(t *test
 }
 
 func TestAlertGroupRuleTICKScriptDeadman(t *testing.T) {
-	t.Skip("Skipping refactored tests")
+	rule := cloudhub.AlertGroupRule{
+		ID:   "deadman-1",
+		Name: "agent deadman",
+		Specs: []cloudhub.AlertRuleSpec{
+			{
+				Database:        "telegraf",
+				RetentionPolicy: "autogen",
+				Measurement:     "cpu",
+				Field:           "usage_idle",
+				Trigger:         "deadman",
+				TriggerValues: &cloudhub.TriggerValues{
+					Period: "5m",
+				},
+			},
+		},
+		TaskType: "stream",
+		Message:  "deadman timeout",
+	}
+
+	tick, err := AlertGroupRuleTICKScript(rule, AlertRecipients{}, "")
+	if err != nil {
+		t.Fatalf("AlertGroupRuleTICKScript() error = %v", err)
+	}
+
+	if !strings.Contains(tick, "|deadman(0.0, 5m)") {
+		t.Errorf("expected deadman node in script:\n%s", tick)
+	}
+
+	wantEmitted := `trigger_0
+    |eval(lambda: float("emitted"))
+        .as('value')
+        .keep()
+    |influxDBOut()`
+	if !strings.Contains(tick, wantEmitted) {
+		t.Errorf("expected TICKscript to convert emitted field to value before influxDBOut:\n%s", tick)
+	}
 }
 
 func TestAlertGroupRuleTICKScriptExclusiveLambdasForLessOperator(t *testing.T) {
