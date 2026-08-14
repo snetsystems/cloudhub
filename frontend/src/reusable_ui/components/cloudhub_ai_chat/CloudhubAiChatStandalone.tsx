@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect, ChangeEvent, KeyboardEvent, FC} from 'react'
+import React, {useState, useRef, useEffect, useMemo, ChangeEvent, KeyboardEvent, FC} from 'react'
 import classnames from 'classnames'
 import uuid from 'uuid'
 
@@ -12,9 +12,8 @@ import {
 import Button from 'src/reusable_ui/components/Button'
 import Input from 'src/reusable_ui/components/inputs/Input'
 
-// Cloudhub Threesizer Component & Constants
-import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import {HANDLE_VERTICAL} from 'src/shared/constants'
+// Cloudhub Reusable Components & Threesizer Panels
+import CollapsibleSidePanelSlice from 'src/shared/components/CollapsibleSidePanelSlice'
 
 // Cloudhub Reusable Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -290,7 +289,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const [isStreamingActive, setIsStreamingActive] = useState<boolean>(false)
   const [showSubagentPanel, setShowSubagentPanel] = useState<boolean>(false)
   const [subagentFilter, setSubagentFilter] = useState<'ALL' | 'RUNNING' | 'SUCCESS' | 'ERROR'>('ALL')
-  const [subagentPanelProportions, setSubagentPanelProportions] = useState<number[]>([0.55, 0.45])
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(true)
   const wsRef = useRef<WebSocket | null>(null)
@@ -306,6 +304,23 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     const newHeight = Math.min(Math.max(textarea.scrollHeight, 38), 160)
     textarea.style.height = `${newHeight}px`
   }
+
+  useEffect(() => {
+    adjustTextareaHeight()
+    const frameId = requestAnimationFrame(adjustTextareaHeight)
+    const timer = setTimeout(adjustTextareaHeight, 60)
+    return () => {
+      cancelAnimationFrame(frameId)
+      clearTimeout(timer)
+    }
+  }, [inputPrompt, showSubagentPanel])
+
+  useEffect(() => {
+    window.addEventListener('resize', adjustTextareaHeight)
+    return () => {
+      window.removeEventListener('resize', adjustTextareaHeight)
+    }
+  }, [])
 
   useEffect(() => {
     sessionsRef.current = sessions
@@ -1038,10 +1053,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     setShowSubagentPanel(prev => !prev)
   }
 
-  const handleThreesizerResize = (proportions: number[]) => {
-    setSubagentPanelProportions(proportions)
-  }
-
   const wrapperClass = classnames(
     'cloudhub-ai-chat-standalone',
     `mode-${mode}`,
@@ -1132,7 +1143,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                     msg.activities.forEach(card => {
                       elements.push(
                         <div key={`act-${msg.id}-${card.id}`} className="message-item ai activity-message-item">
-                          <AiChatMessageAvatar sender="ai" />
+                          <AiChatMessageAvatar sender="tool" />
                           <div className="message-bubble activity-message-bubble">
                             <AiChatToolExecutionCard card={card} />
                           </div>
@@ -1289,31 +1300,16 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         />
 
-        {showSubagentPanel ? (
-          <Threesizer
-            orientation={HANDLE_VERTICAL}
-            divisions={[
-              {
-                name: 'Chat Thread',
-                headerButtons: [],
-                menuOptions: [],
-                size: subagentPanelProportions[0],
-                render: renderChatThread,
-              },
-              {
-                name: 'Subagent Inspector',
-                headerButtons: [],
-                menuOptions: [],
-                size: subagentPanelProportions[1],
-                minPixels: 360,
-                render: renderSubagentInspectorPanel,
-              },
-            ]}
-            onResize={handleThreesizerResize}
-          />
-        ) : (
-          renderChatThread()
-        )}
+        <CollapsibleSidePanelSlice
+          isOpen={showSubagentPanel}
+          onClose={() => setShowSubagentPanel(false)}
+          defaultRatio={0.42}
+          snapCloseThreshold={120}
+          panelContent={renderSubagentInspectorPanel()}
+          onResize={() => requestAnimationFrame(adjustTextareaHeight)}
+        >
+          {renderChatThread()}
+        </CollapsibleSidePanelSlice>
       </div>
     </div>
   )

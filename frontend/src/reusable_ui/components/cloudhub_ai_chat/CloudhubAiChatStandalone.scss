@@ -216,7 +216,8 @@
 
           &.active {
             background: $g3-castle;
-            border: 1px solid $c-hydrogen;
+            border: 1px solid $c-rainforest;
+            color: $c-rainforest;
           }
         }
       }
@@ -327,7 +328,7 @@
 
           &.active {
             background-color: $g3-castle;
-            color: $c-hydrogen;
+            color: $c-rainforest;
             font-weight: 600;
 
             .session-delete-confirm-btn {
@@ -336,6 +337,18 @@
           }
         }
       }
+    }
+  }
+
+  .threesizer--handle.vertical {
+    cursor: col-resize;
+    background-color: $g3-castle;
+    width: 8px;
+    transition: background-color 0.2s ease;
+
+    &:hover,
+    &.dragging {
+      background-color: $c-rainforest;
     }
   }
 
@@ -503,6 +516,12 @@
               background: rgba($c-amethyst, 0.2);
               color: $c-amethyst;
               border: 1px solid rgba($c-amethyst, 0.5);
+            }
+
+            &.avatar-tool {
+              background: rgba($c-laser, 0.18);
+              color: $c-laser;
+              border: 1px solid rgba($c-laser, 0.45);
             }
           }
 
@@ -1187,6 +1206,7 @@
   .subagent-monitor-panel {
     width: 100%;
     height: 100%;
+    min-width: 420px;
     min-height: 0;
     background-color: $g1-raven;
     border-left: 1px solid $g3-castle;

@@ -1,7 +1,7 @@
 import React, {FC} from 'react'
 import classnames from 'classnames'
 
-export type ChatMessageSender = 'user' | 'ai' | 'system' | 'skill'
+export type ChatMessageSender = 'user' | 'ai' | 'system' | 'skill' | 'tool'
 
 interface AiChatMessageAvatarProps {
   sender: ChatMessageSender
@@ -10,9 +10,10 @@ interface AiChatMessageAvatarProps {
 
 const SENDER_LABEL: Record<ChatMessageSender, string> = {
   user: 'User',
-  ai: 'AI',
+  ai: 'AI Assistant',
   system: 'System',
   skill: 'Skill',
+  tool: 'Tool Execution',
 }
 
 // Simple line-art SVG glyphs (no emoji) so each sender role is visually
@@ -60,6 +61,17 @@ const AVATAR_GLYPH: Record<ChatMessageSender, React.ReactNode> = {
         d="M9.4 4.6a1.9 1.9 0 013.2 1.5v.4a1.4 1.4 0 001.4 1.4h.4a1.9 1.9 0 011.5 3.2 1.9 1.9 0 01-1.5 3.2h-.4a1.4 1.4 0 00-1.4 1.4v.4a1.9 1.9 0 11-3.8 0v-.4a1.4 1.4 0 00-1.4-1.4h-.4a1.9 1.9 0 010-3.8h.4A1.4 1.4 0 009 9.1v-.4a1.9 1.9 0 01.4-1.5"
         stroke="currentColor"
         strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
+  tool: (
+    <svg viewBox="0 0 24 24" width="13" height="13" fill="none">
+      <path
+        d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.77 3.77z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>
