@@ -2,6 +2,7 @@ import React, {FC} from 'react'
 import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ButtonShape, ComponentColor, IconFont} from 'src/reusable_ui'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {ChatSession} from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
   activeSessionId: string
   isCollapsed: boolean
   onSelectSession: (id: string) => void
+  onDeleteSession?: (id: string) => void
   onCreateNewChat: () => void
   onToggleCollapse: () => void
 }
@@ -18,6 +20,7 @@ export const AiChatSidebar: FC<Props> = ({
   activeSessionId,
   isCollapsed,
   onSelectSession,
+  onDeleteSession,
   onCreateNewChat,
   onToggleCollapse,
 }) => {
@@ -90,6 +93,19 @@ export const AiChatSidebar: FC<Props> = ({
               >
                 <span className={`session-icon icon ${IconFont.Chat}`} />
                 <span className="session-text-title">{session.title}</span>
+                {onDeleteSession && (
+                  <ConfirmButton
+                    icon="trash"
+                    size="btn-xs"
+                    square={true}
+                    type="btn-danger"
+                    confirmText="삭제"
+                    customClass="session-delete-confirm-btn"
+                    isEventStopPropagation={true}
+                    position="left"
+                    confirmAction={() => onDeleteSession(session.id)}
+                  />
+                )}
               </div>
             ))}
           </div>

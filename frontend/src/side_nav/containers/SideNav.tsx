@@ -420,6 +420,25 @@ class SideNav extends PureComponent<Props, State> {
             )}
           </NavBlock>
 
+          {/* AI Assistant */}
+          <NavBlock
+            visible={enabled('ai-chat')}
+            highlightWhen={['ai-chat', 'ai-chat-test']}
+            icon="ai-icon"
+            link={`${sourcePrefix}/ai-chat`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/ai-chat`}
+              title="AI Assistant"
+            />
+            {enabled('ai-chat') && (
+              <NavListItem link={`${sourcePrefix}/ai-chat`}>
+                AI Chatbot
+              </NavListItem>
+            )}
+          </NavBlock>
+
           {/* Alert */}
           <NavBlock
             visible={enabled('alert')}

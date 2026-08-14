@@ -77,6 +77,8 @@ const NAV_MENU_ICON_OPTIONS: NavMenuIconOption[] = [
   {id: 'pulse-c', label: 'pulse-c'},
   {id: 'eye', label: 'eye'},
   {id: 'cog-outline', label: 'cog-outline'},
+  {id: 'ai-icon', label: 'ai-icon'},
+  {id: 'chat', label: 'chat'},
 ]
 
 interface Props {
