@@ -13,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
 )
@@ -41,6 +42,7 @@ var (
 	ErrDisconnected   = errors.New("openclaw gateway disconnected")
 	ErrProtocol       = errors.New("openclaw gateway protocol error")
 	ErrRequestTimeout = errors.New("openclaw gateway request timed out")
+	errEventQueueFull = errors.New("openclaw gateway event queue full")
 )
 
 type GatewayConfig struct {
@@ -288,13 +290,55 @@ type SendMessageResult struct {
 	Status string `json:"status"`
 }
 
+type PluginApprovalDecision string
+
+const (
+	DecisionAllowOnce PluginApprovalDecision = "allow-once"
+	DecisionDeny      PluginApprovalDecision = "deny"
+)
+
+type PluginApproval struct {
+	ID               string
+	Title            string
+	Description      string
+	Severity         string
+	ToolName         string
+	AllowedDecisions []PluginApprovalDecision
+	SessionKey       string
+	CreatedAtMs      int64
+	ExpiresAtMs      int64
+}
+
+type ResolvePluginApprovalParams struct {
+	ID       string                 `json:"id"`
+	Decision PluginApprovalDecision `json:"decision"`
+}
+
+type pluginApprovalRequest struct {
+	Title            string                   `json:"title"`
+	Description      string                   `json:"description"`
+	Severity         string                   `json:"severity"`
+	ToolName         string                   `json:"toolName"`
+	AllowedDecisions []PluginApprovalDecision `json:"allowedDecisions"`
+	SessionKey       string                   `json:"sessionKey"`
+}
+
+type pluginApprovalRecord struct {
+	ID          string                `json:"id"`
+	Request     pluginApprovalRequest `json:"request"`
+	CreatedAtMs int64                 `json:"createdAtMs"`
+	ExpiresAtMs int64                 `json:"expiresAtMs"`
+}
+
 type EventKind string
 
 const (
-	EventUnknown         EventKind = "unknown"
-	EventChat            EventKind = "chat"
-	EventActivity        EventKind = "activity"
-	EventSessionsChanged EventKind = "sessions.changed"
+	EventUnknown           EventKind = "unknown"
+	EventChat              EventKind = "chat"
+	EventActivity          EventKind = "activity"
+	EventSessionsChanged   EventKind = "sessions.changed"
+	EventApprovalRequested EventKind = "approval.requested"
+	EventApprovalResolved  EventKind = "approval.resolved"
 )
 
 // Activity is one step the agent took while producing a reply: a tool call, a
@@ -317,42 +361,53 @@ type Activity struct {
 }
 
 type GatewayEvent struct {
-	Kind             EventKind
-	SessionKey       string
-	RunID            string
-	State            string
-	DeltaText        string
-	Reason           string
-	ErrorKind        string
-	ErrorMessage     string
-	StopReason       string
-	SpawnedBy        string
-	Sequence         int
-	EnvelopeSequence int
-	Message          *Message
-	Activity         *Activity
-	Payload          json.RawMessage `json:"-"`
+	Kind                 EventKind
+	SessionKey           string
+	RunID                string
+	State                string
+	DeltaText            string
+	Reason               string
+	ErrorKind            string
+	ErrorMessage         string
+	StopReason           string
+	SpawnedBy            string
+	Sequence             int
+	EnvelopeSequence     int
+	Message              *Message
+	Activity             *Activity
+	Approval             *PluginApproval
+	ApprovalDecision     PluginApprovalDecision
+	ApprovalResolvedBy   string
+	ApprovalResolvedAtMs int64
+	Payload              json.RawMessage `json:"-"`
 }
 
 func NewGatewayClient(ctx context.Context, config GatewayConfig) (*GatewayClient, error) {
+	client, err := NewDisconnectedGatewayClient(config)
+	if err != nil {
+		return nil, err
+	}
+	if err := client.Reconnect(ctx); err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
+// NewDisconnectedGatewayClient creates a client whose first connection is
+// established by Reconnect.
+func NewDisconnectedGatewayClient(config GatewayConfig) (*GatewayClient, error) {
 	if config.URL == "" {
 		return nil, fmt.Errorf("openclaw gateway URL is required")
 	}
 	if config.RequestTimeout <= 0 {
 		config.RequestTimeout = 10 * time.Second
 	}
-	client := &GatewayClient{
+	return &GatewayClient{
 		config:       config,
 		dialer:       websocket.DefaultDialer,
 		events:       make(chan GatewayEvent, 64),
 		disconnected: make(chan struct{}, 1),
-	}
-	client.lifecycleMu.Lock()
-	defer client.lifecycleMu.Unlock()
-	if err := client.connect(ctx); err != nil {
-		return nil, err
-	}
-	return client, nil
+	}, nil
 }
 
 func (c *GatewayClient) Call(ctx context.Context, method string, params interface{}) (json.RawMessage, error) {
@@ -373,6 +428,40 @@ func (c *GatewayClient) ListAgents(ctx context.Context) (AgentList, error) {
 		return AgentList{}, fmt.Errorf("%w: decode agents.list response: %v", ErrProtocol, err)
 	}
 	return list, nil
+}
+
+func (c *GatewayClient) ListPluginApprovals(ctx context.Context) ([]PluginApproval, error) {
+	payload, err := c.call(ctx, "plugin.approval.list", struct{}{})
+	if err != nil {
+		return nil, err
+	}
+	var records []pluginApprovalRecord
+	if err := json.Unmarshal(payload, &records); err != nil {
+		var legacyResponse struct {
+			Pending []pluginApprovalRecord `json:"pending"`
+		}
+		if legacyErr := json.Unmarshal(payload, &legacyResponse); legacyErr != nil {
+			return nil, fmt.Errorf("%w: decode plugin.approval.list response: %v", ErrProtocol, err)
+		}
+		records = legacyResponse.Pending
+	}
+	approvals := make([]PluginApproval, 0, len(records))
+	for _, record := range records {
+		approval, err := validatePluginApprovalRecord(record, true)
+		if err != nil {
+			return nil, err
+		}
+		approvals = append(approvals, approval)
+	}
+	return approvals, nil
+}
+
+func (c *GatewayClient) ResolvePluginApproval(ctx context.Context, params ResolvePluginApprovalParams) error {
+	if strings.TrimSpace(params.ID) == "" || !validPluginApprovalDecision(params.Decision) {
+		return fmt.Errorf("%w: invalid plugin approval resolution", ErrProtocol)
+	}
+	_, err := c.call(ctx, "plugin.approval.resolve", params)
+	return err
 }
 
 func (c *GatewayClient) ListSessions(ctx context.Context, params ListSessionsParams) (SessionPage, error) {
@@ -529,6 +618,11 @@ func (c *GatewayClient) connect(ctx context.Context) error {
 		c.mu.Unlock()
 		c.failConnection(state, ErrClosed)
 		return ErrClosed
+	}
+	if state.failed && errors.Is(state.err, errEventQueueFull) {
+		err := state.err
+		c.mu.Unlock()
+		return err
 	}
 	previous := c.connection
 	c.connection = state
@@ -711,6 +805,8 @@ func (c *GatewayClient) readLoop(conn *gatewayConnection) {
 				select {
 				case c.events <- normalized:
 				default:
+					c.failConnection(conn, fmt.Errorf("%w: %w", ErrDisconnected, errEventQueueFull))
+					return
 				}
 			}
 		default:
@@ -770,14 +866,14 @@ func (c *GatewayClient) failConnection(conn *gatewayConnection, err error) {
 	}
 	c.mu.Unlock()
 	_ = conn.conn.Close()
-	for _, request := range pending {
-		request.result <- rpcResponse{err: err}
-	}
 	if wasCurrent {
 		select {
 		case c.disconnected <- struct{}{}:
 		default:
 		}
+	}
+	for _, request := range pending {
+		request.result <- rpcResponse{err: err}
 	}
 }
 
@@ -840,7 +936,7 @@ func normalizeEvent(frame eventFrame) (GatewayEvent, bool) {
 		if err := json.Unmarshal(frame.Payload, &payload); err != nil {
 			return GatewayEvent{}, false
 		}
-		rawPayload := append(json.RawMessage(nil), frame.Payload...)
+		rawPayload := boundedEventPayload(frame.Payload)
 		return GatewayEvent{Kind: EventChat, SessionKey: payload.SessionKey, RunID: payload.RunID, State: payload.State, DeltaText: payload.DeltaText, ErrorKind: payload.ErrorKind, ErrorMessage: payload.ErrorMessage, StopReason: payload.StopReason, Sequence: payload.Sequence, EnvelopeSequence: frame.Sequence, Message: payload.Message, Payload: rawPayload}, true
 	case "sessions.changed":
 		var payload struct {
@@ -867,11 +963,97 @@ func normalizeEvent(frame eventFrame) (GatewayEvent, bool) {
 		if activity == nil {
 			return GatewayEvent{Kind: EventUnknown, EnvelopeSequence: frame.Sequence}, true
 		}
-		rawPayload := append(json.RawMessage(nil), frame.Payload...)
+		rawPayload := boundedEventPayload(frame.Payload)
 		return GatewayEvent{Kind: EventActivity, SessionKey: payload.SessionKey, RunID: payload.RunID, SpawnedBy: payload.SpawnedBy, Sequence: payload.Sequence, EnvelopeSequence: frame.Sequence, Activity: activity, Payload: rawPayload}, true
+	case "plugin.approval.requested":
+		var record pluginApprovalRecord
+		if err := json.Unmarshal(frame.Payload, &record); err != nil {
+			return GatewayEvent{}, false
+		}
+		approval, err := validatePluginApprovalRecord(record, true)
+		if err != nil {
+			return GatewayEvent{}, false
+		}
+		return GatewayEvent{
+			Kind:             EventApprovalRequested,
+			SessionKey:       approval.SessionKey,
+			EnvelopeSequence: frame.Sequence,
+			Approval:         &approval,
+			Payload:          boundedEventPayload(frame.Payload),
+		}, true
+	case "plugin.approval.resolved":
+		var payload struct {
+			ID         string                 `json:"id"`
+			Decision   PluginApprovalDecision `json:"decision"`
+			ResolvedBy string                 `json:"resolvedBy"`
+			Timestamp  int64                  `json:"ts"`
+			Request    pluginApprovalRequest  `json:"request"`
+		}
+		if err := json.Unmarshal(frame.Payload, &payload); err != nil ||
+			strings.TrimSpace(payload.ResolvedBy) == "" || payload.Timestamp <= 0 ||
+			!validPluginApprovalDecision(payload.Decision) {
+			return GatewayEvent{}, false
+		}
+		approval, err := validatePluginApprovalRecord(pluginApprovalRecord{
+			ID: payload.ID, Request: payload.Request,
+		}, false)
+		if err != nil {
+			return GatewayEvent{}, false
+		}
+		return GatewayEvent{
+			Kind:                 EventApprovalResolved,
+			SessionKey:           approval.SessionKey,
+			EnvelopeSequence:     frame.Sequence,
+			Approval:             &approval,
+			ApprovalDecision:     payload.Decision,
+			ApprovalResolvedBy:   payload.ResolvedBy,
+			ApprovalResolvedAtMs: payload.Timestamp,
+			Payload:              boundedEventPayload(frame.Payload),
+		}, true
 	default:
 		return GatewayEvent{Kind: EventUnknown, EnvelopeSequence: frame.Sequence}, true
 	}
+}
+
+const maxGatewayEventPayloadBytes = 64 * 1024
+
+func boundedEventPayload(payload json.RawMessage) json.RawMessage {
+	if len(payload) > maxGatewayEventPayloadBytes {
+		return nil
+	}
+	return append(json.RawMessage(nil), payload...)
+}
+
+func validatePluginApprovalRecord(record pluginApprovalRecord, requireTimestamps bool) (PluginApproval, error) {
+	request := record.Request
+	if strings.TrimSpace(record.ID) == "" || strings.TrimSpace(request.SessionKey) == "" ||
+		utf8.RuneCountInString(request.Title) > 80 || utf8.RuneCountInString(request.Description) > 256 ||
+		(requireTimestamps && (strings.TrimSpace(request.ToolName) == "" || len(request.AllowedDecisions) == 0)) {
+		return PluginApproval{}, fmt.Errorf("%w: invalid plugin approval record", ErrProtocol)
+	}
+	for _, decision := range request.AllowedDecisions {
+		if !validPluginApprovalDecision(decision) {
+			return PluginApproval{}, fmt.Errorf("%w: invalid plugin approval decision %q", ErrProtocol, decision)
+		}
+	}
+	if requireTimestamps && (record.CreatedAtMs <= 0 || record.ExpiresAtMs <= record.CreatedAtMs) {
+		return PluginApproval{}, fmt.Errorf("%w: invalid plugin approval timestamps", ErrProtocol)
+	}
+	return PluginApproval{
+		ID:               record.ID,
+		Title:            request.Title,
+		Description:      request.Description,
+		Severity:         request.Severity,
+		ToolName:         request.ToolName,
+		AllowedDecisions: append([]PluginApprovalDecision(nil), request.AllowedDecisions...),
+		SessionKey:       request.SessionKey,
+		CreatedAtMs:      record.CreatedAtMs,
+		ExpiresAtMs:      record.ExpiresAtMs,
+	}, nil
+}
+
+func validPluginApprovalDecision(decision PluginApprovalDecision) bool {
+	return decision == DecisionAllowOnce || decision == DecisionDeny
 }
 
 // normalizeActivity keeps the two agent streams that describe a run's steps and

@@ -53,13 +53,6 @@ func (c *Client) GetToken(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no token configured")
 	}
 
-	// Log token info for debugging (without exposing the full token)
-	if len(c.config.Token) > 10 {
-		c.logger.Info("Token available, length: ", len(c.config.Token), ", prefix: ", c.config.Token[:10], "...")
-	} else {
-		c.logger.Error("Token seems too short, length: ", len(c.config.Token))
-	}
-
 	return c.config.Token, nil
 }
 

@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect, useMemo, ChangeEvent, KeyboardEvent, FC} from 'react'
+import React, {useState, useRef, useEffect, useCallback, ChangeEvent, KeyboardEvent, FC} from 'react'
 import classnames from 'classnames'
 import uuid from 'uuid'
 
@@ -10,7 +10,6 @@ import {
   ComponentStatus,
 } from 'src/reusable_ui/types'
 import Button from 'src/reusable_ui/components/Button'
-import Input from 'src/reusable_ui/components/inputs/Input'
 
 // Cloudhub Reusable Components & Threesizer Panels
 import CollapsibleSidePanelSlice from 'src/shared/components/CollapsibleSidePanelSlice'
@@ -21,7 +20,12 @@ import AiChatSidebar from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatSid
 import SubagentInspectorPanel, {CustomPanelView} from 'src/reusable_ui/components/cloudhub_ai_chat/SubagentInspectorPanel'
 import AiChatMessageMarkdown from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageMarkdown'
 import AiChatMessageAvatar from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageAvatar'
-import {deleteOpenClawSession} from 'src/reusable_ui/components/cloudhub_ai_chat/openclawApi'
+import OpenClawApprovalCard from 'src/reusable_ui/components/cloudhub_ai_chat/OpenClawApprovalCard'
+import {
+  deleteOpenClawSession,
+  OpenClawApprovalEventDTO,
+} from 'src/reusable_ui/components/cloudhub_ai_chat/openclawApi'
+import {useOpenClawApprovals} from 'src/reusable_ui/components/cloudhub_ai_chat/useOpenClawApprovals'
 
 // Cloudhub Redux Notification Action & Helpers
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -326,16 +330,27 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     sessionsRef.current = sessions
   }, [sessions])
 
-  const triggerErrorNotification = (msg: string) => {
-    if (notify) {
-      notify({
-        ...defaultErrorNotification,
-        message: msg,
-      })
-    } else {
-      console.error('[OpenClaw AI Chat Error]:', msg)
-    }
-  }
+  const triggerErrorNotification = useCallback(
+    (msg: string) => {
+      if (notify) {
+        notify({
+          ...defaultErrorNotification,
+          message: msg,
+        })
+      } else {
+        console.error('[OpenClaw AI Chat Error]:', msg)
+      }
+    },
+    [notify]
+  )
+
+  const {
+    approvals,
+    now,
+    refreshApprovals,
+    handleApprovalEvent,
+    resolveApproval,
+  } = useOpenClawApprovals(activeSessionId, triggerErrorNotification)
 
   // Original clean session fetcher
   const fetchSessions = async () => {
@@ -448,7 +463,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       const key = actData.toolCallId || actData.itemId || `act-${Date.now()}`
       const phase = actData.phase || 'start'
       const kind = actData.kind || 'tool'
-      const name = actData.name || 'exec'
       const title = actData.title || actData.meta || actData.name || key
       const isFinished = phase === 'end' || phase === 'output' || actData.status === 'completed' || phase === 'result'
       const isErr = actData.isError || actData.status === 'error'
@@ -555,15 +569,25 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
         socket.onopen = () => {
           socket.send(JSON.stringify({sessionId: activeSessionId}))
+          refreshApprovals()
         }
 
         socket.onmessage = event => {
           try {
             const payload = JSON.parse(event.data)
 
+            if (
+              payload.type === 'approval.requested' ||
+              payload.type === 'approval.resolved'
+            ) {
+              handleApprovalEvent(payload as OpenClawApprovalEventDTO)
+              return
+            }
+
             // Handle resync notification from OpenClaw
             if (payload.type === 'sessions.changed') {
               fetchMessages(true)
+              refreshApprovals()
               return
             }
 
@@ -741,7 +765,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           }
         }
 
-        socket.onclose = ev => {
+        socket.onclose = () => {
           setIsStreamingActive(false)
           finalizePendingRun('연결이 끊어져 응답을 받지 못했습니다.')
           if (!isTornDown) {
@@ -760,14 +784,20 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       if (reconnectTimer) clearTimeout(reconnectTimer)
       if (wsRef.current) wsRef.current.close()
     }
-  }, [activeSessionId])
+  }, [activeSessionId, handleApprovalEvent, refreshApprovals])
 
   const activeSession = sessions.find(s => s.id === activeSessionId) || null
   const subagents = activeSession?.subagents || []
+  const displayableMessages = (activeSession?.messages || []).filter(
+    msg => msg.text || msg.isStreaming || (msg.activities && msg.activities.length > 0)
+  )
+  const approvalIdSetKey = JSON.stringify(
+    approvals.map(approval => approval.id).sort()
+  )
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'})
-  }, [activeSession?.messages])
+  }, [activeSession?.messages, approvalIdSetKey])
 
   const handleSelectSession = (id: string) => {
     setActiveSessionId(id)
@@ -1110,16 +1140,14 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 </span>
                 <span>대화 내역을 불러오는 중입니다...</span>
               </div>
-            ) : !activeSession || (activeSession.messages || []).length === 0 ? (
+            ) : displayableMessages.length === 0 && approvals.length === 0 ? (
               <div style={{padding: '60px 20px', textAlign: 'center', color: '#718096', fontSize: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'}}>
                 <div style={{fontSize: '24px', marginBottom: '4px'}}>💬</div>
                 <div style={{fontWeight: 'bold', color: '#e2e8f0'}}>새로운 대화를 시작해보세요</div>
                 <div style={{fontSize: '12px', color: '#a0aec0'}}>질문이나 분석할 로그/명령어를 입력하면 자동으로 대화 세션이 생성됩니다.</div>
               </div>
             ) : (
-              activeSession!.messages
-                .filter(msg => msg.text || msg.isStreaming || (msg.activities && msg.activities.length > 0))
-                .flatMap(msg => {
+              displayableMessages.flatMap(msg => {
                   if (msg.sender === 'user') {
                     return [(
                       <div key={msg.id} className="message-item user">
@@ -1214,6 +1242,19 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   return elements
                 })
             )}
+            {approvals.map(approval => (
+              <div
+                key={`approval-${approval.id}`}
+                className="message-item ai approval-message-item"
+              >
+                <AiChatMessageAvatar sender="tool" />
+                <OpenClawApprovalCard
+                  approval={approval}
+                  now={now}
+                  onResolve={resolveApproval}
+                />
+              </div>
+            ))}
             <div ref={messagesEndRef} />
           </div>
         </FancyScrollbar>

@@ -390,6 +390,31 @@ func TestOpenClawHandlersEnforceRequestLimitsAndMapGatewayErrors(t *testing.T) {
 	}
 }
 
+func TestOpenClawDisconnectedClientMapsToBadGateway(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{
+		ID: "owned", OrganizationID: "org-a", UserID: "42",
+		AgentID: "main", SessionKey: "server-session",
+	})
+	gateway, err := openclaw.NewDisconnectedGatewayClient(openclaw.GatewayConfig{
+		URL: "ws://127.0.0.1:1",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gateway.Close()
+
+	svc := newOpenClawChatService(store, gateway)
+	req := openClawRequest(http.MethodPost, "/cloudhub/v2/openclaw/sessions/owned/messages", `{"message":"hello","idempotencyKey":"disconnected"}`, 42, "org-a")
+	req = withOpenClawSessionID(req, "owned")
+	rr := httptest.NewRecorder()
+	svc.OpenClawSessionMessage(rr, req)
+
+	if rr.Code != http.StatusBadGateway {
+		t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusBadGateway, rr.Body.String())
+	}
+}
+
 func TestOpenClawEventsFilterToOwnedSubscribedSession(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
 	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned"})
@@ -487,6 +512,108 @@ func TestOpenClawEventsRelayActivityForOwnedSession(t *testing.T) {
 	}
 }
 
+func TestOpenClawEventsRelayOnlyOwnedApprovalEvents(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{
+		ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned",
+	})
+	events := make(chan openclaw.GatewayEvent, 4)
+	defer close(events)
+	svc := newOpenClawChatService(store, &fakeOpenClawGateway{events: events})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		svc.OpenClawEvents(w, openClawRequestWithContext(r, 42, "org-a"))
+	}))
+	defer server.Close()
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(t, server.URL), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	if err := conn.WriteJSON(map[string]string{"sessionId": "owned"}); err != nil {
+		t.Fatal(err)
+	}
+
+	foreignApproval := &openclaw.PluginApproval{ID: "plugin:foreign", SessionKey: "session-foreign"}
+	ownedApproval := &openclaw.PluginApproval{
+		ID: "plugin:owned", Title: "NetworkPolicy 복구 승인", Description: "demo/allow TCP 8081 → 8080",
+		Severity: "warning", ToolName: "k8s_network__apply_network_policy_repair",
+		AllowedDecisions: []openclaw.PluginApprovalDecision{openclaw.DecisionAllowOnce, openclaw.DecisionDeny},
+		SessionKey:       "session-owned", CreatedAtMs: 1786700000000, ExpiresAtMs: 1786700120000,
+	}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventApprovalRequested, SessionKey: "session-foreign", Approval: foreignApproval}
+	events <- openclaw.GatewayEvent{Kind: openclaw.EventApprovalRequested, SessionKey: "session-owned", Approval: ownedApproval}
+	requested := readOpenClawEvent(t, conn)
+	if requested["type"] != "approval.requested" || requested["sessionId"] != "owned" {
+		t.Fatalf("requested event = %#v", requested)
+	}
+	requestedApproval, ok := requested["approval"].(map[string]interface{})
+	if !ok || requestedApproval["id"] != "plugin:owned" || requestedApproval["source"] != "native" ||
+		requestedApproval["title"] != "NetworkPolicy 복구 승인" {
+		t.Fatalf("requested approval = %#v", requested["approval"])
+	}
+	if _, exposed := requestedApproval["sessionKey"]; exposed {
+		t.Fatalf("requested approval exposed Gateway session key: %#v", requestedApproval)
+	}
+
+	events <- openclaw.GatewayEvent{
+		Kind: openclaw.EventApprovalResolved, SessionKey: "session-foreign", Approval: foreignApproval,
+		ApprovalDecision: openclaw.DecisionDeny, ApprovalResolvedBy: "foreign-user", ApprovalResolvedAtMs: 1786700004000,
+	}
+	events <- openclaw.GatewayEvent{
+		Kind: openclaw.EventApprovalResolved, SessionKey: "session-owned", Approval: ownedApproval,
+		ApprovalDecision: openclaw.DecisionAllowOnce, ApprovalResolvedBy: "cloudhub-user", ApprovalResolvedAtMs: 1786700005000,
+	}
+	resolved := readOpenClawEvent(t, conn)
+	if resolved["type"] != "approval.resolved" || resolved["sessionId"] != "owned" {
+		t.Fatalf("resolved event = %#v", resolved)
+	}
+	resolvedApproval, ok := resolved["approval"].(map[string]interface{})
+	if !ok || resolvedApproval["id"] != "plugin:owned" || resolvedApproval["decision"] != "allow-once" ||
+		resolvedApproval["resolvedBy"] != "cloudhub-user" || resolvedApproval["resolvedAt"] != float64(1786700005000) {
+		t.Fatalf("resolved approval = %#v", resolved["approval"])
+	}
+
+	_ = conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+	if _, _, err := conn.ReadMessage(); err == nil {
+		t.Fatal("received a foreign approval event")
+	}
+}
+
+func TestOpenClawApprovalResolvedEventResponseSupportsPartialMetadata(t *testing.T) {
+	response := openClawEventResponse("owned", openclaw.GatewayEvent{
+		Kind:       openclaw.EventApprovalResolved,
+		SessionKey: "session-owned",
+		Approval: &openclaw.PluginApproval{
+			ID:         "plugin:partial-id",
+			SessionKey: "session-owned",
+		},
+		ApprovalDecision:     openclaw.DecisionDeny,
+		ApprovalResolvedBy:   "cloudhub-user",
+		ApprovalResolvedAtMs: 1786700005000,
+	})
+	payload, err := json.Marshal(response)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded map[string]interface{}
+	if err := json.Unmarshal(payload, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	approval, ok := decoded["approval"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("approval = %#v", decoded["approval"])
+	}
+	if approval["id"] != "plugin:partial-id" || approval["source"] != "native" ||
+		approval["decision"] != "deny" || approval["resolvedAt"] != float64(1786700005000) {
+		t.Fatalf("partial resolved approval = %#v", approval)
+	}
+	for _, field := range []string{"title", "description", "severity", "toolName", "allowedDecisions", "createdAt", "expiresAt"} {
+		if _, present := approval[field]; present {
+			t.Fatalf("partial resolved approval unexpectedly included %q: %#v", field, approval)
+		}
+	}
+}
+
 func TestOpenClawEventsRegistersSubscriberBeforeWebSocketUpgrade(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
 	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned"})
@@ -553,13 +680,14 @@ func TestOpenClawEventsRegistersSubscriberBeforeWebSocketUpgrade(t *testing.T) {
 func TestOpenClawEventFanoutKeepsHealthySubscriberMovingWhenAnotherStalls(t *testing.T) {
 	const eventCount = openClawEventSubscriberBuffer + 2
 	events := make(chan openclaw.GatewayEvent, eventCount)
+	defer close(events)
 	fanout := newOpenClawEventFanout(&fakeOpenClawGateway{events: events})
-	_, unsubscribeSlow, err := fanout.Subscribe(context.Background())
+	_, slowOverflow, unsubscribeSlow, err := fanout.Subscribe(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer unsubscribeSlow()
-	healthy, unsubscribeHealthy, err := fanout.Subscribe(context.Background())
+	healthy, healthyOverflow, unsubscribeHealthy, err := fanout.Subscribe(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -575,6 +703,140 @@ func TestOpenClawEventFanoutKeepsHealthySubscriberMovingWhenAnotherStalls(t *tes
 		case <-time.After(2 * time.Second):
 			t.Fatalf("healthy subscriber received %d events, want %d after slow subscriber stalled", i, eventCount)
 		}
+	}
+	select {
+	case <-slowOverflow:
+	case <-time.After(2 * time.Second):
+		t.Fatal("slow subscriber did not signal overflow")
+	}
+	select {
+	case <-healthyOverflow:
+		t.Fatal("healthy subscriber unexpectedly signaled overflow")
+	default:
+	}
+}
+
+func TestOpenClawEventFanoutPublishesLocalEventToEverySubscriber(t *testing.T) {
+	gatewayEvents := make(chan openclaw.GatewayEvent)
+	defer close(gatewayEvents)
+	fanout := newOpenClawEventFanout(&fakeOpenClawGateway{events: gatewayEvents})
+	first, firstOverflow, unsubscribeFirst, err := fanout.Subscribe(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unsubscribeFirst()
+	second, secondOverflow, unsubscribeSecond, err := fanout.Subscribe(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unsubscribeSecond()
+
+	want := openclaw.GatewayEvent{Kind: openclaw.EventApprovalRequested, SessionKey: "session-owned"}
+	fanout.Publish(want)
+	if got := <-first; got.Kind != want.Kind || got.SessionKey != want.SessionKey {
+		t.Fatalf("first = %#v", got)
+	}
+	if got := <-second; got.Kind != want.Kind || got.SessionKey != want.SessionKey {
+		t.Fatalf("second = %#v", got)
+	}
+	for name, overflow := range map[string]<-chan struct{}{"first": firstOverflow, "second": secondOverflow} {
+		select {
+		case <-overflow:
+			t.Fatalf("%s healthy subscriber unexpectedly signaled overflow", name)
+		default:
+		}
+	}
+}
+
+func TestOpenClawEventFanoutPublishDoesNotBlockOnSlowSubscriber(t *testing.T) {
+	gatewayEvents := make(chan openclaw.GatewayEvent)
+	defer close(gatewayEvents)
+	fanout := newOpenClawEventFanout(&fakeOpenClawGateway{events: gatewayEvents})
+	_, slowOverflow, unsubscribeSlow, err := fanout.Subscribe(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unsubscribeSlow()
+	healthy, healthyOverflow, unsubscribeHealthy, err := fanout.Subscribe(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer unsubscribeHealthy()
+
+	for i := 0; i < openClawEventSubscriberBuffer; i++ {
+		want := openclaw.GatewayEvent{Kind: openclaw.EventApprovalRequested, SessionKey: fmt.Sprintf("buffered-%d", i)}
+		fanout.Publish(want)
+		select {
+		case got := <-healthy:
+			if got.Kind != want.Kind || got.SessionKey != want.SessionKey {
+				t.Fatalf("buffered event %d = %#v, want %#v", i, got, want)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatalf("healthy subscriber did not receive buffered event %d", i)
+		}
+	}
+
+	want := openclaw.GatewayEvent{Kind: openclaw.EventApprovalRequested, SessionKey: "session-owned"}
+	published := make(chan struct{})
+	go func() {
+		fanout.Publish(want)
+		close(published)
+	}()
+	select {
+	case <-published:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Publish blocked on the slow subscriber")
+	}
+	select {
+	case got := <-healthy:
+		if got.Kind != want.Kind || got.SessionKey != want.SessionKey {
+			t.Fatalf("healthy = %#v, want %#v", got, want)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("healthy subscriber did not receive the locally published event")
+	}
+	select {
+	case <-slowOverflow:
+	case <-time.After(2 * time.Second):
+		t.Fatal("slow subscriber did not signal overflow")
+	}
+	select {
+	case <-healthyOverflow:
+		t.Fatal("healthy subscriber unexpectedly signaled overflow")
+	default:
+	}
+}
+
+func TestOpenClawEventsClosesConnectionWhenSubscriberQueueOverflows(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	_, _ = store.Create(context.Background(), &cloudhub.OpenClawSession{
+		ID: "owned", OrganizationID: "org-a", UserID: "42", SessionKey: "session-owned",
+	})
+	gatewayEvents := make(chan openclaw.GatewayEvent)
+	defer close(gatewayEvents)
+	gateway := &fakeOpenClawGateway{events: gatewayEvents}
+	svc := newOpenClawChatService(store, gateway)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		svc.OpenClawEvents(w, openClawRequestWithContext(r, 42, "org-a"))
+	}))
+	defer server.Close()
+	conn, _, err := websocket.DefaultDialer.Dial(webSocketURL(t, server.URL), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	for i := 0; i <= openClawEventSubscriberBuffer; i++ {
+		svc.openClawEventFanout().Publish(openclaw.GatewayEvent{
+			Kind: openclaw.EventApprovalRequested,
+		})
+	}
+
+	_ = conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+	if _, _, err := conn.ReadMessage(); err == nil {
+		t.Fatal("overflowed subscriber connection remained open")
+	} else if closeError, ok := err.(*websocket.CloseError); !ok || closeError.Code != websocket.CloseTryAgainLater {
+		t.Fatalf("overflow close error = %T %v, want WebSocket close code %d", err, err, websocket.CloseTryAgainLater)
 	}
 }
 
@@ -842,24 +1104,30 @@ func readOpenClawEvent(t *testing.T, conn *websocket.Conn) map[string]interface{
 }
 
 type fakeOpenClawGateway struct {
-	mu               sync.Mutex
-	history          openclaw.HistoryPage
-	historyErr       error
-	historyParams    openclaw.HistoryParams
-	historyCalls     int
-	send             openclaw.SendMessageResult
-	sendErr          error
-	sendParams       openclaw.SendMessageParams
-	sendCalls        int
-	sendHadDeadline  bool
-	events           <-chan openclaw.GatewayEvent
-	subscribeErr     error
-	subscribeCalls   int
-	subscribeStarted chan<- struct{}
-	subscribeRelease <-chan struct{}
-	agents           openclaw.AgentList
-	agentsErr        error
-	agentsCalls      int
+	mu                   sync.Mutex
+	history              openclaw.HistoryPage
+	historyErr           error
+	historyParams        openclaw.HistoryParams
+	historyCalls         int
+	send                 openclaw.SendMessageResult
+	sendErr              error
+	sendParams           openclaw.SendMessageParams
+	sendCalls            int
+	sendHadDeadline      bool
+	events               <-chan openclaw.GatewayEvent
+	subscribeErr         error
+	subscribeCalls       int
+	subscribeStarted     chan<- struct{}
+	subscribeRelease     <-chan struct{}
+	agents               openclaw.AgentList
+	agentsErr            error
+	agentsCalls          int
+	approvals            []openclaw.PluginApproval
+	approvalsErr         error
+	approvalListCalls    int
+	resolvedApproval     openclaw.ResolvePluginApprovalParams
+	resolveApprovalErr   error
+	resolveApprovalCalls int
 }
 
 func (g *fakeOpenClawGateway) ListAgents(context.Context) (openclaw.AgentList, error) {
@@ -867,6 +1135,21 @@ func (g *fakeOpenClawGateway) ListAgents(context.Context) (openclaw.AgentList, e
 	defer g.mu.Unlock()
 	g.agentsCalls++
 	return g.agents, g.agentsErr
+}
+
+func (g *fakeOpenClawGateway) ListPluginApprovals(context.Context) ([]openclaw.PluginApproval, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.approvalListCalls++
+	return append([]openclaw.PluginApproval(nil), g.approvals...), g.approvalsErr
+}
+
+func (g *fakeOpenClawGateway) ResolvePluginApproval(_ context.Context, params openclaw.ResolvePluginApprovalParams) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.resolveApprovalCalls++
+	g.resolvedApproval = params
+	return g.resolveApprovalErr
 }
 
 func (g *fakeOpenClawGateway) ListAgentsCalls() int {

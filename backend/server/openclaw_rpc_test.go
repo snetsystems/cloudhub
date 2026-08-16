@@ -236,6 +236,14 @@ func (g *fakeOpenClawRPCGateway) ListAgents(context.Context) (openclaw.AgentList
 	return openclaw.AgentList{}, nil
 }
 
+func (g *fakeOpenClawRPCGateway) ListPluginApprovals(context.Context) ([]openclaw.PluginApproval, error) {
+	return nil, nil
+}
+
+func (g *fakeOpenClawRPCGateway) ResolvePluginApproval(context.Context, openclaw.ResolvePluginApprovalParams) error {
+	return nil
+}
+
 func (g *fakeOpenClawRPCGateway) History(context.Context, openclaw.HistoryParams) (openclaw.HistoryPage, error) {
 	return openclaw.HistoryPage{}, nil
 }

@@ -12,7 +12,7 @@ import (
 )
 
 // buildKubernetesReverseProxy creates a reverse proxy for Kubernetes API with authentication
-func buildKubernetesReverseProxy(targetURL, token string) *httputil.ReverseProxy {
+func buildKubernetesReverseProxy(targetURL, token string, insecureSkipVerify bool) *httputil.ReverseProxy {
 	target, _ := url.Parse(targetURL)
 
 	proxy := httputil.NewSingleHostReverseProxy(target)
@@ -21,7 +21,7 @@ func buildKubernetesReverseProxy(targetURL, token string) *httputil.ReverseProxy
 		IdleConnTimeout:     30 * time.Second,
 		TLSHandshakeTimeout: 10 * time.Second,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true, // For self-signed certificates
+			InsecureSkipVerify: insecureSkipVerify,
 		},
 	}
 
@@ -35,9 +35,13 @@ func buildKubernetesReverseProxy(targetURL, token string) *httputil.ReverseProxy
 			req.Header.Set("Authorization", "Bearer "+token)
 		}
 
-		// Set standard Kubernetes API headers
-		req.Header.Set("Accept", "application/json")
-		req.Header.Set("Content-Type", "application/json")
+		// Set standard Kubernetes API headers when the caller did not provide them.
+		if req.Header.Get("Accept") == "" {
+			req.Header.Set("Accept", "application/json")
+		}
+		if req.Body != nil && req.Header.Get("Content-Type") == "" {
+			req.Header.Set("Content-Type", "application/json")
+		}
 	}
 
 	return proxy
@@ -54,7 +58,6 @@ func (s *Service) KubernetesProxy(w http.ResponseWriter, r *http.Request) {
 	s.Logger.Info("Kubernetes Proxy called with path: ", r.URL.Path)
 	s.Logger.Info("Kubernetes URL: ", kubernetesURL)
 	s.Logger.Info("Kubernetes Config: URL=", s.InternalENV.KubernetesConfig.URL,
-		", Token length=", len(s.InternalENV.KubernetesConfig.Token),
 		", InsecureSkipVerify=", s.InternalENV.KubernetesConfig.InsecureSkipVerify)
 
 	// Extract the path from the URL
@@ -98,11 +101,6 @@ func (s *Service) KubernetesProxy(w http.ResponseWriter, r *http.Request) {
 		token, err = s.KubernetesClient.GetToken(r.Context())
 		if err != nil {
 			s.Logger.Error("Failed to get token: ", err)
-		} else {
-			s.Logger.Info("Successfully obtained token, length: ", len(token))
-			if len(token) < 10 {
-				s.Logger.Error("Token seems too short, might be invalid")
-			}
 		}
 	}
 
@@ -110,7 +108,11 @@ func (s *Service) KubernetesProxy(w http.ResponseWriter, r *http.Request) {
 	if token != "" {
 		s.Logger.Info("Using authenticated proxy with token")
 		// Build reverse proxy with authentication
-		proxy := buildKubernetesReverseProxy(kubernetesURL, token)
+		proxy := buildKubernetesReverseProxy(
+			kubernetesURL,
+			token,
+			s.InternalENV.KubernetesConfig.InsecureSkipVerify,
+		)
 		proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, e error) {
 			s.Logger.Error("Authenticated proxy error: ", e)
 			s.Logger.Error("Request URL: ", req.URL.String())
@@ -143,7 +145,7 @@ func (s *Service) KubernetesProxy(w http.ResponseWriter, r *http.Request) {
 			IdleConnTimeout:     30 * time.Second,
 			TLSHandshakeTimeout: 10 * time.Second,
 			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true, // For self-signed certificates
+				InsecureSkipVerify: s.InternalENV.KubernetesConfig.InsecureSkipVerify,
 			},
 		}
 

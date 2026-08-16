@@ -22,6 +22,64 @@ export interface OpenClawMessageDTO {
   timestamp: number
 }
 
+export type OpenClawApprovalDecision = 'allow-once' | 'deny'
+export type OpenClawApprovalSource = 'managed' | 'native'
+
+export class OpenClawAPIError extends Error {
+  public readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'OpenClawAPIError'
+    this.status = status
+    Object.setPrototypeOf(this, OpenClawAPIError.prototype)
+  }
+}
+
+export interface OpenClawApprovalDTO {
+  id: string
+  source: OpenClawApprovalSource
+  title: string
+  description: string
+  severity: string
+  toolName: string
+  allowedDecisions: OpenClawApprovalDecision[]
+  createdAt: number
+  expiresAt: number
+}
+
+export interface OpenClawApprovalSnapshotDTO {
+  approvals: OpenClawApprovalDTO[]
+  completeSources: OpenClawApprovalSource[]
+}
+
+export interface OpenClawResolvedApprovalDTO {
+  id: string
+  source: OpenClawApprovalSource
+  title?: string
+  description?: string
+  severity?: string
+  toolName?: string
+  allowedDecisions?: OpenClawApprovalDecision[]
+  createdAt?: number
+  expiresAt?: number
+  decision: OpenClawApprovalDecision
+  resolvedAt: number
+  resolvedBy?: string
+}
+
+export type OpenClawApprovalEventDTO =
+  | {
+      type: 'approval.requested'
+      sessionId: string
+      approval: OpenClawApprovalDTO
+    }
+  | {
+      type: 'approval.resolved'
+      sessionId: string
+      approval: OpenClawResolvedApprovalDTO
+    }
+
 const DEFAULT_HEADERS: HeadersInit = {
   'Content-Type': 'application/json',
   'X-Organization-Id': 'org-default',
@@ -95,4 +153,46 @@ export const getOpenClawMessages = async (sessionId: string): Promise<OpenClawMe
 
   const data: {messages: OpenClawMessageDTO[]} = await res.json()
   return data.messages || []
+}
+
+export const getOpenClawApprovals = async (
+  sessionId: string,
+  signal?: AbortSignal
+): Promise<OpenClawApprovalSnapshotDTO> => {
+  const res = await fetch(
+    `${OPENCLAW_BASE_URL}/sessions/${encodeURIComponent(sessionId)}/approvals`,
+    {
+      headers: DEFAULT_HEADERS,
+      signal,
+    }
+  )
+  if (!res.ok)
+    throw new Error(
+      `Failed to fetch approvals (${res.status}): ${res.statusText}`
+    )
+  const data: OpenClawApprovalSnapshotDTO = await res.json()
+  return {
+    approvals: data.approvals || [],
+    completeSources: data.completeSources || [],
+  }
+}
+
+export const resolveOpenClawApproval = async (
+  sessionId: string,
+  approvalId: string,
+  decision: OpenClawApprovalDecision
+): Promise<void> => {
+  const res = await fetch(
+    `${OPENCLAW_BASE_URL}/sessions/${encodeURIComponent(sessionId)}/approvals/${encodeURIComponent(approvalId)}/resolve`,
+    {
+      method: 'POST',
+      headers: DEFAULT_HEADERS,
+      body: JSON.stringify({decision}),
+    }
+  )
+  if (!res.ok)
+    throw new OpenClawAPIError(
+      `Failed to resolve approval (${res.status}): ${res.statusText}`,
+      res.status
+    )
 }

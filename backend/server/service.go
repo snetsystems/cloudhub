@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
 	"time"
 
@@ -46,6 +47,7 @@ type Service struct {
 	AlertTemplates            cloudhub.AlertTemplatesStore
 	OpenClawGateway           openClawGateway
 	OpenClawAgentID           string
+	openClawManagedApprovals  *openClawManagedApprovalStore
 }
 
 // KafkaProducer defines the interface for publishing configuration updates
@@ -107,6 +109,8 @@ type openClawGateway interface {
 	SendMessage(context.Context, openclaw.SendMessageParams) (openclaw.SendMessageResult, error)
 	Subscribe(context.Context) (<-chan openclaw.GatewayEvent, error)
 	ListAgents(context.Context) (openclaw.AgentList, error)
+	ListPluginApprovals(context.Context) ([]openclaw.PluginApproval, error)
+	ResolvePluginApproval(context.Context, openclaw.ResolvePluginApprovalParams) error
 }
 
 var _ openClawGateway = (*openclaw.GatewayClient)(nil)
@@ -131,6 +135,7 @@ const (
 // refresh their history once the connection is restored.
 type openClawGatewayManager struct {
 	gateway openClawGatewayLifecycle
+	logger  cloudhub.Logger
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -147,10 +152,11 @@ type openClawGatewayManager struct {
 	closeErr  error
 }
 
-func newOpenClawGatewayManager(ctx context.Context, gateway openClawGatewayLifecycle) *openClawGatewayManager {
+func newOpenClawGatewayManager(ctx context.Context, gateway openClawGatewayLifecycle, logger cloudhub.Logger) *openClawGatewayManager {
 	managerCtx, cancel := context.WithCancel(ctx)
 	manager := &openClawGatewayManager{
 		gateway:                 gateway,
+		logger:                  logger,
 		ctx:                     managerCtx,
 		cancel:                  cancel,
 		reconnectInitialBackoff: openClawReconnectInitialBackoff,
@@ -177,6 +183,14 @@ func (m *openClawGatewayManager) ListAgents(ctx context.Context) (openclaw.Agent
 	return m.gateway.ListAgents(ctx)
 }
 
+func (m *openClawGatewayManager) ListPluginApprovals(ctx context.Context) ([]openclaw.PluginApproval, error) {
+	return m.gateway.ListPluginApprovals(ctx)
+}
+
+func (m *openClawGatewayManager) ResolvePluginApproval(ctx context.Context, params openclaw.ResolvePluginApprovalParams) error {
+	return m.gateway.ResolvePluginApproval(ctx, params)
+}
+
 func (m *openClawGatewayManager) Subscribe(ctx context.Context) (<-chan openclaw.GatewayEvent, error) {
 	m.eventsMu.Lock()
 	defer m.eventsMu.Unlock()
@@ -201,12 +215,22 @@ func (m *openClawGatewayManager) Close() error {
 }
 
 func (m *openClawGatewayManager) run() {
+	defer func() { _ = m.Close() }()
+	if !m.reconnect() {
+		return
+	}
 	for {
 		select {
 		case <-m.ctx.Done():
-			_ = m.Close()
 			return
 		case <-m.gateway.Disconnected():
+			if m.ctx.Err() != nil {
+				return
+			}
+			if m.logger != nil {
+				m.logger.WithField("component", "openclaw-gateway").
+					Error("OpenClaw gateway connection lost; reconnecting")
+			}
 			if m.reconnect() {
 				m.publishResync()
 			}
@@ -217,8 +241,23 @@ func (m *openClawGatewayManager) run() {
 func (m *openClawGatewayManager) reconnect() bool {
 	backoff := m.reconnectInitialBackoff
 	for {
-		if err := m.gateway.Reconnect(m.ctx); err == nil {
+		err := m.gateway.Reconnect(m.ctx)
+		if err == nil {
+			if m.logger != nil {
+				m.logger.WithField("component", "openclaw-gateway").
+					Info("OpenClaw gateway connection established")
+			}
 			return true
+		}
+		m.discardDisconnectNotification()
+		if m.ctx.Err() != nil {
+			return false
+		}
+		if m.logger != nil {
+			m.logger.WithField("component", "openclaw-gateway").
+				WithField("error_kind", openClawReconnectErrorKind(err)).
+				WithField("retry_after", backoff.String()).
+				Error("OpenClaw gateway connection failed; retrying")
 		}
 		select {
 		case <-m.ctx.Done():
@@ -229,6 +268,29 @@ func (m *openClawGatewayManager) reconnect() bool {
 		if backoff > m.reconnectMaxBackoff {
 			backoff = m.reconnectMaxBackoff
 		}
+	}
+}
+
+func (m *openClawGatewayManager) discardDisconnectNotification() {
+	select {
+	case <-m.gateway.Disconnected():
+	default:
+	}
+}
+
+func openClawReconnectErrorKind(err error) string {
+	var rpcErr *openclaw.RPCError
+	switch {
+	case errors.As(err, &rpcErr):
+		return "rpc"
+	case errors.Is(err, openclaw.ErrProtocol):
+		return "protocol"
+	case errors.Is(err, openclaw.ErrDisconnected):
+		return "disconnected"
+	case errors.Is(err, openclaw.ErrRequestTimeout), errors.Is(err, context.DeadlineExceeded):
+		return "timeout"
+	default:
+		return "connection"
 	}
 }
 

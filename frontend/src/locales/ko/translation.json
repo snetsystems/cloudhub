@@ -415,6 +415,26 @@
     "restore_success": "메뉴 항목을 복원했습니다.",
     "restore_failed": "메뉴 항목 복원에 실패했습니다."
   },
+  "openclaw_approval": {
+    "aria_label": "승인 요청",
+    "tool": "도구",
+    "severity": "심각도",
+    "status": {
+      "decision_required": "결정 필요.",
+      "resolving": "결정 처리 중.",
+      "allowed": "한 번 허용됨.",
+      "denied": "거부됨.",
+      "expired": "만료됨."
+    },
+    "countdown": {
+      "seconds": "{{count}}초 남음.",
+      "minutes": "{{count}}분 남음."
+    },
+    "actions": {
+      "allow_once": "한 번 허용",
+      "deny": "거부"
+    }
+  },
   "org_menus": {
     "title": "조직명",
     "col_enabled": "활성화",

@@ -359,6 +359,105 @@
     min-height: 0;
   }
 
+  .openclaw-approval-card {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px 16px;
+    background-color: $g2-kevlar;
+    border: 1px solid $g3-castle;
+    border-left: 3px solid $s-orange;
+    border-radius: 12px 12px 12px 2px;
+    color: $g16-pearl;
+    overflow-wrap: break-word;
+
+    &__title {
+      margin: 0 0 6px;
+      color: $g20-white;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+
+    &__description {
+      margin: 0 0 10px;
+      color: $g13-mist;
+      font-size: 13px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    &__metadata {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      margin: 0 0 10px;
+      color: $g11-sidewalk;
+      font-size: 12px;
+
+      div {
+        display: flex;
+        min-width: 0;
+        gap: 4px;
+      }
+
+      dt,
+      dd {
+        margin: 0;
+      }
+
+      dt {
+        font-weight: 600;
+      }
+
+      dd {
+        color: $g16-pearl;
+        overflow-wrap: anywhere;
+      }
+    }
+
+    &__status {
+      margin: 0;
+      color: $g16-pearl;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    &__actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+
+      .button {
+        max-width: 100%;
+        white-space: normal;
+      }
+
+      .button.openclaw-approval-card__action:focus-visible {
+        outline: 2px solid $c-hydrogen;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 1px $g0-obsidian;
+      }
+    }
+
+    &--resolving {
+      border-left-color: $s-orange;
+    }
+
+    &--allowed {
+      border-left-color: $c-rainforest;
+    }
+
+    &--denied {
+      border-left-color: $s-grapefruit;
+    }
+
+    &--expired {
+      border-left-color: $g7-graphite;
+    }
+  }
+
   .chat-thread-container {
     flex: 1;
     display: flex;

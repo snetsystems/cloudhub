@@ -20,6 +20,52 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+func TestNewDisconnectedGatewayClientDoesNotDial(t *testing.T) {
+	client, err := NewDisconnectedGatewayClient(GatewayConfig{URL: "ws://127.0.0.1:1"})
+	if err != nil {
+		t.Fatalf("new disconnected client: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Close() })
+
+	if _, err := client.Call(context.Background(), "agents.list", struct{}{}); !errors.Is(err, ErrDisconnected) {
+		t.Fatalf("call error = %v, want ErrDisconnected", err)
+	}
+}
+
+func TestGatewayPublishesDisconnectBeforeReleasingPendingCalls(t *testing.T) {
+	releaseServer := make(chan struct{})
+	server := newFakeGateway(t, func(*websocket.Conn, int) error {
+		<-releaseServer
+		return nil
+	})
+	client := newTestGatewayClient(t, server.URL(), time.Second)
+
+	client.mu.Lock()
+	conn := client.connection
+	pending := &pendingRequest{result: make(chan rpcResponse)}
+	conn.pending["blocked"] = pending
+	client.mu.Unlock()
+
+	failed := make(chan struct{})
+	go func() {
+		client.failConnection(conn, ErrDisconnected)
+		close(failed)
+	}()
+
+	notified := false
+	select {
+	case <-client.Disconnected():
+		notified = true
+	case <-time.After(50 * time.Millisecond):
+	}
+	<-pending.result
+	<-failed
+	close(releaseServer)
+	if !notified {
+		t.Fatal("pending call was released before disconnect notification")
+	}
+}
+
 func TestGatewayWaitsForChallengeAndSendsNonceBoundDeviceProof(t *testing.T) {
 	publicKey, privateKey, err := ed25519.GenerateKey(nil)
 	if err != nil {
@@ -82,7 +128,7 @@ func TestGatewayWaitsForChallengeAndSendsNonceBoundDeviceProof(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		payload := fmt.Sprintf("v3|%s|%s|%s|operator|operator.read,operator.write|%d|test-token|nonce-1|%s|", deviceID, gatewayClientID, gatewayClientMode, params.Device.SignedAt, runtime.GOOS)
+		payload := fmt.Sprintf("v3|%s|%s|%s|operator|operator.read,operator.write,operator.approvals|%d|test-token|nonce-1|%s|", deviceID, gatewayClientID, gatewayClientMode, params.Device.SignedAt, runtime.GOOS)
 		if !ed25519.Verify(publicKey, []byte(payload), signature) {
 			return errors.New("device proof signature is invalid")
 		}
@@ -480,6 +526,208 @@ func TestGatewayCallReturnsRawPayload(t *testing.T) {
 	}
 }
 
+func TestGatewayPluginApprovalListAndResolve(t *testing.T) {
+	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
+		listRequest, err := readGatewayRequest(conn)
+		if err != nil {
+			return err
+		}
+		if listRequest.Method != "plugin.approval.list" {
+			return fmt.Errorf("list method = %q", listRequest.Method)
+		}
+		if !jsonEqual(listRequest.Params, []byte(`{}`)) {
+			return fmt.Errorf("list params = %s, want {}", listRequest.Params)
+		}
+		if err := writeGatewayResponse(conn, listRequest.ID, true, []interface{}{
+			validPluginApprovalRecord(),
+		}, nil); err != nil {
+			return err
+		}
+
+		resolveRequest, err := readGatewayRequest(conn)
+		if err != nil {
+			return err
+		}
+		if resolveRequest.Method != "plugin.approval.resolve" {
+			return fmt.Errorf("resolve method = %q", resolveRequest.Method)
+		}
+		if !jsonEqual(resolveRequest.Params, []byte(`{"id":"plugin:full-id","decision":"allow-once"}`)) {
+			return fmt.Errorf("resolve params = %s", resolveRequest.Params)
+		}
+		return writeGatewayResponse(conn, resolveRequest.ID, true, map[string]interface{}{}, nil)
+	})
+	client := newTestGatewayClient(t, server.URL(), 500*time.Millisecond)
+
+	approvals, err := client.ListPluginApprovals(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(approvals) != 1 {
+		t.Fatalf("approvals = %#v", approvals)
+	}
+	approval := approvals[0]
+	if approval.ID != "plugin:full-id" || approval.Title != "NetworkPolicy 복구 승인" ||
+		approval.Description != "network-repair-demo/allow TCP 8081 → 8080" ||
+		approval.Severity != "warning" || approval.ToolName != "k8s_network__apply_network_policy_repair" ||
+		approval.SessionKey != "agent:main:cloudhub:session-owned" ||
+		approval.CreatedAtMs != 1786700000000 || approval.ExpiresAtMs != 1786700120000 {
+		t.Fatalf("approval = %#v", approval)
+	}
+	if len(approval.AllowedDecisions) != 2 || approval.AllowedDecisions[0] != DecisionAllowOnce || approval.AllowedDecisions[1] != DecisionDeny {
+		t.Fatalf("allowed decisions = %v", approval.AllowedDecisions)
+	}
+	if err := client.ResolvePluginApproval(context.Background(), ResolvePluginApprovalParams{
+		ID: "plugin:full-id", Decision: DecisionAllowOnce,
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestGatewayPluginApprovalListRejectsMalformedRecords(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(map[string]interface{})
+	}{
+		{name: "malformed timestamp", mutate: func(record map[string]interface{}) { record["createdAtMs"] = "bad" }},
+		{name: "empty id", mutate: func(record map[string]interface{}) { record["id"] = "" }},
+		{name: "empty session key", mutate: func(record map[string]interface{}) {
+			record["request"].(map[string]interface{})["sessionKey"] = ""
+		}},
+		{name: "description too long", mutate: func(record map[string]interface{}) {
+			record["request"].(map[string]interface{})["description"] = strings.Repeat("가", 257)
+		}},
+		{name: "unknown decision", mutate: func(record map[string]interface{}) {
+			record["request"].(map[string]interface{})["allowedDecisions"] = []interface{}{"allow-always"}
+		}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			record := validPluginApprovalRecord()
+			test.mutate(record)
+			server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
+				request, err := readGatewayRequest(conn)
+				if err != nil {
+					return err
+				}
+				return writeGatewayResponse(conn, request.ID, true, []interface{}{record}, nil)
+			})
+			client := newTestGatewayClient(t, server.URL(), 500*time.Millisecond)
+
+			_, err := client.ListPluginApprovals(context.Background())
+			if !errors.Is(err, ErrProtocol) {
+				t.Fatalf("error = %v, want ErrProtocol", err)
+			}
+		})
+	}
+}
+
+func TestGatewayResolvePluginApprovalRejectsInvalidParamsBeforeRPC(t *testing.T) {
+	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
+		conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond))
+		if _, _, err := conn.ReadMessage(); err == nil {
+			return errors.New("invalid approval resolution sent an RPC request")
+		}
+		return nil
+	})
+	client := newTestGatewayClient(t, server.URL(), 500*time.Millisecond)
+
+	for _, params := range []ResolvePluginApprovalParams{
+		{ID: "", Decision: DecisionAllowOnce},
+		{ID: "plugin:full-id", Decision: "allow-always"},
+	} {
+		if err := client.ResolvePluginApproval(context.Background(), params); !errors.Is(err, ErrProtocol) {
+			t.Fatalf("params = %#v, error = %v, want ErrProtocol", params, err)
+		}
+	}
+}
+
+func TestNormalizePluginApprovalEvents(t *testing.T) {
+	requestedPayload, err := json.Marshal(validPluginApprovalRecord())
+	if err != nil {
+		t.Fatal(err)
+	}
+	requested, ok := normalizeEvent(eventFrame{
+		Event: "plugin.approval.requested", Sequence: 21, Payload: requestedPayload,
+	})
+	if !ok || requested.Kind != EventApprovalRequested || requested.SessionKey != "agent:main:cloudhub:session-owned" || requested.Approval == nil {
+		t.Fatalf("requested event = %#v, ok = %v", requested, ok)
+	}
+	if requested.Approval.ID != "plugin:full-id" || requested.EnvelopeSequence != 21 || !jsonEqual(requested.Payload, requestedPayload) {
+		t.Fatalf("requested event = %#v", requested)
+	}
+
+	resolvedPayload, err := json.Marshal(map[string]interface{}{
+		"id":         "plugin:full-id",
+		"decision":   "allow-once",
+		"resolvedBy": "cloudhub-user",
+		"ts":         int64(1786700005000),
+		"request":    validPluginApprovalRecord()["request"],
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, ok := normalizeEvent(eventFrame{
+		Event: "plugin.approval.resolved", Sequence: 22, Payload: resolvedPayload,
+	})
+	if !ok || resolved.Kind != EventApprovalResolved || resolved.SessionKey != "agent:main:cloudhub:session-owned" || resolved.Approval == nil {
+		t.Fatalf("resolved event = %#v, ok = %v", resolved, ok)
+	}
+	if resolved.Approval.ID != "plugin:full-id" || resolved.ApprovalDecision != DecisionAllowOnce ||
+		resolved.ApprovalResolvedBy != "cloudhub-user" || resolved.ApprovalResolvedAtMs != 1786700005000 ||
+		!jsonEqual(resolved.Payload, resolvedPayload) {
+		t.Fatalf("resolved event = %#v", resolved)
+	}
+}
+
+func TestNormalizePluginApprovalResolvedEventAcceptsPartialRequestMetadata(t *testing.T) {
+	payload, err := json.Marshal(map[string]interface{}{
+		"id":         "plugin:partial-id",
+		"decision":   "deny",
+		"resolvedBy": "cloudhub-user",
+		"ts":         int64(1786700005000),
+		"request": map[string]interface{}{
+			"sessionKey": "agent:main:cloudhub:session-owned",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resolved, ok := normalizeEvent(eventFrame{
+		Event: "plugin.approval.resolved", Sequence: 23, Payload: payload,
+	})
+
+	if !ok || resolved.Kind != EventApprovalResolved || resolved.Approval == nil {
+		t.Fatalf("resolved event = %#v, ok = %v", resolved, ok)
+	}
+	if resolved.SessionKey != "agent:main:cloudhub:session-owned" ||
+		resolved.Approval.ID != "plugin:partial-id" || resolved.ApprovalDecision != DecisionDeny ||
+		resolved.ApprovalResolvedAtMs != 1786700005000 {
+		t.Fatalf("resolved event = %#v", resolved)
+	}
+	if resolved.Approval.Title != "" || resolved.Approval.ToolName != "" ||
+		resolved.Approval.CreatedAtMs != 0 || resolved.Approval.ExpiresAtMs != 0 {
+		t.Fatalf("partial approval metadata = %#v, want omitted values preserved as zero values", resolved.Approval)
+	}
+}
+
+func validPluginApprovalRecord() map[string]interface{} {
+	return map[string]interface{}{
+		"id":          "plugin:full-id",
+		"createdAtMs": int64(1786700000000),
+		"expiresAtMs": int64(1786700120000),
+		"request": map[string]interface{}{
+			"title":            "NetworkPolicy 복구 승인",
+			"description":      "network-repair-demo/allow TCP 8081 → 8080",
+			"severity":         "warning",
+			"toolName":         "k8s_network__apply_network_policy_repair",
+			"allowedDecisions": []interface{}{"allow-once", "deny"},
+			"sessionKey":       "agent:main:cloudhub:session-owned",
+		},
+	}
+}
+
 func TestGatewayMalformedFrameRejectsPendingCall(t *testing.T) {
 	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
 		if _, err := readGatewayRequest(conn); err != nil {
@@ -671,6 +919,106 @@ func TestGatewayReconnectResubscribes(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("timed out waiting for event after reconnect")
+	}
+}
+
+func TestGatewayDisconnectsWhenEventQueueIsFull(t *testing.T) {
+	release := make(chan struct{})
+	startEvents := make(chan struct{})
+	eventsSent := make(chan struct{})
+	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
+		<-startEvents
+		for sequence := 1; sequence <= 65; sequence++ {
+			if err := conn.WriteJSON(map[string]interface{}{
+				"type": "event", "event": "sessions.changed", "seq": sequence,
+				"payload": map[string]interface{}{
+					"sessionKey": "session-1",
+					"reason":     "message",
+				},
+			}); err != nil {
+				return err
+			}
+		}
+		close(eventsSent)
+		<-release
+		return nil
+	})
+	defer close(release)
+
+	client := newTestGatewayClient(t, server.URL(), 500*time.Millisecond)
+	close(startEvents)
+	select {
+	case <-eventsSent:
+	case <-time.After(time.Second):
+		t.Fatal("timed out sending events")
+	}
+
+	select {
+	case <-client.Disconnected():
+	case <-time.After(time.Second):
+		t.Fatal("event queue overflow did not disconnect the gateway")
+	}
+}
+
+func TestGatewayRejectsEventQueueOverflowDuringConnect(t *testing.T) {
+	release := make(chan struct{})
+	server := newFakeGatewayWithHandshake(t, func(conn *websocket.Conn, _ *fakeGateway) error {
+		if err := conn.WriteJSON(map[string]interface{}{
+			"type": "event", "event": "connect.challenge",
+			"payload": map[string]interface{}{"nonce": "nonce-1", "ts": 1},
+		}); err != nil {
+			return err
+		}
+		request, err := readGatewayRequest(conn)
+		if err != nil {
+			return err
+		}
+		if err := writeGatewayResponse(conn, request.ID, true, map[string]interface{}{
+			"type": "hello-ok", "protocol": gatewayProtocolVersion,
+			"auth": map[string]interface{}{
+				"role":        "operator",
+				"scopes":      []string{"operator.read", "operator.write", "operator.approvals"},
+				"deviceToken": "test-token",
+			},
+			"padding": strings.Repeat("x", 1024*1024),
+		}, nil); err != nil {
+			return err
+		}
+		return conn.WriteJSON(map[string]interface{}{
+			"type": "event", "event": "sessions.changed", "seq": 1,
+			"payload": map[string]interface{}{
+				"sessionKey": "session-1",
+				"reason":     "message",
+			},
+		})
+	}, func(_ *websocket.Conn, _ int) error {
+		<-release
+		return nil
+	})
+	defer close(release)
+
+	client, err := NewDisconnectedGatewayClient(GatewayConfig{
+		URL:            server.URL(),
+		Token:          "test-token",
+		RequestTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		t.Fatalf("new disconnected gateway client: %v", err)
+	}
+	defer client.Close()
+	for len(client.events) < cap(client.events) {
+		client.events <- GatewayEvent{}
+	}
+
+	err = client.Reconnect(context.Background())
+	if !errors.Is(err, errEventQueueFull) {
+		t.Fatalf("reconnect error = %v, want event queue overflow", err)
+	}
+	client.mu.Lock()
+	connection := client.connection
+	client.mu.Unlock()
+	if connection != nil {
+		t.Fatal("failed connection was installed as current")
 	}
 }
 
@@ -1004,14 +1352,14 @@ func fakeGatewayHandshake(conn *websocket.Conn, protocol int) error {
 	if req.Method != "connect" {
 		return fmt.Errorf("handshake method = %q, want connect", req.Method)
 	}
-	if !jsonObjectContains(req.Params, `"minProtocol":4`, `"maxProtocol":4`, `"id":"cli"`, `"mode":"cli"`, `"displayName":"CloudHub"`, `"token":"test-token"`, `"scopes":["operator.read","operator.write"]`) {
+	if !jsonObjectContains(req.Params, `"minProtocol":4`, `"maxProtocol":4`, `"id":"cli"`, `"mode":"cli"`, `"displayName":"CloudHub"`, `"token":"test-token"`, `"scopes":["operator.read","operator.write","operator.approvals"]`) {
 		return fmt.Errorf("unexpected connect params: %s", req.Params)
 	}
 	return writeHelloOK(conn, req.ID, protocol)
 }
 
 func writeHelloOK(conn *websocket.Conn, id string, protocol int) error {
-	return writeHelloOKWithAuth(conn, id, protocol, "operator", []string{"operator.read", "operator.write"}, "test-token")
+	return writeHelloOKWithAuth(conn, id, protocol, "operator", []string{"operator.read", "operator.write", "operator.approvals"}, "test-token")
 }
 
 func writeHelloOKWithAuth(conn *websocket.Conn, id string, protocol int, role string, scopes []string, deviceToken string) error {
