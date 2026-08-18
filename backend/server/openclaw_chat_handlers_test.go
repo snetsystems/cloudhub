@@ -54,10 +54,10 @@ func TestOpenClawSessionsCreateUsesAuthenticatedOwnerAndServerSession(t *testing
 		if session.OrganizationID != "org-a" || session.UserID != "42" {
 			t.Fatalf("owner = (%q, %q), want (org-a, 42)", session.OrganizationID, session.UserID)
 		}
-		if session.AgentID != "cloudhub-chat" {
-			t.Fatalf("agent ID = %q, want cloudhub-chat", session.AgentID)
+		if session.AgentID != "main" {
+			t.Fatalf("agent ID = %q, want main", session.AgentID)
 		}
-		wantSessionKey := "agent:cloudhub-chat:cloudhub:org-a:42:" + session.ID
+		wantSessionKey := "agent:main:cloudhub:org-a:42:" + session.ID
 		if session.SessionKey != wantSessionKey {
 			t.Fatalf("session key = %q, want %q", session.SessionKey, wantSessionKey)
 		}
@@ -90,7 +90,10 @@ func TestOpenClawSessionsCreateBindsConfiguredAgentIntoTheSessionKey(t *testing.
 
 func TestOpenClawSessionsCreateResolvesGatewayDefaultAgentWhenUnconfigured(t *testing.T) {
 	store := newOpenClawSessionStoreContract()
-	gateway := &fakeOpenClawGateway{agents: openclaw.AgentList{DefaultID: "  gateway-default  "}}
+	gateway := &fakeOpenClawGateway{agents: openclaw.AgentList{
+		DefaultID: "  gateway-default  ",
+		Agents:    []openclaw.Agent{{ID: "gateway-default"}, {ID: "other"}},
+	}}
 	svc := newOpenClawChatService(store, gateway)
 	svc.OpenClawAgentID = ""
 	rr := httptest.NewRecorder()
@@ -113,14 +116,51 @@ func TestOpenClawSessionsCreateResolvesGatewayDefaultAgentWhenUnconfigured(t *te
 	}
 }
 
-func TestOpenClawSessionsCreateRejectsUnresolvableDefaultAgent(t *testing.T) {
+func TestOpenClawSessionsCreateFallsBackToFirstConfiguredAgent(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		agents openclaw.AgentList
+		want   string
+	}{
+		{
+			name:   "missing default",
+			agents: openclaw.AgentList{Agents: []openclaw.Agent{{ID: "first"}, {ID: "second"}}},
+			want:   "first",
+		},
+		{
+			name:   "unknown default",
+			agents: openclaw.AgentList{DefaultID: "missing", Agents: []openclaw.Agent{{ID: "first"}}},
+			want:   "first",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			store := newOpenClawSessionStoreContract()
+			svc := newOpenClawChatService(store, &fakeOpenClawGateway{agents: tt.agents})
+			svc.OpenClawAgentID = ""
+			rr := httptest.NewRecorder()
+
+			svc.OpenClawSessions(rr, openClawRequest(http.MethodPost, "/cloudhub/v2/openclaw/sessions", `{"title":"x"}`, 42, "org-a"))
+
+			if rr.Code != http.StatusCreated {
+				t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusCreated, rr.Body.String())
+			}
+			for _, session := range store.items {
+				if session.AgentID != tt.want {
+					t.Fatalf("agent ID = %q, want %q", session.AgentID, tt.want)
+				}
+			}
+		})
+	}
+}
+
+func TestOpenClawSessionsCreateRejectsEmptyAgentList(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		gateway  openClawGateway
 		wantCode int
 	}{
 		{"no gateway to ask", nil, http.StatusServiceUnavailable},
-		{"gateway reports no default", &fakeOpenClawGateway{agents: openclaw.AgentList{DefaultID: "   "}}, http.StatusBadGateway},
+		{"gateway reports no agents", &fakeOpenClawGateway{agents: openclaw.AgentList{}}, http.StatusBadGateway},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			store := newOpenClawSessionStoreContract()
@@ -412,6 +452,25 @@ func TestOpenClawDisconnectedClientMapsToBadGateway(t *testing.T) {
 
 	if rr.Code != http.StatusBadGateway {
 		t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusBadGateway, rr.Body.String())
+	}
+}
+
+func TestOpenClawGatewayErrorLogsUnderlyingError(t *testing.T) {
+	logger := &lifecycleLogger{}
+	svc := &Service{Logger: logger}
+	rr := httptest.NewRecorder()
+	err := fmt.Errorf("%w: websocket closed by peer", openclaw.ErrDisconnected)
+
+	svc.openClawGatewayError(rr, err)
+
+	if rr.Code != http.StatusBadGateway {
+		t.Fatalf("status = %d, want %d", rr.Code, http.StatusBadGateway)
+	}
+	if !logger.hasField("error_kind", "disconnected") {
+		t.Fatal("gateway error log has no disconnected error classification")
+	}
+	if !logger.hasFieldContaining("websocket closed by peer") {
+		t.Fatal("gateway error log did not include the underlying error")
 	}
 }
 
@@ -1033,7 +1092,7 @@ func newOpenClawChatService(store cloudhub.OpenClawSessionStore, gateway openCla
 		Store:           &Store{OpenClawSessionStore: store},
 		Logger:          &mocks.TestLogger{},
 		OpenClawGateway: gateway,
-		OpenClawAgentID: "cloudhub-chat",
+		OpenClawAgentID: "main",
 	}
 }
 
