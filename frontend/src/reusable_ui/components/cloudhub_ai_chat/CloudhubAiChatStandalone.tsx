@@ -811,22 +811,25 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   }
 
   const handleDeleteSession = async (sessionId: string) => {
+    // 1. Optimistically remove from state immediately for responsive UI
+    setSessions(prev => {
+      const remaining = prev.filter(s => s.id !== sessionId)
+      if (activeSessionId === sessionId) {
+        if (remaining.length > 0) {
+          setActiveSessionId(remaining[0].id)
+        } else {
+          setActiveSessionId('')
+        }
+      }
+      return remaining
+    })
+
+    // 2. Sync deletion with backend
     try {
       await deleteOpenClawSession(sessionId)
-
-      setSessions(prev => {
-        const remaining = prev.filter(s => s.id !== sessionId)
-        if (activeSessionId === sessionId) {
-          if (remaining.length > 0) {
-            setActiveSessionId(remaining[0].id)
-          } else {
-            setActiveSessionId('')
-          }
-        }
-        return remaining
-      })
     } catch (err: any) {
-      triggerErrorNotification(`세션 삭제 중 오류 발생: ${err?.message || ''}`)
+      console.warn('Failed to delete session on backend:', err)
+      triggerErrorNotification(`세션 삭제 중 통신 오류 발생: ${err?.message || ''}`)
     }
   }
 

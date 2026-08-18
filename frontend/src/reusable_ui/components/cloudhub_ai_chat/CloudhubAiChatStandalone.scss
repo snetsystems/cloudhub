@@ -307,7 +307,7 @@
             }
 
             &:hover {
-              background-color: rgba(255, 255, 255, 0.1);
+              background-color: rgba($g20-white, 0.1);
               color: $c-fire;
             }
 
@@ -2099,12 +2099,12 @@
 
   code {
     background: rgba($g4-onyx, 0.7);
-    color: #f0883e;
+    color: $s-orange;
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 12px;
     font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
-    border: 1px solid rgba(#f0883e, 0.2);
+    border: 1px solid rgba($s-orange, 0.2);
   }
 
   /* Table styling */
@@ -2146,8 +2146,8 @@
   /* Code Block styling */
   .chat-markdown-codeblock {
     margin: 10px 0;
-    background: #0d1117;
-    border: 1px solid #30363d;
+    background: $g0-obsidian;
+    border: 1px solid $g4-onyx;
     border-radius: 6px;
     overflow: hidden;
 
@@ -2155,17 +2155,17 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #161b22;
+      background: $g1-raven;
       padding: 6px 12px;
-      border-bottom: 1px solid #30363d;
+      border-bottom: 1px solid $g3-castle;
       font-size: 11px;
       font-weight: 600;
-      color: #8b949e;
+      color: $g10-wolf;
 
       .codeblock-copy-btn {
         background: transparent;
-        border: 1px solid #30363d;
-        color: #c9d1d9;
+        border: 1px solid $g4-onyx;
+        color: $g13-mist;
         font-size: 11px;
         padding: 2px 8px;
         border-radius: 4px;
@@ -2173,9 +2173,9 @@
         transition: all 0.15s ease;
 
         &:hover {
-          background: #21262d;
-          color: #58a6ff;
-          border-color: #58a6ff;
+          background: $g3-castle;
+          color: $c-rainforest;
+          border-color: $c-rainforest;
         }
       }
     }
@@ -2184,7 +2184,7 @@
       padding: 12px;
       margin: 0;
       overflow-x: auto;
-      color: #e6edf3;
+      color: $g16-pearl;
       font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
       font-size: 12px;
       line-height: 1.45;
@@ -2309,23 +2309,23 @@
 .activity-card-box {
   margin: 4px 0;
   border-radius: 6px;
-  background-color: #12131c;
-  border: 1px solid #27293a;
+  background-color: $g1-raven;
+  border: 1px solid $g3-castle;
   overflow: hidden;
   font-size: 12px;
   text-align: left;
 
   &.running {
-    border-color: #3182ce;
+    border-color: $c-pool;
   }
   &.success {
-    border-color: #27293a;
+    border-color: $g3-castle;
   }
   &.error {
-    border-color: #e53e3e;
+    border-color: $c-fire;
   }
   &.blocked {
-    border-color: #dd6b20;
+    border-color: $s-orange;
   }
 
   .activity-card-header {
@@ -2333,8 +2333,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    background-color: #1a1c2a;
-    border-bottom: 1px solid #27293a;
+    background-color: $g2-kevlar;
+    border-bottom: 1px solid $g3-castle;
   }
 
   .activity-card-title {
@@ -2342,7 +2342,7 @@
     align-items: center;
     gap: 8px;
     font-weight: 600;
-    color: #e2e8f0;
+    color: $g16-pearl;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2353,14 +2353,14 @@
     font-weight: 700;
     padding: 2px 6px;
     border-radius: 3px;
-    background-color: #2d3748;
-    color: #a0aec0;
+    background-color: $g4-onyx;
+    color: $g12-forge;
     flex-shrink: 0;
   }
 
   .activity-label {
     font-family: monospace;
-    color: #9f7aea;
+    color: $c-comet;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -2374,20 +2374,20 @@
     flex-shrink: 0;
 
     &.running {
-      background-color: rgba(49, 130, 206, 0.2);
-      color: #63b3ed;
+      background-color: rgba($c-pool, 0.2);
+      color: $c-hydrogen;
     }
     &.success {
-      background-color: rgba(56, 161, 105, 0.2);
-      color: #68d391;
+      background-color: rgba($c-rainforest, 0.2);
+      color: $c-rainforest;
     }
     &.error {
-      background-color: rgba(229, 62, 62, 0.2);
-      color: #fc8181;
+      background-color: rgba($c-fire, 0.2);
+      color: $c-curacao;
     }
     &.blocked {
-      background-color: rgba(221, 107, 32, 0.2);
-      color: #fbd38d;
+      background-color: rgba($s-orange, 0.2);
+      color: $s-pitch;
     }
   }
 
@@ -2395,8 +2395,8 @@
     padding: 8px 12px;
     font-family: monospace;
     font-size: 11px;
-    color: #cbd5e0;
-    background-color: #0f1017;
+    color: $g14-chromium;
+    background-color: $g0-obsidian;
     white-space: pre-wrap;
     word-break: break-all;
   }
@@ -2406,35 +2406,35 @@
     justify-content: space-between;
     align-items: center;
     padding: 6px 12px;
-    background-color: #161824;
-    border-top: 1px solid #232536;
+    background-color: $g1-raven;
+    border-top: 1px solid $g3-castle;
   }
 
   .activity-card-toggle-btn {
     background: none;
     border: none;
-    color: #805ad5;
+    color: $c-star;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     padding: 0;
 
     &:hover {
-      color: #b794f4;
+      color: $c-comet;
       text-decoration: underline;
     }
   }
 
   .activity-duration {
     font-size: 10px;
-    color: #718096;
+    color: $g9-mountain;
     font-family: monospace;
   }
 
   .activity-card-expanded {
     padding: 10px 12px;
-    background-color: #0a0b10;
-    border-top: 1px solid #232536;
+    background-color: $g0-obsidian;
+    border-top: 1px solid $g3-castle;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -2444,19 +2444,19 @@
     .detail-title {
       font-size: 11px;
       font-weight: 600;
-      color: #a0aec0;
+      color: $g11-sidewalk;
       margin-bottom: 4px;
     }
 
     .detail-pre {
       margin: 0;
       padding: 8px;
-      background-color: #12131d;
+      background-color: $g1-raven;
       border-radius: 4px;
-      border: 1px solid #212333;
+      border: 1px solid $g3-castle;
       font-family: monospace;
       font-size: 11px;
-      color: #e2e8f0;
+      color: $g15-platinum;
       max-height: 200px;
       overflow-y: auto;
       white-space: pre-wrap;
@@ -2465,12 +2465,12 @@
 
     &.error-block {
       .detail-title {
-        color: #fc8181;
+        color: $c-curacao;
       }
       .detail-pre {
-        border-color: #742a2a;
-        background-color: #1a0e0e;
-        color: #feb2b2;
+        border-color: rgba($c-fire, 0.4);
+        background-color: rgba($c-fire, 0.1);
+        color: $c-tungsten;
       }
     }
   }
