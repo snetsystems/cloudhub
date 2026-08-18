@@ -326,11 +326,11 @@ export function URLMonitoringPage({
 
   const getCodeNumber = (code: any): number | null => {
     if (typeof code === 'number') {
-      return Number.isFinite(code) ? code : null
+      return Number.isFinite(code) && code !== 0 ? code : null
     }
     if (typeof code === 'string' && code.trim() !== '') {
       const parsed = Number(code)
-      return Number.isFinite(parsed) ? parsed : null
+      return Number.isFinite(parsed) && parsed !== 0 ? parsed : null
     }
     return null
   }

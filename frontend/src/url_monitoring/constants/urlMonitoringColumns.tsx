@@ -19,10 +19,10 @@ type StatusCodeCell =
   | null
   | undefined
 
-/** Shown when last_http_response_code is missing (e.g. not returned from Influx) */
+/** Shown when the latest probe has no HTTP status (disconnect / timeout / DNS). */
 const MISSING_HTTP_STATUS_LABEL = 'No code'
 const MISSING_HTTP_STATUS_TITLE =
-  'No HTTP status code in recent data. Check your query and collection settings.'
+  'No HTTP status from the latest probe (connection failed, timeout, or DNS).'
 
 const getStatusTone = (statusCode: number | null) => {
   if (statusCode === null) return 'unknown'
@@ -34,10 +34,12 @@ const getStatusTone = (statusCode: number | null) => {
 }
 
 const toNumber = (value: StatusCodeCell): number | null => {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value !== 0 ? value : null
+  }
   if (typeof value === 'string') {
     const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : null
+    return Number.isFinite(parsed) && parsed !== 0 ? parsed : null
   }
   return null
 }
