@@ -622,11 +622,31 @@ func (s *Service) openClawAgentID(w http.ResponseWriter, ctx context.Context) (s
 		s.openClawGatewayError(w, err)
 		return "", false
 	}
-	if strings.TrimSpace(agents.DefaultID) == "" {
-		Error(w, http.StatusBadGateway, "OpenClaw gateway reported no default agent", s.Logger)
-		return "", false
+	if agentID := selectOpenClawAgentID(agents); agentID != "" {
+		return agentID, true
 	}
-	return strings.TrimSpace(agents.DefaultID), true
+	Error(w, http.StatusBadGateway, "OpenClaw gateway reported no configured agents", s.Logger)
+	return "", false
+}
+
+func selectOpenClawAgentID(agents openclaw.AgentList) string {
+	defaultID := strings.TrimSpace(agents.DefaultID)
+	if defaultID != "" {
+		if len(agents.Agents) == 0 {
+			return defaultID
+		}
+		for _, agent := range agents.Agents {
+			if strings.TrimSpace(agent.ID) == defaultID {
+				return defaultID
+			}
+		}
+	}
+	for _, agent := range agents.Agents {
+		if agentID := strings.TrimSpace(agent.ID); agentID != "" {
+			return agentID
+		}
+	}
+	return ""
 }
 
 func (s *Service) openClawSessionStore(w http.ResponseWriter, ctx context.Context) (cloudhub.OpenClawSessionStore, bool) {
@@ -740,6 +760,13 @@ func openClawQueryInt(r *http.Request, name string, defaultValue, min, max int) 
 }
 
 func (s *Service) openClawGatewayError(w http.ResponseWriter, err error) {
+	if s.Logger != nil {
+		s.Logger.
+			WithField("component", "openclaw-gateway").
+			WithField("error_kind", openClawReconnectErrorKind(err)).
+			WithField("error", err.Error()).
+			Error("OpenClaw gateway request failed")
+	}
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, openclaw.ErrRequestTimeout) {
 		Error(w, http.StatusGatewayTimeout, "OpenClaw gateway request timed out", s.Logger)
 		return
