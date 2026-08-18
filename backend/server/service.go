@@ -305,6 +305,12 @@ func (m *openClawGatewayManager) forward(events <-chan openclaw.GatewayEvent) {
 			}
 			select {
 			case m.forwardedEvents <- event:
+			default:
+				// Keep draining the Gateway even when no web client is
+				// consuming events. Blocking here fills GatewayClient.events,
+				// which makes the Gateway client disconnect and reconnect
+				// indefinitely. Clients refresh history after reconnect, so a
+				// dropped notification is recoverable.
 			case <-m.ctx.Done():
 				return
 			}

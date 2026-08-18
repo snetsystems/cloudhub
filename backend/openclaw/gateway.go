@@ -63,6 +63,7 @@ type GatewayClient struct {
 	closed             bool
 	subscribed         bool
 	subscriptionWanted bool
+	acceptEvents       bool
 	requestID          uint64
 	events             chan GatewayEvent
 	disconnected       chan struct{}
@@ -511,6 +512,9 @@ func (c *GatewayClient) subscribe(ctx context.Context) (<-chan GatewayEvent, err
 	c.mu.Lock()
 	alreadySubscribed := c.subscribed
 	conn := c.connection
+	if !alreadySubscribed && conn != nil {
+		c.acceptEvents = true
+	}
 	c.mu.Unlock()
 	if alreadySubscribed {
 		return c.events, nil
@@ -522,6 +526,7 @@ func (c *GatewayClient) subscribe(ctx context.Context) (<-chan GatewayEvent, err
 		c.mu.Lock()
 		if c.connection == conn {
 			c.subscribed = false
+			c.acceptEvents = false
 		}
 		c.mu.Unlock()
 		return nil, err
@@ -567,6 +572,7 @@ func (c *GatewayClient) Close() error {
 	conn := c.connection
 	c.connection = nil
 	c.subscribed = false
+	c.acceptEvents = false
 	c.mu.Unlock()
 	if conn != nil {
 		c.failConnection(conn, ErrClosed)
@@ -627,6 +633,7 @@ func (c *GatewayClient) connect(ctx context.Context) error {
 	previous := c.connection
 	c.connection = state
 	c.subscribed = false
+	c.acceptEvents = false
 	c.deviceToken = deviceToken
 	c.mu.Unlock()
 	if previous != nil {
@@ -802,6 +809,12 @@ func (c *GatewayClient) readLoop(conn *gatewayConnection) {
 				continue
 			}
 			if normalized, ok := normalizeEvent(event); ok {
+				c.mu.Lock()
+				acceptEvents := c.acceptEvents
+				c.mu.Unlock()
+				if !acceptEvents {
+					continue
+				}
 				select {
 				case c.events <- normalized:
 				default:
@@ -863,6 +876,7 @@ func (c *GatewayClient) failConnection(conn *gatewayConnection, err error) {
 	if wasCurrent {
 		c.connection = nil
 		c.subscribed = false
+		c.acceptEvents = false
 	}
 	c.mu.Unlock()
 	_ = conn.conn.Close()

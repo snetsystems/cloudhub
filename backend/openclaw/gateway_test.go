@@ -927,6 +927,57 @@ func TestGatewayDisconnectsWhenEventQueueIsFull(t *testing.T) {
 	startEvents := make(chan struct{})
 	eventsSent := make(chan struct{})
 	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
+		subscribe, err := readGatewayRequest(conn)
+		if err != nil {
+			return err
+		}
+		if subscribe.Method != "sessions.subscribe" {
+			return fmt.Errorf("subscribe method = %q, want sessions.subscribe", subscribe.Method)
+		}
+		if err := writeGatewayResponse(conn, subscribe.ID, true, map[string]interface{}{"subscribed": true}, nil); err != nil {
+			return err
+		}
+		<-startEvents
+		for sequence := 1; sequence <= 65; sequence++ {
+			if err := conn.WriteJSON(map[string]interface{}{
+				"type": "event", "event": "sessions.changed", "seq": sequence,
+				"payload": map[string]interface{}{
+					"sessionKey": "session-1",
+					"reason":     "message",
+				},
+			}); err != nil {
+				return err
+			}
+		}
+		close(eventsSent)
+		<-release
+		return nil
+	})
+	defer close(release)
+
+	client := newTestGatewayClient(t, server.URL(), 500*time.Millisecond)
+	if _, err := client.Subscribe(context.Background()); err != nil {
+		t.Fatalf("subscribe: %v", err)
+	}
+	close(startEvents)
+	select {
+	case <-eventsSent:
+	case <-time.After(time.Second):
+		t.Fatal("timed out sending events")
+	}
+
+	select {
+	case <-client.Disconnected():
+	case <-time.After(time.Second):
+		t.Fatal("event queue overflow did not disconnect the gateway")
+	}
+}
+
+func TestGatewayIgnoresEventsBeforeSubscription(t *testing.T) {
+	release := make(chan struct{})
+	startEvents := make(chan struct{})
+	eventsSent := make(chan struct{})
+	server := newFakeGateway(t, func(conn *websocket.Conn, _ int) error {
 		<-startEvents
 		for sequence := 1; sequence <= 65; sequence++ {
 			if err := conn.WriteJSON(map[string]interface{}{
@@ -955,12 +1006,12 @@ func TestGatewayDisconnectsWhenEventQueueIsFull(t *testing.T) {
 
 	select {
 	case <-client.Disconnected():
-	case <-time.After(time.Second):
-		t.Fatal("event queue overflow did not disconnect the gateway")
+		t.Fatal("unsubscribed events disconnected the gateway")
+	case <-time.After(100 * time.Millisecond):
 	}
 }
 
-func TestGatewayRejectsEventQueueOverflowDuringConnect(t *testing.T) {
+func TestGatewayIgnoresEventsDuringConnectBeforeSubscription(t *testing.T) {
 	release := make(chan struct{})
 	server := newFakeGatewayWithHandshake(t, func(conn *websocket.Conn, _ *fakeGateway) error {
 		if err := conn.WriteJSON(map[string]interface{}{
@@ -1010,15 +1061,14 @@ func TestGatewayRejectsEventQueueOverflowDuringConnect(t *testing.T) {
 		client.events <- GatewayEvent{}
 	}
 
-	err = client.Reconnect(context.Background())
-	if !errors.Is(err, errEventQueueFull) {
-		t.Fatalf("reconnect error = %v, want event queue overflow", err)
+	if err := client.Reconnect(context.Background()); err != nil {
+		t.Fatalf("reconnect: %v", err)
 	}
 	client.mu.Lock()
 	connection := client.connection
 	client.mu.Unlock()
-	if connection != nil {
-		t.Fatal("failed connection was installed as current")
+	if connection == nil {
+		t.Fatal("connected gateway was not installed as current")
 	}
 }
 
