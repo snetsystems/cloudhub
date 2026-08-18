@@ -1130,6 +1130,38 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     },
   ]
 
+  const PROMPT_SUGGESTIONS = [
+    {
+      id: 'sug-1',
+      icon: '🖥️',
+      title: 'WAS 서버 상태 점검',
+      prompt: 'was-server-01 점검해줘',
+    },
+    {
+      id: 'sug-2',
+      icon: '🌐',
+      title: '연결된 서버 목록 조회',
+      prompt: '연결된 서버목록 알려줘',
+    },
+    {
+      id: 'sug-3',
+      icon: '🔌',
+      title: '네트워크 통신 장애 분석',
+      prompt: 'network-repair-demo 네임스페이스에서 frontend가 backend(8080)로 접속이 안 됩니다.',
+    },
+    {
+      id: 'sug-4',
+      icon: '🚨',
+      title: '주요 Critical 알림 진단',
+      prompt: '확인해야될 알림 알려줘 ( influxDB에서 alert 뒤져서 12시간 안에 쌓인 critical alert 들 중 꼭 확인해야할 message 알려줘)',
+    },
+  ]
+
+  const handleSelectSuggestion = (promptText: string) => {
+    if (isStreamingActive) return
+    handleSendPrompt(promptText)
+  }
+
   const [showSkillMenu, setShowSkillMenu] = useState<boolean>(false)
   const [selectedSkillIndex, setSelectedSkillIndex] = useState<number>(0)
 
@@ -1206,10 +1238,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
   }
 
-  const handleSendPrompt = async () => {
-    if (!inputPrompt.trim() || isStreamingActive) return
+  const handleSendPrompt = async (promptOverride?: string) => {
+    const promptToSend = typeof promptOverride === 'string' ? promptOverride : inputPrompt
+    if (!promptToSend.trim() || isStreamingActive) return
 
-    const currentPrompt = inputPrompt.trim()
+    const currentPrompt = promptToSend.trim()
     setInputPrompt('')
     setIsStreamingActive(true)
     if (textareaRef.current) {
@@ -1402,10 +1435,35 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 <span>대화 내역을 불러오는 중입니다...</span>
               </div>
             ) : displayableMessages.length === 0 && approvals.length === 0 ? (
-              <div style={{padding: '60px 20px', textAlign: 'center', color: '#718096', fontSize: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'}}>
-                <div style={{fontSize: '24px', marginBottom: '4px'}}>💬</div>
-                <div style={{fontWeight: 'bold', color: '#e2e8f0'}}>새로운 대화를 시작해보세요</div>
-                <div style={{fontSize: '12px', color: '#a0aec0'}}>질문이나 분석할 로그/명령어를 입력하면 자동으로 대화 세션이 생성됩니다.</div>
+              <div className="chat-empty-state">
+                <div className="empty-state-hero">
+                  <div className="empty-hero-icon">💬</div>
+                  <div className="empty-hero-title">새로운 대화를 시작해보세요</div>
+                  <div className="empty-hero-subtitle">
+                    클러스터 장애 분석, 호스트 점검, 로그 쿼리 등 질문을 입력하거나 아래 추천 질문을 선택하세요.
+                  </div>
+                </div>
+
+                <div className="prompt-suggestions-container">
+                  <div className="suggestions-header">추천 질문</div>
+                  <div className="suggestions-grid">
+                    {PROMPT_SUGGESTIONS.map(sug => (
+                      <button
+                        key={sug.id}
+                        type="button"
+                        className="suggestion-card"
+                        onClick={() => handleSelectSuggestion(sug.prompt)}
+                        title={sug.prompt}
+                      >
+                        <div className="suggestion-card-top">
+                          <span className="suggestion-icon">{sug.icon}</span>
+                          <span className="suggestion-title">{sug.title}</span>
+                        </div>
+                        <div className="suggestion-desc">{sug.prompt}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
               displayableMessages.flatMap(msg => {
@@ -1598,7 +1656,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           }
           size={ComponentSize.Small}
           shape={ButtonShape.Default}
-          onClick={handleSendPrompt}
+          onClick={() => handleSendPrompt()}
           status={
             isStreamingActive
               ? ComponentStatus.Disabled
