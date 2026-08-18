@@ -746,7 +746,7 @@ func (s *Server) Serve(ctx context.Context) {
 	// protocol/scope detail but never the device token, private key, or
 	// signature. The device ID is a public SHA-256 of the public key.
 	service.OpenClawAgentID = strings.TrimSpace(s.OpenClawAgentID)
-	openClawGateway, openClawDeviceID, err := s.newOpenClawGatewayManager(ctx)
+	openClawGateway, openClawDeviceID, err := s.newOpenClawGatewayManager(ctx, logger)
 	if err != nil {
 		logger.
 			WithField("component", "openclaw-gateway").
@@ -758,7 +758,7 @@ func (s *Server) Serve(ctx context.Context) {
 		logger.
 			WithField("component", "openclaw-gateway").
 			WithField("device_id", openClawDeviceID).
-			Info("OpenClaw gateway connected as a paired operator device")
+			Info("OpenClaw gateway reconnect manager started as a paired operator device")
 	}
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
@@ -1017,14 +1017,14 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-var newOpenClawGatewayClient = func(ctx context.Context, config openclaw.GatewayConfig) (openClawGatewayLifecycle, error) {
-	return openclaw.NewGatewayClient(ctx, config)
+var newOpenClawGatewayClient = func(_ context.Context, config openclaw.GatewayConfig) (openClawGatewayLifecycle, error) {
+	return openclaw.NewDisconnectedGatewayClient(config)
 }
 
 // newOpenClawGatewayManager returns the Gateway lifecycle manager along with
 // the paired device ID, which is public (a SHA-256 of the device public key)
 // and safe to log.
-func (s *Server) newOpenClawGatewayManager(ctx context.Context) (*openClawGatewayManager, string, error) {
+func (s *Server) newOpenClawGatewayManager(ctx context.Context, logger cloudhub.Logger) (*openClawGatewayManager, string, error) {
 	url := strings.TrimSpace(s.OpenClawGatewayURL)
 	if url == "" {
 		return nil, "", nil
@@ -1047,7 +1047,7 @@ func (s *Server) newOpenClawGatewayManager(ctx context.Context) (*openClawGatewa
 	if err != nil {
 		return nil, "", err
 	}
-	return newOpenClawGatewayManager(ctx, gateway), openclaw.DeviceID(devicePrivateKey), nil
+	return newOpenClawGatewayManager(ctx, gateway, logger), openclaw.DeviceID(devicePrivateKey), nil
 }
 
 func openService(
@@ -1224,6 +1224,7 @@ func openService(
 		AlertKapacitorMappings:    alertKapacitorMappingStore,
 		AlertGroupRules:           alertGroupRuleStore,
 		AlertTemplates:            alertTemplatesStore,
+		openClawManagedApprovals:  newOpenClawManagedApprovalStore(time.Now),
 	}
 }
 

@@ -13,6 +13,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+func TestRequiredOperatorScopesIncludeApprovalsExactly(t *testing.T) {
+	want := []string{"operator.read", "operator.write", "operator.approvals"}
+	if len(RequiredOperatorScopes) != len(want) {
+		t.Fatalf("RequiredOperatorScopes = %v, want %v", RequiredOperatorScopes, want)
+	}
+	for i := range want {
+		if RequiredOperatorScopes[i] != want[i] {
+			t.Fatalf("RequiredOperatorScopes = %v, want %v", RequiredOperatorScopes, want)
+		}
+	}
+}
+
 func TestProvisionDeviceFirstRun(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("file mode assertions are POSIX-specific")

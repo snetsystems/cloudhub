@@ -1,0 +1,17 @@
+{
+  "name": "@local/openclaw-command-approval-policy",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test *.test.js"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.6.34"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ]
+  }
+}

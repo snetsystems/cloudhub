@@ -16,7 +16,7 @@ import (
 // RequiredOperatorScopes are the exact operator scopes CloudHub requests
 // when pairing as an OpenClaw operator device. Provisioning and runtime
 // connections must request identical scopes.
-var RequiredOperatorScopes = []string{"operator.read", "operator.write"}
+var RequiredOperatorScopes = []string{"operator.read", "operator.write", "operator.approvals"}
 
 // pairingRequiredCodes are the Gateway RPC error codes returned from the
 // "connect" method when a device has been registered but is still waiting

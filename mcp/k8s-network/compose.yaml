@@ -1,0 +1,14 @@
+services:
+  k8s-network-mcp:
+    build: .
+    env_file: .env
+    ports:
+      - "8080:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/k8s-network-mcp", "healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 6

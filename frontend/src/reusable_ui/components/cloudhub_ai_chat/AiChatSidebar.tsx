@@ -94,17 +94,23 @@ export const AiChatSidebar: FC<Props> = ({
                 <span className={`session-icon icon ${IconFont.Chat}`} />
                 <span className="session-text-title">{session.title}</span>
                 {onDeleteSession && (
-                  <ConfirmButton
-                    icon="trash"
-                    size="btn-xs"
-                    square={true}
-                    type="btn-danger"
-                    confirmText="삭제"
-                    customClass="session-delete-confirm-btn"
-                    isEventStopPropagation={true}
-                    position="left"
-                    confirmAction={() => onDeleteSession(session.id)}
-                  />
+                  <div
+                    className="session-delete-wrapper"
+                    onClick={e => e.stopPropagation()}
+                    onMouseDown={e => e.stopPropagation()}
+                  >
+                    <ConfirmButton
+                      icon="trash"
+                      size="btn-xs"
+                      square={true}
+                      type="btn-danger"
+                      confirmText="삭제"
+                      customClass="session-delete-confirm-btn"
+                      isEventStopPropagation={true}
+                      position="left"
+                      confirmAction={() => onDeleteSession(session.id)}
+                    />
+                  </div>
                 )}
               </div>
             ))}

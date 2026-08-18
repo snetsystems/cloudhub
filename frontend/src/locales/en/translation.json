@@ -418,6 +418,28 @@
     "restore_success": "Menu item restored.",
     "restore_failed": "Failed to restore menu item."
   },
+  "openclaw_approval": {
+    "aria_label": "Approval request",
+    "tool": "Tool",
+    "severity": "Severity",
+    "status": {
+      "decision_required": "Decision required.",
+      "resolving": "Resolving decision.",
+      "allowed": "Allowed.",
+      "denied": "Denied.",
+      "expired": "Expired."
+    },
+    "countdown": {
+      "seconds_one": "{{count}} second remaining.",
+      "seconds_other": "{{count}} seconds remaining.",
+      "minutes_one": "{{count}} minute remaining.",
+      "minutes_other": "{{count}} minutes remaining."
+    },
+    "actions": {
+      "allow_once": "Allow once",
+      "deny": "Deny"
+    }
+  },
   "org_menus": {
     "title": "Organization",
     "col_enabled": "Visible",

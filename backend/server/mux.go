@@ -172,6 +172,13 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		}
 	}
 
+	EnsureManagedApprovalServiceAuth := func(next http.HandlerFunc) http.HandlerFunc {
+		return openClawManagedApprovalServiceAuth(
+			service.InternalENV.KubernetesConfig.CollectorAuthToken,
+			next,
+		)
+	}
+
 	if opts.PprofEnabled {
 		// add profiling routes
 		router.GET("/debug/pprof/:thing", http.DefaultServeMux.ServeHTTP)
@@ -370,7 +377,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v2/openclaw/sessions/:id", EnsureMember(service.OpenClawSessionDelete))
 	router.GET("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureViewer(service.OpenClawSessionMessages))
 	router.POST("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureMember(service.OpenClawSessionMessage))
+	router.GET("/cloudhub/v2/openclaw/sessions/:id/approvals", EnsureViewer(service.OpenClawSessionApprovals))
+	router.POST("/cloudhub/v2/openclaw/sessions/:id/approvals/:approvalId/resolve", EnsureEditor(service.OpenClawSessionApprovalResolve))
 	router.POST("/cloudhub/v2/openclaw/rpc", EnsureMember(service.OpenClawRPC))
+	router.POST("/api/v1/openclaw/managed-approvals", EnsureManagedApprovalServiceAuth(service.OpenClawManagedApprovalCreate))
+	router.GET("/api/v1/openclaw/managed-approvals/:approvalId", EnsureManagedApprovalServiceAuth(service.OpenClawManagedApprovalStatus))
 
 	// Layouts
 	router.GET("/cloudhub/v1/layouts", EnsureViewer(service.Layouts))
@@ -606,6 +617,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Kubernetes API Proxy
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)
 	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)
+	serviceKubernetes := http.HandlerFunc(EnsureCollectorAuth(service.KubernetesProxy))
+	registerAllMethods(router, "/api/v1/kubernetes/proxy/*path", serviceKubernetes)
 
 	// Hubble (Cilium network observability)
 	router.GET("/cloudhub/v1/hubble/clusters", EnsureViewer(service.HubbleClustersHandler))

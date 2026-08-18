@@ -1,0 +1,27 @@
+{
+  "id": "command-approval-policy",
+  "name": "Command Approval Policy",
+  "description": "Blocks forbidden shell commands and requests approval for risky commands.",
+  "activation": {
+    "onStartup": true
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "debug": {
+        "type": "boolean",
+        "default": false
+      },
+      "cloudHubApprovalURL": {
+        "type": "string",
+        "description": "CloudHub base URL for managed NetworkPolicy approvals"
+      },
+      "cloudHubApprovalInsecureSkipVerify": {
+        "type": "boolean",
+        "default": false,
+        "description": "Skip TLS certificate verification only for managed approval requests"
+      }
+    }
+  }
+}

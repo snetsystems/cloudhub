@@ -9011,13 +9011,179 @@
         }
       }
     },
+    "../v2/openclaw/sessions/{id}/approvals": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "List pending plugin approvals for one owned session",
+        "description": "Requires Viewer access. Returns only pending approvals whose Gateway session key exactly matches the caller-owned CloudHub session. Gateway session keys are never returned.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "CloudHub session ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Pending approvals for the owned session",
+            "schema": {
+              "$ref": "#/definitions/OpenClawApprovals"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Insufficient role or the session belongs to another user",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such session in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "The Gateway request failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "No Gateway or session store configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "504": {
+            "description": "The Gateway request timed out",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/sessions/{id}/approvals/{approvalId}/resolve": {
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Resolve one pending plugin approval",
+        "description": "Requires Editor access. Resolves only an unexpired approval whose complete ID and Gateway session key exactly match the caller-owned CloudHub session. Only one-time approval or denial is accepted.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "CloudHub session ID"
+          },
+          {
+            "name": "approvalId",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "Complete plugin approval ID"
+          },
+          {
+            "name": "resolution",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OpenClawApprovalResolveRequest"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Approval resolved"
+          },
+          "400": {
+            "description": "Malformed JSON or unknown request field",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Insufficient role or the session belongs to another user",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such session in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "The approval is expired, resolved, unavailable for this session, or rejects the requested decision",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "approvalId is missing or decision is not allow-once or deny",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "The Gateway request failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "No Gateway or session store configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "504": {
+            "description": "The Gateway request timed out",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "../v2/openclaw/events/ws": {
       "get": {
         "tags": [
           "openclaw"
         ],
         "summary": "Subscribe to OpenClaw events (WebSocket)",
-        "description": "Upgrades to a WebSocket. This is not a JSON request/response operation, so frames are described here rather than in a schema.\n\nSend `{\"sessionId\": \"...\"}` as the first frame, and again for every further session to subscribe to on the same socket; a session the caller does not own closes the socket with code 1008.\n\nFor authorized subscriptions, OpenClaw `chat` and `agent` event payloads are forwarded as the complete Gateway JSON payload, without CloudHub reshaping or truncation. The payload includes `sessionKey` and may include any Gateway-defined fields. A chat payload commonly contains `state`, `deltaText`, and `message`; tool activity uses an agent payload with `stream: \"item\"` or `stream: \"tool\"` and Gateway-defined `data`.\n\nA `sessions.changed` frame remains a CloudHub frame with `type: \"sessions.changed\"`; re-read history when it arrives.",
+        "description": "Upgrades to a WebSocket. This is not a JSON request/response operation, so frames are described here rather than in a schema.\n\nSend `{\"sessionId\": \"...\"}` as the first frame, and again for every further session to subscribe to on the same socket; a session the caller does not own closes the socket with code 1008.\n\nFor authorized subscriptions, OpenClaw `chat` and `agent` event payloads are forwarded as the complete Gateway JSON payload, without CloudHub reshaping or truncation. The payload includes `sessionKey` and may include any Gateway-defined fields. A chat payload commonly contains `state`, `deltaText`, and `message`; tool activity uses an agent payload with `stream: \"item\"` or `stream: \"tool\"` and Gateway-defined `data`.\n\nApproval frames use `type: \"approval.requested\"` or `type: \"approval.resolved\"`, the owned CloudHub `sessionId`, and an `approval` object matching `OpenClawApprovalEvent`. The Gateway session key is omitted.\n\nA `sessions.changed` frame remains a CloudHub frame with `type: \"sessions.changed\"`; re-read history when it arrives.",
         "responses": {
           "101": {
             "description": "Switching protocols"
@@ -16461,6 +16627,118 @@
           "description": "Gateway-reported status, e.g. started"
         }
       }
+    },
+    "OpenClawApproval": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "description",
+        "severity",
+        "toolName",
+        "allowedDecisions",
+        "createdAt",
+        "expiresAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Complete plugin approval ID"
+        },
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "toolName": {
+          "type": "string"
+        },
+        "allowedDecisions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "allow-once",
+              "deny"
+            ]
+          }
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Unix milliseconds"
+        },
+        "expiresAt": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Unix milliseconds"
+        }
+      }
+    },
+    "OpenClawApprovals": {
+      "type": "object",
+      "required": [
+        "approvals"
+      ],
+      "properties": {
+        "approvals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawApproval"
+          }
+        }
+      }
+    },
+    "OpenClawApprovalResolveRequest": {
+      "type": "object",
+      "required": [
+        "decision"
+      ],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "allow-once",
+            "deny"
+          ]
+        }
+      },
+      "example": {
+        "decision": "allow-once"
+      }
+    },
+    "OpenClawApprovalEvent": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/OpenClawApproval"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "decision": {
+              "type": "string",
+              "enum": [
+                "allow-once",
+                "deny"
+              ],
+              "description": "Present on approval.resolved"
+            },
+            "resolvedBy": {
+              "type": "string",
+              "description": "Present on approval.resolved"
+            },
+            "resolvedAt": {
+              "type": "integer",
+              "format": "int64",
+              "description": "Unix milliseconds; present on approval.resolved"
+            }
+          }
+        }
+      ]
     },
     "OpenClawRPCRequest": {
       "type": "object",

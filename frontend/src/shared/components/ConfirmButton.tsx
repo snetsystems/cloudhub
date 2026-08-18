@@ -89,7 +89,13 @@ class ConfirmButton extends PureComponent<Props, State> {
     this.setState({expanded: !this.state.expanded})
   }
 
-  private handleConfirmClick = () => {
+  private handleConfirmClick = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    if (this.props.isEventStopPropagation && e) {
+      e.stopPropagation()
+    }
+
     this.setState({expanded: false})
     this.props.confirmAction()
   }

@@ -97,18 +97,34 @@ type openClawActivityDTO struct {
 	EndedAt    int64  `json:"endedAt,omitempty"`
 }
 
+type openClawApprovalEventDTO struct {
+	ID               string                            `json:"id"`
+	Source           openClawApprovalSource            `json:"source"`
+	Title            string                            `json:"title,omitempty"`
+	Description      string                            `json:"description,omitempty"`
+	Severity         string                            `json:"severity,omitempty"`
+	ToolName         string                            `json:"toolName,omitempty"`
+	AllowedDecisions []openclaw.PluginApprovalDecision `json:"allowedDecisions,omitempty"`
+	CreatedAt        int64                             `json:"createdAt,omitempty"`
+	ExpiresAt        int64                             `json:"expiresAt,omitempty"`
+	Decision         openclaw.PluginApprovalDecision   `json:"decision,omitempty"`
+	ResolvedBy       string                            `json:"resolvedBy,omitempty"`
+	ResolvedAt       int64                             `json:"resolvedAt,omitempty"`
+}
+
 type openClawEventDTO struct {
-	Type         openclaw.EventKind   `json:"type"`
-	SessionID    string               `json:"sessionId"`
-	State        string               `json:"state,omitempty"`
-	DeltaText    string               `json:"deltaText,omitempty"`
-	Reason       string               `json:"reason,omitempty"`
-	ErrorKind    string               `json:"errorKind,omitempty"`
-	ErrorMessage string               `json:"errorMessage,omitempty"`
-	StopReason   string               `json:"stopReason,omitempty"`
-	SpawnedBy    string               `json:"spawnedBy,omitempty"`
-	Message      *openClawMessageDTO  `json:"message,omitempty"`
-	Activity     *openClawActivityDTO `json:"activity,omitempty"`
+	Type         openclaw.EventKind        `json:"type"`
+	SessionID    string                    `json:"sessionId"`
+	State        string                    `json:"state,omitempty"`
+	DeltaText    string                    `json:"deltaText,omitempty"`
+	Reason       string                    `json:"reason,omitempty"`
+	ErrorKind    string                    `json:"errorKind,omitempty"`
+	ErrorMessage string                    `json:"errorMessage,omitempty"`
+	StopReason   string                    `json:"stopReason,omitempty"`
+	SpawnedBy    string                    `json:"spawnedBy,omitempty"`
+	Message      *openClawMessageDTO       `json:"message,omitempty"`
+	Activity     *openClawActivityDTO      `json:"activity,omitempty"`
+	Approval     *openClawApprovalEventDTO `json:"approval,omitempty"`
 }
 
 // OpenClawSessions creates or lists only sessions owned by the
@@ -317,7 +333,7 @@ func (s *Service) OpenClawEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fanout := s.openClawEventFanout()
-	events, unsubscribe, err := fanout.Subscribe(ctx)
+	events, overflow, unsubscribe, err := fanout.Subscribe(ctx)
 	if err != nil {
 		s.openClawGatewayError(w, err)
 		return
@@ -327,7 +343,26 @@ func (s *Service) OpenClawEvents(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	defer ws.Close()
+	connectionDone := make(chan struct{})
+	overflowWatcherDone := make(chan struct{})
+	go func() {
+		defer close(overflowWatcherDone)
+		select {
+		case <-overflow:
+			_ = ws.WriteControl(
+				websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.CloseTryAgainLater, "event stream overflow; reconnect required"),
+				time.Now().Add(time.Second),
+			)
+			_ = ws.Close()
+		case <-connectionDone:
+		}
+	}()
+	defer func() {
+		close(connectionDone)
+		_ = ws.Close()
+		<-overflowWatcherDone
+	}()
 
 	var (
 		subscriptions   = make(map[string]string)
@@ -426,8 +461,11 @@ type openClawEventFanout struct {
 }
 
 type openClawEventSubscriber struct {
-	events chan openclaw.GatewayEvent
-	done   chan struct{}
+	events       chan openclaw.GatewayEvent
+	done         chan struct{}
+	overflow     chan struct{}
+	doneOnce     sync.Once
+	overflowOnce sync.Once
 }
 
 func newOpenClawEventFanout(gateway openClawGateway) *openClawEventFanout {
@@ -460,27 +498,32 @@ func (s *Service) openClawEventFanout() *openClawEventFanout {
 	return fanout
 }
 
-func (f *openClawEventFanout) Subscribe(ctx context.Context) (<-chan openclaw.GatewayEvent, func(), error) {
+func (f *openClawEventFanout) Subscribe(ctx context.Context) (<-chan openclaw.GatewayEvent, <-chan struct{}, func(), error) {
 	if err := f.start(ctx); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	subscriber := &openClawEventSubscriber{
-		events: make(chan openclaw.GatewayEvent, openClawEventSubscriberBuffer),
-		done:   make(chan struct{}),
+		events:   make(chan openclaw.GatewayEvent, openClawEventSubscriberBuffer),
+		done:     make(chan struct{}),
+		overflow: make(chan struct{}),
 	}
 	f.mu.Lock()
 	f.subscribers[subscriber] = struct{}{}
 	f.mu.Unlock()
 
-	var once sync.Once
-	return subscriber.events, func() {
-		once.Do(func() {
-			close(subscriber.done)
-			f.mu.Lock()
-			delete(f.subscribers, subscriber)
-			f.mu.Unlock()
-		})
+	return subscriber.events, subscriber.overflow, func() {
+		f.removeSubscriber(subscriber, false)
 	}, nil
+}
+
+func (f *openClawEventFanout) removeSubscriber(subscriber *openClawEventSubscriber, overflow bool) {
+	if overflow {
+		subscriber.overflowOnce.Do(func() { close(subscriber.overflow) })
+	}
+	subscriber.doneOnce.Do(func() { close(subscriber.done) })
+	f.mu.Lock()
+	delete(f.subscribers, subscriber)
+	f.mu.Unlock()
 }
 
 func (f *openClawEventFanout) start(ctx context.Context) error {
@@ -521,22 +564,34 @@ func (f *openClawEventFanout) start(ctx context.Context) error {
 	}
 }
 
+func (f *openClawEventFanout) Publish(event openclaw.GatewayEvent) {
+	f.dispatch(event)
+}
+
 func (f *openClawEventFanout) forward(events <-chan openclaw.GatewayEvent) {
 	for event := range events {
-		f.mu.Lock()
-		subscribers := make([]*openClawEventSubscriber, 0, len(f.subscribers))
-		for subscriber := range f.subscribers {
-			subscribers = append(subscribers, subscriber)
+		f.dispatch(event)
+	}
+}
+
+func (f *openClawEventFanout) dispatch(event openclaw.GatewayEvent) {
+	f.mu.Lock()
+	subscribers := make([]*openClawEventSubscriber, 0, len(f.subscribers))
+	for subscriber := range f.subscribers {
+		subscribers = append(subscribers, subscriber)
+	}
+	f.mu.Unlock()
+	for _, subscriber := range subscribers {
+		select {
+		case <-subscriber.done:
+			continue
+		default:
 		}
-		f.mu.Unlock()
-		for _, subscriber := range subscribers {
-			select {
-			case subscriber.events <- event:
-			case <-subscriber.done:
-			default:
-				// A full queue means this WebSocket is slow. Drop this event for
-				// that recipient so it cannot block dispatch to other clients.
-			}
+		select {
+		case subscriber.events <- event:
+		case <-subscriber.done:
+		default:
+			f.removeSubscriber(subscriber, true)
 		}
 	}
 }
@@ -567,11 +622,31 @@ func (s *Service) openClawAgentID(w http.ResponseWriter, ctx context.Context) (s
 		s.openClawGatewayError(w, err)
 		return "", false
 	}
-	if strings.TrimSpace(agents.DefaultID) == "" {
-		Error(w, http.StatusBadGateway, "OpenClaw gateway reported no default agent", s.Logger)
-		return "", false
+	if agentID := selectOpenClawAgentID(agents); agentID != "" {
+		return agentID, true
 	}
-	return strings.TrimSpace(agents.DefaultID), true
+	Error(w, http.StatusBadGateway, "OpenClaw gateway reported no configured agents", s.Logger)
+	return "", false
+}
+
+func selectOpenClawAgentID(agents openclaw.AgentList) string {
+	defaultID := strings.TrimSpace(agents.DefaultID)
+	if defaultID != "" {
+		if len(agents.Agents) == 0 {
+			return defaultID
+		}
+		for _, agent := range agents.Agents {
+			if strings.TrimSpace(agent.ID) == defaultID {
+				return defaultID
+			}
+		}
+	}
+	for _, agent := range agents.Agents {
+		if agentID := strings.TrimSpace(agent.ID); agentID != "" {
+			return agentID
+		}
+	}
+	return ""
 }
 
 func (s *Service) openClawSessionStore(w http.ResponseWriter, ctx context.Context) (cloudhub.OpenClawSessionStore, bool) {
@@ -685,14 +760,24 @@ func openClawQueryInt(r *http.Request, name string, defaultValue, min, max int) 
 }
 
 func (s *Service) openClawGatewayError(w http.ResponseWriter, err error) {
+	if s.Logger != nil {
+		s.Logger.
+			WithField("component", "openclaw-gateway").
+			WithField("error_kind", openClawReconnectErrorKind(err)).
+			WithField("error", err.Error()).
+			Error("OpenClaw gateway request failed")
+	}
 	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, openclaw.ErrRequestTimeout) {
 		Error(w, http.StatusGatewayTimeout, "OpenClaw gateway request timed out", s.Logger)
 		return
 	}
 	var rpcError *openclaw.RPCError
-	if errors.As(err, &rpcError) && (rpcError.Code == "conflict" || rpcError.Code == "session_busy" || rpcError.Code == "already_running") {
-		Error(w, http.StatusConflict, "OpenClaw gateway rejected the request due to a session conflict", s.Logger)
-		return
+	if errors.As(err, &rpcError) {
+		switch strings.ToLower(rpcError.Code) {
+		case "conflict", "session_busy", "already_running":
+			Error(w, http.StatusConflict, "OpenClaw gateway rejected the request due to a session conflict", s.Logger)
+			return
+		}
 	}
 	Error(w, http.StatusBadGateway, "OpenClaw gateway request failed", s.Logger)
 }
@@ -743,7 +828,30 @@ func openClawEventResponse(sessionID string, event openclaw.GatewayEvent) openCl
 			EndedAt:    event.Activity.EndedAt,
 		}
 	}
+	if event.Approval != nil {
+		response.Approval = &openClawApprovalEventDTO{
+			ID:               event.Approval.ID,
+			Source:           openClawApprovalSourceForID(event.Approval.ID),
+			Title:            event.Approval.Title,
+			Description:      event.Approval.Description,
+			Severity:         event.Approval.Severity,
+			ToolName:         event.Approval.ToolName,
+			AllowedDecisions: append([]openclaw.PluginApprovalDecision(nil), event.Approval.AllowedDecisions...),
+			CreatedAt:        event.Approval.CreatedAtMs,
+			ExpiresAt:        event.Approval.ExpiresAtMs,
+			Decision:         event.ApprovalDecision,
+			ResolvedBy:       event.ApprovalResolvedBy,
+			ResolvedAt:       event.ApprovalResolvedAtMs,
+		}
+	}
 	return response
+}
+
+func openClawApprovalSourceForID(approvalID string) openClawApprovalSource {
+	if strings.HasPrefix(approvalID, "cloudhub:") {
+		return openClawApprovalSourceManaged
+	}
+	return openClawApprovalSourceNative
 }
 
 // truncateOpenClawActivityOutput caps a tool output so one command reading a

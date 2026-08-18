@@ -38,105 +38,103 @@ const preprocessMarkdownText = (rawText: string): string => {
   return processed
 }
 
-export const AiChatMessageMarkdown: FC<AiChatMessageMarkdownProps> = ({
-  content,
-  className,
-}) => {
-  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null)
+const MarkdownCodeBlock: FC<{value?: string; language?: string}> = ({value, language}) => {
+  const [isCopied, setIsCopied] = useState<boolean>(false)
+  const codeString = value || ''
+  const lang = language || 'text'
 
-  const handleCopyCode = (codeText: string, id: string) => {
-    navigator.clipboard.writeText(codeText)
-    setCopiedCodeId(id)
+  const handleCopyCode = () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(codeString).catch(() => {})
+      }
+    } catch {
+      // Fallback ignore clipboard errors in non-secure or iframe contexts
+    }
+    setIsCopied(true)
     setTimeout(() => {
-      setCopiedCodeId(null)
+      setIsCopied(false)
     }, 2000)
   }
 
-  const processedContent = preprocessMarkdownText(content)
-
-  // Custom Code Block component for react-markdown 3.x
-  const renderCodeBlock = (props: {value?: string; language?: string}) => {
-    const codeString = props.value || ''
-    const lang = props.language || 'text'
-    const codeId = `code-${Math.random().toString(36).substring(2, 9)}`
-
-    return (
-      <div className="chat-markdown-codeblock">
-        <div className="codeblock-header">
-          <span className="codeblock-lang">{lang.toUpperCase()}</span>
-          <button
-            className="codeblock-copy-btn"
-            onClick={() => handleCopyCode(codeString, codeId)}
-            type="button"
-          >
-            {copiedCodeId === codeId ? '✓ Copied' : 'Copy Code'}
-          </button>
-        </div>
-        <pre className="codeblock-pre">
-          <code>{codeString}</code>
-        </pre>
+  return (
+    <div className="chat-markdown-codeblock">
+      <div className="codeblock-header">
+        <span className="codeblock-lang">{lang.toUpperCase()}</span>
+        <button
+          className="codeblock-copy-btn"
+          onClick={handleCopyCode}
+          type="button"
+        >
+          {isCopied ? '✓ Copied' : 'Copy Code'}
+        </button>
       </div>
-    )
-  }
+      <pre className="codeblock-pre">
+        <code>{codeString}</code>
+      </pre>
+    </div>
+  )
+}
 
-  // Custom Image Renderer using inline-block container to prevent HTML DOM breaking inside <li> or <p>
-  const renderImage = (props: {src?: string; alt?: string}) => {
-    const [hasError, setHasError] = useState(false)
+const MarkdownImage: FC<{src?: string; alt?: string}> = ({src, alt}) => {
+  const [hasError, setHasError] = useState<boolean>(false)
 
-    if (hasError || !props.src) {
-      return (
-        <span className="chat-markdown-img-fallback">
-          🖼️ <strong>Image Path:</strong> <code>{props.src || 'Unknown'}</code>
-        </span>
-      )
-    }
-
+  if (hasError || !src) {
     return (
-      <span className="chat-markdown-image-container">
-        <img
-          src={props.src}
-          alt={props.alt || 'Attached image'}
-          className="chat-markdown-img"
-          onError={() => setHasError(true)}
-        />
-        {props.alt && props.alt !== 'Pasted Image' && props.alt !== 'Attached image' && (
-          <span className="chat-markdown-img-caption">{props.alt}</span>
-        )}
+      <span className="chat-markdown-img-fallback">
+        🖼️ <strong>Image Path:</strong> <code>{src || 'Unknown'}</code>
       </span>
     )
   }
 
-  // Custom Link Renderer
-  const renderLink = (props: {href?: string; children?: React.ReactNode}) => {
-    return (
-      <a
-        href={props.href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="chat-markdown-link"
-      >
-        {props.children}
-      </a>
-    )
-  }
+  return (
+    <span className="chat-markdown-image-container">
+      <img
+        src={src}
+        alt={alt || 'Attached image'}
+        className="chat-markdown-img"
+        onError={() => setHasError(true)}
+      />
+      {alt && alt !== 'Pasted Image' && alt !== 'Attached image' && (
+        <span className="chat-markdown-img-caption">{alt}</span>
+      )}
+    </span>
+  )
+}
 
-  // Custom Table Cell Renderer
-  const renderTableCell = (props: {isHeader?: boolean; children?: React.ReactNode}) => {
-    if (props.isHeader) {
-      return <th>{props.children}</th>
-    }
-    return <td>{props.children}</td>
+const MarkdownLink: FC<{href?: string; children?: React.ReactNode}> = ({href, children}) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    className="chat-markdown-link"
+  >
+    {children}
+  </a>
+)
+
+const MarkdownTableCell: FC<{isHeader?: boolean; children?: React.ReactNode}> = ({isHeader, children}) => {
+  if (isHeader) {
+    return <th>{children}</th>
   }
+  return <td>{children}</td>
+}
+
+export const AiChatMessageMarkdown: FC<AiChatMessageMarkdownProps> = ({
+  content,
+  className,
+}) => {
+  const processedContent = preprocessMarkdownText(typeof content === 'string' ? content : String(content || ''))
 
   return (
     <div className={classnames('chat-markdown-body', className)}>
       <Markdown
         source={processedContent}
         renderers={{
-          code: renderCodeBlock,
-          image: renderImage,
-          link: renderLink,
-          tableCell: renderTableCell,
+          code: MarkdownCodeBlock,
+          image: MarkdownImage,
+          link: MarkdownLink,
+          tableCell: MarkdownTableCell,
         }}
         escapeHtml={false}
       />

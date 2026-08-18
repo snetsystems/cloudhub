@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect, ChangeEvent, KeyboardEvent, FC} from 'react'
+import React, {useState, useRef, useEffect, useCallback, ChangeEvent, KeyboardEvent, FC} from 'react'
 import classnames from 'classnames'
 import uuid from 'uuid'
 
@@ -10,11 +10,9 @@ import {
   ComponentStatus,
 } from 'src/reusable_ui/types'
 import Button from 'src/reusable_ui/components/Button'
-import Input from 'src/reusable_ui/components/inputs/Input'
 
-// Cloudhub Threesizer Component & Constants
-import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import {HANDLE_VERTICAL} from 'src/shared/constants'
+// Cloudhub Reusable Components & Threesizer Panels
+import CollapsibleSidePanelSlice from 'src/shared/components/CollapsibleSidePanelSlice'
 
 // Cloudhub Reusable Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -22,7 +20,12 @@ import AiChatSidebar from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatSid
 import SubagentInspectorPanel, {CustomPanelView} from 'src/reusable_ui/components/cloudhub_ai_chat/SubagentInspectorPanel'
 import AiChatMessageMarkdown from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageMarkdown'
 import AiChatMessageAvatar from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageAvatar'
-import {deleteOpenClawSession} from 'src/reusable_ui/components/cloudhub_ai_chat/openclawApi'
+import OpenClawApprovalCard from 'src/reusable_ui/components/cloudhub_ai_chat/OpenClawApprovalCard'
+import {
+  deleteOpenClawSession,
+  OpenClawApprovalEventDTO,
+} from 'src/reusable_ui/components/cloudhub_ai_chat/openclawApi'
+import {useOpenClawApprovals} from 'src/reusable_ui/components/cloudhub_ai_chat/useOpenClawApprovals'
 
 // Cloudhub Redux Notification Action & Helpers
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -151,25 +154,57 @@ const isRawToolErrorMessage = (str: string): boolean => {
   )
 }
 
-const extractDisplayableText = (contentParts: OpenClawContentPart[]): string => {
-  if (!contentParts || contentParts.length === 0) return ''
-  return contentParts
-    .filter(part => {
-      const text = part.text || ''
-      if (isJsonString(text)) return false
-      if (isRawToolErrorMessage(text)) return false
-      return true
-    })
-    .map(part => part.text)
-    .join('')
+const extractDisplayableText = (content: any): string => {
+  if (!content) return ''
+  if (typeof content === 'string') return content
+  if (Array.isArray(content)) {
+    return content
+      .filter(part => {
+        if (!part) return false
+        if (part.type === 'toolCall') return false
+        const text = typeof part === 'string' ? part : (part.text || '')
+        if (!text) return false
+        if (isJsonString(text)) return false
+        if (isRawToolErrorMessage(text)) return false
+        return true
+      })
+      .map(part => (typeof part === 'string' ? part : part.text || ''))
+      .join('')
+  }
+  return ''
+}
+
+const ensureString = (val: any): string => {
+  if (val === null || val === undefined) return ''
+  if (typeof val === 'string') return val
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val)
+  if (typeof val === 'object') {
+    try {
+      return JSON.stringify(val)
+    } catch {
+      return String(val)
+    }
+  }
+  return String(val)
 }
 
 const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
 
+  if (!card) return null
+
+  const labelText = ensureString(card.label) || 'Tool'
+  const descriptionText = ensureString(card.description)
+  const inputText = ensureString(card.input)
+  const detailText = ensureString(card.detail)
+  const errorText = ensureString(card.error)
+
+  const startedAt = card.startedAt ? Number(card.startedAt) : null
+  const endedAt = card.endedAt ? Number(card.endedAt) : null
+
   const durationMs =
-    card.startedAt && card.endedAt && card.endedAt >= card.startedAt
-      ? card.endedAt - card.startedAt
+    startedAt && endedAt && endedAt >= startedAt
+      ? endedAt - startedAt
       : null
 
   const durationText =
@@ -179,32 +214,33 @@ const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
         : `${(durationMs / 1000).toFixed(2)}s`
       : null
 
-  const badgeClass = card.status.toLowerCase()
+  const rawStatus = card.status || 'success'
+  const badgeClass = rawStatus.toLowerCase()
   const badgeLabel =
-    card.status === 'running'
+    rawStatus === 'running'
       ? '실행 중...'
-      : card.status === 'success'
+      : rawStatus === 'success'
       ? '완료'
-      : card.status === 'error'
+      : rawStatus === 'error'
       ? '오류'
       : '차단됨'
 
-  const hasDetails = Boolean(card.input || card.detail || card.error || durationText)
+  const hasDetails = Boolean(inputText || detailText || errorText || durationText)
 
   return (
     <div className={classnames('activity-card-box', badgeClass)}>
       <div className="activity-card-header">
         <div className="activity-card-title">
           <span className="activity-type-tag">{card.type === 'mcp' ? 'MCP' : 'TOOL'}</span>
-          <span className="activity-label">{card.label}</span>
+          <span className="activity-label">{labelText}</span>
         </div>
         <span className={classnames('activity-status-badge', badgeClass)}>
           {badgeLabel}
         </span>
       </div>
 
-      {card.description && (
-        <div className="activity-card-description">{card.description}</div>
+      {descriptionText && (
+        <div className="activity-card-description">{descriptionText}</div>
       )}
 
       {hasDetails && (
@@ -222,22 +258,22 @@ const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
 
       {isExpanded && hasDetails && (
         <div className="activity-card-expanded">
-          {card.input && (
+          {inputText && (
             <div className="activity-detail-block">
               <div className="detail-title">📥 입력 (Input):</div>
-              <pre className="detail-pre"><code>{card.input}</code></pre>
+              <pre className="detail-pre"><code>{inputText}</code></pre>
             </div>
           )}
-          {card.detail && (
+          {detailText && (
             <div className="activity-detail-block">
               <div className="detail-title">📤 출력 (Output):</div>
-              <pre className="detail-pre"><code>{card.detail}</code></pre>
+              <pre className="detail-pre"><code>{detailText}</code></pre>
             </div>
           )}
-          {card.error && (
+          {errorText && (
             <div className="activity-detail-block error-block">
               <div className="detail-title">⚠️ 오류 (Error):</div>
-              <pre className="detail-pre error-pre"><code>{card.error}</code></pre>
+              <pre className="detail-pre error-pre"><code>{errorText}</code></pre>
             </div>
           )}
         </div>
@@ -251,24 +287,161 @@ const formatChatTimestamp = (timestamp?: number | string | Date): string => {
     return new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
   }
   const d = typeof timestamp === 'number' || typeof timestamp === 'string' ? new Date(timestamp) : timestamp
-  if (isNaN(d.getTime())) {
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) {
     return new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
   }
   return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
 }
 
-const toChatMessage = (dto: OpenClawMessageDTO, index: number): ChatMessage | null => {
-  if (dto.role === 'system') return null
+const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
+  if (!rawMessages || !Array.isArray(rawMessages) || rawMessages.length === 0) return []
 
-  const text = extractDisplayableText(dto.content || [])
-  if (!text.trim() && dto.role !== 'user') return null
+  const chatMessages: ChatMessage[] = []
+  let currentAiMessage: ChatMessage | null = null
+  const pendingActivityMap: Map<string, ActivityCardItem> = new Map()
 
-  return {
-    id: `${dto.timestamp || Date.now()}-${index}`,
-    sender: dto.role === 'user' ? 'user' : dto.role === 'assistant' ? 'ai' : 'system',
-    text,
-    timestamp: formatChatTimestamp(dto.timestamp),
+  const flushAiMessage = () => {
+    if (currentAiMessage) {
+      if (currentAiMessage.text || (currentAiMessage.activities && currentAiMessage.activities.length > 0)) {
+        chatMessages.push(currentAiMessage)
+      }
+      currentAiMessage = null
+    }
   }
+
+  rawMessages.forEach((raw, idx) => {
+    if (!raw || typeof raw !== 'object') return
+    if (raw.role === 'system') return
+
+    if (raw.role === 'user') {
+      flushAiMessage()
+      let userText = ''
+      if (typeof raw.content === 'string') {
+        userText = raw.content
+      } else if (Array.isArray(raw.content)) {
+        userText = raw.content
+          .map((p: any) => (typeof p === 'string' ? p : p?.text || ''))
+          .join('')
+      } else if (raw.content) {
+        userText = String(raw.content)
+      }
+      chatMessages.push({
+        id: raw.__openclaw?.id || `user-${raw.timestamp || Date.now()}-${idx}`,
+        sender: 'user',
+        text: userText,
+        timestamp: formatChatTimestamp(raw.timestamp),
+      })
+      return
+    }
+
+    if (raw.role === 'assistant') {
+      if (!currentAiMessage) {
+        currentAiMessage = {
+          id: raw.__openclaw?.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+          sender: 'ai',
+          text: '',
+          timestamp: formatChatTimestamp(raw.timestamp),
+          activities: [],
+        }
+      }
+
+      if (Array.isArray(raw.content)) {
+        for (const part of raw.content) {
+          if (!part) continue
+          if (part.type === 'toolCall') {
+            const toolName = part.name || 'tool'
+            const isMcp = toolName.includes('__')
+            let inputStr = ''
+            try {
+              inputStr = part.arguments ? JSON.stringify(part.arguments, null, 2) : ''
+            } catch {
+              inputStr = String(part.arguments || '')
+            }
+            const rawDesc =
+              part.arguments?.command ||
+              part.arguments?.query ||
+              part.arguments?.path ||
+              part.arguments?.url ||
+              inputStr
+            const desc = ensureString(rawDesc)
+
+            const card: ActivityCardItem = {
+              id: part.id || `act-${idx}`,
+              type: isMcp ? 'mcp' : 'tool',
+              label: toolName,
+              description: desc,
+              input: inputStr,
+              status: 'success',
+              startedAt: raw.timestamp ? Number(raw.timestamp) : undefined,
+            }
+            if (!currentAiMessage.activities) {
+              currentAiMessage.activities = []
+            }
+            currentAiMessage.activities.push(card)
+            if (part.id) {
+              pendingActivityMap.set(part.id, card)
+            }
+          } else if (part.type === 'text' && part.text) {
+            currentAiMessage.text = (currentAiMessage.text ? currentAiMessage.text + '\n' : '') + part.text
+          }
+        }
+      } else if (typeof raw.content === 'string' && raw.content) {
+        currentAiMessage.text = (currentAiMessage.text ? currentAiMessage.text + '\n' : '') + raw.content
+      }
+      return
+    }
+
+    if (raw.role === 'toolResult') {
+      let resultText = ''
+      if (Array.isArray(raw.content)) {
+        resultText = raw.content.map((p: any) => (typeof p === 'string' ? p : p?.text || '')).join('')
+      } else if (typeof raw.content === 'string') {
+        resultText = raw.content
+      } else if (raw.content) {
+        resultText = String(raw.content)
+      }
+
+      const toolCallId = raw.toolCallId
+      const targetCard = toolCallId ? pendingActivityMap.get(toolCallId) : null
+
+      if (targetCard) {
+        targetCard.status = raw.isError ? 'error' : 'success'
+        targetCard.endedAt = raw.timestamp ? Number(raw.timestamp) : undefined
+        if (raw.isError) {
+          targetCard.error = resultText
+        } else {
+          targetCard.detail = resultText
+        }
+      } else {
+        if (!currentAiMessage) {
+          currentAiMessage = {
+            id: raw.__openclaw?.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+            sender: 'ai',
+            text: '',
+            timestamp: formatChatTimestamp(raw.timestamp),
+            activities: [],
+          }
+        }
+        const toolName = raw.toolName || 'tool'
+        const card: ActivityCardItem = {
+          id: toolCallId || raw.__openclaw?.id || `tool-${idx}`,
+          type: toolName.includes('__') ? 'mcp' : 'tool',
+          label: toolName,
+          status: raw.isError ? 'error' : 'success',
+          detail: raw.isError ? undefined : resultText,
+          error: raw.isError ? resultText : undefined,
+          endedAt: raw.timestamp ? Number(raw.timestamp) : undefined,
+        }
+        if (!currentAiMessage.activities) {
+          currentAiMessage.activities = []
+        }
+        currentAiMessage.activities.push(card)
+      }
+    }
+  })
+
+  flushAiMessage()
+  return chatMessages
 }
 
 interface ComponentProps extends CloudhubAiChatProps {
@@ -290,7 +463,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const [isStreamingActive, setIsStreamingActive] = useState<boolean>(false)
   const [showSubagentPanel, setShowSubagentPanel] = useState<boolean>(false)
   const [subagentFilter, setSubagentFilter] = useState<'ALL' | 'RUNNING' | 'SUCCESS' | 'ERROR'>('ALL')
-  const [subagentPanelProportions, setSubagentPanelProportions] = useState<number[]>([0.55, 0.45])
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(true)
   const wsRef = useRef<WebSocket | null>(null)
@@ -298,6 +470,68 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pendingRunsRef = useRef<Record<string, string>>({})
   const sessionsRef = useRef<ChatSession[]>(sessions)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const [isJustCompleted, setIsJustCompleted] = useState<boolean>(false)
+  const prevStreamingRef = useRef<boolean>(false)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleCopyMessageText = useCallback((msgId: string, text: string) => {
+    if (!text) return
+    const fallbackCopy = (content: string) => {
+      try {
+        const el = document.createElement('textarea')
+        el.value = content
+        el.setAttribute('readonly', '')
+        el.style.position = 'absolute'
+        el.style.left = '-9999px'
+        document.body.appendChild(el)
+        el.select()
+        document.execCommand('copy')
+        document.body.removeChild(el)
+      } catch (e) {
+        console.warn('[OpenClaw AI Chat]: Copy fallback failed:', e)
+      }
+    }
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        fallbackCopy(text)
+      })
+    } else {
+      fallbackCopy(text)
+    }
+
+    setCopiedMessageId(msgId)
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current)
+    }
+    copyTimeoutRef.current = setTimeout(() => {
+      setCopiedMessageId(null)
+    }, 2000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Detect when streaming finishes: trigger ready glow & auto-focus textarea
+  useEffect(() => {
+    if (prevStreamingRef.current && !isStreamingActive) {
+      setIsJustCompleted(true)
+      const timer = setTimeout(() => {
+        setIsJustCompleted(false)
+      }, 1200)
+      if (textareaRef.current) {
+        textareaRef.current.focus()
+      }
+      return () => clearTimeout(timer)
+    }
+    prevStreamingRef.current = isStreamingActive
+  }, [isStreamingActive])
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current
@@ -308,19 +542,47 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   }
 
   useEffect(() => {
+    adjustTextareaHeight()
+    const frameId = requestAnimationFrame(adjustTextareaHeight)
+    const timer = setTimeout(adjustTextareaHeight, 60)
+    return () => {
+      cancelAnimationFrame(frameId)
+      clearTimeout(timer)
+    }
+  }, [inputPrompt, showSubagentPanel])
+
+  useEffect(() => {
+    window.addEventListener('resize', adjustTextareaHeight)
+    return () => {
+      window.removeEventListener('resize', adjustTextareaHeight)
+    }
+  }, [])
+
+  useEffect(() => {
     sessionsRef.current = sessions
   }, [sessions])
 
-  const triggerErrorNotification = (msg: string) => {
-    if (notify) {
-      notify({
-        ...defaultErrorNotification,
-        message: msg,
-      })
-    } else {
-      console.error('[OpenClaw AI Chat Error]:', msg)
-    }
-  }
+  const triggerErrorNotification = useCallback(
+    (msg: string) => {
+      if (notify) {
+        notify({
+          ...defaultErrorNotification,
+          message: msg,
+        })
+      } else {
+        console.error('[OpenClaw AI Chat Error]:', msg)
+      }
+    },
+    [notify]
+  )
+
+  const {
+    approvals,
+    now,
+    refreshApprovals,
+    handleApprovalEvent,
+    resolveApproval,
+  } = useOpenClawApprovals(activeSessionId, triggerErrorNotification)
 
   // Original clean session fetcher
   const fetchSessions = async () => {
@@ -335,7 +597,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         setIsLoadingHistory(false)
         return
       }
-      const data: {sessions: OpenClawSessionDTO[]} = await res.json()
+      const data: {sessions: OpenClawSessionDTO[]} = await res.json().catch(() => ({sessions: []}))
       const loadedSessions = (data.sessions || []).map(toChatSession)
       if (loadedSessions.length > 0) {
         setSessions(loadedSessions)
@@ -379,16 +641,24 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         })
         if (!res.ok) return
 
-        const data: {messages: OpenClawMessageDTO[]} = await res.json()
-        const msgs = (data.messages || [])
-          .map(toChatMessage)
-          .filter((m): m is ChatMessage => m !== null)
+        const data: {messages: OpenClawMessageDTO[]} = await res.json().catch(() => ({messages: []}))
+        const msgs = parseOpenClawHistory(data.messages || [])
         setSessions(prev =>
           prev.map(s => {
             if (s.id !== activeSessionId) return s
-            const fetchedIds = new Set(msgs.map(m => m.id))
-            const localOnly = (s.messages || []).filter(m => !fetchedIds.has(m.id))
-            return {...s, messages: [...msgs, ...localOnly]}
+            const hasPendingStreaming = Boolean(
+              pendingRunsRef.current[activeSessionId] ||
+              (s.messages || []).some(m => m.isStreaming)
+            )
+            // If the session is currently actively streaming, keep local streaming state
+            if (hasPendingStreaming) {
+              return s
+            }
+            // Otherwise, replace with official server history
+            return {
+              ...s,
+              messages: msgs.length > 0 ? msgs : (s.messages && s.messages.length > 0 ? s.messages : []),
+            }
           })
         )
       } catch (err: any) {
@@ -430,11 +700,10 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     const mergeActivityCardIntoSession = (actData: any) => {
       if (!actData) return
-      const key = actData.toolCallId || actData.itemId || `act-${Date.now()}`
+      const key = ensureString(actData.toolCallId || actData.itemId || `act-${Date.now()}`)
       const phase = actData.phase || 'start'
       const kind = actData.kind || 'tool'
-      const name = actData.name || 'exec'
-      const title = actData.title || actData.meta || actData.name || key
+      const title = ensureString(actData.title || actData.meta || actData.name || key)
       const isFinished = phase === 'end' || phase === 'output' || actData.status === 'completed' || phase === 'result'
       const isErr = actData.isError || actData.status === 'error'
       const isBlocked = actData.status === 'blocked'
@@ -447,20 +716,30 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         ? 'success'
         : 'running'
 
-      let outputText = actData.output || actData.summary || actData.progressText || ''
+      let outputText = ensureString(actData.output || actData.summary || actData.progressText || '')
       if (actData.result?.content) {
-        outputText = actData.result.content.map((c: any) => c.text || '').join('\n')
+        if (Array.isArray(actData.result.content)) {
+          outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : ensureString(c?.text || c))).join('\n')
+        } else if (typeof actData.result.content === 'string') {
+          outputText = actData.result.content
+        } else if (actData.result.content) {
+          outputText = ensureString(actData.result.content)
+        }
       }
+
+      const summaryText = ensureString(actData.summary || (kind === 'command' ? actData.meta : undefined))
+      const inputText = ensureString(actData.input ? (typeof actData.input === 'string' ? actData.input : JSON.stringify(actData.input, null, 2)) : '')
+      const errorText = ensureString(actData.error || (isErr ? outputText : undefined))
 
       const newEntry: ActivityCardItem = {
         id: key,
         type: kind === 'mcp' ? 'mcp' : 'tool',
         label: title,
-        description: actData.summary || (kind === 'command' ? actData.meta : undefined),
+        description: summaryText || undefined,
         detail: outputText,
-        error: actData.error || (isErr ? outputText : undefined),
+        error: errorText || undefined,
         status,
-        input: actData.input,
+        input: inputText || undefined,
         startedAt: actData.startedAt,
         endedAt: actData.endedAt,
       }
@@ -540,15 +819,25 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
         socket.onopen = () => {
           socket.send(JSON.stringify({sessionId: activeSessionId}))
+          refreshApprovals()
         }
 
         socket.onmessage = event => {
           try {
             const payload = JSON.parse(event.data)
 
+            if (
+              payload.type === 'approval.requested' ||
+              payload.type === 'approval.resolved'
+            ) {
+              handleApprovalEvent(payload as OpenClawApprovalEventDTO)
+              return
+            }
+
             // Handle resync notification from OpenClaw
             if (payload.type === 'sessions.changed') {
               fetchMessages(true)
+              refreshApprovals()
               return
             }
 
@@ -578,18 +867,24 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
               mergeActivityCardIntoSession(actData)
 
               // 2. Update Subagent Inspector panel task list
-              const toolCallId = actData.toolCallId || actData.itemId || `tool-${Date.now()}`
+              const toolCallId = ensureString(actData.toolCallId || actData.itemId || `tool-${Date.now()}`)
               const phase = actData.phase || 'start'
               const kind: 'tool' | 'command' | string = actData.kind || (actData.itemId?.startsWith('command:') ? 'command' : 'tool')
-              const name = actData.name || 'exec'
-              const title = actData.title || actData.meta || actData.name || 'Tool Execution'
-              const metaText = actData.meta || actData.summary || actData.progressText || ''
+              const name = ensureString(actData.name || 'exec')
+              const title = ensureString(actData.title || actData.meta || actData.name || 'Tool Execution')
+              const metaText = ensureString(actData.meta || actData.summary || actData.progressText || '')
               const isEnd = phase === 'end' || actData.status === 'completed' || phase === 'result'
               const isErr = actData.isError || actData.status === 'error'
 
-              let outputText = actData.output || metaText
+              let outputText = ensureString(actData.output || metaText)
               if (actData.result?.content) {
-                outputText = actData.result.content.map((c: any) => c.text || '').join('\n')
+                if (Array.isArray(actData.result.content)) {
+                  outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : ensureString(c?.text || c))).join('\n')
+                } else if (typeof actData.result.content === 'string') {
+                  outputText = actData.result.content
+                } else if (actData.result.content) {
+                  outputText = ensureString(actData.result.content)
+                }
               }
 
               const status: 'RUNNING' | 'SUCCESS' | 'ERROR' = isErr ? 'ERROR' : isEnd ? 'SUCCESS' : 'RUNNING'
@@ -720,13 +1015,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   })
                 )
               }
+              // Sync with official backend history after stream completion
+              fetchMessages(true)
             }
           } catch (e) {
             console.warn('[WebSocket Payload Parse Error]', e)
           }
         }
 
-        socket.onclose = ev => {
+        socket.onclose = () => {
           setIsStreamingActive(false)
           finalizePendingRun('연결이 끊어져 응답을 받지 못했습니다.')
           if (!isTornDown) {
@@ -745,14 +1042,20 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       if (reconnectTimer) clearTimeout(reconnectTimer)
       if (wsRef.current) wsRef.current.close()
     }
-  }, [activeSessionId])
+  }, [activeSessionId, handleApprovalEvent, refreshApprovals])
 
   const activeSession = sessions.find(s => s.id === activeSessionId) || null
   const subagents = activeSession?.subagents || []
+  const displayableMessages = (activeSession?.messages || []).filter(
+    msg => msg.text || msg.isStreaming || (msg.activities && msg.activities.length > 0)
+  )
+  const approvalIdSetKey = JSON.stringify(
+    approvals.map(approval => approval.id).sort()
+  )
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'})
-  }, [activeSession?.messages])
+  }, [activeSession?.messages, approvalIdSetKey])
 
   const handleSelectSession = (id: string) => {
     setActiveSessionId(id)
@@ -766,22 +1069,25 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   }
 
   const handleDeleteSession = async (sessionId: string) => {
+    // 1. Optimistically remove from state immediately for responsive UI
+    setSessions(prev => {
+      const remaining = prev.filter(s => s.id !== sessionId)
+      if (activeSessionId === sessionId) {
+        if (remaining.length > 0) {
+          setActiveSessionId(remaining[0].id)
+        } else {
+          setActiveSessionId('')
+        }
+      }
+      return remaining
+    })
+
+    // 2. Sync deletion with backend
     try {
       await deleteOpenClawSession(sessionId)
-
-      setSessions(prev => {
-        const remaining = prev.filter(s => s.id !== sessionId)
-        if (activeSessionId === sessionId) {
-          if (remaining.length > 0) {
-            setActiveSessionId(remaining[0].id)
-          } else {
-            setActiveSessionId('')
-          }
-        }
-        return remaining
-      })
     } catch (err: any) {
-      triggerErrorNotification(`세션 삭제 중 오류 발생: ${err?.message || ''}`)
+      console.warn('Failed to delete session on backend:', err)
+      triggerErrorNotification(`세션 삭제 중 통신 오류 발생: ${err?.message || ''}`)
     }
   }
 
@@ -823,6 +1129,38 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       category: 'Test',
     },
   ]
+
+  const PROMPT_SUGGESTIONS = [
+    {
+      id: 'sug-1',
+      icon: '🖥️',
+      title: 'WAS 서버 상태 점검',
+      prompt: 'was-server-01 점검해줘',
+    },
+    {
+      id: 'sug-2',
+      icon: '🌐',
+      title: '연결된 서버 목록 조회',
+      prompt: '연결된 서버목록 알려줘',
+    },
+    {
+      id: 'sug-3',
+      icon: '🔌',
+      title: '네트워크 통신 장애 분석',
+      prompt: 'network-repair-demo 네임스페이스에서 frontend가 backend(8080)로 접속이 안 됩니다.',
+    },
+    {
+      id: 'sug-4',
+      icon: '🚨',
+      title: '주요 Critical 알림 진단',
+      prompt: '확인해야될 알림 알려줘 ( influxDB에서 alert 뒤져서 12시간 안에 쌓인 critical alert 들 중 꼭 확인해야할 message 알려줘)',
+    },
+  ]
+
+  const handleSelectSuggestion = (promptText: string) => {
+    if (isStreamingActive) return
+    handleSendPrompt(promptText)
+  }
 
   const [showSkillMenu, setShowSkillMenu] = useState<boolean>(false)
   const [selectedSkillIndex, setSelectedSkillIndex] = useState<number>(0)
@@ -900,10 +1238,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
   }
 
-  const handleSendPrompt = async () => {
-    if (!inputPrompt.trim() || isStreamingActive) return
+  const handleSendPrompt = async (promptOverride?: string) => {
+    const promptToSend = typeof promptOverride === 'string' ? promptOverride : inputPrompt
+    if (!promptToSend.trim() || isStreamingActive) return
 
-    const currentPrompt = inputPrompt.trim()
+    const currentPrompt = promptToSend.trim()
     setInputPrompt('')
     setIsStreamingActive(true)
     if (textareaRef.current) {
@@ -953,7 +1292,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           return
         }
 
-        const createdDto: OpenClawSessionDTO = await createRes.json()
+        const createdDto: OpenClawSessionDTO = await createRes.json().catch(() => ({} as any))
         const createdSession: ChatSession = {
           ...toChatSession(createdDto),
           messages: [userMessage, loadingAiMsg],
@@ -1038,10 +1377,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     setShowSubagentPanel(prev => !prev)
   }
 
-  const handleThreesizerResize = (proportions: number[]) => {
-    setSubagentPanelProportions(proportions)
-  }
-
   const wrapperClass = classnames(
     'cloudhub-ai-chat-standalone',
     `mode-${mode}`,
@@ -1099,16 +1434,39 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 </span>
                 <span>대화 내역을 불러오는 중입니다...</span>
               </div>
-            ) : !activeSession || (activeSession.messages || []).length === 0 ? (
-              <div style={{padding: '60px 20px', textAlign: 'center', color: '#718096', fontSize: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px'}}>
-                <div style={{fontSize: '24px', marginBottom: '4px'}}>💬</div>
-                <div style={{fontWeight: 'bold', color: '#e2e8f0'}}>새로운 대화를 시작해보세요</div>
-                <div style={{fontSize: '12px', color: '#a0aec0'}}>질문이나 분석할 로그/명령어를 입력하면 자동으로 대화 세션이 생성됩니다.</div>
+            ) : displayableMessages.length === 0 && approvals.length === 0 ? (
+              <div className="chat-empty-state">
+                <div className="empty-state-hero">
+                  <div className="empty-hero-icon">💬</div>
+                  <div className="empty-hero-title">새로운 대화를 시작해보세요</div>
+                  <div className="empty-hero-subtitle">
+                    클러스터 장애 분석, 호스트 점검, 로그 쿼리 등 질문을 입력하거나 아래 추천 질문을 선택하세요.
+                  </div>
+                </div>
+
+                <div className="prompt-suggestions-container">
+                  <div className="suggestions-header">추천 질문</div>
+                  <div className="suggestions-grid">
+                    {PROMPT_SUGGESTIONS.map(sug => (
+                      <button
+                        key={sug.id}
+                        type="button"
+                        className="suggestion-card"
+                        onClick={() => handleSelectSuggestion(sug.prompt)}
+                        title={sug.prompt}
+                      >
+                        <div className="suggestion-card-top">
+                          <span className="suggestion-icon">{sug.icon}</span>
+                          <span className="suggestion-title">{sug.title}</span>
+                        </div>
+                        <div className="suggestion-desc">{sug.prompt}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             ) : (
-              activeSession!.messages
-                .filter(msg => msg.text || msg.isStreaming || (msg.activities && msg.activities.length > 0))
-                .flatMap(msg => {
+              displayableMessages.flatMap(msg => {
                   if (msg.sender === 'user') {
                     return [(
                       <div key={msg.id} className="message-item user">
@@ -1132,7 +1490,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                     msg.activities.forEach(card => {
                       elements.push(
                         <div key={`act-${msg.id}-${card.id}`} className="message-item ai activity-message-item">
-                          <AiChatMessageAvatar sender="ai" />
+                          <AiChatMessageAvatar sender="tool" />
                           <div className="message-bubble activity-message-bubble">
                             <AiChatToolExecutionCard card={card} />
                           </div>
@@ -1167,9 +1525,34 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                                   {msg.text && <AiChatMessageMarkdown content={msg.text} />}
                                   {msg.isStreaming && <span className="blinking-cursor" />}
                                 </div>
-                                {msg.timestamp && (
-                                  <div className="message-bubble-footer">
-                                    <span className="message-timestamp">{msg.timestamp}</span>
+                                {msg.isStreaming ? (
+                                  msg.timestamp && (
+                                    <div className="message-bubble-footer">
+                                      <span className="message-timestamp">{msg.timestamp}</span>
+                                    </div>
+                                  )
+                                ) : (
+                                  <div className="message-bubble-footer ai-completed-footer">
+                                    <div className="ai-footer-left">
+                                      <span className="ai-status-done-badge">
+                                        <span className="done-icon">✓</span> 답변 완료
+                                      </span>
+                                      {msg.timestamp && (
+                                        <span className="message-timestamp">{msg.timestamp}</span>
+                                      )}
+                                    </div>
+                                    <div className="ai-footer-actions">
+                                      <button
+                                        type="button"
+                                        className={classnames('ai-copy-btn', {
+                                          copied: copiedMessageId === msg.id,
+                                        })}
+                                        onClick={() => handleCopyMessageText(msg.id, msg.text)}
+                                        title="답변 내용 복사"
+                                      >
+                                        {copiedMessageId === msg.id ? '복사됨' : '복사'}
+                                      </button>
+                                    </div>
                                   </div>
                                 )}
                               </>
@@ -1203,6 +1586,19 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   return elements
                 })
             )}
+            {approvals.map(approval => (
+              <div
+                key={`approval-${approval.id}`}
+                className="message-item ai approval-message-item"
+              >
+                <AiChatMessageAvatar sender="tool" />
+                <OpenClawApprovalCard
+                  approval={approval}
+                  now={now}
+                  onResolve={resolveApproval}
+                />
+              </div>
+            ))}
             <div ref={messagesEndRef} />
           </div>
         </FancyScrollbar>
@@ -1237,8 +1633,14 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         )}
         <textarea
           ref={textareaRef}
-          className="chat-textarea"
-          placeholder="Cloudhub AI Ops 장애 분석 및 조치 명령을 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록)"
+          className={classnames('chat-textarea', {
+            'is-just-completed': isJustCompleted,
+          })}
+          placeholder={
+            isStreamingActive
+              ? 'AI가 답변을 생성하고 있습니다...'
+              : "Cloudhub AI Ops 장애 분석 및 조치 명령을 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록)"
+          }
           value={inputPrompt}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
@@ -1246,11 +1648,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           disabled={isStreamingActive}
         />
         <Button
-          text="전송"
-          color={ComponentColor.Success}
+          text={isStreamingActive ? '생성 중...' : '전송'}
+          color={
+            isStreamingActive
+              ? ComponentColor.Default
+              : ComponentColor.Success
+          }
           size={ComponentSize.Small}
           shape={ButtonShape.Default}
-          onClick={handleSendPrompt}
+          onClick={() => handleSendPrompt()}
           status={
             isStreamingActive
               ? ComponentStatus.Disabled
@@ -1289,31 +1695,16 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         />
 
-        {showSubagentPanel ? (
-          <Threesizer
-            orientation={HANDLE_VERTICAL}
-            divisions={[
-              {
-                name: 'Chat Thread',
-                headerButtons: [],
-                menuOptions: [],
-                size: subagentPanelProportions[0],
-                render: renderChatThread,
-              },
-              {
-                name: 'Subagent Inspector',
-                headerButtons: [],
-                menuOptions: [],
-                size: subagentPanelProportions[1],
-                minPixels: 360,
-                render: renderSubagentInspectorPanel,
-              },
-            ]}
-            onResize={handleThreesizerResize}
-          />
-        ) : (
-          renderChatThread()
-        )}
+        <CollapsibleSidePanelSlice
+          isOpen={showSubagentPanel}
+          onClose={() => setShowSubagentPanel(false)}
+          defaultRatio={0.42}
+          snapCloseThreshold={120}
+          panelContent={renderSubagentInspectorPanel()}
+          onResize={() => requestAnimationFrame(adjustTextareaHeight)}
+        >
+          {renderChatThread()}
+        </CollapsibleSidePanelSlice>
       </div>
     </div>
   )
