@@ -174,10 +174,30 @@ const extractDisplayableText = (content: any): string => {
   return ''
 }
 
+const ensureString = (val: any): string => {
+  if (val === null || val === undefined) return ''
+  if (typeof val === 'string') return val
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val)
+  if (typeof val === 'object') {
+    try {
+      return JSON.stringify(val)
+    } catch {
+      return String(val)
+    }
+  }
+  return String(val)
+}
+
 const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
 
   if (!card) return null
+
+  const labelText = ensureString(card.label) || 'Tool'
+  const descriptionText = ensureString(card.description)
+  const inputText = ensureString(card.input)
+  const detailText = ensureString(card.detail)
+  const errorText = ensureString(card.error)
 
   const startedAt = card.startedAt ? Number(card.startedAt) : null
   const endedAt = card.endedAt ? Number(card.endedAt) : null
@@ -205,22 +225,22 @@ const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
       ? '오류'
       : '차단됨'
 
-  const hasDetails = Boolean(card.input || card.detail || card.error || durationText)
+  const hasDetails = Boolean(inputText || detailText || errorText || durationText)
 
   return (
     <div className={classnames('activity-card-box', badgeClass)}>
       <div className="activity-card-header">
         <div className="activity-card-title">
           <span className="activity-type-tag">{card.type === 'mcp' ? 'MCP' : 'TOOL'}</span>
-          <span className="activity-label">{card.label || 'Tool'}</span>
+          <span className="activity-label">{labelText}</span>
         </div>
         <span className={classnames('activity-status-badge', badgeClass)}>
           {badgeLabel}
         </span>
       </div>
 
-      {card.description && (
-        <div className="activity-card-description">{card.description}</div>
+      {descriptionText && (
+        <div className="activity-card-description">{descriptionText}</div>
       )}
 
       {hasDetails && (
@@ -238,22 +258,22 @@ const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
 
       {isExpanded && hasDetails && (
         <div className="activity-card-expanded">
-          {card.input && (
+          {inputText && (
             <div className="activity-detail-block">
               <div className="detail-title">📥 입력 (Input):</div>
-              <pre className="detail-pre"><code>{card.input}</code></pre>
+              <pre className="detail-pre"><code>{inputText}</code></pre>
             </div>
           )}
-          {card.detail && (
+          {detailText && (
             <div className="activity-detail-block">
               <div className="detail-title">📤 출력 (Output):</div>
-              <pre className="detail-pre"><code>{card.detail}</code></pre>
+              <pre className="detail-pre"><code>{detailText}</code></pre>
             </div>
           )}
-          {card.error && (
+          {errorText && (
             <div className="activity-detail-block error-block">
               <div className="detail-title">⚠️ 오류 (Error):</div>
-              <pre className="detail-pre error-pre"><code>{card.error}</code></pre>
+              <pre className="detail-pre error-pre"><code>{errorText}</code></pre>
             </div>
           )}
         </div>
@@ -337,11 +357,13 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
             } catch {
               inputStr = String(part.arguments || '')
             }
-            const desc =
+            const rawDesc =
               part.arguments?.command ||
               part.arguments?.query ||
               part.arguments?.path ||
+              part.arguments?.url ||
               inputStr
+            const desc = ensureString(rawDesc)
 
             const card: ActivityCardItem = {
               id: part.id || `act-${idx}`,
@@ -678,10 +700,10 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     const mergeActivityCardIntoSession = (actData: any) => {
       if (!actData) return
-      const key = actData.toolCallId || actData.itemId || `act-${Date.now()}`
+      const key = ensureString(actData.toolCallId || actData.itemId || `act-${Date.now()}`)
       const phase = actData.phase || 'start'
       const kind = actData.kind || 'tool'
-      const title = actData.title || actData.meta || actData.name || key
+      const title = ensureString(actData.title || actData.meta || actData.name || key)
       const isFinished = phase === 'end' || phase === 'output' || actData.status === 'completed' || phase === 'result'
       const isErr = actData.isError || actData.status === 'error'
       const isBlocked = actData.status === 'blocked'
@@ -694,26 +716,30 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         ? 'success'
         : 'running'
 
-      let outputText = actData.output || actData.summary || actData.progressText || ''
+      let outputText = ensureString(actData.output || actData.summary || actData.progressText || '')
       if (actData.result?.content) {
         if (Array.isArray(actData.result.content)) {
-          outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : c?.text || '')).join('\n')
+          outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : ensureString(c?.text || c))).join('\n')
         } else if (typeof actData.result.content === 'string') {
           outputText = actData.result.content
         } else if (actData.result.content) {
-          outputText = String(actData.result.content)
+          outputText = ensureString(actData.result.content)
         }
       }
+
+      const summaryText = ensureString(actData.summary || (kind === 'command' ? actData.meta : undefined))
+      const inputText = ensureString(actData.input ? (typeof actData.input === 'string' ? actData.input : JSON.stringify(actData.input, null, 2)) : '')
+      const errorText = ensureString(actData.error || (isErr ? outputText : undefined))
 
       const newEntry: ActivityCardItem = {
         id: key,
         type: kind === 'mcp' ? 'mcp' : 'tool',
         label: title,
-        description: actData.summary || (kind === 'command' ? actData.meta : undefined),
+        description: summaryText || undefined,
         detail: outputText,
-        error: actData.error || (isErr ? outputText : undefined),
+        error: errorText || undefined,
         status,
-        input: actData.input,
+        input: inputText || undefined,
         startedAt: actData.startedAt,
         endedAt: actData.endedAt,
       }
@@ -841,23 +867,23 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
               mergeActivityCardIntoSession(actData)
 
               // 2. Update Subagent Inspector panel task list
-              const toolCallId = actData.toolCallId || actData.itemId || `tool-${Date.now()}`
+              const toolCallId = ensureString(actData.toolCallId || actData.itemId || `tool-${Date.now()}`)
               const phase = actData.phase || 'start'
               const kind: 'tool' | 'command' | string = actData.kind || (actData.itemId?.startsWith('command:') ? 'command' : 'tool')
-              const name = actData.name || 'exec'
-              const title = actData.title || actData.meta || actData.name || 'Tool Execution'
-              const metaText = actData.meta || actData.summary || actData.progressText || ''
+              const name = ensureString(actData.name || 'exec')
+              const title = ensureString(actData.title || actData.meta || actData.name || 'Tool Execution')
+              const metaText = ensureString(actData.meta || actData.summary || actData.progressText || '')
               const isEnd = phase === 'end' || actData.status === 'completed' || phase === 'result'
               const isErr = actData.isError || actData.status === 'error'
 
-              let outputText = actData.output || metaText
+              let outputText = ensureString(actData.output || metaText)
               if (actData.result?.content) {
                 if (Array.isArray(actData.result.content)) {
-                  outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : c?.text || '')).join('\n')
+                  outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : ensureString(c?.text || c))).join('\n')
                 } else if (typeof actData.result.content === 'string') {
                   outputText = actData.result.content
                 } else if (actData.result.content) {
-                  outputText = String(actData.result.content)
+                  outputText = ensureString(actData.result.content)
                 }
               }
 
