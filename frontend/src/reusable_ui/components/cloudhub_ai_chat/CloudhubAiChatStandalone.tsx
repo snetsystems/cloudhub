@@ -154,25 +154,37 @@ const isRawToolErrorMessage = (str: string): boolean => {
   )
 }
 
-const extractDisplayableText = (contentParts: OpenClawContentPart[]): string => {
-  if (!contentParts || contentParts.length === 0) return ''
-  return contentParts
-    .filter(part => {
-      const text = part.text || ''
-      if (isJsonString(text)) return false
-      if (isRawToolErrorMessage(text)) return false
-      return true
-    })
-    .map(part => part.text)
-    .join('')
+const extractDisplayableText = (content: any): string => {
+  if (!content) return ''
+  if (typeof content === 'string') return content
+  if (Array.isArray(content)) {
+    return content
+      .filter(part => {
+        if (!part) return false
+        if (part.type === 'toolCall') return false
+        const text = typeof part === 'string' ? part : (part.text || '')
+        if (!text) return false
+        if (isJsonString(text)) return false
+        if (isRawToolErrorMessage(text)) return false
+        return true
+      })
+      .map(part => (typeof part === 'string' ? part : part.text || ''))
+      .join('')
+  }
+  return ''
 }
 
 const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
 
+  if (!card) return null
+
+  const startedAt = card.startedAt ? Number(card.startedAt) : null
+  const endedAt = card.endedAt ? Number(card.endedAt) : null
+
   const durationMs =
-    card.startedAt && card.endedAt && card.endedAt >= card.startedAt
-      ? card.endedAt - card.startedAt
+    startedAt && endedAt && endedAt >= startedAt
+      ? endedAt - startedAt
       : null
 
   const durationText =
@@ -182,13 +194,14 @@ const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
         : `${(durationMs / 1000).toFixed(2)}s`
       : null
 
-  const badgeClass = card.status.toLowerCase()
+  const rawStatus = card.status || 'success'
+  const badgeClass = rawStatus.toLowerCase()
   const badgeLabel =
-    card.status === 'running'
+    rawStatus === 'running'
       ? '실행 중...'
-      : card.status === 'success'
+      : rawStatus === 'success'
       ? '완료'
-      : card.status === 'error'
+      : rawStatus === 'error'
       ? '오류'
       : '차단됨'
 
@@ -199,7 +212,7 @@ const AiChatToolExecutionCard: FC<{ card: ActivityCardItem }> = ({ card }) => {
       <div className="activity-card-header">
         <div className="activity-card-title">
           <span className="activity-type-tag">{card.type === 'mcp' ? 'MCP' : 'TOOL'}</span>
-          <span className="activity-label">{card.label}</span>
+          <span className="activity-label">{card.label || 'Tool'}</span>
         </div>
         <span className={classnames('activity-status-badge', badgeClass)}>
           {badgeLabel}
@@ -254,24 +267,159 @@ const formatChatTimestamp = (timestamp?: number | string | Date): string => {
     return new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
   }
   const d = typeof timestamp === 'number' || typeof timestamp === 'string' ? new Date(timestamp) : timestamp
-  if (isNaN(d.getTime())) {
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) {
     return new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
   }
   return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
 }
 
-const toChatMessage = (dto: OpenClawMessageDTO, index: number): ChatMessage | null => {
-  if (dto.role === 'system') return null
+const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
+  if (!rawMessages || !Array.isArray(rawMessages) || rawMessages.length === 0) return []
 
-  const text = extractDisplayableText(dto.content || [])
-  if (!text.trim() && dto.role !== 'user') return null
+  const chatMessages: ChatMessage[] = []
+  let currentAiMessage: ChatMessage | null = null
+  const pendingActivityMap: Map<string, ActivityCardItem> = new Map()
 
-  return {
-    id: `${dto.timestamp || Date.now()}-${index}`,
-    sender: dto.role === 'user' ? 'user' : dto.role === 'assistant' ? 'ai' : 'system',
-    text,
-    timestamp: formatChatTimestamp(dto.timestamp),
+  const flushAiMessage = () => {
+    if (currentAiMessage) {
+      if (currentAiMessage.text || (currentAiMessage.activities && currentAiMessage.activities.length > 0)) {
+        chatMessages.push(currentAiMessage)
+      }
+      currentAiMessage = null
+    }
   }
+
+  rawMessages.forEach((raw, idx) => {
+    if (!raw || typeof raw !== 'object') return
+    if (raw.role === 'system') return
+
+    if (raw.role === 'user') {
+      flushAiMessage()
+      let userText = ''
+      if (typeof raw.content === 'string') {
+        userText = raw.content
+      } else if (Array.isArray(raw.content)) {
+        userText = raw.content
+          .map((p: any) => (typeof p === 'string' ? p : p?.text || ''))
+          .join('')
+      } else if (raw.content) {
+        userText = String(raw.content)
+      }
+      chatMessages.push({
+        id: raw.__openclaw?.id || `user-${raw.timestamp || Date.now()}-${idx}`,
+        sender: 'user',
+        text: userText,
+        timestamp: formatChatTimestamp(raw.timestamp),
+      })
+      return
+    }
+
+    if (raw.role === 'assistant') {
+      if (!currentAiMessage) {
+        currentAiMessage = {
+          id: raw.__openclaw?.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+          sender: 'ai',
+          text: '',
+          timestamp: formatChatTimestamp(raw.timestamp),
+          activities: [],
+        }
+      }
+
+      if (Array.isArray(raw.content)) {
+        for (const part of raw.content) {
+          if (!part) continue
+          if (part.type === 'toolCall') {
+            const toolName = part.name || 'tool'
+            const isMcp = toolName.includes('__')
+            let inputStr = ''
+            try {
+              inputStr = part.arguments ? JSON.stringify(part.arguments, null, 2) : ''
+            } catch {
+              inputStr = String(part.arguments || '')
+            }
+            const desc =
+              part.arguments?.command ||
+              part.arguments?.query ||
+              part.arguments?.path ||
+              inputStr
+
+            const card: ActivityCardItem = {
+              id: part.id || `act-${idx}`,
+              type: isMcp ? 'mcp' : 'tool',
+              label: toolName,
+              description: desc,
+              input: inputStr,
+              status: 'success',
+              startedAt: raw.timestamp ? Number(raw.timestamp) : undefined,
+            }
+            if (!currentAiMessage.activities) {
+              currentAiMessage.activities = []
+            }
+            currentAiMessage.activities.push(card)
+            if (part.id) {
+              pendingActivityMap.set(part.id, card)
+            }
+          } else if (part.type === 'text' && part.text) {
+            currentAiMessage.text = (currentAiMessage.text ? currentAiMessage.text + '\n' : '') + part.text
+          }
+        }
+      } else if (typeof raw.content === 'string' && raw.content) {
+        currentAiMessage.text = (currentAiMessage.text ? currentAiMessage.text + '\n' : '') + raw.content
+      }
+      return
+    }
+
+    if (raw.role === 'toolResult') {
+      let resultText = ''
+      if (Array.isArray(raw.content)) {
+        resultText = raw.content.map((p: any) => (typeof p === 'string' ? p : p?.text || '')).join('')
+      } else if (typeof raw.content === 'string') {
+        resultText = raw.content
+      } else if (raw.content) {
+        resultText = String(raw.content)
+      }
+
+      const toolCallId = raw.toolCallId
+      const targetCard = toolCallId ? pendingActivityMap.get(toolCallId) : null
+
+      if (targetCard) {
+        targetCard.status = raw.isError ? 'error' : 'success'
+        targetCard.endedAt = raw.timestamp ? Number(raw.timestamp) : undefined
+        if (raw.isError) {
+          targetCard.error = resultText
+        } else {
+          targetCard.detail = resultText
+        }
+      } else {
+        if (!currentAiMessage) {
+          currentAiMessage = {
+            id: raw.__openclaw?.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+            sender: 'ai',
+            text: '',
+            timestamp: formatChatTimestamp(raw.timestamp),
+            activities: [],
+          }
+        }
+        const toolName = raw.toolName || 'tool'
+        const card: ActivityCardItem = {
+          id: toolCallId || raw.__openclaw?.id || `tool-${idx}`,
+          type: toolName.includes('__') ? 'mcp' : 'tool',
+          label: toolName,
+          status: raw.isError ? 'error' : 'success',
+          detail: raw.isError ? undefined : resultText,
+          error: raw.isError ? resultText : undefined,
+          endedAt: raw.timestamp ? Number(raw.timestamp) : undefined,
+        }
+        if (!currentAiMessage.activities) {
+          currentAiMessage.activities = []
+        }
+        currentAiMessage.activities.push(card)
+      }
+    }
+  })
+
+  flushAiMessage()
+  return chatMessages
 }
 
 interface ComponentProps extends CloudhubAiChatProps {
@@ -300,6 +448,68 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pendingRunsRef = useRef<Record<string, string>>({})
   const sessionsRef = useRef<ChatSession[]>(sessions)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const [isJustCompleted, setIsJustCompleted] = useState<boolean>(false)
+  const prevStreamingRef = useRef<boolean>(false)
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleCopyMessageText = useCallback((msgId: string, text: string) => {
+    if (!text) return
+    const fallbackCopy = (content: string) => {
+      try {
+        const el = document.createElement('textarea')
+        el.value = content
+        el.setAttribute('readonly', '')
+        el.style.position = 'absolute'
+        el.style.left = '-9999px'
+        document.body.appendChild(el)
+        el.select()
+        document.execCommand('copy')
+        document.body.removeChild(el)
+      } catch (e) {
+        console.warn('[OpenClaw AI Chat]: Copy fallback failed:', e)
+      }
+    }
+
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {
+        fallbackCopy(text)
+      })
+    } else {
+      fallbackCopy(text)
+    }
+
+    setCopiedMessageId(msgId)
+    if (copyTimeoutRef.current) {
+      clearTimeout(copyTimeoutRef.current)
+    }
+    copyTimeoutRef.current = setTimeout(() => {
+      setCopiedMessageId(null)
+    }, 2000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Detect when streaming finishes: trigger ready glow & auto-focus textarea
+  useEffect(() => {
+    if (prevStreamingRef.current && !isStreamingActive) {
+      setIsJustCompleted(true)
+      const timer = setTimeout(() => {
+        setIsJustCompleted(false)
+      }, 1200)
+      if (textareaRef.current) {
+        textareaRef.current.focus()
+      }
+      return () => clearTimeout(timer)
+    }
+    prevStreamingRef.current = isStreamingActive
+  }, [isStreamingActive])
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current
@@ -365,7 +575,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         setIsLoadingHistory(false)
         return
       }
-      const data: {sessions: OpenClawSessionDTO[]} = await res.json()
+      const data: {sessions: OpenClawSessionDTO[]} = await res.json().catch(() => ({sessions: []}))
       const loadedSessions = (data.sessions || []).map(toChatSession)
       if (loadedSessions.length > 0) {
         setSessions(loadedSessions)
@@ -409,16 +619,24 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         })
         if (!res.ok) return
 
-        const data: {messages: OpenClawMessageDTO[]} = await res.json()
-        const msgs = (data.messages || [])
-          .map(toChatMessage)
-          .filter((m): m is ChatMessage => m !== null)
+        const data: {messages: OpenClawMessageDTO[]} = await res.json().catch(() => ({messages: []}))
+        const msgs = parseOpenClawHistory(data.messages || [])
         setSessions(prev =>
           prev.map(s => {
             if (s.id !== activeSessionId) return s
-            const fetchedIds = new Set(msgs.map(m => m.id))
-            const localOnly = (s.messages || []).filter(m => !fetchedIds.has(m.id))
-            return {...s, messages: [...msgs, ...localOnly]}
+            const hasPendingStreaming = Boolean(
+              pendingRunsRef.current[activeSessionId] ||
+              (s.messages || []).some(m => m.isStreaming)
+            )
+            // If the session is currently actively streaming, keep local streaming state
+            if (hasPendingStreaming) {
+              return s
+            }
+            // Otherwise, replace with official server history
+            return {
+              ...s,
+              messages: msgs.length > 0 ? msgs : (s.messages && s.messages.length > 0 ? s.messages : []),
+            }
           })
         )
       } catch (err: any) {
@@ -478,7 +696,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
       let outputText = actData.output || actData.summary || actData.progressText || ''
       if (actData.result?.content) {
-        outputText = actData.result.content.map((c: any) => c.text || '').join('\n')
+        if (Array.isArray(actData.result.content)) {
+          outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : c?.text || '')).join('\n')
+        } else if (typeof actData.result.content === 'string') {
+          outputText = actData.result.content
+        } else if (actData.result.content) {
+          outputText = String(actData.result.content)
+        }
       }
 
       const newEntry: ActivityCardItem = {
@@ -628,7 +852,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
               let outputText = actData.output || metaText
               if (actData.result?.content) {
-                outputText = actData.result.content.map((c: any) => c.text || '').join('\n')
+                if (Array.isArray(actData.result.content)) {
+                  outputText = actData.result.content.map((c: any) => (typeof c === 'string' ? c : c?.text || '')).join('\n')
+                } else if (typeof actData.result.content === 'string') {
+                  outputText = actData.result.content
+                } else if (actData.result.content) {
+                  outputText = String(actData.result.content)
+                }
               }
 
               const status: 'RUNNING' | 'SUCCESS' | 'ERROR' = isErr ? 'ERROR' : isEnd ? 'SUCCESS' : 'RUNNING'
@@ -759,6 +989,8 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   })
                 )
               }
+              // Sync with official backend history after stream completion
+              fetchMessages(true)
             }
           } catch (e) {
             console.warn('[WebSocket Payload Parse Error]', e)
@@ -1001,7 +1233,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           return
         }
 
-        const createdDto: OpenClawSessionDTO = await createRes.json()
+        const createdDto: OpenClawSessionDTO = await createRes.json().catch(() => ({} as any))
         const createdSession: ChatSession = {
           ...toChatSession(createdDto),
           messages: [userMessage, loadingAiMsg],
@@ -1209,9 +1441,34 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                                   {msg.text && <AiChatMessageMarkdown content={msg.text} />}
                                   {msg.isStreaming && <span className="blinking-cursor" />}
                                 </div>
-                                {msg.timestamp && (
-                                  <div className="message-bubble-footer">
-                                    <span className="message-timestamp">{msg.timestamp}</span>
+                                {msg.isStreaming ? (
+                                  msg.timestamp && (
+                                    <div className="message-bubble-footer">
+                                      <span className="message-timestamp">{msg.timestamp}</span>
+                                    </div>
+                                  )
+                                ) : (
+                                  <div className="message-bubble-footer ai-completed-footer">
+                                    <div className="ai-footer-left">
+                                      <span className="ai-status-done-badge">
+                                        <span className="done-icon">✓</span> 답변 완료
+                                      </span>
+                                      {msg.timestamp && (
+                                        <span className="message-timestamp">{msg.timestamp}</span>
+                                      )}
+                                    </div>
+                                    <div className="ai-footer-actions">
+                                      <button
+                                        type="button"
+                                        className={classnames('ai-copy-btn', {
+                                          copied: copiedMessageId === msg.id,
+                                        })}
+                                        onClick={() => handleCopyMessageText(msg.id, msg.text)}
+                                        title="답변 내용 복사"
+                                      >
+                                        {copiedMessageId === msg.id ? '복사됨' : '복사'}
+                                      </button>
+                                    </div>
                                   </div>
                                 )}
                               </>
@@ -1292,8 +1549,14 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         )}
         <textarea
           ref={textareaRef}
-          className="chat-textarea"
-          placeholder="Cloudhub AI Ops 장애 분석 및 조치 명령을 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록)"
+          className={classnames('chat-textarea', {
+            'is-just-completed': isJustCompleted,
+          })}
+          placeholder={
+            isStreamingActive
+              ? 'AI가 답변을 생성하고 있습니다...'
+              : "Cloudhub AI Ops 장애 분석 및 조치 명령을 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록)"
+          }
           value={inputPrompt}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
@@ -1301,8 +1564,12 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           disabled={isStreamingActive}
         />
         <Button
-          text="전송"
-          color={ComponentColor.Success}
+          text={isStreamingActive ? '생성 중...' : '전송'}
+          color={
+            isStreamingActive
+              ? ComponentColor.Default
+              : ComponentColor.Success
+          }
           size={ComponentSize.Small}
           shape={ButtonShape.Default}
           onClick={handleSendPrompt}

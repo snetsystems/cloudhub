@@ -116,7 +116,7 @@ export const getOpenClawSessions = async (): Promise<OpenClawSessionDTO[]> => {
     throw new Error(`Failed to fetch sessions (${res.status}): ${res.statusText}`)
   }
 
-  const data: {sessions: OpenClawSessionDTO[]} = await res.json()
+  const data: {sessions: OpenClawSessionDTO[]} = await res.json().catch(() => ({sessions: []}))
   return data.sessions || []
 }
 
@@ -135,7 +135,7 @@ export const createOpenClawSession = async (title: string): Promise<OpenClawSess
     throw new Error(`Failed to create session (${res.status}): ${res.statusText}`)
   }
 
-  return await res.json()
+  return await res.json().catch(() => ({id: '', title, createdAt: '', updatedAt: ''}))
 }
 
 /**
@@ -151,7 +151,7 @@ export const getOpenClawMessages = async (sessionId: string): Promise<OpenClawMe
     throw new Error(`Failed to fetch messages (${res.status}): ${res.statusText}`)
   }
 
-  const data: {messages: OpenClawMessageDTO[]} = await res.json()
+  const data: {messages: OpenClawMessageDTO[]} = await res.json().catch(() => ({messages: []}))
   return data.messages || []
 }
 
@@ -170,7 +170,7 @@ export const getOpenClawApprovals = async (
     throw new Error(
       `Failed to fetch approvals (${res.status}): ${res.statusText}`
     )
-  const data: OpenClawApprovalSnapshotDTO = await res.json()
+  const data: OpenClawApprovalSnapshotDTO = await res.json().catch(() => ({approvals: [], completeSources: []}))
   return {
     approvals: data.approvals || [],
     completeSources: data.completeSources || [],

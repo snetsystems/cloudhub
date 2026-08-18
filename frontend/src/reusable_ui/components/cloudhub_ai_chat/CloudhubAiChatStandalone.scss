@@ -631,6 +631,90 @@
             margin-top: 6px;
             padding-top: 2px;
             user-select: none;
+
+            &.ai-completed-footer {
+              justify-content: space-between;
+              margin-top: 8px;
+              padding-top: 6px;
+              border-top: 1px solid rgba($g4-onyx, 0.7);
+              animation: aiFooterFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+              .ai-footer-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .ai-status-done-badge {
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 4px;
+                  font-size: 11px;
+                  font-weight: 600;
+                  color: $c-rainforest;
+                  background: rgba($c-rainforest, 0.12);
+                  border: 1px solid rgba($c-rainforest, 0.3);
+                  padding: 1px 6px;
+                  border-radius: 4px;
+                  letter-spacing: -0.2px;
+
+                  .done-icon {
+                    font-size: 10px;
+                    font-weight: bold;
+                  }
+                }
+
+                .message-timestamp {
+                  font-size: 11px;
+                  color: $g10-wolf;
+                  opacity: 0.85;
+                }
+              }
+
+              .ai-footer-actions {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                .ai-copy-btn {
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 4px;
+                  padding: 2px 7px;
+                  font-size: 11px;
+                  font-weight: 500;
+                  background: rgba($g3-castle, 0.5);
+                  border: 1px solid $g4-onyx;
+                  border-radius: 4px;
+                  color: $g12-forge;
+                  cursor: pointer;
+                  outline: none;
+                  transition: all 0.18s ease;
+
+                  &:hover {
+                    background: $g4-onyx;
+                    border-color: $g6-smoke;
+                    color: $g20-white;
+                  }
+
+                  &.copied {
+                    background: rgba($c-rainforest, 0.18);
+                    border-color: rgba($c-rainforest, 0.5);
+                    color: $c-rainforest;
+                  }
+                }
+              }
+            }
+          }
+
+          @keyframes aiFooterFadeIn {
+            from {
+              opacity: 0;
+              transform: translateY(2px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
 
           .message-timestamp {
@@ -1159,9 +1243,28 @@
           cursor: not-allowed;
         }
 
+        &.is-just-completed {
+          animation: composer-ready-pulse 1.2s ease-out;
+        }
+
         &::placeholder {
           color: $g9-mountain;
           font-style: italic;
+        }
+      }
+
+      @keyframes composer-ready-pulse {
+        0% {
+          border-color: $c-rainforest;
+          box-shadow: 0 0 10px rgba($c-rainforest, 0.6);
+        }
+        40% {
+          border-color: rgba($c-rainforest, 0.8);
+          box-shadow: 0 0 6px rgba($c-rainforest, 0.35);
+        }
+        100% {
+          border-color: $g5-pepper;
+          box-shadow: none;
         }
       }
 
