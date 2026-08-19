@@ -1290,17 +1290,25 @@ export const notifyConnectRemoteConsoleFailed = (
 //  ----------------------------------------------------------------------------
 
 export const notifyLoginFailed = (
-  error: {
-    code: number
-    message: string
-    retryCount: number
-    locked: boolean
-    lockedTime: string
-  },
-  retryPolicysObj: {[k: string]: any}
+  error:
+    | {
+        code?: number
+        message?: string
+        retryCount?: number
+        locked?: boolean
+        lockedTime?: string
+      }
+    | string
+    | any,
+  retryPolicysObj: {[k: string]: any} = {}
 ): Notification => {
-  const {message, retryCount, locked} = error
-  const {count, delaytime} = retryPolicysObj
+  const err = typeof error === 'object' && error !== null ? error : {}
+  const message =
+    err.message ||
+    (typeof error === 'string' && error.trim()) ||
+    'Invalid ID or password.'
+  const {retryCount, locked} = err
+  const {count, delaytime} = retryPolicysObj || {}
   let temp = `Login is failed.
   <hr class="notification-line">
   <div>${message}</div>
@@ -1309,9 +1317,9 @@ export const notifyLoginFailed = (
   if (retryCount && retryCount !== 0) {
     if (locked) {
       temp += `<hr class="notification-line">
-    <div>Please try again in ${delaytime} minutes.</div>
+    <div>Please try again in ${delaytime || 5} minutes.</div>
     `
-    } else {
+    } else if (count) {
       temp += `<hr class="notification-line">
     <div>${count - retryCount} time[s] left.</div>
       `
@@ -1335,14 +1343,27 @@ export const notifyUserAddCompleted = (): Notification => ({
   message: `Sign up is successful.`,
 })
 
-export const notifyUserAddFailed = (error: {
-  code: number
-  message: string
-}): Notification => ({
-  ...defaultErrorNotification,
-  isHasHTML: true,
-  message: `Sign up is failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
-})
+export const notifyUserAddFailed = (
+  error:
+    | {
+        code?: number
+        message?: string
+      }
+    | string
+    | any
+): Notification => {
+  const err = typeof error === 'object' && error !== null ? error : {}
+  const code = err.code ? `<br/>CODE: ${err.code}` : ''
+  const message =
+    err.message ||
+    (typeof error === 'string' && error.trim()) ||
+    'Unknown error occurred.'
+  return {
+    ...defaultErrorNotification,
+    isHasHTML: true,
+    message: `Sign up is failed.${code}<br/>REASON: ${message}`,
+  }
+}
 
 export const notifyUserPasswordResetCompleted = ({
   name,

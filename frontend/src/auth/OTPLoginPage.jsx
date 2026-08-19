@@ -40,15 +40,19 @@ class OTPLoginPage extends PureComponent {
           password,
         }
 
-        handleOTPChange({url: basicPassword, user}).then(res => {
-          if (res.status === 200) {
-            setTimeout(() => {
-              handleLogin({url: basicauth.login, user}).then(() => {
-                router.go('/')
-              })
-            }, 1000)
-          }
-        })
+        handleOTPChange({url: basicPassword, user})
+          .then(res => {
+            if (res.status === 200) {
+              setTimeout(() => {
+                handleLogin({url: basicauth.login, user})
+                  .then(() => {
+                    router.go('/')
+                  })
+                  .catch(() => {})
+              }, 1000)
+            }
+          })
+          .catch(() => {})
       }
     },
     250

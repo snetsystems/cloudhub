@@ -84,17 +84,18 @@ class UpdateUser extends PureComponent {
             }
           }
 
-          handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(
-            res => {
+          handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user})
+            .then(res => {
               this.setState({email: '', password: '', passwordConfirm: ''})
               if (res.data?.email) {
                 this.setState({
                   email: res.data.email,
                 })
               }
-            }
-          )
+            })
+            .catch(() => {})
         })
+        .catch(() => {})
         .finally(() => {
           this.setState({isFetching: false})
         })
@@ -112,13 +113,15 @@ class UpdateUser extends PureComponent {
       router.path('/')
     }
 
-    this.getUser().then(({data}) => {
-      if (data?.email) {
-        this.setState({email: data.email})
-      } else {
-        this.setState({email: ''})
-      }
-    })
+    this.getUser()
+      .then(({data}) => {
+        if (data?.email) {
+          this.setState({email: data.email})
+        } else {
+          this.setState({email: ''})
+        }
+      })
+      .catch(() => {})
   }
 
   render() {

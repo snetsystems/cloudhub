@@ -43,16 +43,18 @@ class Login extends PureComponent {
       url: basicauth.login,
       user: {name, password},
       retryPolicys,
-    }).then(({data}) => {
-      if (data?.passwordResetFlag === 'N') {
-        router.go('/')
-      } else {
-        router.push({
-          pathname: '/otp-login',
-          state: {name},
-        })
-      }
     })
+      .then(({data}) => {
+        if (data?.passwordResetFlag === 'N') {
+          router.go('/')
+        } else {
+          router.push({
+            pathname: '/otp-login',
+            state: {name},
+          })
+        }
+      })
+      .catch(() => {})
   }, 250)
 
   handleSignupSubmit = _.debounce((isValidPassword, isValidPasswordConfirm) => {
@@ -63,11 +65,13 @@ class Login extends PureComponent {
       handleCreateUser({
         url: '/basic/users',
         user: {name, password, email},
-      }).then(({status}) => {
-        if (status === 201) {
-          this.onClickActiveEditorTab('Login')
-        }
       })
+        .then(({status}) => {
+          if (status === 201) {
+            this.onClickActiveEditorTab('Login')
+          }
+        })
+        .catch(() => {})
     }
   }, 250)
 

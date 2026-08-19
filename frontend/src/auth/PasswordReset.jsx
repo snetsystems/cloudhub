@@ -31,9 +31,11 @@ class PasswordReset extends PureComponent {
       url: basicPasswordReset,
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       name,
-    }).then(res => {
-      router.push('/')
     })
+      .then(res => {
+        router.push('/')
+      })
+      .catch(() => {})
   }, 250)
 
   handleKeyPressSubmit = e => {
