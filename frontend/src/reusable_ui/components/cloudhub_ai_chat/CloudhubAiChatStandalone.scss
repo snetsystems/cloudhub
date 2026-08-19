@@ -495,6 +495,79 @@
     .message-list-wrapper {
       flex: 1;
       min-height: 0;
+      position: relative;
+
+      .scroll-to-bottom-btn {
+        position: absolute;
+        bottom: 16px;
+        right: 24px;
+        z-index: 15;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        background: rgba($g2-kevlar, 0.92);
+        border: 1px solid $g5-pepper;
+        border-radius: 20px;
+        color: $g18-cloud;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        outline: none;
+        box-shadow: 0 4px 14px rgba($g0-obsidian, 0.5), 0 0 0 1px rgba($c-hydrogen, 0.15);
+        backdrop-filter: blur(8px);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        animation: scrollBtnFadeIn 0.22s ease-out both;
+
+        &:hover {
+          background: $g3-castle;
+          border-color: $c-hydrogen;
+          color: $g20-white;
+          transform: translateY(-2px);
+          box-shadow: 0 6px 18px rgba($g0-obsidian, 0.65), 0 0 8px rgba($c-hydrogen, 0.35);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+
+        .scroll-arrow {
+          font-size: 13px;
+          font-weight: 700;
+          color: $c-hydrogen;
+        }
+
+        .streaming-dot-pulse {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: $c-rainforest;
+          margin-left: 2px;
+          animation: pulseStreamingDot 1.2s infinite;
+        }
+      }
+
+      @keyframes scrollBtnFadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes pulseStreamingDot {
+        0%, 100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.3;
+          transform: scale(1.4);
+        }
+      }
 
       .message-list {
         padding: 20px;
@@ -768,6 +841,42 @@
             margin-top: 6px;
             padding-top: 2px;
             user-select: none;
+
+            &.ai-streaming-dots-footer {
+              justify-content: space-between;
+              margin-top: 8px;
+              padding-top: 6px;
+              border-top: 1px solid rgba($g4-onyx, 0.4);
+
+              .loading-dots-container {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding-left: 2px;
+
+                .loading-dot {
+                  width: 5px;
+                  height: 5px;
+                  background-color: $c-hydrogen;
+                  border-radius: 50%;
+                  display: inline-block;
+                  animation: pulse-dot 1.4s infinite ease-in-out both;
+
+                  &:nth-child(1) {
+                    animation-delay: -0.32s;
+                  }
+                  &:nth-child(2) {
+                    animation-delay: -0.16s;
+                  }
+                }
+              }
+
+              .message-timestamp {
+                font-size: 11px;
+                color: $g10-wolf;
+                opacity: 0.85;
+              }
+            }
 
             &.ai-completed-footer {
               justify-content: space-between;

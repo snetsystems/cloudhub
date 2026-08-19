@@ -584,7 +584,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     resolveApproval,
   } = useOpenClawApprovals(activeSessionId, triggerErrorNotification)
 
-  // Original clean session fetcher
+  // Original clean session fetcher with safe message preservation
   const fetchSessions = async () => {
     try {
       const res = await fetch(`${OPENCLAW_BASE_URL}/sessions`, {
@@ -598,14 +598,44 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         return
       }
       const data: {sessions: OpenClawSessionDTO[]} = await res.json().catch(() => ({sessions: []}))
-      const loadedSessions = (data.sessions || []).map(toChatSession)
-      if (loadedSessions.length > 0) {
-        setSessions(loadedSessions)
-        setActiveSessionId(loadedSessions[0].id)
-      } else {
-        setIsLoadingHistory(false)
-      }
+      const loadedDtos = data.sessions || []
+
+      setSessions(prev => {
+        const prevMap = new Map(prev.map(s => [s.id, s]))
+        const merged: ChatSession[] = loadedDtos.map(dto => {
+          const existing = prevMap.get(dto.id)
+          return {
+            id: dto.id,
+            title: dto.title || existing?.title || '새 대화',
+            updatedAt: dto.updatedAt,
+            messages: existing?.messages || [],
+            subagents: existing?.subagents || [],
+          }
+        })
+
+        // Preserve any optimistic local sessions not yet in backend
+        prev.forEach(p => {
+          if (!loadedDtos.some(d => d.id === p.id)) {
+            merged.push(p)
+          }
+        })
+
+        return merged
+      })
+
+      setActiveSessionId(currentActive => {
+        // If currentActive is already set and exists, KEEP IT!
+        if (currentActive && (loadedDtos.some(d => d.id === currentActive) || currentActive === 'demo-markdown-session')) {
+          return currentActive
+        }
+        // Only if no active session is selected, pick the first one
+        if (!currentActive && loadedDtos.length > 0) {
+          return loadedDtos[0].id
+        }
+        return currentActive
+      })
     } catch (err: any) {
+      console.warn('[OpenClaw AI Chat]: Failed to fetch sessions:', err)
       setIsLoadingHistory(false)
     }
   }
@@ -836,6 +866,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
             // Handle resync notification from OpenClaw
             if (payload.type === 'sessions.changed') {
+              fetchSessions()
               fetchMessages(true)
               refreshApprovals()
               return
@@ -1053,19 +1084,52 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     approvals.map(approval => approval.id).sort()
   )
 
+  const [isUserScrolledUp, setIsUserScrolledUp] = useState<boolean>(false)
+
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    const target = e?.currentTarget
+    if (!target) return
+    const { scrollTop, scrollHeight, clientHeight } = target
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+    if (distanceFromBottom > 100) {
+      setIsUserScrolledUp(true)
+    } else if (distanceFromBottom <= 40) {
+      setIsUserScrolledUp(false)
+    }
+  }
+
+  const scrollToBottom = (smooth = true) => {
+    setIsUserScrolledUp(false)
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: smooth ? 'smooth' : 'auto',
+        block: 'end',
+      })
+    }
+  }
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({behavior: 'smooth', block: 'end'})
-  }, [activeSession?.messages, approvalIdSetKey])
+    if (!isUserScrolledUp && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({
+        behavior: isStreamingActive ? 'auto' : 'smooth',
+        block: 'end',
+      })
+    }
+  }, [activeSession?.messages, approvalIdSetKey, isUserScrolledUp, isStreamingActive])
 
   const handleSelectSession = (id: string) => {
+    if (activeSessionId === id) return
+    setIsStreamingActive(false)
     setActiveSessionId(id)
     setInputPrompt('')
+    setIsUserScrolledUp(false)
   }
 
   const handleCreateNewChat = () => {
     setActiveSessionId('')
     setInputPrompt('')
     setIsLoadingHistory(false)
+    setIsUserScrolledUp(false)
   }
 
   const handleDeleteSession = async (sessionId: string) => {
@@ -1244,6 +1308,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     const currentPrompt = promptToSend.trim()
     setInputPrompt('')
+    setIsUserScrolledUp(false)
     setIsStreamingActive(true)
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -1423,7 +1488,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       </div>
 
       <div className="message-list-wrapper">
-        <FancyScrollbar autoHide={true}>
+        <FancyScrollbar autoHide={true} setScrollTop={handleScroll}>
           <div className="message-list">
             {isLoadingHistory && activeSessionId ? (
               <div style={{padding: '60px 20px', textAlign: 'center', color: '#a0aec0', fontSize: '13px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px'}}>
@@ -1526,11 +1591,16 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                                   {msg.isStreaming && <span className="blinking-cursor" />}
                                 </div>
                                 {msg.isStreaming ? (
-                                  msg.timestamp && (
-                                    <div className="message-bubble-footer">
+                                  <div className="message-bubble-footer ai-streaming-dots-footer">
+                                    <span className="loading-dots-container">
+                                      <span className="loading-dot" />
+                                      <span className="loading-dot" />
+                                      <span className="loading-dot" />
+                                    </span>
+                                    {msg.timestamp && (
                                       <span className="message-timestamp">{msg.timestamp}</span>
-                                    </div>
-                                  )
+                                    )}
+                                  </div>
                                 ) : (
                                   <div className="message-bubble-footer ai-completed-footer">
                                     <div className="ai-footer-left">
@@ -1602,6 +1672,19 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             <div ref={messagesEndRef} />
           </div>
         </FancyScrollbar>
+
+        {isUserScrolledUp && displayableMessages.length > 0 && (
+          <button
+            type="button"
+            className="scroll-to-bottom-btn"
+            onClick={() => scrollToBottom(true)}
+            title="최신 메시지로 이동"
+          >
+            <span className="scroll-arrow">↓</span>
+            <span className="scroll-label">최신 메시지</span>
+            {isStreamingActive && <span className="streaming-dot-pulse" />}
+          </button>
+        )}
       </div>
 
       <div className="composer-footer">

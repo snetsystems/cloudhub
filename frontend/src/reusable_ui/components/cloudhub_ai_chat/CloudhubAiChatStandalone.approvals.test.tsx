@@ -345,4 +345,73 @@ describe('CloudhubAiChatStandalone approval integration', () => {
     ).toHaveLength(messageFetchesBeforeSessionChange + 1)
     expect(refreshApprovals).toHaveBeenCalledTimes(2)
   })
+
+  it('replaces local messages with server history without duplicating messages on sessions.changed', async () => {
+    const serverMessages = [
+      {
+        role: 'user',
+        content: [{type: 'text', text: 'Question A'}],
+        timestamp: 1000,
+      },
+      {
+        role: 'assistant',
+        content: [{type: 'text', text: 'Answer A'}],
+        timestamp: 2000,
+      },
+    ]
+
+    fetchMock.mockImplementation((input: RequestInfo) => {
+      const url = String(input)
+      if (url.endsWith('/sessions')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              sessions: [
+                {
+                  id: 'owned',
+                  title: 'Owned session',
+                  createdAt: '2026-08-16T00:00:00Z',
+                  updatedAt: '2026-08-16T00:00:00Z',
+                },
+              ],
+            }),
+        })
+      }
+      if (url.endsWith('/sessions/owned/messages')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({messages: serverMessages}),
+        })
+      }
+      throw new Error(`Unexpected fetch: ${url}`)
+    })
+
+    act(() => {
+      mountedWrapper = mount(<CloudhubAiChatStandaloneUnconnected />)
+    })
+    await flushEffects()
+
+    const socket = FakeWebSocket.instances[0]
+    expect(socket).toBeDefined()
+
+    // Trigger sessions.changed multiple times
+    act(() => {
+      socket.onmessage!({
+        data: JSON.stringify({type: 'sessions.changed'}),
+      } as MessageEvent)
+    })
+    await flushEffects()
+
+    act(() => {
+      socket.onmessage!({
+        data: JSON.stringify({type: 'sessions.changed'}),
+      } as MessageEvent)
+    })
+    await flushEffects()
+
+    const userMessages = mountedWrapper.find('.message-item.user')
+    expect(userMessages).toHaveLength(1)
+    expect(userMessages.text()).toContain('Question A')
+  })
 })
