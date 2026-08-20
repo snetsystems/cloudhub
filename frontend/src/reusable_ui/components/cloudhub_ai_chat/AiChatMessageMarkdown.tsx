@@ -1,4 +1,4 @@
-import React, {FC, useState} from 'react'
+import React, {Component, ErrorInfo, FC, useState} from 'react'
 import Markdown from 'react-markdown'
 import classnames from 'classnames'
 
@@ -8,34 +8,57 @@ interface AiChatMessageMarkdownProps {
 }
 
 /**
+ * Ensures incomplete code blocks (e.g. streaming ```python ... without closing ```)
+ * are temporarily closed for smooth parsing without flickering or disappearing.
+ */
+const balanceCodeBlocks = (text: string): string => {
+  if (!text) return ''
+  const codeBlockMatches = text.match(/```/g)
+  if (codeBlockMatches && codeBlockMatches.length % 2 !== 0) {
+    return text + '\n```'
+  }
+  return text
+}
+
+/**
  * Pre-processes text to nicely format special patterns like:
  * - [Pasted text #1 +26 lines] -> formatted quote/chip
  * - Raw local file paths (/tmp/orca-paste-xxx.png) -> formatted attached file badge/card
- *   (Strictly avoids corrupting http:// or https:// URLs)
+ *   (Strictly avoids corrupting code blocks or http:// URLs)
  */
 const preprocessMarkdownText = (rawText: string): string => {
   if (!rawText) return ''
 
-  let processed = rawText
+  // Split by complete code blocks to preserve code content untouched
+  const segments = rawText.split(/(```[\s\S]*?```)/g)
 
-  // 1. Format pasted text chips like [Pasted text #1 +26 lines]
-  const pastedTextRegex = /\[Pasted text (#\d+) (\+\d+ lines)\]/g
-  processed = processed.replace(pastedTextRegex, '`📋 Pasted text $1 ($2)`')
-
-  // 2. Format isolated local temp file paths (e.g. /tmp/orca-paste-xxx.png)
-  // Ensures http:// or https:// URLs are NEVER matched or corrupted
   const localTempPathRegex = /(?<!https?:\/\/[^\s\)]*)(?<![a-zA-Z0-9_\-\/])(\/(?:tmp|var|home|Users|[a-zA-Z0-9_\-\.]+)\/[^\s\)]+\.(?:png|jpg|jpeg|gif|svg|webp))/gi
 
-  processed = processed.replace(localTempPathRegex, (match, capturedPath, offset, fullString) => {
-    // Safety check: ensure not preceded by protocol like http: or https:
-    const prefix = fullString.substring(Math.max(0, offset - 10), offset)
-    if (/https?:$/i.test(prefix) || /:\/$/i.test(prefix) || /:\/\/$!/i.test(prefix)) {
-      return match
-    }
-    return `\`🖼️ Attached Image Path: ${capturedPath}\``
-  })
+  return segments
+    .map((segment, idx) => {
+      // If segment is inside a code block, do not alter it
+      if (idx % 2 === 1) {
+        return segment
+      }
 
-  return processed
+      let processed = segment
+
+      // 1. Format pasted text chips like [Pasted text #1 +26 lines]
+      const pastedTextRegex = /\[Pasted text (#\d+) (\+\d+ lines)\]/g
+      processed = processed.replace(pastedTextRegex, '`📋 Pasted text $1 ($2)`')
+
+      // 2. Format isolated local temp file paths (e.g. /tmp/orca-paste-xxx.png)
+      processed = processed.replace(localTempPathRegex, (match, capturedPath, offset, fullString) => {
+        const prefix = fullString.substring(Math.max(0, offset - 10), offset)
+        if (/https?:$/i.test(prefix) || /:\/$/i.test(prefix) || /:\/\/$!/i.test(prefix)) {
+          return match
+        }
+        return `\`🖼️ Attached Image Path: ${capturedPath}\``
+      })
+
+      return processed
+    })
+    .join('')
 }
 
 const MarkdownCodeBlock: FC<{value?: string; language?: string}> = ({value, language}) => {
@@ -120,25 +143,64 @@ const MarkdownTableCell: FC<{isHeader?: boolean; children?: React.ReactNode}> = 
   return <td>{children}</td>
 }
 
+interface ErrorBoundaryProps {
+  fallbackContent: string
+  children: React.ReactNode
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean
+}
+
+class MarkdownErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = {hasError: false}
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return {hasError: true}
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.warn('[Markdown Parsing Error Fallback]:', error, info)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <pre className="chat-markdown-raw-fallback">
+          <code>{this.props.fallbackContent}</code>
+        </pre>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export const AiChatMessageMarkdown: FC<AiChatMessageMarkdownProps> = ({
   content,
   className,
 }) => {
-  const processedContent = preprocessMarkdownText(typeof content === 'string' ? content : String(content || ''))
+  const rawString = typeof content === 'string' ? content : String(content || '')
+  const balancedContent = balanceCodeBlocks(rawString)
+  const processedContent = preprocessMarkdownText(balancedContent)
 
   return (
-    <div className={classnames('chat-markdown-body', className)}>
-      <Markdown
-        source={processedContent}
-        renderers={{
-          code: MarkdownCodeBlock,
-          image: MarkdownImage,
-          link: MarkdownLink,
-          tableCell: MarkdownTableCell,
-        }}
-        escapeHtml={false}
-      />
-    </div>
+    <MarkdownErrorBoundary fallbackContent={rawString}>
+      <div className={classnames('chat-markdown-body', className)}>
+        <Markdown
+          source={processedContent}
+          renderers={{
+            code: MarkdownCodeBlock,
+            image: MarkdownImage,
+            link: MarkdownLink,
+            tableCell: MarkdownTableCell,
+          }}
+          escapeHtml={true}
+        />
+      </div>
+    </MarkdownErrorBoundary>
   )
 }
 

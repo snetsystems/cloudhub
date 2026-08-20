@@ -3,6 +3,8 @@ import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import RadioButtons from 'src/reusable_ui/components/radio_buttons/RadioButtons'
 import {SubagentTask} from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
+import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
+import AiChatMessageMarkdown from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageMarkdown'
 
 export interface CustomPanelView {
   id: string
@@ -85,7 +87,9 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
                 <rect x="14" y="19" width="4" height="8" fill="#718096" />
               </svg>
             </div>
-            <div className="agent-status-tag">Orchestrator</div>
+            <AiChatBadge variant="category" size="sm">
+              Orchestrator
+            </AiChatBadge>
           </div>
 
           {/* Dynamic Interactive Story Connection Track */}
@@ -128,7 +132,9 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
                 )}
               </svg>
             </div>
-            <div className="agent-status-tag">{sub.status}</div>
+            <AiChatBadge variant={sub.status.toLowerCase()} size="sm">
+              {sub.status}
+            </AiChatBadge>
           </div>
         </div>
 
@@ -136,7 +142,9 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
         <div className="story-narrative-card">
           <div className="narrative-header">
             <span className="narrative-title">Story Narrative Track</span>
-            <span className={classnames('status-pill', stageStatusClass)}>{sub.progress}%</span>
+            <AiChatBadge variant={sub.status.toLowerCase()} size="sm">
+              {sub.progress}%
+            </AiChatBadge>
           </div>
           <div className="narrative-text">{stateMessage}</div>
           <div className="story-progress-bar">
@@ -173,15 +181,21 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
           <div className="human-log-list">
             <div className="log-item">
               <span className="log-time">10:45:01</span>
-              <span className="log-desc">Main Orchestrator가 {sub.role}에게 태스크 발주</span>
+              <div className="log-desc">
+                <AiChatMessageMarkdown content={`Main Orchestrator가 **${sub.role}**에게 태스크 발주`} />
+              </div>
             </div>
             <div className="log-item">
               <span className="log-time">10:45:03</span>
-              <span className="log-desc">{sub.taskName} 수행 시작</span>
+              <div className="log-desc">
+                <AiChatMessageMarkdown content={`\`${sub.taskName}\` 수행 시작`} />
+              </div>
             </div>
             <div className="log-item highlight">
               <span className="log-time">10:45:05</span>
-              <span className="log-desc">{sub.latestLog}</span>
+              <div className="log-desc">
+                <AiChatMessageMarkdown content={sub.latestLog || ''} />
+              </div>
             </div>
           </div>
         </div>
@@ -279,9 +293,9 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
             <div className="task-menu-sidebar">
               <div className="task-menu-header">
                 <span>Subagent Tasks</span>
-                <span className="active-count-tag">
-                  ({subagents.length} Active)
-                </span>
+                <AiChatBadge variant="category" size="sm">
+                  {subagents.length} Active
+                </AiChatBadge>
               </div>
               <div className="subagent-task-list-wrapper">
                 <FancyScrollbar autoHide={true}>
@@ -295,19 +309,19 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
                         onClick={() => onSelectTaskId(sub.id)}
                       >
                         <div className="card-header">
-                          <span className="subagent-role">
+                          <span className="subagent-role" title={sub.role}>
                             {sub.role}
                           </span>
-                          <span
-                            className={classnames(
-                              'status-badge',
-                              sub.status.toLowerCase()
-                            )}
+                          <AiChatBadge
+                            variant={sub.status.toLowerCase()}
+                            size="sm"
                           >
                             {sub.progress}%
-                          </span>
+                          </AiChatBadge>
                         </div>
-                        <div className="subagent-task-name">{sub.taskName}</div>
+                        <div className="subagent-task-name" title={sub.taskName}>
+                          {sub.taskName}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -335,32 +349,36 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
                     </span>
                   </div>
                   {activeSubagent && (
-                    <span
-                      className={classnames(
-                        'status-badge',
-                        activeSubagent.status.toLowerCase()
-                      )}
+                    <AiChatBadge
+                      variant={activeSubagent.status.toLowerCase()}
+                      size="sm"
                     >
                       {activeSubagent.status} ({activeSubagent.progress}%)
-                    </span>
+                    </AiChatBadge>
                   )}
                 </div>
                 <div className="terminal-console-wrapper">
                   <FancyScrollbar autoHide={true}>
                     <div className="terminal-console-output">
-                      <div>
-                        [System] Subagent{' '}
-                        <strong>{activeSubagent ? activeSubagent.role : ''}</strong> spawned by Main Orchestrator.
+                      <div className="log-line-system">
+                        <AiChatMessageMarkdown
+                          content={`[System] Subagent **${activeSubagent ? activeSubagent.role : ''}** spawned by Main Orchestrator.`}
+                        />
                       </div>
-                      <div>
-                        [Action] Executing pipeline task payload...
+                      <div className="log-line-action">
+                        <AiChatMessageMarkdown
+                          content="[Action] Executing pipeline task payload..."
+                        />
                       </div>
                       <div className="log-line-tool">
-                        [Tool Call] `execute_diagnostics --target="{activeSubagent ? activeSubagent.taskName : ''}"`
+                        <AiChatMessageMarkdown
+                          content={`[Tool Call] \`execute_diagnostics --target="${activeSubagent ? activeSubagent.taskName : ''}"\``}
+                        />
                       </div>
                       <div className="log-line-output">
-                        [Tool Output]{' '}
-                        {activeSubagent ? activeSubagent.latestLog : ''}
+                        <AiChatMessageMarkdown
+                          content={`[Tool Output] ${activeSubagent ? activeSubagent.latestLog : ''}`}
+                        />
                       </div>
                     </div>
                   </FancyScrollbar>

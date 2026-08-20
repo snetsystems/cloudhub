@@ -1,5 +1,6 @@
 import React, {FC, useState} from 'react'
 import classnames from 'classnames'
+import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
 
 export type SystemActivityType = 'skill' | 'mcp' | 'tool' | 'security'
 export type SystemActivityStatus = 'success' | 'error' | 'running' | 'blocked'
@@ -141,10 +142,14 @@ const ActivityEntryItem: FC<ActivityEntryItemProps> = ({entry, iconSize, showIco
       )}
       <div className="activity-entry-body">
         <div className="activity-entry-title-row">
-          <span className="activity-entry-type-tag">{TYPE_LABEL[entry.type]}</span>
+          <AiChatBadge variant="category" size="sm">
+            {TYPE_LABEL[entry.type]}
+          </AiChatBadge>
           <span className="activity-entry-label">{entry.label}</span>
           {entry.truncated && (
-            <span className="activity-truncated-badge">[Preview Mode - Capped at 16KB]</span>
+            <AiChatBadge variant="truncated" size="sm">
+              [Preview Mode - Capped at 16KB]
+            </AiChatBadge>
           )}
           {hasDetails && (
             <span className="activity-entry-expand-hint">
@@ -171,7 +176,9 @@ const ActivityEntryItem: FC<ActivityEntryItemProps> = ({entry, iconSize, showIco
                 <div className="activity-block-header">
                   <span className="activity-block-label">Output Result</span>
                   {entry.truncated && (
-                    <span className="activity-truncated-badge">[Preview Mode - Capped at 16KB]</span>
+                    <AiChatBadge variant="truncated" size="sm">
+                      [Preview Mode - Capped at 16KB]
+                    </AiChatBadge>
                   )}
                 </div>
                 <pre className="activity-code-block">{entry.detail}</pre>
@@ -187,12 +194,21 @@ const ActivityEntryItem: FC<ActivityEntryItemProps> = ({entry, iconSize, showIco
         )}
       </div>
       {entry.status && (
-        <span className={classnames('activity-entry-status-badge', entry.status)}>
-          {entry.status === 'running' && <span className="activity-spinner" />}
-          {entry.status === 'success' && <span className="status-icon">✓</span>}
-          {entry.status === 'error' && <span className="status-icon">✕</span>}
-          <span className="status-text">{STATUS_LABEL[entry.status]}</span>
-        </span>
+        <AiChatBadge
+          variant={entry.status}
+          size="sm"
+          icon={
+            entry.status === 'running' ? (
+              <span className="ai-chat-badge-spinner" />
+            ) : entry.status === 'success' ? (
+              '✓'
+            ) : entry.status === 'error' ? (
+              '✕'
+            ) : undefined
+          }
+        >
+          {STATUS_LABEL[entry.status]}
+        </AiChatBadge>
       )}
     </li>
   )
