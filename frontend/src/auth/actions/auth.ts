@@ -288,7 +288,16 @@ export const loginAsync = ({url, user, retryPolicys}: LoginParams) => async (
     })
 
     dispatch(userLoginFailed())
-    dispatch(notify(notifyLoginFailed(error.data, retryPolicysObj)))
+    const errorData =
+      error?.data && typeof error.data === 'object'
+        ? error.data
+        : {
+            message:
+              (typeof error?.data === 'string' && error.data.trim()) ||
+              error?.statusText ||
+              'Invalid ID or password.',
+          }
+    dispatch(notify(notifyLoginFailed(errorData, retryPolicysObj)))
 
     throw error
   }
@@ -312,7 +321,17 @@ export const createUserAsync = ({url, user}: SignupParams) => async (
     return res
   } catch (error) {
     dispatch(userAddFailed())
-    dispatch(notify(notifyUserAddFailed(error.data)))
+    const errorData =
+      error?.data && typeof error.data === 'object'
+        ? error.data
+        : {
+            code: error?.status || 400,
+            message:
+              (typeof error?.data === 'string' && error.data.trim()) ||
+              error?.statusText ||
+              'Sign up failed.',
+          }
+    dispatch(notify(notifyUserAddFailed(errorData)))
 
     throw error
   }

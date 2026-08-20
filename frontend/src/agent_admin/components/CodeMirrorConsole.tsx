@@ -1,19 +1,16 @@
 import React from 'react'
-import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
+import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {Editor} from 'codemirror'
+import 'src/external/codemirror'
 
 interface Props {
   res: string
-  handleOnChange?: (editor: ReactCodeMirrorEditor) => void
+  handleOnChange?: (editor: Editor) => void
 }
 
-interface ReactCodeMirrorEditor extends IInstance {
-  editor: Editor
-  doc: {height: number}
-}
-
-export const scrolltoBottom = (editor: ReactCodeMirrorEditor) => {
-  editor.scrollTo(0, editor.doc.height + 100)
+export const scrolltoBottom = (editor: Editor) => {
+  const height = (editor as any)?.doc?.height ?? editor.getScrollInfo?.()?.height ?? 0
+  editor.scrollTo(0, height + 100)
 }
 
 const CodeMirrorConsole = (props: Props) => {

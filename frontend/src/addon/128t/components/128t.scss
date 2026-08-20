@@ -659,7 +659,7 @@ $Roles: conductor, combo;
       &.bg-#{$Role} {
         &::after {
           content: '';
-          background: url('../addon/128t/components/assets/role-#{$Role}.svg')
+          background: url('./assets/role-#{$Role}.svg')
             no-repeat
             center;
           display: flex;
@@ -673,7 +673,7 @@ $Roles: conductor, combo;
     &.bg-machine {
       &::after {
         content: '';
-        background: url('../addon/128t/components/assets/topology_machine.svg')
+        background: url('./assets/topology_machine.svg')
           no-repeat center;
         display: flex;
         width: 70%;

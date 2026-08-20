@@ -6,6 +6,7 @@ import classnames from 'classnames'
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {SlideToggle, ComponentSize} from 'src/reusable_ui'
+import 'src/external/codemirror'
 
 // Types
 import {NoteVisibility} from 'src/types/dashboards'

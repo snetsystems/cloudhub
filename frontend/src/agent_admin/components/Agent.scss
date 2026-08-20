@@ -269,7 +269,7 @@
 
   @each $OperatingSystem in $OperatingSystems {
     .os-#{$OperatingSystem}::after {
-      background: url('../agent_admin/components/assets/os/os-#{$OperatingSystem}.png');
+      background: url('./assets/os/os-#{$OperatingSystem}.png');
       background-size: cover;
     }
   }

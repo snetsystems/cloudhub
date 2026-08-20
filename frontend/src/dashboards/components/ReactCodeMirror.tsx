@@ -16,6 +16,7 @@ import {applyMasks, insertTempVar, unMask} from 'src/tempVars/constants'
 
 import {Template, QueryConfig} from 'src/types'
 import {EditorChange, EditorConfiguration, Position} from 'codemirror'
+import 'src/external/codemirror'
 
 interface State {
   markers: CodeMirror.TextMarker[]

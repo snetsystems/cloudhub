@@ -1,15 +1,16 @@
 // Libraries
 import React, {PureComponent} from 'react'
-import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
-import {EditorChange} from 'codemirror'
+import {Controlled as ReactCodeMirror} from 'react-codemirror2'
+import {Editor, EditorChange} from 'codemirror'
+import 'src/external/codemirror'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   configScript: string
-  onBeforeChangeScript: (_: IInstance, __: EditorChange, ___: string) => void
-  onChangeScript: (_: IInstance, __: EditorChange, ___: string) => void
+  onBeforeChangeScript: (_: Editor, __: EditorChange, ___: string) => void
+  onChangeScript: (_: Editor, __: EditorChange, ___: string) => void
 }
 
 interface State {

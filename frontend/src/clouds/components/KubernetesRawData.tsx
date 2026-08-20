@@ -3,6 +3,7 @@ import _ from 'lodash'
 import yaml from 'js-yaml'
 
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
+import 'src/external/codemirror'
 
 interface Props {
   script: string

@@ -3,6 +3,7 @@ import {Rnd} from 'react-rnd'
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import _ from 'lodash'
+import 'src/external/codemirror'
 
 interface Props {
   isVisible: boolean
