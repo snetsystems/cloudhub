@@ -1,10 +1,16 @@
-import React, {FC, useState} from 'react'
+import React, {FC, useState, useEffect} from 'react'
 import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import RadioButtons from 'src/reusable_ui/components/radio_buttons/RadioButtons'
-import {SubagentTask} from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
+import {
+  SubagentTask,
+  ActivityCardItem,
+} from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
 import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
 import AiChatMessageMarkdown from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageMarkdown'
+import MessageActivityInspector, {
+  ConversationTurnItem,
+} from 'src/reusable_ui/components/cloudhub_ai_chat/MessageActivityInspector'
 
 export interface CustomPanelView {
   id: string
@@ -21,11 +27,12 @@ export interface SubagentInspectorPanelProps {
   onSetSubagentFilter: (filter: 'ALL' | 'RUNNING' | 'SUCCESS' | 'ERROR') => void
   onClosePanel: () => void
   defaultViewMode?: 'terminal' | 'character'
-  /**
-   * Allows external caller to register custom components/panels
-   * so that users can display other custom views inside the panel container!
-   */
   customViews?: CustomPanelView[]
+  activeInspectorTab?: string
+  onChangeInspectorTab?: (tab: string) => void
+  turns?: ConversationTurnItem[]
+  selectedTurnId?: string | null
+  onSelectTurnId?: (id: string) => void
 }
 
 export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
@@ -37,9 +44,29 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
   onClosePanel,
   defaultViewMode = 'character',
   customViews = [],
+  activeInspectorTab = 'activity',
+  onChangeInspectorTab,
+  turns = [],
+  selectedTurnId,
+  onSelectTurnId,
 }) => {
-  const [activeTab, setActiveTab] = useState<string>('subagent-inspector')
+  const [internalTab, setInternalTab] = useState<string>(activeInspectorTab)
   const [inspectorViewMode, setInspectorViewMode] = useState<'terminal' | 'character'>(defaultViewMode)
+
+  useEffect(() => {
+    if (activeInspectorTab) {
+      setInternalTab(activeInspectorTab)
+    }
+  }, [activeInspectorTab])
+
+  const handleTabChange = (tab: string) => {
+    setInternalTab(tab)
+    if (onChangeInspectorTab) {
+      onChangeInspectorTab(tab)
+    }
+  }
+
+  const activeTab = internalTab
 
   const activeSubagent =
     subagents.find(s => s.id === activeTaskId) || (subagents.length > 0 ? subagents[0] : null)
@@ -96,14 +123,14 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
           <div className="pixel-track">
             {sub.status === 'RUNNING' && sub.progress < 50 && (
               <div className="data-packet dispatching">
-                <span className="packet-dot">📦</span>
+                <span className="packet-dot" />
                 <span className="packet-label">Task</span>
               </div>
             )}
 
             {sub.status === 'RUNNING' && sub.progress >= 50 && (
               <div className="data-packet reporting">
-                <span className="packet-dot">📜</span>
+                <span className="packet-dot" />
                 <span className="packet-label">Report</span>
               </div>
             )}
@@ -208,16 +235,32 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
 
   return (
     <div className="subagent-monitor-panel">
-      {/* Panel Top Navigation Bar: Switch between Subagent Inspector and other Custom Views */}
+      {/* Panel Top Navigation Bar: Switch between Tool Activity, Subagent Inspector, and Custom Views */}
       <div className="panel-tab-nav">
+        <button
+          className={classnames('tab-nav-item', {
+            active: activeTab === 'activity',
+          })}
+          onClick={() => handleTabChange('activity')}
+          type="button"
+        >
+          도구 실행 내역
+          {turns.length > 0 && (
+            <span className="tab-count-pill">{turns.length}</span>
+          )}
+        </button>
+
         <button
           className={classnames('tab-nav-item', {
             active: activeTab === 'subagent-inspector',
           })}
-          onClick={() => setActiveTab('subagent-inspector')}
+          onClick={() => handleTabChange('subagent-inspector')}
           type="button"
         >
-          Subagent Inspector
+          SubAgent Tasks
+          {subagents.length > 0 && (
+            <span className="tab-count-pill">{subagents.length}</span>
+          )}
         </button>
 
         {customViews.map(view => (
@@ -226,7 +269,7 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
             className={classnames('tab-nav-item', {
               active: activeTab === view.id,
             })}
-            onClick={() => setActiveTab(view.id)}
+            onClick={() => handleTabChange(view.id)}
             type="button"
           >
             {view.icon ? `${view.icon} ` : ''}{view.label}
@@ -234,7 +277,14 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
         ))}
       </div>
 
-      {activeTab === 'subagent-inspector' ? (
+      {activeTab === 'activity' ? (
+        <MessageActivityInspector
+          turns={turns}
+          selectedTurnId={selectedTurnId}
+          onSelectTurnId={onSelectTurnId}
+          onClose={onClosePanel}
+        />
+      ) : activeTab === 'subagent-inspector' ? (
         <>
           <div className="subagent-header">
             <div className="panel-title">

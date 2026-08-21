@@ -3,6 +3,7 @@ import React, {
   useRef,
   useEffect,
   useCallback,
+  useMemo,
   ChangeEvent,
   KeyboardEvent,
   FC,
@@ -41,7 +42,9 @@ import {useOpenClawApprovals} from 'src/reusable_ui/components/cloudhub_ai_chat/
 // Cloudhub Redux Notification Action & Helpers
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {defaultErrorNotification} from 'src/shared/copy/notifications'
-import {connect} from 'react-redux'
+import {connect, useSelector} from 'react-redux'
+import moment from 'moment'
+import {TimeZones} from 'src/types'
 
 // SCSS Theme Styling (Influx / SNet Color Variables)
 import './CloudhubAiChatStandalone.scss'
@@ -53,9 +56,14 @@ export interface SubagentTask {
   status: 'RUNNING' | 'SUCCESS' | 'ERROR' | 'QUEUED'
   progress: number
   latestLog: string
+  currentAction?: string
   characterAvatar?: string
   currentStepIndex?: number
   steps?: {title: string; status: 'done' | 'active' | 'pending' | 'error'}[]
+  timeline?: {
+    title: string
+    status: 'done' | 'running' | 'active' | 'pending' | 'error'
+  }[]
 }
 
 export interface ActivityCardItem {
@@ -76,6 +84,7 @@ export interface ChatMessage {
   sender: 'user' | 'ai' | 'system'
   text: string
   timestamp: string
+  timestampRaw?: number
   action?: 'ALLOW' | 'BLOCKED' | 'REDACTED'
   toolCommand?: string
   stdout?: string
@@ -88,6 +97,7 @@ export interface ChatSession {
   id: string
   title: string
   updatedAt: string
+  createdAt?: string
   messages: ChatMessage[]
   subagents?: SubagentTask[]
 }
@@ -99,6 +109,7 @@ export interface CloudhubAiChatProps {
   customClass?: string
   subagentDefaultView?: 'terminal' | 'character'
   customPanelViews?: CustomPanelView[]
+  timeZone?: TimeZones
 }
 
 /* REAL OPENCLAW REST & WEBSOCKET API INTEGRATION */
@@ -126,6 +137,7 @@ const toChatSession = (dto: OpenClawSessionDTO): ChatSession => ({
   id: dto.id,
   title: dto.title,
   updatedAt: dto.updatedAt,
+  createdAt: dto.createdAt,
   messages: [],
 })
 
@@ -359,24 +371,50 @@ const AiChatToolExecutionCard: FC<{card: ActivityCardItem}> = ({card}) => {
   )
 }
 
-const formatChatTimestamp = (timestamp?: number | string | Date): string => {
+export const formatChatTimestamp = (
+  timestamp?: number | string | Date,
+  timeZone: TimeZones = TimeZones.Local
+): string => {
   if (!timestamp) {
-    return new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    const m = timeZone === TimeZones.UTC ? moment.utc() : moment()
+    return timeZone === TimeZones.UTC ? m.format('HH:mm') : m.format('A h:mm')
   }
-  const d =
-    typeof timestamp === 'number' || typeof timestamp === 'string'
-      ? new Date(timestamp)
+
+  const rawNum =
+    typeof timestamp === 'string' && /^\d+$/.test(timestamp)
+      ? Number(timestamp)
       : timestamp
-  if (!d || !(d instanceof Date) || isNaN(d.getTime())) {
-    return new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+
+  const m = timeZone === TimeZones.UTC ? moment.utc(rawNum) : moment(rawNum)
+  if (!m.isValid()) {
+    const fallback = timeZone === TimeZones.UTC ? moment.utc() : moment()
+    return timeZone === TimeZones.UTC
+      ? fallback.format('HH:mm')
+      : fallback.format('A h:mm')
   }
-  return d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+
+  const now = timeZone === TimeZones.UTC ? moment.utc() : moment()
+  const isToday = m.isSame(now, 'day')
+  const isThisYear = m.isSame(now, 'year')
+
+  if (timeZone === TimeZones.UTC) {
+    if (isToday) {
+      return m.format('HH:mm')
+    }
+    if (isThisYear) {
+      return m.format('M[월] D[일] HH:mm')
+    }
+    return m.format('YYYY[년] M[월] D[일] HH:mm')
+  }
+
+  // Local (KST)
+  if (isToday) {
+    return m.format('A h:mm')
+  }
+  if (isThisYear) {
+    return m.format('M[월] D[일] A h:mm')
+  }
+  return m.format('YYYY[년] M[월] D[일] A h:mm')
 }
 
 const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
@@ -403,34 +441,64 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
     if (!raw || typeof raw !== 'object') return
     if (raw.role === 'system') return
 
-    if (raw.role === 'user') {
+    const role = (raw.role || raw.sender || '').toLowerCase()
+
+    if (role === 'user' || role === 'human' || role === 'client') {
       flushAiMessage()
       let userText = ''
       if (typeof raw.content === 'string') {
         userText = raw.content
       } else if (Array.isArray(raw.content)) {
         userText = raw.content
-          .map((p: any) => (typeof p === 'string' ? p : p?.text || ''))
+          .map((p: any) =>
+            typeof p === 'string'
+              ? p
+              : p?.text || p?.content || p?.value || ''
+          )
           .join('')
+      } else if (typeof raw.text === 'string') {
+        userText = raw.text
       } else if (raw.content) {
         userText = String(raw.content)
       }
+
+      // Only ignore OpenClaw's internal automated crash recovery prompt
+      // Genuine user messages (even if they start with [System] or [OpenClaw]) will never be blocked
+      const isInternalCrashRecovery =
+        userText.includes('interrupted by a gateway restart') &&
+        userText.includes('Continue from the existing transcript')
+
+      if (isInternalCrashRecovery && !raw.idempotencyKey) {
+        return
+      }
+
+      const rawTs = raw.timestamp ? Number(raw.timestamp) : Date.now()
+
       chatMessages.push({
-        id: raw.__openclaw?.id || `user-${raw.timestamp || Date.now()}-${idx}`,
+        id: raw.__openclaw?.id || raw.id || `user-${raw.timestamp || Date.now()}-${idx}`,
         sender: 'user',
         text: userText,
-        timestamp: formatChatTimestamp(raw.timestamp),
+        timestamp: formatChatTimestamp(rawTs),
+        timestampRaw: rawTs,
       })
       return
     }
 
-    if (raw.role === 'assistant') {
+    if (
+      role === 'assistant' ||
+      role === 'model' ||
+      role === 'agent' ||
+      role === 'bot' ||
+      role === 'ai'
+    ) {
+      const rawTs = raw.timestamp ? Number(raw.timestamp) : Date.now()
       if (!currentAiMessage) {
         currentAiMessage = {
-          id: raw.__openclaw?.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+          id: raw.__openclaw?.id || raw.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
           sender: 'ai',
           text: '',
-          timestamp: formatChatTimestamp(raw.timestamp),
+          timestamp: formatChatTimestamp(rawTs),
+          timestampRaw: rawTs,
           activities: [],
         }
       }
@@ -438,8 +506,8 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       if (Array.isArray(raw.content)) {
         for (const part of raw.content) {
           if (!part) continue
-          if (part.type === 'toolCall') {
-            const toolName = part.name || 'tool'
+          if (part.type === 'toolCall' || part.type === 'tool_call' || part.type === 'tool') {
+            const toolName = part.name || part.toolName || 'tool'
             const isMcp = toolName.includes('__')
             let inputStr = ''
             try {
@@ -458,7 +526,7 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
             const desc = ensureString(rawDesc)
 
             const card: ActivityCardItem = {
-              id: part.id || `act-${idx}`,
+              id: part.id || part.toolCallId || `act-${idx}`,
               type: isMcp ? 'mcp' : 'tool',
               label: toolName,
               description: desc,
@@ -473,33 +541,47 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
             if (part.id) {
               pendingActivityMap.set(part.id, card)
             }
-          } else if (part.type === 'text' && part.text) {
+          } else if (
+            (part.type === 'text' || !part.type) &&
+            (part.text || part.content || typeof part === 'string')
+          ) {
+            const addedText = typeof part === 'string' ? part : part.text || part.content || ''
             currentAiMessage.text =
               (currentAiMessage.text ? currentAiMessage.text + '\n' : '') +
-              part.text
+              addedText
           }
         }
       } else if (typeof raw.content === 'string' && raw.content) {
         currentAiMessage.text =
           (currentAiMessage.text ? currentAiMessage.text + '\n' : '') +
           raw.content
+      } else if (typeof raw.text === 'string' && raw.text) {
+        currentAiMessage.text =
+          (currentAiMessage.text ? currentAiMessage.text + '\n' : '') +
+          raw.text
       }
       return
     }
 
-    if (raw.role === 'toolResult') {
+    if (role === 'toolresult' || role === 'tool_result' || role === 'tool') {
       let resultText = ''
       if (Array.isArray(raw.content)) {
         resultText = raw.content
-          .map((p: any) => (typeof p === 'string' ? p : p?.text || ''))
+          .map((p: any) =>
+            typeof p === 'string'
+              ? p
+              : p?.text || p?.content || p?.output || ''
+          )
           .join('')
       } else if (typeof raw.content === 'string') {
         resultText = raw.content
+      } else if (typeof raw.output === 'string') {
+        resultText = raw.output
       } else if (raw.content) {
         resultText = String(raw.content)
       }
 
-      const toolCallId = raw.toolCallId
+      const toolCallId = raw.toolCallId || raw.tool_call_id || raw.id
       const targetCard = toolCallId ? pendingActivityMap.get(toolCallId) : null
 
       if (targetCard) {
@@ -511,17 +593,19 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
           targetCard.detail = resultText
         }
       } else {
+        const rawTs = raw.timestamp ? Number(raw.timestamp) : Date.now()
         if (!currentAiMessage) {
           currentAiMessage = {
             id:
-              raw.__openclaw?.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+              raw.__openclaw?.id || raw.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
             sender: 'ai',
             text: '',
-            timestamp: formatChatTimestamp(raw.timestamp),
+            timestamp: formatChatTimestamp(rawTs),
+            timestampRaw: rawTs,
             activities: [],
           }
         }
-        const toolName = raw.toolName || 'tool'
+        const toolName = raw.toolName || raw.name || 'tool'
         const card: ActivityCardItem = {
           id: toolCallId || raw.__openclaw?.id || `tool-${idx}`,
           type: toolName.includes('__') ? 'mcp' : 'tool',
@@ -543,6 +627,68 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
   return chatMessages
 }
 
+const mergeHistoryWithLocal = (
+  existing: ChatMessage[],
+  incoming: ChatMessage[]
+): ChatMessage[] => {
+  if (!existing || existing.length === 0) return incoming || []
+  if (!incoming || incoming.length === 0) return existing
+
+  const merged = [...existing]
+
+  incoming.forEach(incMsg => {
+    // 1. Match by exact ID
+    let foundIdx = merged.findIndex(m => m.id === incMsg.id)
+
+    // 2. If not found by ID, match by sender and text content
+    if (foundIdx < 0 && incMsg.text && incMsg.text.trim()) {
+      foundIdx = merged.findIndex(
+        m =>
+          m.sender === incMsg.sender &&
+          m.text &&
+          m.text.trim() === incMsg.text.trim()
+      )
+    }
+
+    // 3. If incoming is an AI message from server and we have a local in-progress AI message, match it
+    if (foundIdx < 0 && incMsg.sender === 'ai') {
+      const streamingIdx = merged.findIndex(
+        m => m.sender === 'ai' && (m.isStreaming || m.id.startsWith('m-ai-'))
+      )
+      if (streamingIdx >= 0) {
+        foundIdx = streamingIdx
+      }
+    }
+
+    if (foundIdx >= 0) {
+      const ex = merged[foundIdx]
+      // Merge activities to keep all tool executions
+      const existingActs = ex.activities || []
+      const incomingActs = incMsg.activities || []
+      const actMap = new Map<string, ActivityCardItem>()
+      existingActs.forEach(a => actMap.set(a.id, a))
+      incomingActs.forEach(a =>
+        actMap.set(a.id, {...(actMap.get(a.id) || {}), ...a})
+      )
+
+      merged[foundIdx] = {
+        ...ex,
+        ...incMsg,
+        text: incMsg.text || ex.text,
+        timestamp: incMsg.timestamp || ex.timestamp,
+        timestampRaw: incMsg.timestampRaw || ex.timestampRaw,
+        activities: Array.from(actMap.values()),
+        isStreaming: false,
+      }
+    } else {
+      // New message from server: append
+      merged.push(incMsg)
+    }
+  })
+
+  return merged
+}
+
 interface ComponentProps extends CloudhubAiChatProps {
   notify?: (notification: any) => void
 }
@@ -554,8 +700,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   customClass,
   subagentDefaultView = 'character',
   customPanelViews = [],
+  timeZone: timeZoneProp,
   notify,
 }) => {
+  const reduxTimeZone = useSelector(
+    (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
+      state.app?.persisted?.timeZone ?? TimeZones.Local
+  )
+  const effectiveTimeZone = timeZoneProp ?? reduxTimeZone
+
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string>('')
   const [inputPrompt, setInputPrompt] = useState<string>('')
@@ -565,6 +718,12 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     'ALL' | 'RUNNING' | 'SUCCESS' | 'ERROR'
   >('ALL')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [selectedInspectorMessageId, setSelectedInspectorMessageId] = useState<
+    string | null
+  >(null)
+  const [activeInspectorTab, setActiveInspectorTab] = useState<string>(
+    'activity'
+  )
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(true)
   const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -575,6 +734,75 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const [isJustCompleted, setIsJustCompleted] = useState<boolean>(false)
   const prevStreamingRef = useRef<boolean>(false)
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Compute list of turns for the activity inspector
+  const currentChatSession = sessions.find(s => s.id === activeSessionId)
+  const currentSessionMessages = currentChatSession?.messages || []
+
+  const conversationTurns = useMemo(() => {
+    const turns: Array<{
+      id: string
+      userPrompt?: string
+      aiResponse?: string
+      timestamp?: string
+      activities?: ActivityCardItem[]
+      toolCommand?: string
+      isStreaming?: boolean
+    }> = []
+    let lastUserPrompt = ''
+
+    currentSessionMessages.forEach(msg => {
+      if (msg.sender === 'user') {
+        lastUserPrompt = msg.text
+      } else if (msg.sender === 'ai') {
+        turns.push({
+          id: msg.id,
+          userPrompt: lastUserPrompt,
+          aiResponse: msg.text,
+          timestamp: formatChatTimestamp(
+            msg.timestampRaw || msg.timestamp,
+            effectiveTimeZone
+          ),
+          activities: msg.activities || [],
+          toolCommand: msg.toolCommand,
+          isStreaming: msg.isStreaming,
+        })
+      }
+    })
+
+    return turns
+  }, [currentSessionMessages, effectiveTimeZone])
+
+  const targetInspectorMessage = useMemo(() => {
+    if (selectedInspectorMessageId) {
+      const found = currentSessionMessages.find(
+        m => m.id === selectedInspectorMessageId
+      )
+      if (found) return found
+    }
+    // Default to the last AI message with activities
+    for (let i = currentSessionMessages.length - 1; i >= 0; i--) {
+      const m = currentSessionMessages[i]
+      if (
+        m.sender === 'ai' &&
+        ((m.activities && m.activities.length > 0) || m.toolCommand)
+      ) {
+        return m
+      }
+    }
+    // Or just the last AI message
+    for (let i = currentSessionMessages.length - 1; i >= 0; i--) {
+      if (currentSessionMessages[i].sender === 'ai')
+        return currentSessionMessages[i]
+    }
+    return null
+  }, [currentSessionMessages, selectedInspectorMessageId])
+
+  const handleOpenActivityInspector = useCallback((messageId: string) => {
+    setSelectedInspectorMessageId(messageId)
+    setActiveInspectorTab('activity')
+    setShowSubagentPanel(true)
+  }, [])
 
   const handleCopyMessageText = useCallback((msgId: string, text: string) => {
     if (!text) return
@@ -661,7 +889,10 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
   useEffect(() => {
     sessionsRef.current = sessions
-  }, [sessions])
+    const current = sessions.find(s => s.id === activeSessionId)
+    const isStreaming = Boolean(current?.messages?.some(m => m.isStreaming))
+    setIsStreamingActive(isStreaming)
+  }, [sessions, activeSessionId])
 
   const triggerErrorNotification = useCallback(
     (msg: string) => {
@@ -787,30 +1018,24 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         )
         if (!res.ok) return
 
-        const data: {
-          messages: OpenClawMessageDTO[]
-        } = await res.json().catch(() => ({messages: []}))
-        const msgs = parseOpenClawHistory(data.messages || [])
+        const rawJson: any = await res.json().catch(() => null)
+        let rawList: any[] = []
+        if (Array.isArray(rawJson)) {
+          rawList = rawJson
+        } else if (rawJson && Array.isArray(rawJson.messages)) {
+          rawList = rawJson.messages
+        } else if (rawJson && Array.isArray(rawJson.data)) {
+          rawList = rawJson.data
+        } else if (rawJson && Array.isArray(rawJson.history)) {
+          rawList = rawJson.history
+        }
+        const msgs = parseOpenClawHistory(rawList)
         setSessions(prev =>
           prev.map(s => {
             if (s.id !== activeSessionId) return s
-            const hasPendingStreaming = Boolean(
-              pendingRunsRef.current[activeSessionId] ||
-                (s.messages || []).some(m => m.isStreaming)
-            )
-            // If the session is currently actively streaming, keep local streaming state
-            if (hasPendingStreaming) {
-              return s
-            }
-            // Otherwise, replace with official server history
             return {
               ...s,
-              messages:
-                msgs.length > 0
-                  ? msgs
-                  : s.messages && s.messages.length > 0
-                  ? s.messages
-                  : [],
+              messages: mergeHistoryWithLocal(s.messages || [], msgs),
             }
           })
         )
@@ -834,25 +1059,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     let isTornDown = false
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null
-
-    const finalizePendingRun = (fallbackText: string) => {
-      const pendingId = pendingRunsRef.current[activeSessionId]
-      if (!pendingId) return
-      delete pendingRunsRef.current[activeSessionId]
-      setSessions(prev =>
-        prev.map(s => {
-          if (s.id !== activeSessionId) return s
-          return {
-            ...s,
-            messages: s.messages.map(m =>
-              m.id === pendingId && m.isStreaming
-                ? {...m, isStreaming: false, text: m.text || fallbackText}
-                : m
-            ),
-          }
-        })
-      )
-    }
 
     const mergeActivityCardIntoSession = (actData: any) => {
       if (!actData) return
@@ -954,7 +1160,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
               status: newEntry.status,
               input: newEntry.input || existingCard.input,
               startedAt: existingCard.startedAt || newEntry.startedAt,
-              endedAt: newEntry.endedAt || existingCard.endedAt,
+              endedAt: existingCard.endedAt || newEntry.endedAt,
             }
 
             const updatedActivities = existingActivities.map((c, idx) =>
@@ -962,30 +1168,45 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             )
             msgs[targetMsgIdx] = {...targetMsg, activities: updatedActivities}
           } else {
-            // Close streaming on prior text segment if present
+            // New activity card: attach to the current AI turn message
             const currentPendingId = pendingRunsRef.current[activeSessionId]
-            if (currentPendingId) {
-              const pendingIdx = msgs.findIndex(m => m.id === currentPendingId)
-              if (pendingIdx >= 0) {
-                if (msgs[pendingIdx].text) {
-                  msgs[pendingIdx] = {...msgs[pendingIdx], isStreaming: false}
-                } else {
-                  // Remove empty placeholder message
-                  msgs.splice(pendingIdx, 1)
+            let pendingIdx = currentPendingId
+              ? msgs.findIndex(m => m.id === currentPendingId)
+              : -1
+
+            if (pendingIdx < 0) {
+              // If no pending AI message, check if the last message is an AI message
+              const lastIdx = msgs.length - 1
+              if (lastIdx >= 0 && msgs[lastIdx].sender === 'ai') {
+                pendingIdx = lastIdx
+                pendingRunsRef.current[activeSessionId] = msgs[lastIdx].id
+              } else {
+                // Spawn the single AI response message for this turn
+                const newAiMsgId = `m-ai-${Date.now()}`
+                pendingRunsRef.current[activeSessionId] = newAiMsgId
+                const newAiMsg: ChatMessage = {
+                  id: newAiMsgId,
+                  sender: 'ai',
+                  text: '',
+                  timestamp: formatChatTimestamp(Date.now()),
+                  isStreaming: true,
+                  activities: [newEntry],
+                }
+                msgs.push(newAiMsg)
+                return {
+                  ...s,
+                  messages: msgs,
                 }
               }
-              delete pendingRunsRef.current[activeSessionId]
             }
 
-            // Create a dedicated separate message item for this tool execution card and append in order
-            const newActMsg: ChatMessage = {
-              id: `act-msg-${key}`,
-              sender: 'ai',
-              text: '',
-              timestamp: formatChatTimestamp(Date.now()),
-              activities: [newEntry],
+            const targetAiMsg = msgs[pendingIdx]
+            const existingActivities = targetAiMsg.activities || []
+            msgs[pendingIdx] = {
+              ...targetAiMsg,
+              isStreaming: true,
+              activities: [...existingActivities, newEntry],
             }
-            msgs.push(newActMsg)
           }
 
           return {
@@ -1129,23 +1350,34 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                         ? existingTask.role
                         : roleLabel,
                     taskName: title,
-                    status:
-                      isEnd && existingTask?.status === 'SUCCESS'
-                        ? 'SUCCESS'
-                        : status,
+                    status,
                     progress: Math.max(existingTask?.progress || 0, progress),
                     latestLog:
                       outputText ||
+                      metaText ||
                       existingTask?.latestLog ||
                       (status === 'RUNNING' ? '실행 중...' : '실행 완료'),
+                    currentAction: metaText || `Executing ${name}...`,
                     currentStepIndex: isEnd ? 3 : 2,
                     steps: [
-                      {title: `도구/명령어 호출 (${name})`, status: 'done'},
+                      {title: `요청 수신 (${name})`, status: 'done'},
                       {
-                        title: `실행 (${
-                          kind === 'command' ? '시스템 명령' : '도구 실행'
-                        })`,
+                        title: `도구 로직 수행`,
                         status: isEnd ? 'done' : 'active',
+                      },
+                      {
+                        title: `결과 검증 및 출력`,
+                        status: isEnd ? 'done' : 'pending',
+                      },
+                    ],
+                    timeline: [
+                      {
+                        title: `요청 수신 (${name})`,
+                        status: 'done',
+                      },
+                      {
+                        title: `도구 로직 수행`,
+                        status: isEnd ? 'done' : 'running',
                       },
                       {
                         title: `결과 검증 및 출력`,
@@ -1197,41 +1429,51 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
                     const msgs = [...(s.messages || [])]
                     const pendingId = pendingRunsRef.current[activeSessionId]
-                    const targetIdx = pendingId
+                    let targetIdx = pendingId
                       ? msgs.findIndex(m => m.id === pendingId)
                       : -1
 
                     if (targetIdx < 0) {
-                      // Spawn a NEW text response segment message in chronological order!
-                      const newTextMsgId = `m-text-${Date.now()}-${Math.random()
-                        .toString(36)
-                        .substring(2, 6)}`
-                      pendingRunsRef.current[activeSessionId] = newTextMsgId
-                      const newTextMsg: ChatMessage = {
-                        id: newTextMsgId,
-                        sender: 'ai',
-                        text: incomingText,
-                        timestamp: formatChatTimestamp(Date.now()),
-                        isStreaming: true,
+                      // Check if last message is an AI message to attach to
+                      const lastIdx = msgs.length - 1
+                      if (lastIdx >= 0 && msgs[lastIdx].sender === 'ai') {
+                        targetIdx = lastIdx
+                        pendingRunsRef.current[activeSessionId] =
+                          msgs[lastIdx].id
+                      } else {
+                        const newTextMsgId = `m-ai-${Date.now()}`
+                        pendingRunsRef.current[activeSessionId] = newTextMsgId
+                        const newTextMsg: ChatMessage = {
+                          id: newTextMsgId,
+                          sender: 'ai',
+                          text: incomingText,
+                          timestamp: formatChatTimestamp(Date.now()),
+                          isStreaming: true,
+                          activities: [],
+                        }
+                        msgs.push(newTextMsg)
+                        return {
+                          ...s,
+                          messages: msgs,
+                        }
                       }
-                      msgs.push(newTextMsg)
-                    } else {
-                      // Update existing streaming text message segment
-                      const existingMsg = msgs[targetIdx]
-                      let updatedText = existingMsg.text
-                      if (
-                        fullTextFromMsg &&
-                        fullTextFromMsg.length >= existingMsg.text.length
-                      ) {
-                        updatedText = fullTextFromMsg
-                      } else if (payload.deltaText) {
-                        updatedText = existingMsg.text + payload.deltaText
-                      }
-                      msgs[targetIdx] = {
-                        ...existingMsg,
-                        text: updatedText,
-                        isStreaming: true,
-                      }
+                    }
+
+                    // Update existing AI turn message
+                    const existingMsg = msgs[targetIdx]
+                    let updatedText = existingMsg.text
+                    if (
+                      fullTextFromMsg &&
+                      fullTextFromMsg.length >= existingMsg.text.length
+                    ) {
+                      updatedText = fullTextFromMsg
+                    } else if (payload.deltaText) {
+                      updatedText = existingMsg.text + payload.deltaText
+                    }
+                    msgs[targetIdx] = {
+                      ...existingMsg,
+                      text: updatedText,
+                      isStreaming: true,
                     }
 
                     return {
@@ -1252,39 +1494,48 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             ) {
               setIsStreamingActive(false)
               const pendingId = pendingRunsRef.current[activeSessionId]
-              if (pendingId) {
-                delete pendingRunsRef.current[activeSessionId]
-                setSessions(prev =>
-                  prev.map(s => {
-                    if (s.id !== activeSessionId) return s
-                    return {
-                      ...s,
-                      messages: s.messages.map(m => {
-                        if (m.id !== pendingId) return m
-                        const finalDto: OpenClawMessageDTO | undefined =
-                          payload.message
-                        const textFromFinal = finalDto
-                          ? extractDisplayableText(finalDto.content || [])
-                          : ''
-                        const finalText = textFromFinal || m.text
-                        return {
-                          ...m,
-                          isStreaming: false,
-                          timestamp:
-                            m.timestamp || formatChatTimestamp(Date.now()),
-                          text:
-                            finalText ||
-                            (payload.state !== 'final' &&
-                            payload.state !== 'completed'
-                              ? payload.errorMessage ||
-                                '응답 처리 중 오류가 발생했습니다.'
-                              : m.text),
-                        }
-                      }),
-                    }
-                  })
-                )
-              }
+              delete pendingRunsRef.current[activeSessionId]
+
+              setSessions(prev =>
+                prev.map(s => {
+                  if (s.id !== activeSessionId) return s
+                  return {
+                    ...s,
+                    messages: (s.messages || []).map(m => {
+                      if (pendingId && m.id !== pendingId) return m
+                      if (!pendingId && !m.isStreaming) return m
+                      const finalDto: OpenClawMessageDTO | undefined =
+                        payload.message
+                      const textFromFinal = finalDto
+                        ? extractDisplayableText(finalDto.content || [])
+                        : ''
+                      const finalText = textFromFinal || m.text
+                      return {
+                        ...m,
+                        isStreaming: false,
+                        timestamp:
+                          m.timestamp || formatChatTimestamp(Date.now()),
+                        text:
+                          finalText ||
+                          (payload.state !== 'final' &&
+                          payload.state !== 'completed'
+                            ? payload.errorMessage ||
+                              '응답 처리 중 오류가 발생했습니다.'
+                            : m.text),
+                        activities: (m.activities || []).map(act => ({
+                          ...act,
+                          status:
+                            act.status === 'running'
+                              ? payload.state === 'error'
+                                ? 'error'
+                                : 'success'
+                              : act.status,
+                        })),
+                      }
+                    }),
+                  }
+                })
+              )
               // Sync with official backend history after stream completion
               fetchMessages(true)
             }
@@ -1294,8 +1545,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         }
 
         socket.onclose = () => {
-          setIsStreamingActive(false)
-          finalizePendingRun('연결이 끊어져 응답을 받지 못했습니다.')
           if (!isTornDown) {
             reconnectTimer = setTimeout(connect, 2000)
           }
@@ -1318,9 +1567,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const subagents = activeSession?.subagents || []
   const displayableMessages = (activeSession?.messages || []).filter(
     msg =>
-      msg.text ||
-      msg.isStreaming ||
-      (msg.activities && msg.activities.length > 0)
+      Boolean(msg.text) || Boolean(msg.activities && msg.activities.length > 0)
+  )
+  const isAnyAiWorking = displayableMessages.some(
+    m =>
+      m.sender === 'ai' &&
+      m.isStreaming &&
+      (Boolean(m.text) || Boolean(m.activities && m.activities.length > 0))
   )
   const approvalIdSetKey = JSON.stringify(
     approvals.map(approval => approval.id).sort()
@@ -1570,23 +1823,27 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     let targetSessionId = activeSessionId
 
-    const userMsgId = `m-${Date.now()}`
-    const timeStr = formatChatTimestamp(Date.now())
+    const nowTs = Date.now()
+    const userMsgId = `m-${nowTs}`
+    const timeStr = formatChatTimestamp(nowTs, effectiveTimeZone)
 
     const userMessage: ChatMessage = {
       id: userMsgId,
       sender: 'user',
       text: currentPrompt,
       timestamp: timeStr,
+      timestampRaw: nowTs,
     }
 
-    const aiMsgId = `m-ai-${Date.now()}`
+    const aiMsgId = `m-ai-${nowTs}`
     const loadingAiMsg: ChatMessage = {
       id: aiMsgId,
       sender: 'ai',
       text: '',
-      timestamp: formatChatTimestamp(Date.now()),
+      timestamp: formatChatTimestamp(nowTs, effectiveTimeZone),
+      timestampRaw: nowTs,
       isStreaming: true,
+      activities: [],
     }
 
     // 1. If this is a new chat draft (no active session yet), create the session
@@ -1731,7 +1988,17 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   }
 
   const handleToggleSubagentPanel = () => {
-    setShowSubagentPanel(prev => !prev)
+    setShowSubagentPanel(prev => {
+      const next = !prev
+      if (next) {
+        if (subagents.some(s => s.status === 'RUNNING')) {
+          setActiveInspectorTab('subagent-inspector')
+        } else {
+          setActiveInspectorTab('activity')
+        }
+      }
+      return next
+    })
   }
 
   const wrapperClass = classnames(
@@ -1753,10 +2020,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           <Button
             text={
               showSubagentPanel
-                ? 'Hide Subagents'
+                ? '패널 닫기'
                 : subagents.length > 0
-                ? `Subagent Inspector (${subagents.length})`
-                : 'Subagent Inspector'
+                ? `Subagents (${subagents.length})`
+                : targetInspectorMessage?.activities &&
+                  targetInspectorMessage.activities.length > 0
+                ? `도구 내역 (${targetInspectorMessage.activities.length})`
+                : '작업 인스펙터'
             }
             color={
               showSubagentPanel || subagents.some(s => s.status === 'RUNNING')
@@ -1855,9 +2125,12 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                               </button>
                             </div>
                           ) : (
-                            msg.timestamp && (
+                            (msg.timestampRaw || msg.timestamp) && (
                               <span className="message-timestamp">
-                                {msg.timestamp}
+                                {formatChatTimestamp(
+                                  msg.timestampRaw || msg.timestamp,
+                                  effectiveTimeZone
+                                )}
                               </span>
                             )
                           )}
@@ -1868,102 +2141,159 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   ]
                 }
 
-                const elements: React.ReactNode[] = []
-
-                // Render each tool card as its own individual chat message bubble
-                if (msg.activities && msg.activities.length > 0) {
-                  msg.activities.forEach(card => {
-                    elements.push(
-                      <div
-                        key={`act-${msg.id}-${card.id}`}
-                        className="message-item ai activity-message-item"
-                      >
-                        <AiChatMessageAvatar sender="tool" />
-                        <div className="message-bubble activity-message-bubble">
-                          <AiChatToolExecutionCard card={card} />
-                        </div>
-                      </div>
-                    )
-                  })
-                }
-
-                // 1. Render assistant text response as its own dedicated chat bubble
+                const hasActivities = Boolean(
+                  msg.activities && msg.activities.length > 0
+                )
                 const hasText = Boolean(msg.text)
+                const isTargetSelected = selectedInspectorMessageId === msg.id
 
-                if (hasText) {
-                  elements.push(
-                    <div key={`text-${msg.id}`} className="message-item ai">
-                      <AiChatMessageAvatar sender="ai" />
-                      <div className="message-content-col">
-                        <div className="message-bubble">
-                          <div className="message-text-content">
-                            {msg.text && (
-                              <AiChatMessageMarkdown content={msg.text} />
-                            )}
-                            {msg.isStreaming && (
-                              <span className="blinking-cursor" />
-                            )}
+                return (
+                  <div key={`msg-${msg.id}`} className="message-item ai">
+                    <AiChatMessageAvatar sender="ai" />
+                    <div className="message-content-col">
+                      {hasActivities ? (
+                        <div className="message-bubble has-activities">
+                          <div className="ai-tool-activity-summary-bar">
+                            <div className="summary-bar-left">
+                              <span className="summary-label">
+                                {`도구 ${msg.activities!.length}개 실행`}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className={classnames(
+                                'view-activity-inspector-btn',
+                                {
+                                  active:
+                                    isTargetSelected &&
+                                    showSubagentPanel &&
+                                    activeInspectorTab === 'activity',
+                                }
+                              )}
+                              onClick={() =>
+                                handleOpenActivityInspector(msg.id)
+                              }
+                              title="우측 패널에서 상세 실행 내역 보기"
+                            >
+                              작업 내용 보기 ↗
+                            </button>
                           </div>
+
+                          {hasText && (
+                            <div className="message-text-content">
+                              <AiChatMessageMarkdown content={msg.text} />
+                              {msg.isStreaming && (
+                                <span className="blinking-cursor" />
+                              )}
+                            </div>
+                          )}
+
+                          {!hasText && msg.isStreaming && (
+                            <div className="inline-streaming-dots">
+                              <span className="loading-dot" />
+                              <span className="loading-dot" />
+                              <span className="loading-dot" />
+                            </div>
+                          )}
+
                           {!msg.isStreaming && (
                             <div className="message-bubble-footer ai-completed-footer">
                               <div className="ai-footer-left">
                                 <AiChatBadge variant="done" icon="✓">
                                   답변 완료
                                 </AiChatBadge>
-                                {msg.timestamp && (
+                                {(msg.timestampRaw || msg.timestamp) && (
                                   <span className="message-timestamp">
-                                    {msg.timestamp}
+                                    {formatChatTimestamp(
+                                      msg.timestampRaw || msg.timestamp,
+                                      effectiveTimeZone
+                                    )}
                                   </span>
                                 )}
                               </div>
                               <div className="ai-footer-actions">
-                                <button
-                                  type="button"
-                                  className={classnames('ai-copy-btn', {
-                                    copied: copiedMessageId === msg.id,
-                                  })}
-                                  onClick={() =>
-                                    handleCopyMessageText(msg.id, msg.text)
-                                  }
-                                  title="답변 내용 복사"
-                                >
-                                  {copiedMessageId === msg.id
-                                    ? '복사됨'
-                                    : '복사'}
-                                </button>
+                                {hasText && (
+                                  <button
+                                    type="button"
+                                    className={classnames('ai-copy-btn', {
+                                      copied: copiedMessageId === msg.id,
+                                    })}
+                                    onClick={() =>
+                                      handleCopyMessageText(msg.id, msg.text)
+                                    }
+                                    title="답변 내용 복사"
+                                  >
+                                    {copiedMessageId === msg.id
+                                      ? '복사됨'
+                                      : '복사'}
+                                  </button>
+                                )}
                               </div>
                             </div>
                           )}
                         </div>
-
-                        {msg.toolCommand &&
-                          msg.toolCommand !== 'NONE (BLOCKED BY GATEWAY)' && (
-                            <div className="tool-call-card">
-                              <div className="tool-header">
-                                Executed Tool Command
-                              </div>
-                              <div className="code-block">
-                                <code>{msg.toolCommand}</code>
-                              </div>
+                      ) : (
+                        <div className="message-bubble">
+                          {hasText && (
+                            <div className="message-text-content">
+                              <AiChatMessageMarkdown content={msg.text} />
+                              {msg.isStreaming && (
+                                <span className="blinking-cursor" />
+                              )}
                             </div>
                           )}
 
-                        {msg.action === 'BLOCKED' && (
-                          <AiChatBadge variant="blocked" size="md">
-                            Security Gateway Intercepted (Dropped in Trash)
-                          </AiChatBadge>
-                        )}
-                        {msg.action === 'REDACTED' && (
-                          <AiChatBadge variant="redacted" size="md">
-                            Sensitive Secret / PII Data Masked
-                          </AiChatBadge>
-                        )}
-                      </div>
-                    </div>
-                  )
-                }
+                          {!msg.isStreaming && (
+                            <div className="message-bubble-footer ai-completed-footer">
+                              <div className="ai-footer-left">
+                                <AiChatBadge variant="done" icon="✓">
+                                  답변 완료
+                                </AiChatBadge>
+                                {(msg.timestampRaw || msg.timestamp) && (
+                                  <span className="message-timestamp">
+                                    {formatChatTimestamp(
+                                      msg.timestampRaw || msg.timestamp,
+                                      effectiveTimeZone
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="ai-footer-actions">
+                                {hasText && (
+                                  <button
+                                    type="button"
+                                    className={classnames('ai-copy-btn', {
+                                      copied: copiedMessageId === msg.id,
+                                    })}
+                                    onClick={() =>
+                                      handleCopyMessageText(msg.id, msg.text)
+                                    }
+                                    title="답변 내용 복사"
+                                  >
+                                    {copiedMessageId === msg.id
+                                      ? '복사됨'
+                                      : '복사'}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                return elements
+                      {msg.action === 'BLOCKED' && (
+                        <AiChatBadge variant="blocked" size="md">
+                          Security Gateway Intercepted (Dropped in Trash)
+                        </AiChatBadge>
+                      )}
+                      {msg.action === 'REDACTED' && (
+                        <AiChatBadge variant="redacted" size="md">
+                          Sensitive Secret / PII Data Masked
+                        </AiChatBadge>
+                      )}
+                    </div>
+                  </div>
+                )
               })
             )}
             {approvals.map(approval => (
@@ -1979,19 +2309,17 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 />
               </div>
             ))}
-            {isStreamingActive && (
+            {isStreamingActive && !isAnyAiWorking && (
               <div
                 key="active-streaming-global-indicator"
                 className="message-item ai is-indicator"
               >
                 <AiChatMessageAvatar sender="ai" />
                 <div className="message-content-col">
-                  <div className="message-bubble is-loading">
-                    <span className="loading-dots-container">
-                      <span className="loading-dot" />
-                      <span className="loading-dot" />
-                      <span className="loading-dot" />
-                    </span>
+                  <div className="streaming-dots-standalone">
+                    <span className="loading-dot" />
+                    <span className="loading-dot" />
+                    <span className="loading-dot" />
                   </div>
                 </div>
               </div>
@@ -2086,9 +2414,14 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       onSelectTaskId={setSelectedTaskId}
       subagentFilter={subagentFilter}
       onSetSubagentFilter={setSubagentFilter}
-      onClosePanel={handleToggleSubagentPanel}
+      onClosePanel={() => setShowSubagentPanel(false)}
       defaultViewMode={subagentDefaultView}
       customViews={customPanelViews}
+      activeInspectorTab={activeInspectorTab}
+      onChangeInspectorTab={setActiveInspectorTab}
+      turns={conversationTurns}
+      selectedTurnId={selectedInspectorMessageId}
+      onSelectTurnId={setSelectedInspectorMessageId}
     />
   )
 

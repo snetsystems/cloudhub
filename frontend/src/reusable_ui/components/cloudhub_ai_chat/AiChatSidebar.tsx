@@ -15,6 +15,40 @@ interface Props {
   onToggleCollapse: () => void
 }
 
+export const formatTimeAgo = (dateInput?: string | number | Date): string => {
+  if (!dateInput) return ''
+  const d =
+    typeof dateInput === 'number' || typeof dateInput === 'string'
+      ? new Date(dateInput)
+      : dateInput
+  if (!d || !(d instanceof Date) || isNaN(d.getTime())) return ''
+
+  const diffMs = Math.max(0, Date.now() - d.getTime())
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffHours = Math.floor(diffMin / 60)
+  const diffDays = Math.floor(diffHours / 24)
+  const diffMonths = Math.floor(diffDays / 30)
+  const diffYears = Math.floor(diffDays / 365)
+
+  if (diffMin < 1) {
+    return '1m'
+  }
+  if (diffMin < 60) {
+    return `${diffMin}m`
+  }
+  if (diffHours < 24) {
+    return `${diffHours}h`
+  }
+  if (diffDays < 30) {
+    return `${diffDays}d`
+  }
+  if (diffMonths < 12) {
+    return `${diffMonths}mo`
+  }
+  return `${diffYears}y`
+}
+
 export const AiChatSidebar: FC<Props> = ({
   sessions,
   activeSessionId,
@@ -83,37 +117,46 @@ export const AiChatSidebar: FC<Props> = ({
       <div className="session-list-wrapper">
         <FancyScrollbar autoHide={true}>
           <div className="session-list">
-            {sessions.map(session => (
-              <div
-                key={session.id}
-                className={classnames('session-item', {
-                  active: session.id === activeSessionId,
-                })}
-                onClick={() => onSelectSession(session.id)}
-              >
-                <span className={`session-icon icon ${IconFont.Chat}`} />
-                <span className="session-text-title">{session.title}</span>
-                {onDeleteSession && (
-                  <div
-                    className="session-delete-wrapper"
-                    onClick={e => e.stopPropagation()}
-                    onMouseDown={e => e.stopPropagation()}
-                  >
-                    <ConfirmButton
-                      icon="trash"
-                      size="btn-xs"
-                      square={true}
-                      type="btn-danger"
-                      confirmText="삭제"
-                      customClass="session-delete-confirm-btn"
-                      isEventStopPropagation={true}
-                      position="left"
-                      confirmAction={() => onDeleteSession(session.id)}
-                    />
-                  </div>
-                )}
-              </div>
-            ))}
+            {sessions.map(session => {
+              const timeAgoStr = formatTimeAgo(
+                session.updatedAt || session.createdAt
+              )
+
+              return (
+                <div
+                  key={session.id}
+                  className={classnames('session-item', {
+                    active: session.id === activeSessionId,
+                  })}
+                  onClick={() => onSelectSession(session.id)}
+                >
+                  <span className={`session-icon icon ${IconFont.Chat}`} />
+                  <span className="session-text-title">{session.title}</span>
+                  {timeAgoStr && (
+                    <span className="session-time-ago">{timeAgoStr}</span>
+                  )}
+                  {onDeleteSession && (
+                    <div
+                      className="session-delete-wrapper"
+                      onClick={e => e.stopPropagation()}
+                      onMouseDown={e => e.stopPropagation()}
+                    >
+                      <ConfirmButton
+                        icon="trash"
+                        size="btn-xs"
+                        square={true}
+                        type="btn-danger"
+                        confirmText="삭제"
+                        customClass="session-delete-confirm-btn"
+                        isEventStopPropagation={true}
+                        position="left"
+                        confirmAction={() => onDeleteSession(session.id)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </FancyScrollbar>
       </div>
