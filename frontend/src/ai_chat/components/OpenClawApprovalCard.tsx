@@ -4,8 +4,8 @@ import {TFunction, useTranslation} from 'react-i18next'
 import Button from 'src/reusable_ui/components/Button'
 import {ComponentColor, ComponentStatus} from 'src/reusable_ui/types'
 
-import {OpenClawApprovalDecision} from './openclawApi'
-import {OpenClawApprovalView} from './openclawApprovalState'
+import {OpenClawApprovalDecision} from 'src/ai_chat/apis/openclawApi'
+import {OpenClawApprovalView} from 'src/ai_chat/utils/openclawApprovalState'
 
 export interface OpenClawApprovalCardProps {
   approval: OpenClawApprovalView

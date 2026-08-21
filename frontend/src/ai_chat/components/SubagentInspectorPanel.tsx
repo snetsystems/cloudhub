@@ -5,12 +5,12 @@ import RadioButtons from 'src/reusable_ui/components/radio_buttons/RadioButtons'
 import {
   SubagentTask,
   ActivityCardItem,
-} from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
-import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
-import AiChatMessageMarkdown from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageMarkdown'
+} from 'src/ai_chat/containers/CloudhubAiChatStandalone'
+import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
+import AiChatMessageMarkdown from 'src/ai_chat/components/AiChatMessageMarkdown'
 import MessageActivityInspector, {
   ConversationTurnItem,
-} from 'src/reusable_ui/components/cloudhub_ai_chat/MessageActivityInspector'
+} from 'src/ai_chat/components/MessageActivityInspector'
 
 export interface CustomPanelView {
   id: string

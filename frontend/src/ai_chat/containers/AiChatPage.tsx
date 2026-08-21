@@ -1,12 +1,12 @@
 import React, {FC} from 'react'
 import {connect} from 'react-redux'
 import {Page} from 'src/reusable_ui'
-import CloudhubAiChatStandalone from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
-import {CustomPanelView} from 'src/reusable_ui/components/cloudhub_ai_chat/SubagentInspectorPanel'
-import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
+import CloudhubAiChatStandalone from 'src/ai_chat/containers/CloudhubAiChatStandalone'
+import {CustomPanelView} from 'src/ai_chat/components/SubagentInspectorPanel'
+import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import {setTimeZone} from 'src/shared/actions/app'
-import {TimeZones} from 'src/types'
+import {TimeZones} from 'src/types/app'
 
 interface StateProps {
   timeZone: TimeZones

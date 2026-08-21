@@ -3,7 +3,7 @@ import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ButtonShape, ComponentColor, IconFont} from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import {ChatSession} from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
+import {ChatSession} from 'src/ai_chat/containers/CloudhubAiChatStandalone'
 
 interface Props {
   sessions: ChatSession[]

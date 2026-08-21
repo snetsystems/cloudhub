@@ -1,6 +1,6 @@
 import React, {FC, useState} from 'react'
 import classnames from 'classnames'
-import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
+import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
 
 export type SystemActivityType = 'skill' | 'mcp' | 'tool' | 'security'
 export type SystemActivityStatus = 'success' | 'error' | 'running' | 'blocked'

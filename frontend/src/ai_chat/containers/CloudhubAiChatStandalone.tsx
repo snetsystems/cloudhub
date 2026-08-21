@@ -25,26 +25,26 @@ import CollapsibleSidePanelSlice from 'src/shared/components/CollapsibleSidePane
 
 // Cloudhub Reusable Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import AiChatSidebar from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatSidebar'
+import AiChatSidebar from 'src/ai_chat/containers/AiChatSidebar'
 import SubagentInspectorPanel, {
   CustomPanelView,
-} from 'src/reusable_ui/components/cloudhub_ai_chat/SubagentInspectorPanel'
-import AiChatMessageMarkdown from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageMarkdown'
-import AiChatMessageAvatar from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageAvatar'
-import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
-import OpenClawApprovalCard from 'src/reusable_ui/components/cloudhub_ai_chat/OpenClawApprovalCard'
+} from 'src/ai_chat/components/SubagentInspectorPanel'
+import AiChatMessageMarkdown from 'src/ai_chat/components/AiChatMessageMarkdown'
+import AiChatMessageAvatar from 'src/ai_chat/components/AiChatMessageAvatar'
+import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
+import OpenClawApprovalCard from 'src/ai_chat/components/OpenClawApprovalCard'
 import {
   deleteOpenClawSession,
   OpenClawApprovalEventDTO,
-} from 'src/reusable_ui/components/cloudhub_ai_chat/openclawApi'
-import {useOpenClawApprovals} from 'src/reusable_ui/components/cloudhub_ai_chat/useOpenClawApprovals'
+} from 'src/ai_chat/apis/openclawApi'
+import {useOpenClawApprovals} from 'src/ai_chat/hooks/useOpenClawApprovals'
 
 // Cloudhub Redux Notification Action & Helpers
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {defaultErrorNotification} from 'src/shared/copy/notifications'
-import {connect, useSelector} from 'react-redux'
+import {connect} from 'react-redux'
 import moment from 'moment'
-import {TimeZones} from 'src/types'
+import {TimeZones} from 'src/types/app'
 
 // SCSS Theme Styling (Influx / SNet Color Variables)
 import './CloudhubAiChatStandalone.scss'
@@ -219,157 +219,7 @@ const ensureString = (val: any): string => {
   return String(val)
 }
 
-const MAX_TOOL_OUTPUT_DISPLAY_CHARS = 50000
 
-const SafeLargeTextPre: FC<{
-  title: string
-  content: string
-  isError?: boolean
-}> = ({title, content, isError}) => {
-  const [isCopied, setIsCopied] = useState<boolean>(false)
-  const isTruncated = content.length > MAX_TOOL_OUTPUT_DISPLAY_CHARS
-  const displayContent = isTruncated
-    ? content.slice(0, MAX_TOOL_OUTPUT_DISPLAY_CHARS)
-    : content
-
-  const handleCopy = () => {
-    try {
-      if (
-        typeof navigator !== 'undefined' &&
-        navigator.clipboard &&
-        navigator.clipboard.writeText
-      ) {
-        navigator.clipboard.writeText(content).catch(() => {})
-      }
-    } catch {
-      // ignore
-    }
-    setIsCopied(true)
-    setTimeout(() => setIsCopied(false), 2000)
-  }
-
-  return (
-    <div
-      className={classnames('activity-detail-block', {'error-block': isError})}
-    >
-      <div className="detail-header-row">
-        <span className="detail-title">{title}</span>
-        <button
-          type="button"
-          className="detail-copy-btn"
-          onClick={handleCopy}
-          title="전체 원본 클립보드 복사"
-        >
-          {isCopied ? '✓ 복사됨' : '복사'}
-        </button>
-      </div>
-      <pre className={classnames('detail-pre', {'error-pre': isError})}>
-        <code>{displayContent}</code>
-      </pre>
-      {isTruncated && (
-        <div className="detail-truncation-notice">
-          대용량 로그입니다. 브라우저 성능을 위해 총{' '}
-          {content.length.toLocaleString()}자 중{' '}
-          {MAX_TOOL_OUTPUT_DISPLAY_CHARS.toLocaleString()}자만 표시되었습니다.
-          (전체 내용은 '복사' 버튼으로 확인 가능)
-        </div>
-      )}
-    </div>
-  )
-}
-
-const AiChatToolExecutionCard: FC<{card: ActivityCardItem}> = ({card}) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(false)
-
-  if (!card) return null
-
-  const labelText = ensureString(card.label) || 'Tool'
-  const descriptionText = ensureString(card.description)
-  const inputText = ensureString(card.input)
-  const detailText = ensureString(card.detail)
-  const errorText = ensureString(card.error)
-
-  const startedAt = card.startedAt ? Number(card.startedAt) : null
-  const endedAt = card.endedAt ? Number(card.endedAt) : null
-
-  const durationMs =
-    startedAt && endedAt && endedAt >= startedAt ? endedAt - startedAt : null
-
-  const durationText =
-    durationMs !== null
-      ? durationMs < 1000
-        ? `${durationMs}ms`
-        : `${(durationMs / 1000).toFixed(2)}s`
-      : null
-
-  const rawStatus = card.status || 'success'
-  const badgeClass = rawStatus.toLowerCase()
-  const badgeLabel =
-    rawStatus === 'running'
-      ? '실행 중...'
-      : rawStatus === 'success'
-      ? '완료'
-      : rawStatus === 'error'
-      ? '오류'
-      : '차단됨'
-
-  const hasDetails = Boolean(
-    inputText || detailText || errorText || durationText
-  )
-
-  return (
-    <div className={classnames('activity-card-box', badgeClass)}>
-      <div className="activity-card-header">
-        <div className="activity-card-title">
-          <AiChatBadge variant="category" size="sm">
-            {card.type === 'mcp' ? 'MCP' : 'TOOL'}
-          </AiChatBadge>
-          <span className="activity-label">{labelText}</span>
-        </div>
-        <AiChatBadge variant={badgeClass} size="sm">
-          {badgeLabel}
-        </AiChatBadge>
-      </div>
-
-      {descriptionText && (
-        <div className="activity-card-description">{descriptionText}</div>
-      )}
-
-      {hasDetails && (
-        <div className="activity-card-footer">
-          <button
-            type="button"
-            className="activity-card-toggle-btn"
-            onClick={() => setIsExpanded(prev => !prev)}
-          >
-            {isExpanded ? '▲ 접기' : '▼ [입력 / 출력 / 실행 시간 보기]'}
-          </button>
-          {durationText && (
-            <span className="activity-duration">{durationText}</span>
-          )}
-        </div>
-      )}
-
-      {isExpanded && hasDetails && (
-        <div className="activity-card-expanded">
-          {inputText && (
-            <SafeLargeTextPre title="입력 (Input):" content={inputText} />
-          )}
-          {detailText && (
-            <SafeLargeTextPre title="출력 (Output):" content={detailText} />
-          )}
-          {errorText && (
-            <SafeLargeTextPre
-              title="오류 (Error):"
-              content={errorText}
-              isError={true}
-            />
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 export const formatChatTimestamp = (
   timestamp?: number | string | Date,
@@ -691,6 +541,7 @@ const mergeHistoryWithLocal = (
 
 interface ComponentProps extends CloudhubAiChatProps {
   notify?: (notification: any) => void
+  persistedTimeZone?: TimeZones
 }
 
 export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
@@ -701,13 +552,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   subagentDefaultView = 'character',
   customPanelViews = [],
   timeZone: timeZoneProp,
+  persistedTimeZone,
   notify,
 }) => {
-  const reduxTimeZone = useSelector(
-    (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
-      state.app?.persisted?.timeZone ?? TimeZones.Local
-  )
-  const effectiveTimeZone = timeZoneProp ?? reduxTimeZone
+  const effectiveTimeZone =
+    timeZoneProp ?? persistedTimeZone ?? TimeZones.Local
 
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string>('')
@@ -2455,12 +2304,20 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   )
 }
 
+interface StateProps {
+  persistedTimeZone?: TimeZones
+}
+
+const mSTP = (state: {app?: {persisted?: {timeZone?: TimeZones}}}): StateProps => ({
+  persistedTimeZone: state.app?.persisted?.timeZone,
+})
+
 const mDTP = {
   notify: notifyAction,
 }
 
 export const CloudhubAiChatStandalone = connect(
-  null,
+  mSTP,
   mDTP
 )(CloudhubAiChatStandaloneUnconnected)
 export default CloudhubAiChatStandalone

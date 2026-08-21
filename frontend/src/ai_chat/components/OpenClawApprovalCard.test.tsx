@@ -6,7 +6,7 @@ import Button from 'src/reusable_ui/components/Button'
 import {ComponentColor, ComponentStatus} from 'src/reusable_ui/types'
 
 import OpenClawApprovalCard from './OpenClawApprovalCard'
-import {OpenClawApprovalView} from './openclawApprovalState'
+import {OpenClawApprovalView} from 'src/ai_chat/utils/openclawApprovalState'
 
 const approval = (
   state: OpenClawApprovalView['state'],

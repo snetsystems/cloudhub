@@ -2,13 +2,13 @@ import React from 'react'
 import {mount, ReactWrapper, shallow} from 'enzyme'
 import {act} from 'react-dom/test-utils'
 
-import OpenClawApprovalCard from './OpenClawApprovalCard'
-import {OpenClawApprovalEventDTO} from './openclawApi'
-import {OpenClawApprovalView} from './openclawApprovalState'
+import OpenClawApprovalCard from 'src/ai_chat/components/OpenClawApprovalCard'
+import {OpenClawApprovalEventDTO} from 'src/ai_chat/apis/openclawApi'
+import {OpenClawApprovalView} from 'src/ai_chat/utils/openclawApprovalState'
 import {CloudhubAiChatStandaloneUnconnected} from './CloudhubAiChatStandalone'
-import {useOpenClawApprovals} from './useOpenClawApprovals'
+import {useOpenClawApprovals} from 'src/ai_chat/hooks/useOpenClawApprovals'
 
-jest.mock('./useOpenClawApprovals', () => ({
+jest.mock('src/ai_chat/hooks/useOpenClawApprovals', () => ({
   useOpenClawApprovals: jest.fn(),
 }))
 
@@ -29,19 +29,19 @@ jest.mock('src/reusable_ui/components/Button', () => {
 })
 
 jest.mock(
-  'src/reusable_ui/components/cloudhub_ai_chat/AiChatSidebar',
+  'src/ai_chat/containers/AiChatSidebar',
   () => () => null
 )
 jest.mock(
-  'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageMarkdown',
+  'src/ai_chat/components/AiChatMessageMarkdown',
   () => () => null
 )
 jest.mock(
-  'src/reusable_ui/components/cloudhub_ai_chat/AiChatMessageAvatar',
+  'src/ai_chat/components/AiChatMessageAvatar',
   () => () => null
 )
 jest.mock(
-  'src/reusable_ui/components/cloudhub_ai_chat/SubagentInspectorPanel',
+  'src/ai_chat/components/SubagentInspectorPanel',
   () => () => null
 )
 jest.mock('src/shared/actions/notifications', () => ({notify: jest.fn()}))

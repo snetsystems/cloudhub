@@ -3,7 +3,7 @@ import {
   OpenClawApprovalDTO,
   OpenClawApprovalSource,
   OpenClawResolvedApprovalDTO,
-} from './openclawApi'
+} from 'src/ai_chat/apis/openclawApi'
 
 export type OpenClawApprovalViewState =
   | 'pending'

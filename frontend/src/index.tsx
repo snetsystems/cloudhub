@@ -129,7 +129,7 @@ const Applications = React.lazy(() =>
   import('src/applications').then(m => ({default: m.Applications}))
 )
 const AiChatPage = React.lazy(() =>
-  import('src/reusable_ui/components/cloudhub_ai_chat/AiChatPage').then(m => ({default: m.AiChatPage}))
+  import('src/ai_chat/containers/AiChatPage').then(m => ({default: m.AiChatPage}))
 )
 const LogsPage = React.lazy(() =>
   import('src/logs').then(m => ({default: m.LogsPage}))

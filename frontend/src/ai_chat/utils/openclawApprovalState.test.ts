@@ -2,7 +2,7 @@ import {
   activeSessionApprovals,
   openClawApprovalReducer,
 } from './openclawApprovalState'
-import {OpenClawApprovalDTO} from './openclawApi'
+import {OpenClawApprovalDTO} from 'src/ai_chat/apis/openclawApi'
 
 const approval = (
   id: string,

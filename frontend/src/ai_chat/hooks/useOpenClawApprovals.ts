@@ -6,11 +6,11 @@ import {
   OpenClawApprovalDecision,
   OpenClawApprovalEventDTO,
   resolveOpenClawApproval,
-} from './openclawApi'
+} from 'src/ai_chat/apis/openclawApi'
 import {
   activeSessionApprovals,
   openClawApprovalReducer,
-} from './openclawApprovalState'
+} from 'src/ai_chat/utils/openclawApprovalState'
 
 const DEMO_SESSION_ID = 'demo-markdown-session'
 const SNAPSHOT_RETRY_OFFSETS_MS = [0, 500, 1_000]

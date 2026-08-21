@@ -2,8 +2,8 @@ import React, {FC, useState, useMemo} from 'react'
 import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import RadioButtons from 'src/reusable_ui/components/radio_buttons/RadioButtons'
-import AiChatBadge from 'src/reusable_ui/components/cloudhub_ai_chat/AiChatBadge'
-import {ActivityCardItem} from 'src/reusable_ui/components/cloudhub_ai_chat/CloudhubAiChatStandalone'
+import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
+import {ActivityCardItem} from 'src/ai_chat/containers/CloudhubAiChatStandalone'
 
 export interface ConversationTurnItem {
   id: string

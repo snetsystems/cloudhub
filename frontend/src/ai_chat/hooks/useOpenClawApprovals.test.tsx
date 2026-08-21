@@ -8,11 +8,11 @@ import {
   OpenClawApprovalDTO,
   OpenClawApprovalSnapshotDTO,
   resolveOpenClawApproval,
-} from './openclawApi'
+} from 'src/ai_chat/apis/openclawApi'
 import {useOpenClawApprovals} from './useOpenClawApprovals'
 
-jest.mock('./openclawApi', () => ({
-  ...jest.requireActual('./openclawApi'),
+jest.mock('src/ai_chat/apis/openclawApi', () => ({
+  ...jest.requireActual('src/ai_chat/apis/openclawApi'),
   getOpenClawApprovals: jest.fn(),
   resolveOpenClawApproval: jest.fn(),
 }))
