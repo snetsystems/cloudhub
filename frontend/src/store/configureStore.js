@@ -23,6 +23,7 @@ import {vspheres} from 'src/clouds/reducers'
 import kubernetesDetailsDashboard from 'src/clouds/reducers/kubernetesDetailsDashboard'
 import source from 'src/sources/reducers'
 import aiModal from 'src/shared/reducers/aiModal'
+import aiAgentsDrawer from 'src/shared/reducers/aiAgentsDrawer'
 import predictionDashboard from 'src/device_management/reducers/predictionDashboard'
 import gpuMonitoringDashboard from 'src/gpu_monitoring/reducers/gpuMonitoringDashboard'
 import esSourcesReducer from 'src/shared/reducers/esSources'
@@ -55,6 +56,7 @@ const rootReducer = combineReducers({
   lastAction,
   source,
   aiModal,
+  aiAgentsDrawer,
   predictionDashboard,
   gpuMonitoringDashboard,
   esSources: esSourcesReducer,

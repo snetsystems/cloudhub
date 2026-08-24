@@ -7,6 +7,7 @@ import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import RenameDashboard from 'src/dashboards/components/rename_dashboard/RenameDashboard'
 import DashboardSwitcher from 'src/dashboards/components/DashboardSwitcher'
+import AiAgentsButton from 'src/dashboards/components/AiAgentsButton'
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {
   Button,
@@ -25,6 +26,7 @@ import {setTimeZone} from 'src/shared/actions/app'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
+import SourceIndicator from 'src/shared/components/SourceIndicator'
 
 // Constants
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
@@ -114,7 +116,9 @@ class DashboardHeader extends Component<Props, State> {
           {this.dashboardSwitcher}
           {this.dashboardTitle}
         </Page.Header.Left>
-        <Page.Header.Right showSourceIndicator={true}>
+        <Page.Header.Right>
+          <AiAgentsButton />
+          <SourceIndicator />
           <GraphTips />
           <TimeZoneToggle timeZone={timeZone} onSetTimeZone={onSetTimeZone} />
           {this.addCellButton}

@@ -5,6 +5,9 @@ import download from 'src/external/download'
 import _ from 'lodash'
 
 import DashboardsContents from 'src/dashboards/components/DashboardsPageContents'
+import AiAgentsButton from 'src/dashboards/components/AiAgentsButton'
+import {DashboardsAiSplit} from 'src/dashboards/components/AiAgentsDrawer'
+import SourceIndicator from 'src/shared/components/SourceIndicator'
 import {Page} from 'src/reusable_ui'
 import {getDeep} from 'src/utils/wrappers'
 
@@ -93,24 +96,29 @@ export class DashboardsPage extends PureComponent<Props, State> {
           <Page.Header.Left>
             <Page.Title title="Dashboards" />
           </Page.Header.Left>
-          <Page.Header.Right showSourceIndicator={true} />
+          <Page.Header.Right>
+            <AiAgentsButton />
+            <SourceIndicator />
+          </Page.Header.Right>
         </Page.Header>
-        <Page.Contents>
-          <DashboardsContents
-            notify={notify}
-            source={source}
-            sources={sources}
-            dashboards={dashboards}
-            dashboardsStatus={dashboardsStatus}
-            dashboardLink={dashboardLink}
-            onDeleteDashboard={this.handleDeleteDashboard}
-            onCreateDashboard={this.handleCreateDashboard}
-            onCloneDashboard={this.handleCloneDashboard}
-            onExportDashboard={this.handleExportDashboard}
-            onImportDashboard={this.handleImportDashboard}
-            onSetDefaultDashboard={this.handleSetDefaultDashboard}
-          />
-        </Page.Contents>
+        <DashboardsAiSplit>
+          <Page.Contents>
+            <DashboardsContents
+              notify={notify}
+              source={source}
+              sources={sources}
+              dashboards={dashboards}
+              dashboardsStatus={dashboardsStatus}
+              dashboardLink={dashboardLink}
+              onDeleteDashboard={this.handleDeleteDashboard}
+              onCreateDashboard={this.handleCreateDashboard}
+              onCloneDashboard={this.handleCloneDashboard}
+              onExportDashboard={this.handleExportDashboard}
+              onImportDashboard={this.handleImportDashboard}
+              onSetDefaultDashboard={this.handleSetDefaultDashboard}
+            />
+          </Page.Contents>
+        </DashboardsAiSplit>
       </Page>
     )
   }

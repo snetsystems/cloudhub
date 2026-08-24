@@ -9,6 +9,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import CellEditorOverlay from 'src/dashboards/components/CellEditorOverlay'
 import DashboardHeader from 'src/dashboards/components/DashboardHeader'
 import Dashboard from 'src/dashboards/components/Dashboard'
+import {DashboardsAiSplit} from 'src/dashboards/components/AiAgentsDrawer'
 import ManualRefresh from 'src/shared/components/ManualRefresh'
 import TemplateControlBar from 'src/tempVars/components/TemplateControlBar'
 import AnnotationControlBar from 'src/shared/components/AnnotationControlBar'
@@ -345,38 +346,40 @@ class DashboardPage extends Component<Props, State> {
           onToggleShowAnnotationControls={this.toggleAnnotationControls}
           handleClickPresentationButton={handleClickPresentationButton}
         />
-        {!inPresentationMode && showTemplateVariableControlBar && (
-          <TemplateControlBar
-            templates={dashboard && dashboard.templates}
-            me={me}
-            isUsingAuth={isUsingAuth}
-            onSaveTemplates={this.handleSaveTemplateVariables}
-            onPickTemplate={this.handlePickTemplate}
-            source={source}
-          />
-        )}
-        {!inPresentationMode && showAnnotationControls && (
-          <AnnotationControlBar dashboardID={dashboardID} source={source} />
-        )}
-        {this.showDashboard ? (
-          <Dashboard
-            source={source}
-            sources={sources}
-            setScrollTop={this.setScrollTop}
-            inView={this.inView}
-            dashboard={dashboard}
-            timeRange={timeRange}
-            manualRefresh={manualRefresh}
-            onZoom={this.handleZoomedTimeRange}
-            inPresentationMode={inPresentationMode}
-            onPositionChange={this.handleUpdatePosition}
-            onDeleteCell={this.handleDeleteDashboardCell}
-            onCloneCell={this.handleCloneCell}
-            templatesIncludingDashTime={templatesIncludingDashTime}
-            onSummonOverlayTechnologies={this.handleShowCellEditorOverlay}
-            onPickTemplate={this.handlePickTemplate}
-          />
-        ) : null}
+        <DashboardsAiSplit inPresentationMode={inPresentationMode}>
+          {!inPresentationMode && showTemplateVariableControlBar && (
+            <TemplateControlBar
+              templates={dashboard && dashboard.templates}
+              me={me}
+              isUsingAuth={isUsingAuth}
+              onSaveTemplates={this.handleSaveTemplateVariables}
+              onPickTemplate={this.handlePickTemplate}
+              source={source}
+            />
+          )}
+          {!inPresentationMode && showAnnotationControls && (
+            <AnnotationControlBar dashboardID={dashboardID} source={source} />
+          )}
+          {this.showDashboard ? (
+            <Dashboard
+              source={source}
+              sources={sources}
+              setScrollTop={this.setScrollTop}
+              inView={this.inView}
+              dashboard={dashboard}
+              timeRange={timeRange}
+              manualRefresh={manualRefresh}
+              onZoom={this.handleZoomedTimeRange}
+              inPresentationMode={inPresentationMode}
+              onPositionChange={this.handleUpdatePosition}
+              onDeleteCell={this.handleDeleteDashboardCell}
+              onCloneCell={this.handleCloneCell}
+              templatesIncludingDashTime={templatesIncludingDashTime}
+              onSummonOverlayTechnologies={this.handleShowCellEditorOverlay}
+              onPickTemplate={this.handlePickTemplate}
+            />
+          ) : null}
+        </DashboardsAiSplit>
         <AnnotationEditorContainer />
         {isImportModalOpen && (
           <FixedModal
