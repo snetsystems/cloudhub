@@ -196,7 +196,7 @@
 .cloudhub-ai-chat-standalone {
   font-family: $ix-text-font;
   color: $g13-mist;
-  background-color: $g0-obsidian;
+  @include gradient-v($g2-kevlar, $g0-obsidian);
   border-radius: $ix-radius;
 
   // Custom scrollbars for all native scroll containers in AI Chat
@@ -209,39 +209,30 @@
     @include ai-chat-custom-scrollbar($s-orange, $s-grapefruit, 6px);
   }
 
-  // Harmonized FancyScrollbar styling inside AI Chat
+  // FancyScrollbar Transparent Background & Clean Transparent Track
   .fancy-scroll--container {
+    background-color: transparent;
+
+    .fancy-scroll--view {
+      background-color: transparent;
+    }
+
     .fancy-scroll--track-v,
     .fancy-scroll--track-h {
       background: transparent !important;
     }
-
-    .fancy-scroll--thumb-v {
-      width: 6px !important;
-      border-radius: 3px !important;
-      @include gradient-v($s-orange, $s-grapefruit);
-      opacity: 0.85;
-      transition: opacity 0.2s ease;
-
-      &:hover {
-        opacity: 1;
-      }
-    }
-
-    .fancy-scroll--thumb-h {
-      height: 6px !important;
-      border-radius: 3px !important;
-      @include gradient-h($s-orange, $s-grapefruit);
-      opacity: 0.85;
-      transition: opacity 0.2s ease;
-
-      &:hover {
-        opacity: 1;
-      }
-    }
   }
 
-  // Threesizer Integration Flex & Overflow Bounds
+  // Threesizer & Collapsible Section Flex & Transparent Background
+  .collapsible-side-panel-slice,
+  .collapsible-main-section,
+  .threesizer,
+  .threesizer--division,
+  .threesizer--contents,
+  .threesizer--body {
+    background-color: transparent;
+  }
+
   .threesizer {
     flex: 1;
     height: 100%;
@@ -640,7 +631,7 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
-    background-color: $g0-obsidian;
+    @include gradient-v($g2-kevlar, $g0-obsidian);
     overflow: hidden;
 
     .thread-header {
@@ -672,6 +663,12 @@
       flex: 1;
       min-height: 0;
       position: relative;
+      background-color: transparent;
+
+      .fancy-scroll--container,
+      .fancy-scroll--view {
+        background-color: transparent;
+      }
 
       .scroll-to-bottom-btn {
         position: absolute;
@@ -750,6 +747,7 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
+        background-color: transparent;
 
         .chat-history-loading {
           padding: 60px 20px;
@@ -1833,12 +1831,13 @@
 
       .chat-textarea {
         flex: 1;
-        min-height: 38px;
+        min-height: 30px;
+        height: 30px;
         max-height: 160px;
-        padding: 8px 12px;
+        padding: 4px 12px;
         font-size: 13px;
         font-weight: 500;
-        line-height: 1.45;
+        line-height: 20px;
         font-family: inherit;
         background-color: $g2-kevlar;
         color: $g15-platinum;
@@ -2977,13 +2976,16 @@
 
   /* Table styling */
   table {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
     border-collapse: collapse;
     margin: 12px 0;
     font-size: 12px;
     background: $g2-kevlar;
     border-radius: 6px;
-    overflow: hidden;
     border: 1px solid $g4-onyx;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 
@@ -3424,11 +3426,17 @@
 // =============================================================================
 // AI Chat Page & Custom Panel Views Theme Styles
 // =============================================================================
+.page-contents.ai-chat-page-contents {
+  @include gradient-v($g2-kevlar, $g0-obsidian);
+  overflow: hidden;
+}
+
 .ai-chat-page-container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  @include gradient-v($g2-kevlar, $g0-obsidian);
 }
 
 .ai-chat-custom-panel-metrics {
