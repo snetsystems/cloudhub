@@ -9,6 +9,7 @@ interface Props {
   sessions: ChatSession[]
   activeSessionId: string
   isCollapsed: boolean
+  isStreamingActive?: boolean
   onSelectSession: (id: string) => void
   onDeleteSession?: (id: string) => void
   onCreateNewChat: () => void
@@ -53,6 +54,7 @@ export const AiChatSidebar: FC<Props> = ({
   sessions,
   activeSessionId,
   isCollapsed,
+  isStreamingActive = false,
   onSelectSession,
   onDeleteSession,
   onCreateNewChat,
@@ -78,18 +80,36 @@ export const AiChatSidebar: FC<Props> = ({
             color={ComponentColor.Primary}
             titleText="새 대화 시작"
           />
-          {sessions.map(s => (
-            <div
-              key={s.id}
-              className={classnames('collapsed-session-dot', {
-                active: s.id === activeSessionId,
-              })}
-              onClick={() => onSelectSession(s.id)}
-              title={s.title}
-            >
-              <span className={`icon ${IconFont.Chat}`} />
-            </div>
-          ))}
+          {sessions.map(s => {
+            const isGenerating =
+              (s.id === activeSessionId && isStreamingActive) ||
+              s.messages?.some(m => m.isStreaming)
+
+            return (
+              <div
+                key={s.id}
+                className={classnames('collapsed-session-dot', {
+                  active: s.id === activeSessionId,
+                  'is-generating': isGenerating,
+                })}
+                onClick={() => onSelectSession(s.id)}
+                title={isGenerating ? `${s.title} (답변 생성 중...)` : s.title}
+              >
+                {isGenerating ? (
+                  <span
+                    className="session-generating-indicator in-collapsed"
+                    title="답변 생성 중..."
+                  >
+                    <span className="generating-dot" />
+                    <span className="generating-dot" />
+                    <span className="generating-dot" />
+                  </span>
+                ) : (
+                  <span className={`icon ${IconFont.Chat}`} />
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     )
@@ -121,38 +141,57 @@ export const AiChatSidebar: FC<Props> = ({
               const timeAgoStr = formatTimeAgo(
                 session.updatedAt || session.createdAt
               )
+              const isGenerating =
+                (session.id === activeSessionId && isStreamingActive) ||
+                session.messages?.some(m => m.isStreaming)
 
               return (
                 <div
                   key={session.id}
                   className={classnames('session-item', {
                     active: session.id === activeSessionId,
+                    'is-generating': isGenerating,
                   })}
                   onClick={() => onSelectSession(session.id)}
                 >
                   <span className={`session-icon icon ${IconFont.Chat}`} />
                   <span className="session-text-title">{session.title}</span>
-                  {timeAgoStr && (
-                    <span className="session-time-ago">{timeAgoStr}</span>
-                  )}
-                  {onDeleteSession && (
-                    <div
-                      className="session-delete-wrapper"
-                      onClick={e => e.stopPropagation()}
-                      onMouseDown={e => e.stopPropagation()}
-                    >
-                      <ConfirmButton
-                        icon="trash"
-                        size="btn-xs"
-                        square={true}
-                        type="btn-danger"
-                        confirmText="삭제"
-                        customClass="session-delete-confirm-btn"
-                        isEventStopPropagation={true}
-                        position="left"
-                        confirmAction={() => onDeleteSession(session.id)}
-                      />
+                  {isGenerating ? (
+                    <div className="session-generating-wrapper">
+                      <span
+                        className="session-generating-indicator"
+                        title="답변 생성 중..."
+                      >
+                        <span className="generating-dot" />
+                        <span className="generating-dot" />
+                        <span className="generating-dot" />
+                      </span>
                     </div>
+                  ) : (
+                    <>
+                      {timeAgoStr && (
+                        <span className="session-time-ago">{timeAgoStr}</span>
+                      )}
+                      {onDeleteSession && (
+                        <div
+                          className="session-delete-wrapper"
+                          onClick={e => e.stopPropagation()}
+                          onMouseDown={e => e.stopPropagation()}
+                        >
+                          <ConfirmButton
+                            icon="trash"
+                            size="btn-xs"
+                            square={true}
+                            type="btn-danger"
+                            confirmText="삭제"
+                            customClass="session-delete-confirm-btn"
+                            isEventStopPropagation={true}
+                            position="left"
+                            confirmAction={() => onDeleteSession(session.id)}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )

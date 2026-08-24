@@ -1497,6 +1497,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     if (activeSessionId === id) return
     setIsStreamingActive(false)
     setActiveSessionId(id)
+    setSelectedInspectorMessageId(null)
     setInputPrompt('')
     setIsUserScrolledUp(false)
 
@@ -1507,6 +1508,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
   const handleCreateNewChat = () => {
     setActiveSessionId('')
+    setSelectedInspectorMessageId(null)
     setInputPrompt('')
     setIsLoadingHistory(false)
     setIsUserScrolledUp(false)
@@ -2027,7 +2029,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   msg.activities && msg.activities.length > 0
                 )
                 const hasText = Boolean(msg.text)
-                const isTargetSelected = selectedInspectorMessageId === msg.id
+                const isTargetSelected = targetInspectorMessage?.id === msg.id
 
                 return (
                   <div key={`msg-${msg.id}`} className="message-item ai">
@@ -2302,7 +2304,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       activeInspectorTab={activeInspectorTab}
       onChangeInspectorTab={setActiveInspectorTab}
       turns={conversationTurns}
-      selectedTurnId={selectedInspectorMessageId}
+      selectedTurnId={targetInspectorMessage?.id || null}
       onSelectTurnId={setSelectedInspectorMessageId}
     />
   )
@@ -2324,6 +2326,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           sessions={sessions}
           activeSessionId={activeSessionId}
           isCollapsed={isSidebarCollapsed}
+          isStreamingActive={isStreamingActive}
           onSelectSession={handleSelectSession}
           onDeleteSession={handleDeleteSession}
           onCreateNewChat={handleCreateNewChat}
