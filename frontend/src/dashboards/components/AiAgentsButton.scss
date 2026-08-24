@@ -1,0 +1,20 @@
+@import 'src/style/modules/modules';
+
+.dashboard-ai-agents-button.button {
+  border-radius: $form-sm-height;
+  @include buttonColorModifier(
+    rgba($c-laser, 0.14),
+    $c-laser,
+    mix($c-laser, $c-pool, 55%),
+    $c-laser,
+    $g20-white
+  );
+}
+
+.dashboard-ai-agents-button.button.active,
+.dashboard-ai-agents-button.button.active:hover {
+  color: $g20-white;
+  background-color: $c-laser;
+  border-color: mix($c-laser, $c-pool, 55%);
+  box-shadow: 0 0 8px rgba($c-laser, 0.35);
+}

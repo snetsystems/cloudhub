@@ -109,6 +109,8 @@ export interface CloudhubAiChatProps {
   customClass?: string
   subagentDefaultView?: 'terminal' | 'character'
   customPanelViews?: CustomPanelView[]
+  defaultSidebarCollapsed?: boolean
+  chatOnly?: boolean
   timeZone?: TimeZones
 }
 
@@ -219,8 +221,6 @@ const ensureString = (val: any): string => {
   return String(val)
 }
 
-
-
 export const formatChatTimestamp = (
   timestamp?: number | string | Date,
   timeZone: TimeZones = TimeZones.Local
@@ -301,9 +301,7 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       } else if (Array.isArray(raw.content)) {
         userText = raw.content
           .map((p: any) =>
-            typeof p === 'string'
-              ? p
-              : p?.text || p?.content || p?.value || ''
+            typeof p === 'string' ? p : p?.text || p?.content || p?.value || ''
           )
           .join('')
       } else if (typeof raw.text === 'string') {
@@ -325,7 +323,10 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       const rawTs = raw.timestamp ? Number(raw.timestamp) : Date.now()
 
       chatMessages.push({
-        id: raw.__openclaw?.id || raw.id || `user-${raw.timestamp || Date.now()}-${idx}`,
+        id:
+          raw.__openclaw?.id ||
+          raw.id ||
+          `user-${raw.timestamp || Date.now()}-${idx}`,
         sender: 'user',
         text: userText,
         timestamp: formatChatTimestamp(rawTs),
@@ -344,7 +345,10 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       const rawTs = raw.timestamp ? Number(raw.timestamp) : Date.now()
       if (!currentAiMessage) {
         currentAiMessage = {
-          id: raw.__openclaw?.id || raw.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+          id:
+            raw.__openclaw?.id ||
+            raw.id ||
+            `ai-${raw.timestamp || Date.now()}-${idx}`,
           sender: 'ai',
           text: '',
           timestamp: formatChatTimestamp(rawTs),
@@ -356,7 +360,11 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       if (Array.isArray(raw.content)) {
         for (const part of raw.content) {
           if (!part) continue
-          if (part.type === 'toolCall' || part.type === 'tool_call' || part.type === 'tool') {
+          if (
+            part.type === 'toolCall' ||
+            part.type === 'tool_call' ||
+            part.type === 'tool'
+          ) {
             const toolName = part.name || part.toolName || 'tool'
             const isMcp = toolName.includes('__')
             let inputStr = ''
@@ -395,7 +403,8 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
             (part.type === 'text' || !part.type) &&
             (part.text || part.content || typeof part === 'string')
           ) {
-            const addedText = typeof part === 'string' ? part : part.text || part.content || ''
+            const addedText =
+              typeof part === 'string' ? part : part.text || part.content || ''
             currentAiMessage.text =
               (currentAiMessage.text ? currentAiMessage.text + '\n' : '') +
               addedText
@@ -407,8 +416,7 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
           raw.content
       } else if (typeof raw.text === 'string' && raw.text) {
         currentAiMessage.text =
-          (currentAiMessage.text ? currentAiMessage.text + '\n' : '') +
-          raw.text
+          (currentAiMessage.text ? currentAiMessage.text + '\n' : '') + raw.text
       }
       return
     }
@@ -418,9 +426,7 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       if (Array.isArray(raw.content)) {
         resultText = raw.content
           .map((p: any) =>
-            typeof p === 'string'
-              ? p
-              : p?.text || p?.content || p?.output || ''
+            typeof p === 'string' ? p : p?.text || p?.content || p?.output || ''
           )
           .join('')
       } else if (typeof raw.content === 'string') {
@@ -447,7 +453,9 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
         if (!currentAiMessage) {
           currentAiMessage = {
             id:
-              raw.__openclaw?.id || raw.id || `ai-${raw.timestamp || Date.now()}-${idx}`,
+              raw.__openclaw?.id ||
+              raw.id ||
+              `ai-${raw.timestamp || Date.now()}-${idx}`,
             sender: 'ai',
             text: '',
             timestamp: formatChatTimestamp(rawTs),
@@ -551,12 +559,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   customClass,
   subagentDefaultView = 'character',
   customPanelViews = [],
+  defaultSidebarCollapsed = false,
+  chatOnly = false,
   timeZone: timeZoneProp,
   persistedTimeZone,
   notify,
 }) => {
-  const effectiveTimeZone =
-    timeZoneProp ?? persistedTimeZone ?? TimeZones.Local
+  const effectiveTimeZone = timeZoneProp ?? persistedTimeZone ?? TimeZones.Local
 
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string>('')
@@ -1850,6 +1859,10 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     })
   }
 
+  const handleCloseSubagentPanel = () => {
+    setShowSubagentPanel(false)
+  }
+
   const wrapperClass = classnames(
     'cloudhub-ai-chat-standalone',
     `mode-${mode}`,
@@ -1861,42 +1874,45 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
   const renderChatThread = () => (
     <div className="chat-thread-container">
-      <div className="thread-header">
-        <div className="thread-title">
-          <span>{activeSession?.title || 'OpenClaw AI Ops Chat'}</span>
-        </div>
-        <div className="thread-header-actions">
-          <Button
-            text={
-              showSubagentPanel
-                ? '패널 닫기'
-                : subagents.length > 0
-                ? `Subagents (${subagents.length})`
-                : targetInspectorMessage?.activities &&
-                  targetInspectorMessage.activities.length > 0
-                ? `도구 내역 (${targetInspectorMessage.activities.length})`
-                : '작업 인스펙터'
-            }
-            color={
-              showSubagentPanel || subagents.some(s => s.status === 'RUNNING')
-                ? ComponentColor.Success
-                : ComponentColor.Default
-            }
-            size={ComponentSize.Small}
-            shape={ButtonShape.Default}
-            onClick={handleToggleSubagentPanel}
-          />
-          {mode === 'drawer' && (
+      {!chatOnly && (
+        <div className="thread-header">
+          <div className="thread-title">
+            <span>{activeSession?.title || 'OpenClaw AI Ops Chat'}</span>
+          </div>
+          <div className="thread-header-actions">
             <Button
-              text="✕ Close"
-              color={ComponentColor.Default}
+              text={
+                showSubagentPanel
+                  ? '패널 닫기'
+                  : subagents.length > 0
+                  ? `Subagents (${subagents.length})`
+                  : targetInspectorMessage?.activities &&
+                    targetInspectorMessage.activities.length > 0
+                  ? `도구 내역 (${targetInspectorMessage.activities.length})`
+                  : '작업 인스펙터'
+              }
+              color={
+                showSubagentPanel || subagents.some(s => s.status === 'RUNNING')
+                  ? ComponentColor.Success
+                  : ComponentColor.Default
+              }
               size={ComponentSize.Small}
               shape={ButtonShape.Default}
-              onClick={onClose}
+              onClick={handleToggleSubagentPanel}
             />
-          )}
+            {mode === 'drawer' && (
+              <Button
+                text="✕"
+                color={ComponentColor.Default}
+                size={ComponentSize.Small}
+                shape={ButtonShape.Default}
+                titleText="Close"
+                onClick={onClose}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="message-list-wrapper">
         <FancyScrollbar autoHide={true} setScrollTop={handleScroll}>
@@ -2263,7 +2279,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       onSelectTaskId={setSelectedTaskId}
       subagentFilter={subagentFilter}
       onSetSubagentFilter={setSubagentFilter}
-      onClosePanel={() => setShowSubagentPanel(false)}
+      onClosePanel={handleCloseSubagentPanel}
       defaultViewMode={subagentDefaultView}
       customViews={customPanelViews}
       activeInspectorTab={activeInspectorTab}
@@ -2274,7 +2290,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     />
   )
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(
+    defaultSidebarCollapsed
+  )
+
+  useEffect(() => {
+    if (defaultSidebarCollapsed && isOpen) {
+      setIsSidebarCollapsed(true)
+    }
+  }, [defaultSidebarCollapsed, isOpen])
 
   return (
     <div className={wrapperClass}>
@@ -2289,16 +2313,20 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         />
 
-        <CollapsibleSidePanelSlice
-          isOpen={showSubagentPanel}
-          onClose={() => setShowSubagentPanel(false)}
-          defaultRatio={0.42}
-          snapCloseThreshold={120}
-          panelContent={renderSubagentInspectorPanel()}
-          onResize={() => requestAnimationFrame(adjustTextareaHeight)}
-        >
-          {renderChatThread()}
-        </CollapsibleSidePanelSlice>
+        {chatOnly ? (
+          renderChatThread()
+        ) : (
+          <CollapsibleSidePanelSlice
+            isOpen={showSubagentPanel}
+            onClose={() => setShowSubagentPanel(false)}
+            defaultRatio={0.42}
+            snapCloseThreshold={120}
+            panelContent={renderSubagentInspectorPanel()}
+            onResize={() => requestAnimationFrame(adjustTextareaHeight)}
+          >
+            {renderChatThread()}
+          </CollapsibleSidePanelSlice>
+        )}
       </div>
     </div>
   )
@@ -2308,7 +2336,9 @@ interface StateProps {
   persistedTimeZone?: TimeZones
 }
 
-const mSTP = (state: {app?: {persisted?: {timeZone?: TimeZones}}}): StateProps => ({
+const mSTP = (state: {
+  app?: {persisted?: {timeZone?: TimeZones}}
+}): StateProps => ({
   persistedTimeZone: state.app?.persisted?.timeZone,
 })
 
