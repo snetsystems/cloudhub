@@ -409,7 +409,11 @@
         padding: 8px;
 
         .session-item {
-          padding: 8px 10px;
+          padding: 0 10px;
+          height: 36px;
+          min-height: 36px;
+          max-height: 36px;
+          box-sizing: border-box;
           border-radius: $radius-small;
           color: $g11-sidewalk;
           font-size: 12px;
@@ -430,6 +434,7 @@
             text-overflow: ellipsis;
             flex: 1;
             min-width: 0;
+            line-height: 1.4;
           }
 
           .session-time-ago {
@@ -443,7 +448,18 @@
 
           .session-delete-wrapper {
             display: none;
+            align-items: center;
+            justify-content: center;
+            height: 20px;
             flex-shrink: 0;
+
+            .confirm-button,
+            .btn {
+              padding: 0 4px;
+              height: 20px;
+              line-height: 20px;
+              min-height: 20px;
+            }
           }
 
           .session-delete-confirm-btn {
@@ -3151,13 +3167,13 @@
 
       &.active {
         background: $g0-obsidian;
-        color: $c-pool;
+        color: $g20-white;
         font-weight: 600;
-        border-bottom: 2px solid $c-pool;
+        border-bottom: 2px solid $s-orange;
 
         .tab-count-pill {
-          background: rgba($c-pool, 0.2);
-          color: $c-pool;
+          background: rgba($s-orange, 0.25);
+          color: $s-orange;
         }
       }
 
@@ -3437,102 +3453,6 @@
   display: flex;
   flex-direction: column;
   @include gradient-v($g2-kevlar, $g0-obsidian);
-}
-
-.ai-chat-custom-panel-metrics {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-
-  .ai-chat-custom-panel-title {
-    color: $c-pool;
-    margin: 0;
-    font-size: $ix-text-base-1;
-    font-weight: 600;
-  }
-
-  .ai-chat-metrics-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-
-    .ai-chat-metric-card {
-      background: $g2-kevlar;
-      padding: 12px;
-      border-radius: $ix-radius;
-      border: 1px solid $g5-pepper;
-
-      .ai-chat-metric-label {
-        font-size: $ix-text-tiny;
-        color: $g13-mist;
-        text-transform: uppercase;
-        font-weight: 500;
-      }
-
-      .ai-chat-metric-value-cpu {
-        font-size: 20px;
-        font-weight: bold;
-        color: $c-rainforest;
-        margin-top: 4px;
-      }
-
-      .ai-chat-metric-value-mem {
-        font-size: 20px;
-        font-weight: bold;
-        color: $s-orange;
-        margin-top: 4px;
-      }
-    }
-  }
-
-  .ai-chat-pod-status-card {
-    background: $g2-kevlar;
-    padding: 12px;
-    border-radius: $ix-radius;
-    border: 1px solid $g5-pepper;
-
-    .ai-chat-pod-status-title {
-      font-size: $ix-text-tiny;
-      font-weight: bold;
-      margin-bottom: 8px;
-      color: $g17-whisper;
-    }
-
-    .ai-chat-pod-status-list {
-      margin: 0;
-      padding-left: 16px;
-      font-size: $ix-text-tiny;
-      color: $g15-platinum;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-  }
-}
-
-.ai-chat-security-audit-panel {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  .ai-chat-security-audit-title {
-    color: $s-orange;
-    margin: 0;
-    font-size: $ix-text-base-1;
-    font-weight: 600;
-  }
-
-  .ai-chat-security-audit-card {
-    font-size: $ix-text-tiny;
-    color: $g15-platinum;
-    background: $g2-kevlar;
-    padding: 12px;
-    border-radius: $ix-radius;
-    border: 1px solid $g5-pepper;
-    line-height: 1.6;
-  }
 }
 
 // =============================================================================
