@@ -228,7 +228,7 @@ export const formatChatTimestamp = (
 ): string => {
   if (!timestamp) {
     const m = timeZone === TimeZones.UTC ? moment.utc() : moment()
-    return timeZone === TimeZones.UTC ? m.format('HH:mm') : m.format('A h:mm')
+    return m.format('HH:mm')
   }
 
   const rawNum =
@@ -239,33 +239,20 @@ export const formatChatTimestamp = (
   const m = timeZone === TimeZones.UTC ? moment.utc(rawNum) : moment(rawNum)
   if (!m.isValid()) {
     const fallback = timeZone === TimeZones.UTC ? moment.utc() : moment()
-    return timeZone === TimeZones.UTC
-      ? fallback.format('HH:mm')
-      : fallback.format('A h:mm')
+    return fallback.format('HH:mm')
   }
 
   const now = timeZone === TimeZones.UTC ? moment.utc() : moment()
   const isToday = m.isSame(now, 'day')
   const isThisYear = m.isSame(now, 'year')
 
-  if (timeZone === TimeZones.UTC) {
-    if (isToday) {
-      return m.format('HH:mm')
-    }
-    if (isThisYear) {
-      return m.format('M[월] D[일] HH:mm')
-    }
-    return m.format('YYYY[년] M[월] D[일] HH:mm')
-  }
-
-  // Local (KST)
   if (isToday) {
-    return m.format('A h:mm')
+    return m.format('HH:mm')
   }
   if (isThisYear) {
-    return m.format('M[월] D[일] A h:mm')
+    return m.format('M[월] D[일] HH:mm')
   }
-  return m.format('YYYY[년] M[월] D[일] A h:mm')
+  return m.format('YYYY[년] M[월] D[일] HH:mm')
 }
 
 const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
@@ -1510,6 +1497,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     if (activeSessionId === id) return
     setIsStreamingActive(false)
     setActiveSessionId(id)
+    setSelectedInspectorMessageId(null)
     setInputPrompt('')
     setIsUserScrolledUp(false)
 
@@ -1520,6 +1508,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
   const handleCreateNewChat = () => {
     setActiveSessionId('')
+    setSelectedInspectorMessageId(null)
     setInputPrompt('')
     setIsLoadingHistory(false)
     setIsUserScrolledUp(false)
@@ -2040,7 +2029,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   msg.activities && msg.activities.length > 0
                 )
                 const hasText = Boolean(msg.text)
-                const isTargetSelected = selectedInspectorMessageId === msg.id
+                const isTargetSelected = targetInspectorMessage?.id === msg.id
 
                 return (
                   <div key={`msg-${msg.id}`} className="message-item ai">
@@ -2315,7 +2304,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       activeInspectorTab={activeInspectorTab}
       onChangeInspectorTab={setActiveInspectorTab}
       turns={conversationTurns}
-      selectedTurnId={selectedInspectorMessageId}
+      selectedTurnId={targetInspectorMessage?.id || null}
       onSelectTurnId={setSelectedInspectorMessageId}
     />
   )
@@ -2337,6 +2326,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           sessions={sessions}
           activeSessionId={activeSessionId}
           isCollapsed={isSidebarCollapsed}
+          isStreamingActive={isStreamingActive}
           onSelectSession={handleSelectSession}
           onDeleteSession={handleDeleteSession}
           onCreateNewChat={handleCreateNewChat}

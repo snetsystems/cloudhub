@@ -2,8 +2,6 @@ import React, {FC} from 'react'
 import {connect} from 'react-redux'
 import {Page} from 'src/reusable_ui'
 import CloudhubAiChatStandalone from 'src/ai_chat/containers/CloudhubAiChatStandalone'
-import {CustomPanelView} from 'src/ai_chat/components/SubagentInspectorPanel'
-import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
 import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
 import {setTimeZone} from 'src/shared/actions/app'
 import {TimeZones} from 'src/types/app'
@@ -19,72 +17,6 @@ interface DispatchProps {
 type Props = StateProps & DispatchProps
 
 export const AiChatPage: FC<Props> = ({timeZone, onSetTimeZone}) => {
-  // Custom views rendered alongside Subagent Inspector
-  const customPanelViews: CustomPanelView[] = [
-    {
-      id: 'resource-monitor',
-      label: 'Cluster Metrics',
-      component: (
-        <div className="ai-chat-custom-panel-metrics">
-          <h4 className="ai-chat-custom-panel-title">
-            CloudHub Infrastructure Monitor
-          </h4>
-          <div className="ai-chat-metrics-grid">
-            <div className="ai-chat-metric-card">
-              <div className="ai-chat-metric-label">CPU USAGE</div>
-              <div className="ai-chat-metric-value-cpu">34.2%</div>
-            </div>
-            <div className="ai-chat-metric-card">
-              <div className="ai-chat-metric-label">MEMORY USAGE</div>
-              <div className="ai-chat-metric-value-mem">6.4 / 16 GB</div>
-            </div>
-          </div>
-          <div className="ai-chat-pod-status-card">
-            <div className="ai-chat-pod-status-title">Active Pod Status</div>
-            <ul className="ai-chat-pod-status-list">
-              <li>
-                openclaw-gateway-v2:{' '}
-                <AiChatBadge variant="success" size="sm">
-                  Healthy
-                </AiChatBadge>
-              </li>
-              <li>
-                subagent-runner-pool:{' '}
-                <AiChatBadge variant="success" size="sm">
-                  Healthy (3 Workers)
-                </AiChatBadge>
-              </li>
-              <li>
-                influxdb-telemetry:{' '}
-                <AiChatBadge variant="success" size="sm">
-                  Healthy
-                </AiChatBadge>
-              </li>
-            </ul>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: 'security-audit',
-      label: 'Security Scanner',
-      component: (
-        <div className="ai-chat-security-audit-panel">
-          <h4 className="ai-chat-security-audit-title">
-            Real-time Security Interceptor
-          </h4>
-          <div className="ai-chat-security-audit-card">
-            OpenClaw Gateway Interceptor Active
-            <br />
-            Secret Masking Level: High (PII & API Keys Redacted)
-            <br />
-            Subagent Sandbox Isolation: Enforced
-          </div>
-        </div>
-      ),
-    },
-  ]
-
   return (
     <Page>
       <Page.Header fullWidth={true}>
@@ -107,7 +39,6 @@ export const AiChatPage: FC<Props> = ({timeZone, onSetTimeZone}) => {
           <CloudhubAiChatStandalone
             mode="full"
             isOpen={true}
-            customPanelViews={customPanelViews}
             timeZone={timeZone}
           />
         </div>

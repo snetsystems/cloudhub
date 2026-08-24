@@ -89,9 +89,7 @@ const TopologyRouter = React.lazy(
 const NewHostsPage = React.lazy(
   () => import('src/hosts/containers/NewHostsPage')
 )
-const HostPage = React.lazy(
-  () => import('src/hosts/containers/HostPage')
-)
+const HostPage = React.lazy(() => import('src/hosts/containers/HostPage'))
 const LogAnalysisDashboard = React.lazy(
   () => import('src/log_analysis/containers/LogAnalysisDashboard')
 )
@@ -129,7 +127,9 @@ const Applications = React.lazy(() =>
   import('src/applications').then(m => ({default: m.Applications}))
 )
 const AiChatPage = React.lazy(() =>
-  import('src/ai_chat/containers/AiChatPage').then(m => ({default: m.AiChatPage}))
+  import('src/ai_chat/containers/AiChatPage').then(m => ({
+    default: m.AiChatPage,
+  }))
 )
 const OpenClawSkillsPage = React.lazy(() =>
   import('src/openclaw_skills/containers/OpenClawSkillsPage').then(m => ({
