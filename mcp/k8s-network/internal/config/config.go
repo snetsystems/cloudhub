@@ -18,7 +18,8 @@ type Config struct {
 	ProxyURL                string
 	ProxyInsecureSkipVerify bool
 	AllowedNamespace        string
-	ServiceToken            string
+	ServerAuthToken         string
+	CloudHubAuthToken       string
 	ListenAddr              string
 	PlanTTL                 time.Duration
 }
@@ -37,7 +38,11 @@ func Load() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
-	serviceToken, err := requiredEnvironment("MCP_SERVICE_TOKEN")
+	serverAuthToken, err := requiredEnvironment("MCP_SERVER_AUTH_TOKEN")
+	if err != nil {
+		return Config{}, err
+	}
+	cloudHubAuthToken, err := requiredEnvironment("MCP_AUTH_TOKEN")
 	if err != nil {
 		return Config{}, err
 	}
@@ -67,7 +72,8 @@ func Load() (Config, error) {
 		ProxyURL:                strings.TrimRight(proxyURL, "/"),
 		ProxyInsecureSkipVerify: proxyInsecureSkipVerify,
 		AllowedNamespace:        allowedNamespace,
-		ServiceToken:            serviceToken,
+		ServerAuthToken:         serverAuthToken,
+		CloudHubAuthToken:       cloudHubAuthToken,
 		ListenAddr:              listenAddr,
 		PlanTTL:                 planTTL,
 	}, nil

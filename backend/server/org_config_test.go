@@ -160,7 +160,7 @@ func TestOrganizationConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cloudhub/v1/org_config","logViewer":"/cloudhub/v1/org_config/logviewer"},"organization":"default","logViewer":{"columns":[{"name":"time","position":0,"encodings":[{"type":"visibility","value":"hidden"}]},{"name":"severity","position":1,"encodings":[{"type":"visibility","value":"visible"},{"type":"label","value":"icon"},{"type":"label","value":"text"}]},{"name":"timestamp","position":2,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"message","position":3,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"facility","position":4,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"procid","position":5,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Proc ID"}]},{"name":"appname","position":6,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Application"}]},{"name":"host","position":7,"encodings":[{"type":"visibility","value":"visible"}]}]}}`,
+				body:        `{"links":{"self":"/cloudhub/v1/org_config","logViewer":"/cloudhub/v1/org_config/logviewer","logAnalysis":"/cloudhub/v1/org_config/log-analysis"},"organization":"default","logViewer":{"columns":[{"name":"time","position":0,"encodings":[{"type":"visibility","value":"hidden"}]},{"name":"severity","position":1,"encodings":[{"type":"visibility","value":"visible"},{"type":"label","value":"icon"},{"type":"label","value":"text"}]},{"name":"timestamp","position":2,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"message","position":3,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"facility","position":4,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"procid","position":5,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Proc ID"}]},{"name":"appname","position":6,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Application"}]},{"name":"host","position":7,"encodings":[{"type":"visibility","value":"visible"}]}]},"logAnalysis":{"annotationPadding":"2h","queryFillOption":"none"}}`,
 			},
 		},
 	}
@@ -1312,7 +1312,7 @@ func TestReplaceLogAnalysisOrganizationConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "Set log analysis configuration with empty existing values - should keep empty values",
+			name: "Set log analysis configuration with empty existing annotation padding - should apply default",
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
 					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
@@ -1343,11 +1343,11 @@ func TestReplaceLogAnalysisOrganizationConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"","queryFillOption":"linear"}`,
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"2h","queryFillOption":"linear"}`,
 			},
 		},
 		{
-			name: "Set log analysis configuration with empty existing values and empty request - should keep empty values",
+			name: "Set log analysis configuration with empty existing values and empty request - should apply defaults",
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
 					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
@@ -1378,7 +1378,7 @@ func TestReplaceLogAnalysisOrganizationConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"","queryFillOption":""}`,
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/log-analysis"},"annotationPadding":"2h","queryFillOption":"none"}`,
 			},
 		},
 	}

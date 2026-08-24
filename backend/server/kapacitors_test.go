@@ -116,6 +116,7 @@ func Test_KapacitorRulesGet(t *testing.T) {
 					Type:       "stream",
 					DBRPs:      []cloudhub.DBRP{{DB: "telegraf", RP: "autogen"}},
 					TICKScript: tickScript,
+					Source:     "user",
 					AlertNodes: cloudhub.AlertNodes{
 						Posts:      []*cloudhub.Post{},
 						TCPs:       []*cloudhub.TCP{},
@@ -354,7 +355,7 @@ func Test_KapacitorActivation(t *testing.T) {
 			SrcID:  sourceId,
 			Name:   strconv.Itoa(id),
 			URL:    "http://test/" + strconv.Itoa(id),
-		}		
+		}
 		requestBody, _ := json.Marshal(kapacitor)
 		req := httptest.NewRequest("POST", "/cloudhub/v1/sources/"+sourceIdStr+"/kapacitors", bytes.NewReader(requestBody))
 		rr := httptest.NewRecorder()
@@ -365,7 +366,7 @@ func Test_KapacitorActivation(t *testing.T) {
 				Key:   "id",
 				Value: sourceIdStr,
 			},
-		}		
+		}
 		ctx := httprouter.WithParams(bg, params)
 		req = req.WithContext(ctx)
 

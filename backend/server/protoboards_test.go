@@ -2,11 +2,13 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -217,8 +219,21 @@ func Test_Protoboards(t *testing.T) {
 			if contentType != tt.wants.contentType {
 				t.Errorf("%q. Protoboards() = %v, want %v", tt.name, contentType, tt.wants.contentType)
 			}
-			if eq, _ := jsonEqual(string(body), tt.wants.body); !eq {
-				t.Errorf("%q. Protoboards() = %v, want %v", tt.name, string(body), tt.wants.body)
+			var got getProtoboardsResponse
+			if err := json.Unmarshal(body, &got); err != nil {
+				t.Fatalf("%q. Protoboards() decode response: %v", tt.name, err)
+			}
+			if len(got.Protoboards) != len(tt.arg) {
+				t.Fatalf("%q. Protoboards() returned %d items, want %d", tt.name, len(got.Protoboards), len(tt.arg))
+			}
+			for i := range tt.arg {
+				if !reflect.DeepEqual(got.Protoboards[i].Protoboard, tt.arg[i]) {
+					t.Errorf("%q. Protoboards()[%d] = %+v, want %+v", tt.name, i, got.Protoboards[i].Protoboard, tt.arg[i])
+				}
+				wantLink := fmt.Sprintf("/cloudhub/v1/protoboards/%s", tt.arg[i].ID)
+				if got.Protoboards[i].Links.Self != wantLink {
+					t.Errorf("%q. Protoboards()[%d] link = %q, want %q", tt.name, i, got.Protoboards[i].Links.Self, wantLink)
+				}
 			}
 
 		})
@@ -325,8 +340,21 @@ func Test_ProtoboardsID(t *testing.T) {
 			if contentType != tt.wants.contentType {
 				t.Errorf("%q. Protoboards() = %v, want %v", tt.name, contentType, tt.wants.contentType)
 			}
-			if eq, _ := jsonEqual(string(body), tt.wants.body); !eq {
-				t.Errorf("%q. Protoboards() = %v, want %v", tt.name, string(body), tt.wants.body)
+			if statusCode == http.StatusOK {
+				var got protoboardResponse
+				if err := json.Unmarshal(body, &got); err != nil {
+					t.Fatalf("%q. ProtoboardsID() decode response: %v", tt.name, err)
+				}
+				want := cloudhub.Protoboard{ID: tt.args.id}
+				if !reflect.DeepEqual(got.Protoboard, want) {
+					t.Errorf("%q. ProtoboardsID() = %+v, want %+v", tt.name, got.Protoboard, want)
+				}
+				wantLink := fmt.Sprintf("/cloudhub/v1/protoboards/%s", tt.args.id)
+				if got.Links.Self != wantLink {
+					t.Errorf("%q. ProtoboardsID() link = %q, want %q", tt.name, got.Links.Self, wantLink)
+				}
+			} else if eq, _ := jsonEqual(string(body), tt.wants.body); !eq {
+				t.Errorf("%q. ProtoboardsID() = %v, want %v", tt.name, string(body), tt.wants.body)
 			}
 
 		})

@@ -423,7 +423,7 @@ class SideNav extends PureComponent<Props, State> {
           {/* AI Assistant */}
           <NavBlock
             visible={enabled('ai-chat')}
-            highlightWhen={['ai-chat', 'ai-chat-test']}
+            highlightWhen={['ai-chat', 'ai-chat-test', 'openclaw-skills']}
             icon="ai-icon"
             link={`${sourcePrefix}/ai-chat`}
             location={location}
@@ -432,9 +432,14 @@ class SideNav extends PureComponent<Props, State> {
               link={`${sourcePrefix}/ai-chat`}
               title="AI Assistant"
             />
-            {enabled('ai-chat') && (
+            {enabled('ai-chatbot') && (
               <NavListItem link={`${sourcePrefix}/ai-chat`}>
                 AI Chatbot
+              </NavListItem>
+            )}
+            {isAdminRole && enabled('openclaw-skills') && (
+              <NavListItem link={`${sourcePrefix}/openclaw-skills`}>
+                Skills
               </NavListItem>
             )}
           </NavBlock>

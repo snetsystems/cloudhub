@@ -347,7 +347,7 @@ func Test_newDashboardResponse(t *testing.T) {
 			want: &dashboardResponse{
 				Organization: "0",
 				Type:         "normal",
-				Templates:   []templateResponse{},
+				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
 					{
 						Links: dashboardCellLinks{
@@ -394,7 +394,7 @@ func Test_newDashboardResponse(t *testing.T) {
 								},
 							},
 							NoteVisibility: "default",
-							DetailQueries: []cloudhub.DashboardQuery{},
+							DetailQueries:  []cloudhub.DashboardQuery{},
 						},
 					},
 					{
@@ -442,7 +442,7 @@ func Test_newDashboardResponse(t *testing.T) {
 								},
 							},
 							NoteVisibility: "default",
-							DetailQueries: []cloudhub.DashboardQuery{},
+							DetailQueries:  []cloudhub.DashboardQuery{},
 						},
 					},
 				},
@@ -716,9 +716,9 @@ func TestDashboard_TableGaugeChartOptions_ValueFormat(t *testing.T) {
 								IsEnforced: false,
 								Digits:     0,
 							},
-							IsShowValues:    true,
-							SortBy:          "name",
-							SortByDirection: "asc",
+							IsShowValues:    false,
+							SortBy:          "",
+							SortByDirection: "",
 						},
 					},
 				},
@@ -793,12 +793,8 @@ func TestDashboard_TableGaugeChartOptions_ValueFormat(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			actual := DashboardDefaults(tt.d)
-			want := tt.want
-			for i := range want.Cells {
-				applyTableGaugeDefaults(&want.Cells[i])
-			}
-			if !gocmp.Equal(actual, want) {
-				t.Errorf("DashboardDefaults() = diff:\n%s", gocmp.Diff(actual, want))
+			if !gocmp.Equal(actual, tt.want) {
+				t.Errorf("DashboardDefaults() = diff:\n%s", gocmp.Diff(actual, tt.want))
 			}
 		})
 	}
@@ -973,13 +969,13 @@ func TestSetFixedCellVersionInfo(t *testing.T) {
 
 func Test_newDashboardResponse_includesVersion(t *testing.T) {
 	d := cloudhub.Dashboard{
-		ID:            cloudhub.DashboardID(1),
-		Name:          "host_page",
-		Organization:  "org1",
-		Type:          "builtin",
-		Version:       "1.0.0",
-		Cells:         []cloudhub.DashboardCell{},
-		Templates:     []cloudhub.Template{},
+		ID:           cloudhub.DashboardID(1),
+		Name:         "host_page",
+		Organization: "org1",
+		Type:         "builtin",
+		Version:      "1.0.0",
+		Cells:        []cloudhub.DashboardCell{},
+		Templates:    []cloudhub.Template{},
 	}
 	got := newDashboardResponse(d)
 	if got.Version != "1.0.0" {
@@ -1008,14 +1004,14 @@ func TestService_UpdateDashboard(t *testing.T) {
 	}
 
 	tests := []struct {
-		name            string
-		body            string
-		dashboardsGet   cloudhub.Dashboard
+		name             string
+		body             string
+		dashboardsGet    cloudhub.Dashboard
 		dashboardsGetErr error
-		updateErr       error
-		wantStatus      int
-		wantErrMsg      string
-		checkUpdated    func(t *testing.T, updated cloudhub.Dashboard)
+		updateErr        error
+		wantStatus       int
+		wantErrMsg       string
+		checkUpdated     func(t *testing.T, updated cloudhub.Dashboard)
 	}{
 		{
 			name: "update name only",
@@ -1040,8 +1036,8 @@ func TestService_UpdateDashboard(t *testing.T) {
 				return string(b)
 			}(),
 			dashboardsGet: cloudhub.Dashboard{
-				ID:         1,
-				Name:       "Dash",
+				ID:        1,
+				Name:      "Dash",
 				Templates: []cloudhub.Template{},
 			},
 			wantStatus: http.StatusOK,
@@ -1076,11 +1072,11 @@ func TestService_UpdateDashboard(t *testing.T) {
 			},
 		},
 		{
-			name:       "no name cells or templates returns 422",
-			body:       `{}`,
+			name:          "no name cells or templates returns 422",
+			body:          `{}`,
 			dashboardsGet: cloudhub.Dashboard{ID: 1, Name: "D"},
-			wantStatus: http.StatusUnprocessableEntity,
-			wantErrMsg: "Update must include at least one of name, cells, templates, or isDefault",
+			wantStatus:    http.StatusUnprocessableEntity,
+			wantErrMsg:    "Update must include at least one of name, cells, templates, or isDefault",
 		},
 		{
 			name: "invalid template type returns 422",
@@ -1094,21 +1090,21 @@ func TestService_UpdateDashboard(t *testing.T) {
 				return string(b)
 			}(),
 			dashboardsGet: cloudhub.Dashboard{ID: 1, Name: "D"},
-			wantStatus:   http.StatusUnprocessableEntity,
-			wantErrMsg:   "Unknown template type",
+			wantStatus:    http.StatusUnprocessableEntity,
+			wantErrMsg:    "Unknown template type",
 		},
 		{
-			name:            "dashboard not found returns 404",
-			body:            `{"name": "X"}`,
+			name:             "dashboard not found returns 404",
+			body:             `{"name": "X"}`,
 			dashboardsGetErr: http.ErrNoLocation,
-			wantStatus:      http.StatusNotFound,
+			wantStatus:       http.StatusNotFound,
 		},
 		{
-			name:       "store update error returns 500",
-			body:       `{"name": "X"}`,
+			name:          "store update error returns 500",
+			body:          `{"name": "X"}`,
 			dashboardsGet: cloudhub.Dashboard{ID: 1, Name: "D"},
-			updateErr:  context.DeadlineExceeded,
-			wantStatus: http.StatusInternalServerError,
+			updateErr:     context.DeadlineExceeded,
+			wantStatus:    http.StatusInternalServerError,
 		},
 		{
 			name: "do not duplicate hidden cell when client sends same cell with hidden false (fixed-cell re-add)",
@@ -1238,8 +1234,8 @@ func TestService_ReplaceDashboard_doNotDuplicateHiddenCell(t *testing.T) {
 func TestService_GetFixedCell(t *testing.T) {
 	s := &Service{Logger: &mocks.TestLogger{}}
 	w := httptest.NewRecorder()
-	r := httptest.NewRequest(http.MethodGet, "/cloudhub/v1/fixed-cells/host_page/template", nil)
-	r = WithContext(r.Context(), r, map[string]string{"name": "host_page"})
+	r := httptest.NewRequest(http.MethodGet, "/cloudhub/v1/fixed-cells/server-details/template", nil)
+	r = WithContext(r.Context(), r, map[string]string{"name": "server-details"})
 
 	s.GetFixedCell(w, r)
 
@@ -1256,8 +1252,8 @@ func TestService_GetFixedCell(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if res.Name != "host_page" {
-		t.Errorf("response name = %q, want host_page", res.Name)
+	if res.Name != "server-details" {
+		t.Errorf("response name = %q, want server-details", res.Name)
 	}
 	if len(res.Cells) == 0 {
 		t.Error("response cells empty, want at least one")

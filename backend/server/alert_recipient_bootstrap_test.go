@@ -449,6 +449,11 @@ func TestSyncDefaultRecipientGroupsForUser_AddsOnCreate(t *testing.T) {
 	rgStore := &memRecipientGroupStore{members: map[string][]cloudhub.RecipientGroupMember{}}
 	svc := &Service{
 		Store: &Store{
+			OrganizationsStore: &mocks.OrganizationsStore{
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "default", Name: "default"}, nil
+				},
+			},
 			UsersStore: &mocks.UsersStore{
 				AllF: func(ctx context.Context) ([]cloudhub.User, error) {
 					return []cloudhub.User{

@@ -58,6 +58,20 @@ func TestOpenClawManagedApprovalInternalAPIRequiresConfiguredServiceToken(t *tes
 	}
 }
 
+func TestOpenClawManagedApprovalRejectsCollectorToken(t *testing.T) {
+	logger := &mocks.TestLogger{}
+	service, _ := newManagedApprovalTestService(t, "different-mcp-secret")
+	service.Logger = logger
+	service.InternalENV.KubernetesConfig.CollectorAuthToken = managedApprovalToken
+	handler := NewMux(MuxOpts{Logger: logger, DisableGZip: true}, *service)
+
+	recorder := performManagedApprovalRequest(handler, http.MethodPost, "/api/v1/openclaw/managed-approvals", validManagedApprovalRequestBody())
+
+	if recorder.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d, want %d: %s", recorder.Code, http.StatusUnauthorized, recorder.Body.String())
+	}
+}
+
 func TestOpenClawManagedApprovalCreateValidatesSessionAndTool(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -175,9 +189,7 @@ func TestOpenClawManagedApprovalCreateMapsSessionStoreFailure(t *testing.T) {
 		}},
 		Logger:                   logger,
 		openClawManagedApprovals: newOpenClawManagedApprovalStore(nil),
-		InternalENV: cloudhub.InternalEnvironment{KubernetesConfig: cloudhub.KubernetesConfig{
-			CollectorAuthToken: managedApprovalToken,
-		}},
+		InternalENV:              cloudhub.InternalEnvironment{MCPAuthToken: managedApprovalToken},
 	}
 	handler := NewMux(MuxOpts{Logger: logger, DisableGZip: true}, service)
 
@@ -250,9 +262,7 @@ func newManagedApprovalTestService(t *testing.T, configuredToken string) (*Servi
 		Store:                    &Store{OpenClawSessionStore: store},
 		Logger:                   logger,
 		openClawManagedApprovals: newOpenClawManagedApprovalStore(nil),
-		InternalENV: cloudhub.InternalEnvironment{KubernetesConfig: cloudhub.KubernetesConfig{
-			CollectorAuthToken: configuredToken,
-		}},
+		InternalENV:              cloudhub.InternalEnvironment{MCPAuthToken: configuredToken},
 	}
 	return service, logger
 }

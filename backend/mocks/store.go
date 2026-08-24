@@ -14,9 +14,9 @@ type Store struct {
 	LayoutsStore            cloudhub.LayoutsStore
 	ProtoboardsStore        cloudhub.ProtoboardsStore
 	UsersStore              cloudhub.UsersStore
-	DashboardsStore             cloudhub.DashboardsStore
-	FixedCellMapping     cloudhub.FixedCellMappingStore
-	OrganizationsStore         cloudhub.OrganizationsStore
+	DashboardsStore         cloudhub.DashboardsStore
+	FixedCellMapping        cloudhub.FixedCellMappingStore
+	OrganizationsStore      cloudhub.OrganizationsStore
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
 	VspheresStore           cloudhub.VspheresStore
@@ -29,11 +29,13 @@ type Store struct {
 	DLNxRstStgStore         cloudhub.DLNxRstStgStore
 	EsSourcesStore          cloudhub.EsSourcesStore
 	DeviceMappingsStore     cloudhub.DeviceMappingsStore
-	CellLibraryStore cloudhub.CellLibraryStore
-	HostStore        cloudhub.HostStore
+	CellLibraryStore        cloudhub.CellLibraryStore
+	HostStore               cloudhub.HostStore
 	URLMonitoringStore      cloudhub.URLMonitoringStore
 	OrgNavMenuStore         cloudhub.OrgNavMenuStore
-	OpenClawSessionStore cloudhub.OpenClawSessionStore
+	OpenClawSessionStore    cloudhub.OpenClawSessionStore
+	OpenClawSkillStore      cloudhub.OpenClawSkillStore
+	OpenClawOrgAgentStore   cloudhub.OpenClawOrgAgentStore
 }
 
 // Sources ...
@@ -164,4 +166,14 @@ func (s *Store) OrgNavMenu(ctx context.Context) cloudhub.OrgNavMenuStore {
 // OpenClawSessions ...
 func (s *Store) OpenClawSessions(ctx context.Context) cloudhub.OpenClawSessionStore {
 	return s.OpenClawSessionStore
+}
+
+// OpenClawSkills ...
+func (s *Store) OpenClawSkills(ctx context.Context) cloudhub.OpenClawSkillStore {
+	return s.OpenClawSkillStore
+}
+
+// OpenClawOrgAgents ...
+func (s *Store) OpenClawOrgAgents(ctx context.Context) cloudhub.OpenClawOrgAgentStore {
+	return s.OpenClawOrgAgentStore
 }

@@ -448,5 +448,91 @@
     "empty_choose_org": "Choose an organization to configure its sidebar menus.",
     "load_failed": "Failed to load master navigation menus.",
     "save_failed": "Failed to save organization menu settings."
+  },
+  "openclaw_skills": {
+    "title": "Agent Skills",
+    "list": {
+      "title": "Skills",
+      "empty": "No skills have been authored yet.",
+      "live_revision": "Revision {{revision}} in use",
+      "not_published": "No revision applied"
+    },
+    "gateway": {
+      "blocked": "Disabled on the Gateway",
+      "missing": "Not on the Gateway"
+    },
+    "detail": {
+      "select_prompt": "Select a skill on the left.",
+      "view_hint": "Click a revision to see the files it stores.",
+      "revision_files": "Revision {{revision}} files",
+      "loading_files": "Reading the files...",
+      "recorded_note": "This is what CloudHub recorded. The Gateway workspace may hold something different now."
+    },
+    "revision": {
+      "number": "Revision",
+      "goal": "Description",
+      "review": "Status",
+      "created": "Created",
+      "live": "In use",
+      "superseded": "Superseded"
+    },
+    "review": {
+      "pending": "Not applied",
+      "approved": "Applied",
+      "rejected": "Rejected"
+    },
+    "actions": {
+      "new_skill": "New Skill",
+      "new_revision": "New Revision",
+      "approve": "Apply",
+      "rollback": "Make this revision live again",
+      "edit_from_revision": "Edit from this revision",
+      "delete": "Delete",
+      "delete_confirm": "Delete",
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "validation": {
+      "main_required": "Write SKILL.md.",
+      "body_too_large": "The body is {{bytes}} bytes, over the {{max}} byte limit.",
+      "frontmatter_missing": "SKILL.md must open with a YAML frontmatter block fenced by ---.",
+      "name_missing": "The frontmatter has no name.",
+      "name_too_long": "The name is longer than {{max}} characters.",
+      "name_pattern": "The name \"{{name}}\" must start with a lowercase letter and use only lowercase letters, digits, - and _.",
+      "name_reserved": "\"{{name}}\" is a built-in OpenClaw command and cannot be used.",
+      "name_mismatch": "A revision cannot rename its skill. Expected \"{{expected}}\", found \"{{name}}\".",
+      "description_missing": "The frontmatter has no description.",
+      "description_too_long": "The description is {{bytes}} bytes, over the {{max}} byte limit.",
+      "too_many_files": "There are {{count}} support files, over the limit of {{max}}.",
+      "file_path_required": "Give the support file a name.",
+      "file_path_folder": "\"{{path}}\" must sit under one of the allowed folders.",
+      "file_path_segment": "\"{{path}}\" has an empty segment or one starting with a dot.",
+      "file_path_duplicate": "Duplicate path: {{path}}",
+      "total_too_large": "The skill is {{bytes}} bytes in total, over the {{max}} byte limit."
+    },
+    "author": {
+      "title": "New Skill",
+      "revision_title": "New revision of {{name}}",
+      "goal_label": "Draft request",
+      "goal_help": "Used only to draft. Nothing is stored, so you can ask for another draft until you are happy with it. The history shows the SKILL.md description instead.",
+      "goal_placeholder": "In plain words: what to build, or what to change.",
+      "draft": "Draft it",
+      "redraft": "Draft again",
+      "tab_edit": "SKILL.md",
+      "tab_preview": "Preview",
+      "tab_files": "Support files ({{count}})",
+      "fact_name": "Name",
+      "fact_description": "description (B)",
+      "fact_body": "Body (B)",
+      "fact_files": "Support files",
+      "fact_total": "Total (B)",
+      "no_files": "No support files. Drop files here, or add one below.",
+      "name_placeholder": "collect.sh",
+      "add_file": "Add empty file",
+      "upload_file": "Upload files",
+      "remove_file": "Remove file",
+      "drop_hint": "Text files only. You can drop them here.",
+      "not_text": "Not a text file, so it cannot be attached: {{files}}"
+    }
   }
 }

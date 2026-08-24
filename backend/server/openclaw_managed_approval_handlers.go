@@ -41,7 +41,7 @@ type openClawManagedApprovalStatusResponse struct {
 	ExpiresAt int64                        `json:"expiresAt"`
 }
 
-func openClawManagedApprovalServiceAuth(configuredToken string, next http.HandlerFunc) http.HandlerFunc {
+func mcpServiceAuth(configuredToken string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if configuredToken == "" {
 			http.Error(w, "service authentication is not configured", http.StatusServiceUnavailable)

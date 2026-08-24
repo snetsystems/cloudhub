@@ -3,9 +3,8 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"net"
 	"net/url"
-	"os"
 	"testing"
 	"time"
 
@@ -18,22 +17,28 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	_, err := NewClient(context.TODO(),
+	c, err := NewClient(context.TODO(),
 		WithEndpoints([]string{"localhost:2"}),
 		WithDialTimeout(time.Second*5),
 		WithRequestTimeout(time.Second*5),
 		WithLogger(mocks.NewLogger()),
-		WithLogin("user", "pass"),
 	)
 	require.NoError(t, err)
+	require.NoError(t, c.Close())
 }
 
 func NewService(t *testing.T) (cloudhub.KVClient, func()) {
-	dir, err := ioutil.TempDir("", "etcd.test")
-	require.NoError(t, err)
+	dir := t.TempDir()
+	clientURL := availableURL(t)
+	peerURL := availableURL(t)
 
 	cfg := embed.NewConfig()
 	cfg.Dir = dir
+	cfg.ListenClientUrls = []url.URL{clientURL}
+	cfg.AdvertiseClientUrls = []url.URL{clientURL}
+	cfg.ListenPeerUrls = []url.URL{peerURL}
+	cfg.AdvertisePeerUrls = []url.URL{peerURL}
+	cfg.InitialCluster = fmt.Sprintf("%s=%s", cfg.Name, peerURL.String())
 
 	e, err := embed.StartEtcd(cfg)
 	require.NoError(t, err)
@@ -45,8 +50,8 @@ func NewService(t *testing.T) (cloudhub.KVClient, func()) {
 	}
 
 	endpoints := []string{}
-	for i := range cfg.ListenPeerUrls {
-		endpoints = append(endpoints, cfg.ListenPeerUrls[i].String())
+	for i := range cfg.ListenClientUrls {
+		endpoints = append(endpoints, cfg.ListenClientUrls[i].String())
 	}
 
 	c, err := NewClient(context.TODO(), WithEndpoints(endpoints))
@@ -57,9 +62,19 @@ func NewService(t *testing.T) (cloudhub.KVClient, func()) {
 
 	return s, func() {
 		e.Close()
-		os.RemoveAll(cfg.Dir)
 		c.Close()
 	}
+}
+
+func availableURL(t *testing.T) url.URL {
+	t.Helper()
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	address := listener.Addr().String()
+	require.NoError(t, listener.Close())
+	u, err := url.Parse("http://" + address)
+	require.NoError(t, err)
+	return *u
 }
 
 func TestEtcd(t *testing.T) {

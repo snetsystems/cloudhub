@@ -109,6 +109,8 @@ type DataStore interface {
 	URLMonitoring(ctx context.Context) cloudhub.URLMonitoringStore
 	OrgNavMenu(ctx context.Context) cloudhub.OrgNavMenuStore
 	OpenClawSessions(ctx context.Context) cloudhub.OpenClawSessionStore
+	OpenClawSkills(ctx context.Context) cloudhub.OpenClawSkillStore
+	OpenClawOrgAgents(ctx context.Context) cloudhub.OpenClawOrgAgentStore
 }
 
 // ensure that Store implements a DataStore
@@ -121,9 +123,9 @@ type Store struct {
 	LayoutsStore            cloudhub.LayoutsStore
 	ProtoboardsStore        cloudhub.ProtoboardsStore
 	UsersStore              cloudhub.UsersStore
-	DashboardsStore              cloudhub.DashboardsStore
-	FixedCellMapping      cloudhub.FixedCellMappingStore
-	MappingsStore                cloudhub.MappingsStore
+	DashboardsStore         cloudhub.DashboardsStore
+	FixedCellMapping        cloudhub.FixedCellMappingStore
+	MappingsStore           cloudhub.MappingsStore
 	OrganizationsStore      cloudhub.OrganizationsStore
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
@@ -137,11 +139,13 @@ type Store struct {
 	DLNxRstStgStore         cloudhub.DLNxRstStgStore
 	EsSourcesStore          cloudhub.EsSourcesStore
 	DeviceMappingsStore     cloudhub.DeviceMappingsStore
-	CellLibraryStore cloudhub.CellLibraryStore
-	HostStore             cloudhub.HostStore
-	URLMonitoringStore    cloudhub.URLMonitoringStore
-	OrgNavMenuStore       cloudhub.OrgNavMenuStore
-	OpenClawSessionStore  cloudhub.OpenClawSessionStore
+	CellLibraryStore        cloudhub.CellLibraryStore
+	HostStore               cloudhub.HostStore
+	URLMonitoringStore      cloudhub.URLMonitoringStore
+	OrgNavMenuStore         cloudhub.OrgNavMenuStore
+	OpenClawSessionStore    cloudhub.OpenClawSessionStore
+	OpenClawSkillStore      cloudhub.OpenClawSkillStore
+	OpenClawOrgAgentStore   cloudhub.OpenClawOrgAgentStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -430,3 +434,27 @@ func (s *Store) OpenClawSessions(ctx context.Context) cloudhub.OpenClawSessionSt
 	return &noop.OpenClawSessionStore{}
 }
 
+// OpenClawSkills returns a store scoped to the organization in ctx. A server
+// context reaches the raw store, an organization context is wrapped so it can
+// only see its own skills, and anything else gets the noop store.
+func (s *Store) OpenClawSkills(ctx context.Context) cloudhub.OpenClawSkillStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.OpenClawSkillStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewOpenClawSkillStore(s.OpenClawSkillStore, org)
+	}
+	return &noop.OpenClawSkillStore{}
+}
+
+// OpenClawOrgAgents returns an agent mapping store scoped the same way as
+// OpenClawSkills.
+func (s *Store) OpenClawOrgAgents(ctx context.Context) cloudhub.OpenClawOrgAgentStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.OpenClawOrgAgentStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewOpenClawOrgAgentStore(s.OpenClawOrgAgentStore, org)
+	}
+	return &noop.OpenClawOrgAgentStore{}
+}

@@ -561,7 +561,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					}
 				  }
 				  `))),
-			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user",args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"tableGaugeChartOptions":{"columnSettings":[],"decimalPlaces":{"isEnforced":false,"digits":0},"isShowValues":true,"sortBy":"name","sortByDirection":"asc"},"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
+			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}],"subFunc":"derivative"}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"tableGaugeChartOptions":{"columnSettings":[],"decimalPlaces":{"isEnforced":false,"digits":0},"isShowValues":true,"sortBy":"name","sortByDirection":"asc"},"detailQueries":[],"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
 `,
 		},
 		{
@@ -743,7 +743,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					}
 				  }
 				  `))),
-			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"tableGaugeChartOptions":{"columnSettings":[],"decimalPlaces":{"isEnforced":false,"digits":0},"isShowValues":true,"sortBy":"name","sortByDirection":"asc"},"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
+			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"minW":0,"minH":0,"name":"Untitled Cell","queries":[{"query":"SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time \u003e :dashboardTime: AND  time \u003c :upperDashboardTime: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}],"subFunc":"derivative"}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time \u003e :dashboardTime: AND  time \u003c :upperDashboardTime: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false,"direction":"","tempVar":""},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","graphOptions":{"fillArea":true,"showLine":true,"showPoint":true,"showTempVarCount":":top_count:"},"tableGaugeChartOptions":{"columnSettings":[],"decimalPlaces":{"isEnforced":false,"digits":0},"isShowValues":true,"sortBy":"name","sortByDirection":"asc"},"detailQueries":[],"links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
 `,
 		},
 		{
@@ -1153,7 +1153,7 @@ func Test_newCellResponses(t *testing.T) {
 	}
 }
 
-func Test_newAddSubFunc(t *testing.T) {
+func Test_newCellResponsesPreservesQueryConfig(t *testing.T) {
 	tests := []struct {
 		name   string
 		dID    cloudhub.DashboardID
@@ -1161,7 +1161,7 @@ func Test_newAddSubFunc(t *testing.T) {
 		want   []dashboardCellResponse
 	}{
 		{
-			name: "add subFunc",
+			name: "preserves derivative query config",
 			dID:  cloudhub.DashboardID(1),
 			dcells: []cloudhub.DashboardCell{
 				{
@@ -1248,26 +1248,25 @@ func Test_newAddSubFunc(t *testing.T) {
 						Name: "Untitled Cell",
 						Queries: []cloudhub.DashboardQuery{
 							{
-								Command: "SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)",
+								Command: "SELECT derivative(mean(\"cached\"),1s) AS \"derivative_mean_cached\" FROM \"Default\".\"autogen\".\"mem\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: GROUP BY :interval: FILL(null)",
 								QueryConfig: cloudhub.QueryConfig{
 									ID:              "8d5ec6da-13a5-423e-9026-7bc45649766c",
-									Database:        "telegraf",
-									Measurement:     "cpu",
+									Database:        "Default",
+									Measurement:     "mem",
 									RetentionPolicy: "autogen",
 									Fields: []cloudhub.Field{
 										{
 											Value: "mean",
 											Type:  "func",
-											Alias: "mean_usage_user",
+											Alias: "derivative_mean_cached",
 											Args: []cloudhub.Field{
 												{
-													Value: "usage_user",
+													Value: "cached",
 													Type:  "field",
 												},
 											},
 										},
 									},
-									Tags: map[string][]string{"cpu": {"ChristohersMBP2.lan"}},
 									GroupBy: cloudhub.GroupBy{
 										Time: "2s",
 									},
@@ -1321,6 +1320,7 @@ func Test_newAddSubFunc(t *testing.T) {
 							ShowPoint:        true,
 							ShowTempVarCount: ":top_count:",
 						},
+						DetailQueries: []cloudhub.DashboardQuery{},
 					},
 					Links: dashboardCellLinks{
 						Self: "/cloudhub/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
@@ -1363,6 +1363,7 @@ func Test_newAddSubFunc(t *testing.T) {
 						Legend:         cloudhub.Legend{},
 						Note:           "",
 						NoteVisibility: "default",
+						DetailQueries:  []cloudhub.DashboardQuery{},
 					},
 					Links: dashboardCellLinks{
 						Self: "/cloudhub/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},

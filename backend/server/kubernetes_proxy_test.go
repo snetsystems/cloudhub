@@ -189,7 +189,7 @@ func TestKubernetesProxyDoesNotLogTokenMetadata(t *testing.T) {
 	}
 }
 
-func TestKubernetesServiceProxyRequiresCollectorToken(t *testing.T) {
+func TestKubernetesServiceProxyFailsClosedWithoutMCPToken(t *testing.T) {
 	const (
 		collectorToken  = "collector-service-secret"
 		kubernetesToken = "kubernetes-service-account-secret"
@@ -220,8 +220,8 @@ func TestKubernetesServiceProxyRequiresCollectorToken(t *testing.T) {
 
 	unauthorized := httptest.NewRecorder()
 	handler.ServeHTTP(unauthorized, httptest.NewRequest(http.MethodGet, endpoint, nil))
-	if unauthorized.Code != http.StatusUnauthorized {
-		t.Fatalf("unauthorized status = %d, want %d", unauthorized.Code, http.StatusUnauthorized)
+	if unauthorized.Code != http.StatusServiceUnavailable {
+		t.Fatalf("unconfigured status = %d, want %d", unauthorized.Code, http.StatusServiceUnavailable)
 	}
 	select {
 	case <-received:
@@ -229,12 +229,67 @@ func TestKubernetesServiceProxyRequiresCollectorToken(t *testing.T) {
 	default:
 	}
 
-	authorizedRequest := httptest.NewRequest(http.MethodGet, endpoint, nil)
-	authorizedRequest.Header.Set("Authorization", "Bearer "+collectorToken)
-	authorized := httptest.NewRecorder()
-	handler.ServeHTTP(authorized, authorizedRequest)
-	if authorized.Code != http.StatusOK {
-		t.Fatalf("authorized status = %d, want %d", authorized.Code, http.StatusOK)
+	collectorRequest := httptest.NewRequest(http.MethodGet, endpoint, nil)
+	collectorRequest.Header.Set("Authorization", "Bearer "+collectorToken)
+	collectorResponse := httptest.NewRecorder()
+	handler.ServeHTTP(collectorResponse, collectorRequest)
+	if collectorResponse.Code != http.StatusServiceUnavailable {
+		t.Fatalf("collector token status = %d, want %d", collectorResponse.Code, http.StatusServiceUnavailable)
+	}
+	select {
+	case <-received:
+		t.Fatal("collector-authenticated request reached Kubernetes without MCP authentication configured")
+	default:
+	}
+}
+
+func TestKubernetesServiceProxyRequiresMCPToken(t *testing.T) {
+	const (
+		collectorToken  = "collector-service-secret"
+		mcpToken        = "mcp-service-secret"
+		kubernetesToken = "kubernetes-service-account-secret"
+	)
+
+	received := make(chan *http.Request, 1)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		received <- r.Clone(r.Context())
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer upstream.Close()
+
+	logger := &kubernetesProxyRecordingLogger{}
+	service := Service{
+		Logger: logger,
+		InternalENV: cloudhub.InternalEnvironment{
+			KubernetesConfig: cloudhub.KubernetesConfig{
+				URL:                upstream.URL,
+				Token:              kubernetesToken,
+				CollectorAuthToken: collectorToken,
+			},
+			MCPAuthToken: mcpToken,
+		},
+		KubernetesClient: kubernetes.NewClient(kubernetes.Config{
+			URL:   upstream.URL,
+			Token: kubernetesToken,
+		}, logger),
+	}
+	handler := NewMux(MuxOpts{Logger: logger, UseAuth: true}, service)
+	endpoint := "/api/v1/kubernetes/proxy/api/v1/namespaces/network-repair-demo"
+
+	collectorRequest := httptest.NewRequest(http.MethodGet, endpoint, nil)
+	collectorRequest.Header.Set("Authorization", "Bearer "+collectorToken)
+	collectorResponse := httptest.NewRecorder()
+	handler.ServeHTTP(collectorResponse, collectorRequest)
+	if collectorResponse.Code != http.StatusUnauthorized {
+		t.Fatalf("collector token status = %d, want %d", collectorResponse.Code, http.StatusUnauthorized)
+	}
+
+	mcpRequest := httptest.NewRequest(http.MethodGet, endpoint, nil)
+	mcpRequest.Header.Set("Authorization", "Bearer "+mcpToken)
+	mcpResponse := httptest.NewRecorder()
+	handler.ServeHTTP(mcpResponse, mcpRequest)
+	if mcpResponse.Code != http.StatusOK {
+		t.Fatalf("MCP token status = %d, want %d", mcpResponse.Code, http.StatusOK)
 	}
 
 	got := <-received

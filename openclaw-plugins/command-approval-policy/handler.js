@@ -8,7 +8,7 @@ export function createBeforeToolCallHandler(
   api,
   {
     awaitApproval = awaitCloudHubApproval,
-    token = process.env.MCP_SERVICE_TOKEN ?? '',
+    token = process.env.MCP_AUTH_TOKEN ?? '',
   } = {}
 ) {
   return async (event, context) => {

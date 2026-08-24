@@ -126,7 +126,18 @@ func TestGetCollectorConfig_Sharding(t *testing.T) {
 		Store: mockStore,
 		InternalENV: cloudhub.InternalEnvironment{
 			TemplatesManager: mockTemplatesManager,
-			Platform: &mocks.MockPlatform{},
+			Platform: &mocks.MockPlatform{
+				GenerateShardConfigFunc: func(ctx context.Context, shardID int) (string, error) {
+					switch shardID {
+					case 0:
+						return "dev-0000\ndev-0499", nil
+					case 1:
+						return "dev-0500\ndev-0999", nil
+					default:
+						return "", cloudhub.ErrInvalidShardID
+					}
+				},
+			},
 		},
 		Logger: mockLogger, // Use our mock logger
 	}

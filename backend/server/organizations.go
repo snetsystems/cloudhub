@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -309,6 +310,8 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	s.reclaimOpenClawWorkspaces(ctx, org.ID)
+
 	// log registrationte
 	msg := fmt.Sprintf(MsgOrganizationDeleted.String(), org.Name)
 	s.logRegistration(ctx, "Organizations", msg)
@@ -435,4 +438,79 @@ func (s *Service) cleanupOrganizationAlertResources(ctx context.Context, orgID s
 	}
 
 	return nil
+}
+
+// reclaimOpenClawWorkspaces removes a deleted organization's Gateway agents and
+// the workspaces they used, then retires the mappings.
+//
+// The mappings are soft-deleted rather than dropped: every skill revision
+// stays in CloudHub, so restoring a mapping is enough to rebuild the workspace
+// and republish. Reclaiming the files therefore costs nothing recoverable.
+//
+// Failures are logged, not returned. The organization is already deleted, and
+// making that outcome depend on the Gateway being reachable would mean an
+// operator cannot remove an organization while OpenClaw is down. What fails
+// here stays unmarked and is picked up later by the reclaim sweep.
+func (s *Service) reclaimOpenClawWorkspaces(ctx context.Context, orgID string) {
+	// Nothing to reclaim on a deployment that does not run OpenClaw.
+	if s.OpenClawAgentProvisioner == nil && s.OpenClawSkillDeleter == nil {
+		return
+	}
+	store := s.Store.OpenClawOrgAgents(ctx)
+	if store == nil {
+		return
+	}
+	agents, err := store.All(ctx, orgID)
+	if err != nil {
+		s.Logger.Error("failed to read OpenClaw agent mappings for a deleted organization: ", err.Error())
+		return
+	}
+	if len(agents) == 0 {
+		return
+	}
+
+	reclaimed := make([]string, 0, len(agents))
+	for purpose, agentID := range agents {
+		if err := s.reclaimOpenClawAgent(ctx, agentID); err != nil {
+			s.Logger.Error("failed to reclaim OpenClaw agent ", agentID, " (", purpose, "): ", err.Error())
+			continue
+		}
+		reclaimed = append(reclaimed, purpose)
+	}
+
+	// Retire every mapping, whether or not its workspace went away: the
+	// organization is gone, so none of them may resolve any more.
+	if err := store.SoftDelete(ctx, orgID); err != nil {
+		s.Logger.Error("failed to retire OpenClaw agent mappings: ", err.Error())
+		return
+	}
+	// Only what actually went away is marked. The rest stays pending so a
+	// sweep can find the files still on the host.
+	for _, purpose := range reclaimed {
+		if err := store.MarkReclaimed(ctx, orgID, purpose); err != nil {
+			s.Logger.Error("failed to record a reclaimed OpenClaw workspace (", purpose, "): ", err.Error())
+		}
+	}
+}
+
+// reclaimOpenClawAgent removes one agent from the Gateway and deletes the
+// workspace it left behind.
+//
+// Both steps run even if the first fails: the Gateway forgetting an agent and
+// the files going away are independent, and a partial success still reduces
+// what a later sweep has to do. The agent record is removed first so nothing
+// can be scheduled onto a workspace that is about to disappear.
+func (s *Service) reclaimOpenClawAgent(ctx context.Context, agentID string) error {
+	var failures []error
+	if s.OpenClawAgentProvisioner != nil {
+		if err := s.OpenClawAgentProvisioner.Remove(ctx, agentID); err != nil {
+			failures = append(failures, fmt.Errorf("remove agent: %w", err))
+		}
+	}
+	if s.OpenClawSkillDeleter != nil {
+		if err := s.OpenClawSkillDeleter.DeleteWorkspace(ctx, agentID); err != nil {
+			failures = append(failures, fmt.Errorf("delete workspace: %w", err))
+		}
+	}
+	return errors.Join(failures...)
 }

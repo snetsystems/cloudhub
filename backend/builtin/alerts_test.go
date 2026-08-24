@@ -12,21 +12,23 @@ import (
 	"github.com/snetsystems/cloudhub/backend/log"
 )
 
-// expectedBuiltinTemplateIDs lists every Phase 4 alert template. Updating this
-// requires adding/removing the matching JSON file in backend/builtin/alerts/.
-var expectedBuiltinTemplateIDs = []string{
-	"agent_data_timeout",
-	"cpu_steal",
-	"cpu_usage",
-	"disk_inode",
-	"disk_io",
-	"disk_usage",
-	"mem_usage",
-	"net_bps",
-	"net_iops",
-	"process_cpu",
-	"process_mem",
-	"swap_mem",
+// expectedBuiltinTemplates lists every embedded alert template and its category.
+// Updating this requires adding/removing the matching JSON file in
+// backend/builtin/alerts/ or backend/builtin/url_alerts/.
+var expectedBuiltinTemplates = map[string]string{
+	"agent_data_timeout":   "server-monitoring",
+	"cpu_steal":            "server-monitoring",
+	"cpu_usage":            "server-monitoring",
+	"disk_inode":           "server-monitoring",
+	"disk_io":              "server-monitoring",
+	"disk_usage":           "server-monitoring",
+	"mem_usage":            "server-monitoring",
+	"net_bps":              "server-monitoring",
+	"net_iops":             "server-monitoring",
+	"process_cpu":          "server-monitoring",
+	"process_mem":          "server-monitoring",
+	"swap_mem":             "server-monitoring",
+	"url_monitoring_alert": "url-monitoring",
 }
 
 func TestBinAlertTemplatesStore_AllReturnsBuiltins(t *testing.T) {
@@ -36,23 +38,28 @@ func TestBinAlertTemplatesStore_AllReturnsBuiltins(t *testing.T) {
 	if err != nil {
 		t.Fatalf("All: %v", err)
 	}
-	if len(out) != len(expectedBuiltinTemplateIDs) {
-		t.Fatalf("expected %d templates, got %d", len(expectedBuiltinTemplateIDs), len(out))
+	if len(out) != len(expectedBuiltinTemplates) {
+		t.Fatalf("expected %d templates, got %d", len(expectedBuiltinTemplates), len(out))
 	}
 	got := make(map[string]bool, len(out))
 	for _, tmpl := range out {
-		if tmpl.ID == "" || tmpl.Name == "" || tmpl.Measurement == "" {
-			t.Errorf("template %+v missing required fields (id/name/measurement)", tmpl)
+		if tmpl.ID == "" || tmpl.Name == "" {
+			t.Errorf("template %+v missing required fields (id/name)", tmpl)
 		}
-		if tmpl.Category != "server-monitoring" {
-			t.Errorf("template %s: expected category server-monitoring, got %q", tmpl.ID, tmpl.Category)
+		if len(tmpl.Specs) == 0 || tmpl.Specs[0].Measurement == "" {
+			t.Errorf("template %s missing spec measurement", tmpl.ID)
+		}
+		if wantCategory, ok := expectedBuiltinTemplates[tmpl.ID]; !ok {
+			t.Errorf("unexpected builtin template: %s", tmpl.ID)
+		} else if tmpl.Category != wantCategory {
+			t.Errorf("template %s: expected category %s, got %q", tmpl.ID, wantCategory, tmpl.Category)
 		}
 		if tmpl.EmailBody == "" {
 			t.Errorf("template %s: expected default emailBody", tmpl.ID)
 		}
 		got[tmpl.ID] = true
 	}
-	for _, id := range expectedBuiltinTemplateIDs {
+	for id := range expectedBuiltinTemplates {
 		if !got[id] {
 			t.Errorf("missing builtin template: %s", id)
 		}
@@ -205,11 +212,15 @@ func TestBinAlertTemplatesStore_AgentDataTimeoutIsDeadman(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Get(agent_data_timeout): %v", err)
 	}
-	if tmpl.Trigger != cloudhub.AlertGroupRuleTriggerDeadman {
-		t.Fatalf("expected trigger=deadman, got %q", tmpl.Trigger)
+	if len(tmpl.Specs) != 1 {
+		t.Fatalf("expected one alert spec, got %d", len(tmpl.Specs))
 	}
-	if tmpl.TriggerValues.Period == "" {
-		t.Fatalf("deadman template missing period: %+v", tmpl.TriggerValues)
+	spec := tmpl.Specs[0]
+	if spec.Trigger != cloudhub.AlertGroupRuleTriggerDeadman {
+		t.Fatalf("expected trigger=deadman, got %q", spec.Trigger)
+	}
+	if spec.TriggerValues == nil || spec.TriggerValues.Period == "" {
+		t.Fatalf("deadman template missing period: %+v", spec.TriggerValues)
 	}
 }
 

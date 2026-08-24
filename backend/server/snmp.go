@@ -304,12 +304,12 @@ func (r *SNMPConfig) validCreate() error {
 	}
 	err := ValidateDeviceIP(r.DeviceIP)
 	if err != nil {
-		return fmt.Errorf(err.Error())
+		return err
 	}
 	isSNMPV3, _ := parseSNMPVersion("v3")
 	reqVersion, err := parseSNMPVersion(strings.ToLower(r.Version))
 	if err != nil {
-		return fmt.Errorf(err.Error())
+		return err
 	}
 	if reqVersion != isSNMPV3 {
 		if r.Community == "" {
@@ -319,7 +319,7 @@ func (r *SNMPConfig) validCreate() error {
 	}
 	reqSecurityLevel, err := parseSecurityLevel(strings.ToLower(r.SecurityLevel))
 	if err != nil {
-		return fmt.Errorf(err.Error())
+		return err
 	}
 	switch reqSecurityLevel {
 	case gosnmp.NoAuthNoPriv:

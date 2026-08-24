@@ -186,6 +186,10 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							},
 						},
 					},
+					LogAnalysis: cloudhub.LogAnalysisConfig{
+						AnnotationPadding: "2h",
+						QueryFillOption:   "none",
+					},
 				},
 			},
 		},
@@ -352,6 +356,10 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 								},
 							},
 						},
+					},
+					LogAnalysis: cloudhub.LogAnalysisConfig{
+						AnnotationPadding: "2h",
+						QueryFillOption:   "none",
 					},
 				},
 			},

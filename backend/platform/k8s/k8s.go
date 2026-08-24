@@ -132,15 +132,19 @@ func (p *Manager) RestartCollector(ctx context.Context, target string) error {
 // result as a failure.
 func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string]bool, error) {
 	if p.telegrafSalt == nil {
-		p.Logger.Debug("k8s.GetActiveCollectors: telegrafSalt not configured, returning empty")
+		if p.Logger != nil {
+			p.Logger.Debug("k8s.GetActiveCollectors: telegrafSalt not configured, returning empty")
+		}
 		return []string{}, map[string]bool{}, nil
 	}
 	keys, active, err := baremetal.GetActiveCollectorsFromClient(p.telegrafSalt)
-	p.Logger.
-		WithField("collectors", keys).
-		WithField("active", active).
-		WithField("error", err).
-		Info("k8s.GetActiveCollectors: salt result")
+	if p.Logger != nil {
+		p.Logger.
+			WithField("collectors", keys).
+			WithField("active", active).
+			WithField("error", err).
+			Info("k8s.GetActiveCollectors: salt result")
+	}
 	return keys, active, err
 }
 
@@ -148,16 +152,20 @@ func (p *Manager) GetActiveCollectors(ctx context.Context) ([]string, map[string
 // Returns false, nil when no Salt client is configured — Salt is optional in K8s deployments.
 func (p *Manager) CheckFileExists(ctx context.Context, collectorName string, filePath string) (bool, error) {
 	if p.telegrafSalt == nil {
-		p.Logger.Debug("k8s.CheckFileExists: telegrafSalt not configured, returning false")
+		if p.Logger != nil {
+			p.Logger.Debug("k8s.CheckFileExists: telegrafSalt not configured, returning false")
+		}
 		return false, nil
 	}
 	exists, err := baremetal.CheckFileExistsWithClient(p.telegrafSalt, collectorName, filePath)
-	p.Logger.
-		WithField("collector", collectorName).
-		WithField("file", filePath).
-		WithField("exists", exists).
-		WithField("error", err).
-		Debug("k8s.CheckFileExists: result")
+	if p.Logger != nil {
+		p.Logger.
+			WithField("collector", collectorName).
+			WithField("file", filePath).
+			WithField("exists", exists).
+			WithField("error", err).
+			Debug("k8s.CheckFileExists: result")
+	}
 	return exists, err
 }
 

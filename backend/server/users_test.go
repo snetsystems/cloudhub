@@ -92,7 +92,7 @@ func TestService_UserID(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1337"},"roles":[{"name":"viewer"}],"email":"sliew@naver.com"}`,
+			wantBody:        `{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1337"},"roles":[{"name":"viewer"}],"email":"sliew@naver.com","retryCount":0,"lockedTime":"","locked":false}`,
 		},
 	}
 
@@ -276,7 +276,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}],"links":{"self":"/cloudhub/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}],"links":{"self":"/cloudhub/v1/users/1338"},"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Create a new CloudHub User with multiple roles same org",
@@ -432,7 +432,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"},"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Create a new User with SuperAdminNewUsers: true in ConfigStore",
@@ -474,7 +474,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"},"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Create a new CloudHub User with multiple roles with wildcard default role",
@@ -552,7 +552,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"member","organization":"2"}],"links":{"self":"/cloudhub/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"member","organization":"2"}],"links":{"self":"/cloudhub/v1/users/1338"},"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 	}
 
@@ -560,6 +560,11 @@ func TestService_NewUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
+					SourcesStore: &mocks.SourcesStore{
+						GetF: func(ctx context.Context, id int) (cloudhub.Source, error) {
+							return cloudhub.Source{}, fmt.Errorf("not configured")
+						},
+					},
 					UsersStore:         tt.fields.UsersStore,
 					ConfigStore:        tt.fields.ConfigStore,
 					OrganizationsStore: tt.fields.OrganizationsStore,
@@ -700,6 +705,11 @@ func TestService_RemoveUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
+					SourcesStore: &mocks.SourcesStore{
+						GetF: func(ctx context.Context, id int) (cloudhub.Source, error) {
+							return cloudhub.Source{}, fmt.Errorf("not configured")
+						},
+					},
 					UsersStore: tt.fields.UsersStore,
 				},
 				Logger: tt.fields.Logger,
@@ -817,7 +827,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[]}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[],"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Update a CloudHub user",
@@ -895,7 +905,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}],"email":"xpw.wm@woeiemk.com"}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}],"email":"xpw.wm@woeiemk.com","retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Update a CloudHub user roles different orgs",
@@ -978,7 +988,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}]}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}],"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Update a CloudHub user roles same org",
@@ -1115,7 +1125,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}],"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "SuperAdmin modifying their own SuperAdmin Status - user missing from context",
@@ -1342,7 +1352,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cloudhub/v1/users/1336"},"id":"1336","name":"bobbetta","provider":"github","scheme":"oauth2","superAdmin":true,"roles":[{"name":"admin","organization":"1"}]}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/users/1336"},"id":"1336","name":"bobbetta","provider":"github","scheme":"oauth2","superAdmin":true,"roles":[{"name":"admin","organization":"1"}],"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 		{
 			name: "Update a CloudHub user to super admin - without super admin context",
@@ -1490,7 +1500,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":true,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
+			wantBody:        `{"id":"1336","superAdmin":true,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}],"retryCount":0,"lockedTime":"","locked":false}`,
 		},
 	}
 	for _, tt := range tests {
@@ -1599,7 +1609,7 @@ func TestService_Users(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}},{"id":"1339","superAdmin":false,"name":"ppxiewoeuie","provider":"cloudhub","scheme":"basic","roles":[],"links":{"self":"/cloudhub/v1/users/1339"}}],"links":{"self":"/cloudhub/v1/users"}}`,
+			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"},"retryCount":0,"lockedTime":"","locked":false},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"},"retryCount":0,"lockedTime":"","locked":false},{"id":"1339","superAdmin":false,"name":"ppxiewoeuie","provider":"cloudhub","scheme":"basic","roles":[],"links":{"self":"/cloudhub/v1/users/1339"},"retryCount":0,"lockedTime":"","locked":false}],"links":{"self":"/cloudhub/v1/users"}}`,
 		},
 		{
 			name: "Get all CloudHub users, ensuring order of users in response",
@@ -1627,7 +1637,7 @@ func TestService_Users(t *testing.T) {
 								ID:       1336,
 								Name:     "ppxiewoeuie",
 								Provider: "cloudhub",
-								Scheme:   "basic",								
+								Scheme:   "basic",
 							},
 						}, nil
 					},
@@ -1643,7 +1653,7 @@ func TestService_Users(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"users":[{"id":"1336","superAdmin":false,"name":"ppxiewoeuie","provider":"cloudhub","scheme":"basic","links":{"self":"/cloudhub/v1/users/1336"},"roles":[]},{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}],"links":{"self":"/cloudhub/v1/users"}}`,
+			wantBody:        `{"users":[{"id":"1336","superAdmin":false,"name":"ppxiewoeuie","provider":"cloudhub","scheme":"basic","links":{"self":"/cloudhub/v1/users/1336"},"roles":[],"retryCount":0,"lockedTime":"","locked":false},{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"},"retryCount":0,"lockedTime":"","locked":false},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"},"retryCount":0,"lockedTime":"","locked":false}],"links":{"self":"/cloudhub/v1/users"}}`,
 		},
 	}
 
@@ -1720,7 +1730,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     fmt.Errorf("Name required on CloudHub User request body"),
+			err:     fmt.Errorf("name required on CloudHub basic User request body"),
 		},
 		{
 			name: "Invalid – Provider missing",
@@ -1738,7 +1748,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     fmt.Errorf("Provider required on CloudHub User request body"),
+			err:     fmt.Errorf("provider required on CloudHub basic User request body"),
 		},
 		{
 			name: "Invalid – Scheme missing",
@@ -1756,7 +1766,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     fmt.Errorf("Scheme required on CloudHub User request body"),
+			err:     fmt.Errorf("scheme required on CloudHub basic User request body"),
 		},
 		{
 			name: "Invalid roles - bad role name",
@@ -1865,8 +1875,6 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 		{
 			name: "Invalid - bad role name",
 
-
-			
 			args: args{
 				u: &userRequest{
 					ID:       1337,

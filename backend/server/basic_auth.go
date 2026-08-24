@@ -384,7 +384,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		if user.Locked {
 			if user.RetryCount == 0 {
-				msg := fmt.Sprintf(MsgSuperLocked.String())
+				msg := MsgSuperLocked.String()
 				s.logRegistration(ctx, "Retry", msg, user.Name)
 
 				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
@@ -405,7 +405,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 					diffTime := nowTime.Sub(lockedTime)
 
 					if diffTime.Minutes() < delayMinute.Minutes() {
-						msg := fmt.Sprintf(MsgRetryDelayTimeAfter.String())
+						msg := MsgRetryDelayTimeAfter.String()
 						s.logRegistration(ctx, "Retry", msg, user.Name)
 
 						ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
@@ -427,7 +427,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		if user.Passwd == "" {
-			msg := fmt.Sprintf(MsgEmptyPassword.String())
+			msg := MsgEmptyPassword.String()
 			s.logRegistration(ctx, "Login", msg, user.Name)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
@@ -452,7 +452,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		// valid password - sha512
 		if !isValid {
-			msg := fmt.Sprintf(MsgDifferentPassword.String())
+			msg := MsgDifferentPassword.String()
 			s.logRegistration(ctx, "Login", msg, user.Name)
 
 			retryCnt, err := strconv.Atoi(s.RetryPolicy["count"])
@@ -497,7 +497,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// log registration
-		msg := fmt.Sprintf(MsgBasicLogin.String())
+		msg := MsgBasicLogin.String()
 		s.logRegistration(ctx, "Login", msg, user.Name)
 
 		if user.RetryCount != 0 {
@@ -530,7 +530,7 @@ func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.Handle
 			if user == nil || err != nil {
 				s.Logger.Error(err.Error())
 			} else {
-				msg := fmt.Sprintf(MsgBasicLogout.String())
+				msg := MsgBasicLogout.String()
 				s.logRegistration(ctx, "Logout", msg, user.Name)
 			}
 		}

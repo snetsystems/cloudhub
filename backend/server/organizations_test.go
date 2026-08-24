@@ -858,8 +858,22 @@ func TestService_NewOrganization(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
+					SourcesStore: &mocks.SourcesStore{
+						GetF: func(ctx context.Context, id int) (cloudhub.Source, error) {
+							return cloudhub.Source{}, fmt.Errorf("not configured")
+						},
+					},
 					OrganizationsStore: tt.fields.OrganizationsStore,
 					UsersStore:         tt.fields.UsersStore,
+					DashboardsStore: &mocks.DashboardsStore{
+						AllF: func(ctx context.Context) ([]cloudhub.Dashboard, error) {
+							return nil, nil
+						},
+						AddF: func(ctx context.Context, dashboard cloudhub.Dashboard) (cloudhub.Dashboard, error) {
+							return dashboard, nil
+						},
+					},
+					FixedCellMapping: &mocks.FixedCellMappingStore{},
 				},
 				Logger: tt.fields.Logger,
 			}

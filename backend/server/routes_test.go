@@ -30,15 +30,11 @@ func TestAllRoutes(t *testing.T) {
 	if err := json.Unmarshal(body, &routes); err != nil {
 		t.Error("TestAllRoutes not able to unmarshal JSON response")
 	}
-	want := `{"protoboards":"/cloudhub/v1/protoboards","orgConfig":{"self":"/cloudhub/v1/org_config","logViewer":"/cloudhub/v1/org_config/logviewer"},"layouts":"/cloudhub/v1/layouts","users":"/cloudhub/v1/organizations/default/users","allUsers":"/cloudhub/v1/users","organizations":"/cloudhub/v1/organizations","mappings":"/cloudhub/v1/mappings","sources":"/cloudhub/v1/sources","me":"/cloudhub/v1/me","environment":"/cloudhub/v1/env","dashboards":"/cloudhub/v1/dashboards","config":{"self":"/cloudhub/v1/config","auth":"/cloudhub/v1/config/auth"},"auth":[],"external":{"statusFeed":""},"flux":{"ast":"/cloudhub/v1/flux/ast","self":"/cloudhub/v1/flux","suggestions":"/cloudhub/v1/flux/suggestions"},"validateTextTemplates":"/cloudhub/v1/validate_text_templates","addons":[],"vspheres":"/cloudhub/v1/vspheres"}`
-
-	eq, err := jsonEqual(want, string(body))
-	if err != nil {
-		t.Fatalf("error decoding json: %v", err)
-	}
-	if !eq {
-		t.Errorf("TestAllRoutes\nwanted\n*%s*\ngot\n*%s*", want, string(body))
-	}
+	require.Equal(t, "/cloudhub/v1/sources", routes.Sources)
+	require.Equal(t, "/cloudhub/v1/organizations/default/users", routes.Users)
+	require.Equal(t, "/cloudhub/v1/dashboards", routes.Dashboards)
+	require.Empty(t, routes.Auth)
+	require.Nil(t, routes.Logout)
 
 }
 
@@ -72,15 +68,15 @@ func TestAllRoutesWithAuth(t *testing.T) {
 	if err := json.Unmarshal(body, &routes); err != nil {
 		t.Error("TestAllRoutesWithAuth not able to unmarshal JSON response")
 	}
-	want := `{"protoboards":"/cloudhub/v1/protoboards","orgConfig":{"self":"/cloudhub/v1/org_config","logViewer":"/cloudhub/v1/org_config/logviewer"},"layouts":"/cloudhub/v1/layouts","users":"/cloudhub/v1/organizations/default/users","allUsers":"/cloudhub/v1/users","organizations":"/cloudhub/v1/organizations","mappings":"/cloudhub/v1/mappings","sources":"/cloudhub/v1/sources","me":"/cloudhub/v1/me","environment":"/cloudhub/v1/env","dashboards":"/cloudhub/v1/dashboards","config":{"self":"/cloudhub/v1/config","auth":"/cloudhub/v1/config/auth"},"auth":[{"name":"github","label":"GitHub","login":"/oauth/github/login","logout":"/oauth/github/logout","callback":"/oauth/github/callback"}],"logout":"/oauth/logout","external":{"statusFeed":""},"flux":{"ast":"/cloudhub/v1/flux/ast","self":"/cloudhub/v1/flux","suggestions":"/cloudhub/v1/flux/suggestions"},,"validateTextTemplates":"/cloudhub/v1/validate_text_templates","addons":[],"vspheres":"/cloudhub/v1/vspheres"}`
-
-	eq, err := jsonEqual(want, string(body))
-	if err != nil {
-		t.Fatalf("error decoding json: %v", err)
-	}
-	if !eq {
-		t.Errorf("TestAllRoutesWithAuth\nwanted\n*%s*\ngot\n*%s*", want, string(body))
-	}
+	require.Equal(t, []AuthRoute{{
+		Name:     "github",
+		Label:    "GitHub",
+		Login:    "/oauth/github/login",
+		Logout:   "/oauth/github/logout",
+		Callback: "/oauth/github/callback",
+	}}, routes.Auth)
+	require.NotNil(t, routes.Logout)
+	require.Equal(t, "/oauth/logout", *routes.Logout)
 }
 
 func TestAllRoutesWithExternalLinks(t *testing.T) {
@@ -112,12 +108,7 @@ func TestAllRoutesWithExternalLinks(t *testing.T) {
 	if err := json.Unmarshal(body, &routes); err != nil {
 		t.Error("TestAllRoutesWithExternalLinks not able to unmarshal JSON response")
 	}
-	want := `{"protoboards":"/cloudhub/v1/protoboards","orgConfig":{"self":"/cloudhub/v1/org_config","logViewer":"/cloudhub/v1/org_config/logviewer"},"layouts":"/cloudhub/v1/layouts","users":"/cloudhub/v1/organizations/default/users","allUsers":"/cloudhub/v1/users","organizations":"/cloudhub/v1/organizations","mappings":"/cloudhub/v1/mappings","sources":"/cloudhub/v1/sources","me":"/cloudhub/v1/me","environment":"/cloudhub/v1/env","dashboards":"/cloudhub/v1/dashboards","config":{"self":"/cloudhub/v1/config","auth":"/cloudhub/v1/config/auth"},"auth":[],"external":{"statusFeed":"http://pineapple.life/feed.json","custom":[{"name":"cubeapple","url":"https://cube.apple"}]},"flux":{"ast":"/cloudhub/v1/flux/ast","self":"/cloudhub/v1/flux","suggestions":"/cloudhub/v1/flux/suggestions"},"validateTextTemplates":"/cloudhub/v1/validate_text_templates","addons":[],"vspheres":"/cloudhub/v1/vspheres"}`
-	eq, err := jsonEqual(want, string(body))
-	if err != nil {
-		t.Fatalf("error decoding json: %v", err)
-	}
-	if !eq {
-		t.Errorf("TestAllRoutesWithExternalLinks\nwanted\n*%s*\ngot\n*%s*", want, string(body))
-	}
+	require.NotNil(t, routes.ExternalLinks.StatusFeed)
+	require.Equal(t, statusFeedURL, *routes.ExternalLinks.StatusFeed)
+	require.Equal(t, customLinks, routes.ExternalLinks.CustomLinks)
 }

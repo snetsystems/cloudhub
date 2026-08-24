@@ -172,9 +172,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		}
 	}
 
-	EnsureManagedApprovalServiceAuth := func(next http.HandlerFunc) http.HandlerFunc {
-		return openClawManagedApprovalServiceAuth(
-			service.InternalENV.KubernetesConfig.CollectorAuthToken,
+	EnsureMCPAuth := func(next http.HandlerFunc) http.HandlerFunc {
+		return mcpServiceAuth(
+			service.InternalENV.MCPAuthToken,
 			next,
 		)
 	}
@@ -380,8 +380,23 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v2/openclaw/sessions/:id/approvals", EnsureViewer(service.OpenClawSessionApprovals))
 	router.POST("/cloudhub/v2/openclaw/sessions/:id/approvals/:approvalId/resolve", EnsureEditor(service.OpenClawSessionApprovalResolve))
 	router.POST("/cloudhub/v2/openclaw/rpc", EnsureMember(service.OpenClawRPC))
-	router.POST("/api/v1/openclaw/managed-approvals", EnsureManagedApprovalServiceAuth(service.OpenClawManagedApprovalCreate))
-	router.GET("/api/v1/openclaw/managed-approvals/:approvalId", EnsureManagedApprovalServiceAuth(service.OpenClawManagedApprovalStatus))
+	router.POST("/cloudhub/v2/openclaw/skill-drafts", EnsureAdmin(service.OpenClawSkillDraft))
+	router.GET("/cloudhub/v2/openclaw/skills", EnsureViewer(service.OpenClawSkillsList))
+	router.GET("/cloudhub/v2/openclaw/skill-inventory", EnsureViewer(service.OpenClawSkillInventory))
+	router.POST("/cloudhub/v2/openclaw/skills", EnsureAdmin(service.OpenClawSkillCreate))
+	router.GET("/cloudhub/v2/openclaw/skills/:id", EnsureViewer(service.OpenClawSkillGet))
+	router.POST("/cloudhub/v2/openclaw/skills/:id/revisions", EnsureAdmin(service.OpenClawSkillRevisionCreate))
+	router.GET("/cloudhub/v2/openclaw/skills/:id/revisions/:rev", EnsureViewer(service.OpenClawSkillRevisionGet))
+	router.POST("/cloudhub/v2/openclaw/skills/:id/revisions/:rev/approve", EnsureAdmin(service.OpenClawSkillRevisionApprove))
+	router.POST("/cloudhub/v2/openclaw/skills/:id/revisions/:rev/reject", EnsureAdmin(service.OpenClawSkillRevisionReject))
+	router.POST("/cloudhub/v2/openclaw/skills/:id/rollback", EnsureAdmin(service.OpenClawSkillRollback))
+	router.DELETE("/cloudhub/v2/openclaw/skills/:id/revisions/:rev", EnsureAdmin(service.OpenClawSkillRevisionDelete))
+	router.DELETE("/cloudhub/v2/openclaw/skills/:id", EnsureAdmin(service.OpenClawSkillDelete))
+	router.GET("/cloudhub/v2/openclaw/org-agents", EnsureViewer(service.OpenClawOrgAgentsGet))
+	router.PUT("/cloudhub/v2/openclaw/org-agents", EnsureAdmin(service.OpenClawOrgAgentsReplace))
+	router.POST("/cloudhub/v2/openclaw/workspaces/reclaim", EnsureSuperAdmin(service.OpenClawWorkspaceReclaim))
+	router.POST("/api/v1/openclaw/managed-approvals", EnsureMCPAuth(service.OpenClawManagedApprovalCreate))
+	router.GET("/api/v1/openclaw/managed-approvals/:approvalId", EnsureMCPAuth(service.OpenClawManagedApprovalStatus))
 
 	// Layouts
 	router.GET("/cloudhub/v1/layouts", EnsureViewer(service.Layouts))
@@ -617,7 +632,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Kubernetes API Proxy
 	kubernetes := http.HandlerFunc(service.KubernetesProxy)
 	registerAllMethods(router, "/cloudhub/v1/kubernetes/proxy/*path", kubernetes)
-	serviceKubernetes := http.HandlerFunc(EnsureCollectorAuth(service.KubernetesProxy))
+	serviceKubernetes := http.HandlerFunc(EnsureMCPAuth(service.KubernetesProxy))
 	registerAllMethods(router, "/api/v1/kubernetes/proxy/*path", serviceKubernetes)
 
 	// Hubble (Cilium network observability)

@@ -74,7 +74,7 @@ func TestNewDevices(t *testing.T) {
 			},
 			wantStatus:      http.StatusMultiStatus,
 			wantContentType: "application/json",
-			wantBody:        `{"failed_devices":[{"errorMessage":"Device IP required in device request body","index":0}]}`,
+			wantBody:        `{"failed_devices":[{"errorMessage":"failed to validate device IP: Device IP required in device request body","index":0}]}`,
 		},
 	}
 
@@ -438,6 +438,9 @@ func TestUpdateNetworkDevice(t *testing.T) {
 					NetworkDeviceStore:    tt.fields.NetworkDeviceStore,
 				},
 				Logger: tt.fields.Logger,
+				InternalENV: cloudhub.InternalEnvironment{
+					Platform: &mocks.MockPlatform{},
+				},
 			}
 
 			buf, _ := json.Marshal(tt.args.request)
@@ -1589,7 +1592,7 @@ func TestManagedSharding_Verified(t *testing.T) {
 	// 4. Verify Exclusion when collection is stopped
 	updated.IsCollectingCfgWritten = false
 	m.Update(ctx, updated)
-	
+
 	// Since we mock the Template rendering as successful, 
 	// we should check if DeviceOrg list in Manager's config call actually skips it.
 	// But in this simple test, we can just log the behavior.

@@ -37,7 +37,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	proxy, err := cloudhubproxy.New(cfg.ProxyURL, cfg.ServiceToken, newProxyHTTPClient(cfg.ProxyInsecureSkipVerify))
+	proxy, err := cloudhubproxy.New(cfg.ProxyURL, cfg.CloudHubAuthToken, newProxyHTTPClient(cfg.ProxyInsecureSkipVerify))
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func run() error {
 
 	server := &http.Server{
 		Addr:              cfg.ListenAddr,
-		Handler:           mcpserver.NewHandler(repairService, cfg.ServiceToken),
+		Handler:           mcpserver.NewHandler(repairService, cfg.ServerAuthToken),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

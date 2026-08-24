@@ -69,7 +69,7 @@ func TestService_RegisterDevice(t *testing.T) {
 				return req.WithContext(ctx)
 			},
 			expectedStatus: http.StatusCreated,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","appName":"","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 	}
 	for _, tt := range tests {
@@ -142,7 +142,7 @@ func TestService_GetDeviceMapping(t *testing.T) {
 				return req.WithContext(ctx)
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","appName":"","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:  "get device successfully as org member",
@@ -155,7 +155,7 @@ func TestService_GetDeviceMapping(t *testing.T) {
 				return req.WithContext(ctx)
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","appName":"","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:  "access denied for different org",
@@ -236,7 +236,7 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"new-alias","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"new-alias","appName":"","deviceType":"baremetal","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:           "superadmin can change orgId",
@@ -252,7 +252,7 @@ func TestService_UpdateDeviceMapping(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","deviceType":"baremetal","orgId":"new-org","links":{"self":"/cloudhub/v1/device-mappings/new-org/devices/test-host"},"isDeletable":false}`,
+			expectedBody:   `{"ip":"1.2.3.4","hostname":"test-host","aliasName":"alias","appName":"","deviceType":"baremetal","orgId":"new-org","links":{"self":"/cloudhub/v1/device-mappings/new-org/devices/test-host"},"isDeletable":false}`,
 		},
 		{
 			name:           "non-superadmin cannot change orgId",
@@ -448,7 +448,7 @@ func TestService_AllDeviceMappings(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"org1":[{"ip":"","hostname":"host1","aliasName":"","deviceType":"","orgId":"org1","links":{"self":"/cloudhub/v1/device-mappings/org1/devices/host1"},"isDeletable":false}],"org2":[{"ip":"","hostname":"host2","aliasName":"","deviceType":"","orgId":"org2","links":{"self":"/cloudhub/v1/device-mappings/org2/devices/host2"},"isDeletable":false}]}`,
+			expectedBody:   `{"org1":[{"ip":"","hostname":"host1","aliasName":"","appName":"","deviceType":"","orgId":"org1","links":{"self":"/cloudhub/v1/device-mappings/org1/devices/host1"},"isDeletable":false}],"org2":[{"ip":"","hostname":"host2","aliasName":"","appName":"","deviceType":"","orgId":"org2","links":{"self":"/cloudhub/v1/device-mappings/org2/devices/host2"},"isDeletable":false}]}`,
 		},
 		{
 			name:         "regular user gets only their org's devices",
@@ -464,7 +464,7 @@ func TestService_AllDeviceMappings(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"org1":[{"ip":"","hostname":"host1","aliasName":"","deviceType":"","orgId":"org1","links":{"self":"/cloudhub/v1/device-mappings/org1/devices/host1"},"isDeletable":false}]}`,
+			expectedBody:   `{"org1":[{"ip":"","hostname":"host1","aliasName":"","appName":"","deviceType":"","orgId":"org1","links":{"self":"/cloudhub/v1/device-mappings/org1/devices/host1"},"isDeletable":false}]}`,
 		},
 	}
 
@@ -612,7 +612,7 @@ func TestService_EnsureDevice(t *testing.T) {
 				}
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"meta":{"ip":"","hostname":"found-host","aliasName":"","deviceType":"","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/found-host"},"isDeletable":false},"status":"found"}`,
+			expectedBody:   `{"meta":{"ip":"","hostname":"found-host","aliasName":"","appName":"","deviceType":"","orgId":"default","links":{"self":"/cloudhub/v1/device-mappings/default/devices/found-host"},"isDeletable":false},"status":"found"}`,
 		},
 		{
 			name:         "device not found and user is not superadmin",

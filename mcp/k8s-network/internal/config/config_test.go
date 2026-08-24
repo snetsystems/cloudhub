@@ -10,20 +10,23 @@ func setValidEnvironment(t *testing.T) {
 	t.Helper()
 	t.Setenv("CLOUDHUB_KUBERNETES_PROXY_URL", "http://cloudhub.example/cloudhub/v1/kubernetes/proxy/")
 	t.Setenv("MCP_ALLOWED_NAMESPACE", "network-repair-demo")
-	t.Setenv("MCP_SERVICE_TOKEN", "mcp-service-secret")
+	t.Setenv("MCP_SERVER_AUTH_TOKEN", "mcp-server-secret")
+	t.Setenv("MCP_AUTH_TOKEN", "cloudhub-mcp-secret")
+	t.Setenv("MCP_SERVICE_TOKEN", "")
 	t.Setenv("MCP_LISTEN_ADDR", "")
 	t.Setenv("MCP_PLAN_TTL", "")
 	t.Setenv("CLOUDHUB_PROXY_INSECURE_SKIP_VERIFY", "")
 }
 
-func TestLoadRequiresCloudHubProxyNamespaceAndServiceToken(t *testing.T) {
+func TestLoadRequiresCloudHubProxyNamespaceAndAuthTokens(t *testing.T) {
 	tests := []struct {
 		name string
 		env  string
 	}{
 		{name: "proxy URL", env: "CLOUDHUB_KUBERNETES_PROXY_URL"},
 		{name: "allowed namespace", env: "MCP_ALLOWED_NAMESPACE"},
-		{name: "service token", env: "MCP_SERVICE_TOKEN"},
+		{name: "MCP server auth token", env: "MCP_SERVER_AUTH_TOKEN"},
+		{name: "CloudHub MCP auth token", env: "MCP_AUTH_TOKEN"},
 	}
 
 	for _, test := range tests {
@@ -52,8 +55,11 @@ func TestLoadAppliesDefaultsAndNormalizesProxyURL(t *testing.T) {
 	if got.AllowedNamespace != "network-repair-demo" {
 		t.Errorf("AllowedNamespace = %q", got.AllowedNamespace)
 	}
-	if got.ServiceToken != "mcp-service-secret" {
-		t.Error("ServiceToken mismatch")
+	if got.ServerAuthToken != "mcp-server-secret" {
+		t.Error("ServerAuthToken mismatch")
+	}
+	if got.CloudHubAuthToken != "cloudhub-mcp-secret" {
+		t.Error("CloudHubAuthToken mismatch")
 	}
 	if got.ListenAddr != ":8080" {
 		t.Errorf("ListenAddr = %q, want :8080", got.ListenAddr)

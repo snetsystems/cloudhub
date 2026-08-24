@@ -16,7 +16,15 @@ import (
 // RequiredOperatorScopes are the exact operator scopes CloudHub requests
 // when pairing as an OpenClaw operator device. Provisioning and runtime
 // connections must request identical scopes.
-var RequiredOperatorScopes = []string{"operator.read", "operator.write", "operator.approvals"}
+//
+// operator.admin is required by the skills.proposals.* family that backs
+// skill authoring: list and inspect need only operator.read, but create,
+// update, apply, reject, and quarantine are all admin-scoped. Adding a scope
+// here does not widen an already-paired device: the Gateway records the
+// scopes approved at pairing time, so an existing device must be re-paired
+// (remove its device token and run cloudhub-openclaw-provision again) before
+// the new scope takes effect.
+var RequiredOperatorScopes = []string{"operator.read", "operator.write", "operator.approvals", "operator.admin"}
 
 // pairingRequiredCodes are the Gateway RPC error codes returned from the
 // "connect" method when a device has been registered but is still waiting

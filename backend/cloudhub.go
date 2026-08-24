@@ -1296,6 +1296,7 @@ type InternalEnvironment struct {
 	AIConfig            AIConfig
 	URLMonitoringConfig URLMonitoringConfig
 	KubernetesConfig    KubernetesConfig
+	MCPAuthToken        string
 	HubbleConfig        HubbleConfig
 	Platform            Platform
 }
@@ -2429,4 +2430,144 @@ type OpenClawSessionStore interface {
 	List(ctx context.Context, organizationID string) ([]OpenClawSession, error)
 	Touch(ctx context.Context, id string, updatedAt time.Time) error
 	Delete(ctx context.Context, id string) error
+}
+
+// OpenClaw skill lifecycle states.
+const (
+	OpenClawSkillDraft    = "draft"
+	OpenClawSkillApproved = "approved"
+)
+
+// OpenClaw skill revision review states.
+const (
+	OpenClawReviewPending  = "pending"
+	OpenClawReviewApproved = "approved"
+	OpenClawReviewRejected = "rejected"
+)
+
+// OpenClaw organization agent purposes.
+const (
+	OpenClawAgentAuthoring = "authoring"
+	OpenClawAgentExecution = "execution"
+)
+
+// ErrOpenClawSkillNotFound is returned when a skill or revision does not exist
+// in the caller's organization. Absent and "belongs to another organization"
+// deliberately share one error so a caller cannot probe for foreign IDs.
+const ErrOpenClawSkillNotFound = Error("openclaw skill not found")
+
+// ErrOpenClawAgentNotMapped is returned when an organization has no agent
+// bound to the requested purpose.
+const ErrOpenClawAgentNotMapped = Error("openclaw agent not mapped for this organization")
+
+// OpenClawSkillFile is one file in a skill revision. Path is relative to the
+// skill directory: "SKILL.md" for the body, or a path under one of the
+// Gateway's support folders such as "scripts/collect.sh".
+type OpenClawSkillFile struct {
+	Path        string `json:"path"`
+	Content     string `json:"content"`
+	ContentHash string `json:"contentHash"`
+	SizeBytes   int    `json:"sizeBytes"`
+}
+
+// OpenClawSkill is an organization-authored skill. The Gateway holds only the
+// active revision's files; the history lives here.
+type OpenClawSkill struct {
+	ID             string     `json:"id"`
+	OrganizationID string     `json:"organizationId"`
+	Name           string     `json:"name"`
+	Status         string     `json:"status"`
+	ActiveRevision int        `json:"activeRevision"`
+	CreatedBy      string     `json:"createdBy"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
+	DeletedAt      *time.Time `json:"deletedAt,omitempty"`
+}
+
+// OpenClawSkillRevision is one submitted version of a skill. TreeHash
+// fingerprints the whole file set so an unchanged resubmission can be
+// rejected without comparing every file.
+type OpenClawSkillRevision struct {
+	ID                string              `json:"id"`
+	SkillID           string              `json:"skillId"`
+	Revision          int                 `json:"revision"`
+	TreeHash          string              `json:"treeHash"`
+	Goal              string              `json:"goal"`
+	AuthorID          string              `json:"authorId"`
+	ReviewStatus      string              `json:"reviewStatus"`
+	ReviewedBy        string              `json:"reviewedBy,omitempty"`
+	ReviewedAt        *time.Time          `json:"reviewedAt,omitempty"`
+	ReviewNote        string              `json:"reviewNote,omitempty"`
+	GatewayProposalID string              `json:"gatewayProposalId,omitempty"`
+	GatewayScan       json.RawMessage     `json:"gatewayScan,omitempty"`
+	CreatedAt         time.Time           `json:"createdAt"`
+	Files             []OpenClawSkillFile `json:"files,omitempty"`
+}
+
+// OpenClawSkillReview is the outcome an Admin records on a revision.
+type OpenClawSkillReview struct {
+	Status     string
+	ReviewedBy string
+	ReviewedAt time.Time
+	Note       string
+	ProposalID string
+	Scan       json.RawMessage
+}
+
+// OpenClawSkillStore persists organization-authored OpenClaw skills and their
+// revision history. CloudHub is the system of record; the Gateway holds only
+// the active revision's files.
+type OpenClawSkillStore interface {
+	List(ctx context.Context, organizationID string) ([]OpenClawSkill, error)
+	Get(ctx context.Context, organizationID, id string) (*OpenClawSkill, error)
+	Create(ctx context.Context, skill *OpenClawSkill, rev *OpenClawSkillRevision) (*OpenClawSkill, error)
+	AddRevision(ctx context.Context, organizationID, skillID string, rev *OpenClawSkillRevision) (*OpenClawSkillRevision, error)
+	Revisions(ctx context.Context, organizationID, skillID string) ([]OpenClawSkillRevision, error)
+	Revision(ctx context.Context, organizationID, skillID string, revision int) (*OpenClawSkillRevision, error)
+	UpdateRevisionReview(ctx context.Context, organizationID, skillID string, revision int, review OpenClawSkillReview) error
+	SetActiveRevision(ctx context.Context, organizationID, skillID string, revision int) error
+	// Delete removes a skill and its whole revision history.
+	//
+	// The Gateway copy is removed separately, before this is called: it holds
+	// only the active revision's files and nothing here can reach them.
+	Delete(ctx context.Context, organizationID, id string) error
+	// DeleteRevision removes one revision and its files.
+	//
+	// The caller refuses the active revision and the last remaining one, so
+	// this never has to leave a skill pointing at a revision that is gone.
+	DeleteRevision(ctx context.Context, organizationID, skillID string, revision int) error
+}
+
+// OpenClawOrgAgentStore maps an organization to the Gateway agents it uses.
+type OpenClawOrgAgentStore interface {
+	Get(ctx context.Context, organizationID, purpose string) (string, error)
+	// Ensure binds agentID to a purpose only if nothing is bound yet, and
+	// returns whatever ends up bound. Two requests provisioning the same
+	// organization at once therefore agree on one agent instead of the second
+	// overwriting the first.
+	Ensure(ctx context.Context, organizationID, purpose, agentID string) (string, error)
+	Replace(ctx context.Context, organizationID string, agents map[string]string) error
+	// All returns every live mapping for an organization, keyed by purpose.
+	All(ctx context.Context, organizationID string) (map[string]string, error)
+	// SoftDelete retires an organization's mappings, keeping them for
+	// recovery. The Gateway workspace is deleted outright; the revisions that
+	// can rebuild it live here.
+	SoftDelete(ctx context.Context, organizationID string) error
+	// PendingReclaim returns every retired mapping whose Gateway workspace has
+	// not been confirmed reclaimed, across all organizations. Deleting an
+	// organization while the Gateway is unreachable leaves its files on the
+	// host, and this is the record of what is still owed.
+	PendingReclaim(ctx context.Context) ([]OpenClawPendingReclaim, error)
+	// MarkReclaimed records that one retired mapping's agent and workspace are
+	// gone, taking it out of PendingReclaim.
+	MarkReclaimed(ctx context.Context, organizationID, purpose string) error
+}
+
+// OpenClawPendingReclaim is a retired agent mapping whose Gateway workspace
+// may still be on disk.
+type OpenClawPendingReclaim struct {
+	OrganizationID string    `json:"organizationId"`
+	Purpose        string    `json:"purpose"`
+	AgentID        string    `json:"agentId"`
+	DeletedAt      time.Time `json:"deletedAt"`
 }

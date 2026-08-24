@@ -114,7 +114,17 @@ func TestOpenClawSessionStorePersistsScopedSessionsAndTouchesThem(t *testing.T) 
 	if err != nil {
 		t.Fatalf("Get: %v", err)
 	}
-	if *got != *session {
+	// Compare the timestamps as instants. The driver hands back times located
+	// in time.Local, so comparing the structs would compare *time.Location
+	// pointers and fail even when both sides name the same moment.
+	if !got.CreatedAt.Equal(session.CreatedAt) || !got.UpdatedAt.Equal(session.UpdatedAt) {
+		t.Fatalf("Get timestamps = %v/%v, want %v/%v",
+			got.CreatedAt, got.UpdatedAt, session.CreatedAt, session.UpdatedAt)
+	}
+	gotCopy, wantCopy := *got, *session
+	gotCopy.CreatedAt, gotCopy.UpdatedAt = time.Time{}, time.Time{}
+	wantCopy.CreatedAt, wantCopy.UpdatedAt = time.Time{}, time.Time{}
+	if gotCopy != wantCopy {
 		t.Fatalf("Get = %#v, want %#v", got, session)
 	}
 

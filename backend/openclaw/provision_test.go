@@ -14,7 +14,7 @@ import (
 )
 
 func TestRequiredOperatorScopesIncludeApprovalsExactly(t *testing.T) {
-	want := []string{"operator.read", "operator.write", "operator.approvals"}
+	want := []string{"operator.read", "operator.write", "operator.approvals", "operator.admin"}
 	if len(RequiredOperatorScopes) != len(want) {
 		t.Fatalf("RequiredOperatorScopes = %v, want %v", RequiredOperatorScopes, want)
 	}

@@ -1,0 +1,594 @@
+/*
+  Agent Skills — authoring, review, and publication of OpenClaw skills.
+  Layered on the standard dark surfaces: raven shell, castle panes, pepper rows.
+*/
+
+.openclaw-skills--error {
+  margin-bottom: $ix-marg-c;
+  padding: $ix-marg-b $ix-marg-c;
+  border-left: $ix-border solid $c-curacao;
+  background-color: $g3-castle;
+  border-radius: $radius;
+  color: $c-curacao;
+}
+
+.openclaw-skills--layout {
+  display: flex;
+  align-items: stretch;
+  gap: $ix-marg-c;
+  min-height: 420px;
+}
+
+/*
+  Both columns are the same surface so their tops line up. Panel is not used
+  here: its header sits outside the body with 30px of gutter, which knocks the
+  two columns out of alignment.
+*/
+.openclaw-skills--pane {
+  display: flex;
+  flex-direction: column;
+  background-color: $g3-castle;
+  border-radius: $radius;
+  overflow: hidden;
+}
+
+.openclaw-skills--list-pane {
+  flex: 0 0 300px;
+}
+
+.openclaw-skills--detail-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.openclaw-skills--pane-header {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+  flex: 0 0 auto;
+  padding: $ix-marg-b $ix-marg-c;
+  border-bottom: 2px solid $g5-pepper;
+  color: $g13-mist;
+  font-size: $ix-text-base;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.openclaw-skills--pane-header-action {
+  margin-left: auto;
+}
+
+.openclaw-skills--count {
+  padding: 0 $ix-marg-a;
+  border-radius: $radius;
+  background-color: $g5-pepper;
+  color: $g10-wolf;
+  font-size: $ix-text-tiny;
+  font-weight: 400;
+}
+
+.openclaw-skills--pane-body {
+  flex: 1 1 auto;
+  padding: $ix-marg-b;
+  overflow-y: auto;
+}
+
+.openclaw-skills--detail {
+  padding: $ix-marg-c;
+}
+
+.openclaw-skills--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  padding: $ix-marg-d;
+  color: $g9-mountain;
+  text-align: center;
+}
+
+/* List */
+
+.openclaw-skills--list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.openclaw-skills--list-item {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+  padding: $ix-marg-b $ix-marg-c;
+  border-radius: $radius;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+
+  &:hover {
+    background-color: $g5-pepper;
+  }
+
+  &.active {
+    background-color: $g6-smoke;
+  }
+}
+
+.openclaw-skills--name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $g15-platinum;
+  font-weight: 600;
+}
+
+/*
+  One dot for the whole state. In the ordinary case the skill's record status,
+  its live revision and the Gateway's inventory all say the same thing, so
+  showing three labels only added noise. Red is reserved for the case they
+  disagree, which is the only one that needs attention.
+*/
+.openclaw-skills--dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.openclaw-skills--sync {
+  font-size: $ix-text-tiny;
+}
+
+.openclaw-skills--dot-active,
+.openclaw-skills--sync-active {
+  color: $c-rainforest;
+}
+
+.openclaw-skills--dot-idle,
+.openclaw-skills--sync-idle {
+  color: $g8-storm;
+}
+
+.openclaw-skills--dot-fault,
+.openclaw-skills--sync-fault {
+  color: $c-curacao;
+}
+
+/* Unconfirmed rather than wrong: hollow, so it cannot pass for a live dot. */
+.openclaw-skills--dot-unknown {
+  color: $g9-mountain;
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px currentColor;
+}
+
+.openclaw-skills--sync-unknown {
+  color: $g9-mountain;
+}
+
+/* Detail */
+
+.openclaw-skills--detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $ix-marg-c;
+  margin-bottom: $ix-marg-c;
+}
+
+.openclaw-skills--detail-name {
+  margin: 0;
+  color: $g15-platinum;
+  font-size: $ix-text-base-2;
+}
+
+.openclaw-skills--detail-meta {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-a;
+  color: $g9-mountain;
+  font-size: $ix-text-tiny;
+}
+
+.openclaw-skills--detail-actions {
+  display: flex;
+  gap: $ix-marg-b;
+}
+
+.openclaw-skills--revisions {
+  td > .button + .button {
+    margin-left: $ix-marg-a;
+  }
+}
+
+/*
+  The delete control sits at the end of the row and stays out of the way: it is
+  the one irreversible action in the table, so it should not read as a peer of
+  the status column next to it.
+*/
+.openclaw-skills--revision-delete {
+  width: 1%;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.openclaw-skills--revision-cell {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+}
+
+/*
+  Exactly one revision is live, so the status column is a radio group: the
+  filled ring is the one in use, an empty ring is one that can be picked.
+  A revision that was never applied gets a dimmed ring — an option that is not
+  in the group yet, which is what the button beside it is for.
+
+  Sized down from the standard form radio, which is built for a form row and
+  is too heavy inside a table cell.
+*/
+.openclaw-skills--pick-row {
+  display: inline-flex;
+  align-items: center;
+  gap: $ix-marg-b;
+}
+
+.openclaw-skills--pick {
+  position: relative;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border: $ix-border solid $g6-smoke;
+  border-radius: 50%;
+  background-color: $g2-kevlar;
+  color: $g8-storm;
+  transition: border-color 0.25s ease;
+
+  &:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2, 2);
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+      opacity 0.25s ease;
+  }
+
+  &.checked {
+    border-color: $c-rainforest;
+    color: $c-rainforest;
+
+    &:after {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1, 1);
+    }
+  }
+
+  &:not(.checked):not(.selectable) {
+    border-color: $g5-pepper;
+  }
+}
+
+/*
+  A superseded revision's status doubles as the control that makes it live
+  again, so it needs to read as pressable without shouting: the label is the
+  affordance, the hover is what confirms it.
+*/
+.openclaw-skills--revision-action {
+  padding: $ix-marg-a $ix-marg-b;
+  margin: (-$ix-marg-a) (-$ix-marg-b);
+  border: 0;
+  border-radius: $radius;
+  background-color: transparent;
+  outline: none;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+
+  &:hover:not(:disabled) {
+    background-color: $g5-pepper;
+
+    .openclaw-skills--sync {
+      color: $g15-platinum;
+    }
+
+    /* Preview the pick: the ring lights up before the click commits it. */
+    .openclaw-skills--pick {
+      border-color: $c-rainforest;
+      color: $c-rainforest;
+
+      &:after {
+        opacity: 0.4;
+        transform: translate(-50%, -50%) scale(1, 1);
+      }
+    }
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+/* Stored files of one revision, read only */
+
+.openclaw-skills--revision-row {
+  cursor: pointer;
+
+  &.active > td {
+    background-color: $g5-pepper;
+  }
+}
+
+.openclaw-skills--revision-files {
+  margin-top: $ix-marg-c;
+  border: 2px solid $g5-pepper;
+  border-radius: $radius;
+  overflow: hidden;
+}
+
+.openclaw-skills--file-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $ix-marg-a;
+  padding: $ix-marg-b;
+}
+
+.openclaw-skills--file-tab {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+  padding: $ix-marg-a $ix-marg-b;
+  border: 0;
+  border-radius: $radius;
+  background-color: $g5-pepper;
+  color: $g13-mist;
+  font-size: $ix-text-tiny;
+  cursor: pointer;
+  transition: background-color 0.25s ease;
+
+  &:hover {
+    background-color: $g6-smoke;
+  }
+
+  &.active {
+    background-color: $c-star;
+    color: $g20-white;
+  }
+}
+
+.openclaw-skills--file-content {
+  max-height: 420px;
+  margin: 0;
+  padding: $ix-marg-c;
+  border: 0;
+  border-top: 2px solid $g5-pepper;
+  border-radius: 0;
+  background-color: $g2-kevlar;
+  color: $g13-mist;
+  font-size: $ix-text-tiny;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.openclaw-skills--revision-files .openclaw-skills--hint {
+  margin: 0;
+  padding: $ix-marg-b $ix-marg-c;
+}
+
+/* Authoring overlay */
+
+/*
+  Two panes: the brief on the left says what to build and what the limits are,
+  the work area on the right is where SKILL.md and its support files are
+  edited. The panes are sized here rather than with a textarea `rows` count so
+  the editors actually fill the modal.
+*/
+.openclaw-skills--author {
+  display: flex;
+  align-items: stretch;
+  gap: $ix-marg-c;
+  height: 64vh;
+  min-height: 420px;
+}
+
+.openclaw-skills--author-brief {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 320px;
+  overflow-y: auto;
+  padding-right: $ix-marg-b;
+
+  > label {
+    margin: 0 0 $ix-marg-a 0;
+    color: $g13-mist;
+    font-size: $ix-text-base;
+    font-weight: 600;
+  }
+
+  > .button {
+    margin-top: $ix-marg-b;
+  }
+}
+
+.openclaw-skills--goal {
+  height: 130px;
+  resize: none;
+}
+
+.openclaw-skills--hint {
+  margin: $ix-marg-b 0 0 0;
+  color: $g9-mountain;
+  font-size: $ix-text-tiny;
+  font-style: italic;
+}
+
+.openclaw-skills--facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: $ix-marg-a $ix-marg-b;
+  margin: $ix-marg-c 0 0 0;
+  padding-top: $ix-marg-c;
+  border-top: 2px solid $g5-pepper;
+  font-size: $ix-text-tiny;
+
+  dt {
+    color: $g9-mountain;
+    font-weight: 400;
+  }
+
+  dd {
+    margin: 0;
+    color: $g13-mist;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.openclaw-skills--over {
+  color: $c-curacao;
+  font-weight: 600;
+}
+
+.openclaw-skills--issues {
+  margin: $ix-marg-c 0 0 0;
+  padding: $ix-marg-b $ix-marg-c;
+  border-left: $ix-border solid $c-pineapple;
+  border-radius: $radius;
+  background-color: $g3-castle;
+  list-style: none;
+  color: $c-pineapple;
+  font-size: $ix-text-tiny;
+
+  li + li {
+    margin-top: $ix-marg-a;
+  }
+}
+
+/*
+  The shared radio button capitalizes its label, which turns "SKILL.md" into
+  "SKILL.Md". These tabs name real files, so the case has to survive.
+*/
+.openclaw-skills--author-tabs .radio-button {
+  text-transform: none;
+}
+
+.openclaw-skills--author-work {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: $ix-marg-b;
+}
+
+.openclaw-skills--author-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: $radius;
+  background-color: $g2-kevlar;
+  overflow: hidden;
+}
+
+.openclaw-skills--author-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $ix-marg-b;
+  margin-top: $ix-marg-c;
+}
+
+/* SKILL.md editor and preview */
+
+.openclaw-skills--code {
+  height: 100%;
+
+  .CodeMirror {
+    height: 100%;
+    background-color: $g2-kevlar;
+    font-family: $code-font;
+    font-size: 13px;
+  }
+}
+
+.openclaw-skills--preview {
+  height: 100%;
+  padding: $ix-marg-c;
+  overflow-y: auto;
+  color: $g13-mist;
+}
+
+/* Support files */
+
+.openclaw-skills--files {
+  display: flex;
+  flex-direction: column;
+  gap: $ix-marg-b;
+  height: 100%;
+  padding: $ix-marg-b;
+  overflow-y: auto;
+  border: $ix-border dashed transparent;
+  border-radius: $radius;
+
+  &.dragging {
+    border-color: $c-pool;
+    background-color: $g3-castle;
+  }
+}
+
+.openclaw-skills--files-empty {
+  padding: $ix-marg-d;
+  color: $g9-mountain;
+  text-align: center;
+  font-size: $ix-text-base;
+}
+
+.openclaw-skills--files-actions {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+  margin-top: auto;
+  padding-top: $ix-marg-b;
+}
+
+.openclaw-skills--files-hint {
+  color: $g9-mountain;
+  font-size: $ix-text-tiny;
+  font-style: italic;
+}
+
+.openclaw-skills--file {
+  flex: 0 0 auto;
+  padding: $ix-marg-b;
+  background-color: $g3-castle;
+  border-radius: $radius;
+}
+
+.openclaw-skills--file-header {
+  display: flex;
+  align-items: center;
+  gap: $ix-marg-b;
+  margin-bottom: $ix-marg-a;
+
+  > input {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.openclaw-skills--file-size {
+  flex: 0 0 auto;
+  color: $g9-mountain;
+  font-size: $ix-text-tiny;
+}
+
+.openclaw-skills--file-body {
+  height: 150px;
+  resize: vertical;
+}

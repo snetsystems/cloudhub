@@ -152,7 +152,7 @@ func (s *Service) OpenClawSessions(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		agentID, ok := s.openClawAgentID(w, r.Context())
+		agentID, ok := s.openClawAgentID(w, r.Context(), orgID)
 		if !ok {
 			return
 		}
@@ -603,16 +603,36 @@ func (s *Service) openClawOwnerContext(r *http.Request) (context.Context, *cloud
 	return ctx, user, orgID, userOK && orgOK
 }
 
-// openClawAgentID resolves the agent a new session binds to. The configured ID
-// wins; empty means "whatever this Gateway calls default", which only the
-// Gateway can answer — its default is the agent flagged default, else the first
-// configured one, so it is not reliably "main". The ID is baked into the session
-// key, so it is resolved once here at creation and never again: re-resolving
-// later would point an existing conversation at a different agent's history.
-func (s *Service) openClawAgentID(w http.ResponseWriter, ctx context.Context) (string, bool) {
+// openClawAgentID resolves the agent a new session binds to.
+//
+// It is the organization's execution agent, because that is where the
+// organization's skills are applied. Binding chat anywhere else means a user
+// talks to an agent that cannot see the skills their organization authored,
+// which is what happened while chat used the Gateway's default agent.
+//
+// An explicit --openclaw-agent-id still wins: that flag is how an operator
+// pins every session to one agent. Without per-organization provisioning
+// configured there is no execution agent to resolve, so the Gateway's default
+// remains the fallback — its default is the agent flagged default, else the
+// first configured one, so it is not reliably "main".
+//
+// The ID is baked into the session key, so it is resolved once here at
+// creation and never again: re-resolving later would point an existing
+// conversation at a different agent's history.
+func (s *Service) openClawAgentID(w http.ResponseWriter, ctx context.Context, orgID string) (string, bool) {
 	if s.OpenClawAgentID != "" {
 		return s.OpenClawAgentID, true
 	}
+
+	agentID, err := s.openClawAgentFor(ctx, orgID, cloudhub.OpenClawAgentExecution)
+	if err == nil {
+		return agentID, true
+	}
+	if !errors.Is(err, cloudhub.ErrOpenClawAgentNotMapped) {
+		Error(w, http.StatusBadGateway, "unable to resolve the organization's agent", s.Logger)
+		return "", false
+	}
+
 	if s.OpenClawGateway == nil {
 		Error(w, http.StatusServiceUnavailable, "OpenClaw gateway is not configured, so its default agent cannot be resolved", s.Logger)
 		return "", false

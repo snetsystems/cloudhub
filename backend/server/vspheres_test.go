@@ -14,6 +14,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 func TestVsphereID(t *testing.T) {
@@ -291,7 +292,7 @@ func TestUpdateVsphere(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(context.Context) (*cloudhub.Organization, error) {
+					GetF: func(context.Context, cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						return &cloudhub.Organization{
 							ID:   "225",
 							Name: "snet_org",
@@ -433,7 +434,7 @@ func TestUpdateVsphere(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(context.Context) (*cloudhub.Organization, error) {
+					GetF: func(context.Context, cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						return &cloudhub.Organization{
 							ID:   "225",
 							Name: "snet_org",
@@ -486,7 +487,7 @@ func TestUpdateVsphere(t *testing.T) {
 			}
 
 			tt.args.r = tt.args.r.WithContext(httprouter.WithParams(
-				context.Background(),
+				context.WithValue(context.Background(), organizations.ContextKey, "225"),
 				httprouter.Params{
 					{
 						Key:   "id",
@@ -598,6 +599,7 @@ func TestRemoveVsphere(t *testing.T) {
 func TestNewVsphere(t *testing.T) {
 	type fields struct {
 		OrganizationsStore cloudhub.OrganizationsStore
+		SourcesStore       cloudhub.SourcesStore
 		VspheresStore      cloudhub.VspheresStore
 		Logger             cloudhub.Logger
 	}
@@ -682,11 +684,16 @@ func TestNewVsphere(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(context.Context) (*cloudhub.Organization, error) {
+					GetF: func(context.Context, cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						return &cloudhub.Organization{
 							ID:   "225",
 							Name: "snet_org",
 						}, nil
+					},
+				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(context.Context, int) (cloudhub.Source, error) {
+						return cloudhub.Source{ID: 87, Organization: "225"}, nil
 					},
 				},
 			},
@@ -793,11 +800,13 @@ func TestNewVsphere(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
 					OrganizationsStore:    tt.fields.OrganizationsStore,
+					SourcesStore:          tt.fields.SourcesStore,
 					VspheresStore:         tt.fields.VspheresStore,
 				},
 				Logger: tt.fields.Logger,
 			}
 
+			tt.args.r = tt.args.r.WithContext(context.WithValue(tt.args.r.Context(), organizations.ContextKey, "225"))
 			buf, _ := json.Marshal(tt.args.vs)
 			tt.args.r.Body = ioutil.NopCloser(bytes.NewReader(buf))
 			s.NewVsphere(tt.args.w, tt.args.r)

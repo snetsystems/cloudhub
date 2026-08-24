@@ -1,0 +1,22 @@
+services:
+  skill-admin-mcp:
+    build: .
+    env_file: .env
+    # Agent workspaces are owned by the Gateway's uid and are mode 0700, so the
+    # server has to run as that uid to remove anything inside them. Override
+    # with SKILL_ADMIN_UID/GID if the Gateway runs as someone else.
+    user: "${SKILL_ADMIN_UID:-1000}:${SKILL_ADMIN_GID:-1000}"
+    # CloudHub connects here directly; the Gateway is not in the path. Bind to
+    # loopback and reach it over a tunnel rather than exposing it on the LAN.
+    ports:
+      - "${SKILL_ADMIN_BIND:-127.0.0.1}:${SKILL_ADMIN_PORT:-8081}:8080"
+    volumes:
+      # Only the directory holding agent workspaces is mounted, so nothing
+      # outside it is reachable whatever a caller asks for.
+      - ${SKILL_ADMIN_WORKSPACE_SOURCE:?set the host path holding the agent workspaces}:/workspaces
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/skill-admin-mcp", "healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 6

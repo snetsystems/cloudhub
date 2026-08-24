@@ -48,6 +48,29 @@ test('allows NetworkPolicy repair only after CloudHub allow-once', async () => {
   assert.equal(received.insecureSkipVerify, true)
 })
 
+test('uses the CloudHub MCP auth token from the environment', async t => {
+  const previousMCPAuthToken = process.env.MCP_AUTH_TOKEN
+  const previousServiceToken = process.env.MCP_SERVICE_TOKEN
+  t.after(() => {
+    restoreEnvironment('MCP_AUTH_TOKEN', previousMCPAuthToken)
+    restoreEnvironment('MCP_SERVICE_TOKEN', previousServiceToken)
+  })
+  process.env.MCP_AUTH_TOKEN = 'cloudhub-mcp-secret'
+  process.env.MCP_SERVICE_TOKEN = 'legacy-service-secret'
+
+  let receivedToken
+  const handler = createBeforeToolCallHandler(testAPI(), {
+    awaitApproval: async options => {
+      receivedToken = options.token
+      return 'allow-once'
+    },
+  })
+
+  await handler(repairEvent, applyContext)
+
+  assert.equal(receivedToken, 'cloudhub-mcp-secret')
+})
+
 test('enables TLS skip only for a literal true configuration', async () => {
   const received = []
   for (const configured of [undefined, false, 'true', 1, true]) {
@@ -136,4 +159,12 @@ function testAPI() {
     pluginConfig: {cloudHubApprovalURL: 'http://cloudhub.example'},
     logger: {info() {}, warn() {}},
   }
+}
+
+function restoreEnvironment(name, value) {
+  if (value === undefined) {
+    delete process.env[name]
+    return
+  }
+  process.env[name] = value
 }

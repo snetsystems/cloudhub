@@ -1,75 +1,43 @@
 package server
+
 import (
-    "net/http"
-    "net/http/httptest"
-    "strings"
-    "strconv"
-    "testing"
-    
-    "github.com/gavv/httpexpect"
+	"net"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strconv"
+	"strings"
+	"testing"
+
+	"github.com/gorilla/websocket"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/stretchr/testify/require"
 )
 
-func Test_WebTerminalHandler(t *testing.T) {
-    type args struct {
-		user    string
-        pwd     string
-        addr    string
-        port    int
-        route   string
-    }
-    tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "Verifying WebSockets and ssh connections",
-			args: args{
-				user: "root",
-                pwd: "root",
-                addr: "192.168.56.103",
-                port: 22,
-                route: "/cloudhub/v1/WebTerminalHandler",
-			},
-			want: true,
-		},
-    }
-    for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-                t.Logf("Hello, client")
-            }))
-            defer s.Close()
-        
-            u := "ws" + strings.TrimPrefix(s.URL, "http")
-            querystring := "?user="+tt.args.user+"&pwd="+tt.args.pwd+"&addr="+tt.args.addr+"&port="+strconv.Itoa(tt.args.port)
-            u = u + tt.args.route + querystring
-            
-            sv := &Service{}
-            e := httpexpect.WithConfig(httpexpect.Config{
-                BaseURL:         u,
-                WebsocketDialer: httpexpect.NewWebsocketDialer(http.HandlerFunc(sv.WebTerminalHandler)),
-                Reporter:        httpexpect.NewAssertReporter(t),
-                Printers: []httpexpect.Printer{
-                    httpexpect.NewDebugPrinter(t, true),
-                },
-            })
-        
-            e.GET(tt.args.route).WithWebsocketUpgrade().
-                Expect().
-                Status(http.StatusSwitchingProtocols).
-                Websocket()
-        
-            sh := &ssh{
-                user: tt.args.user,
-                pwd:  tt.args.pwd,
-                addr: tt.args.addr,
-                port: tt.args.port,
-            }
-            _, err := sh.Connect()
-            if nil != err {
-                t.Errorf("Test_WebTerminalHandler() error = %v", err)
-            }
-		})
+func TestWebTerminalHandlerClosesWebSocketWhenSSHConnectionFails(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	port := listener.Addr().(*net.TCPAddr).Port
+	require.NoError(t, listener.Close())
+
+	service := &Service{Logger: &mocks.TestLogger{}}
+	server := httptest.NewServer(http.HandlerFunc(service.WebTerminalHandler))
+	defer server.Close()
+
+	query := url.Values{
+		"user": {"root"},
+		"pwd":  {"root"},
+		"addr": {"127.0.0.1"},
+		"port": {strconv.Itoa(port)},
 	}
+	websocketURL := "ws" + strings.TrimPrefix(server.URL, "http") + "?" + query.Encode()
+
+	connection, response, err := websocket.DefaultDialer.Dial(websocketURL, nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, response.StatusCode)
+	defer connection.Close()
+
+	_, _, err = connection.ReadMessage()
+	var closeErr *websocket.CloseError
+	require.ErrorAs(t, err, &closeErr)
 }

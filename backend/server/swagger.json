@@ -9232,31 +9232,859 @@
           },
           "401": {
             "description": "Unauthorized",
-            "schema": {"$ref": "#/definitions/Error"}
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "403": {
             "description": "Insufficient role or session access denied",
-            "schema": {"$ref": "#/definitions/Error"}
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "404": {
             "description": "No such session in this organization",
-            "schema": {"$ref": "#/definitions/Error"}
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "422": {
             "description": "Method is not allowlisted or request parameters are invalid",
-            "schema": {"$ref": "#/definitions/Error"}
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "502": {
             "description": "Gateway request failed",
-            "schema": {"$ref": "#/definitions/Error"}
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "503": {
             "description": "No Gateway or session store configured",
-            "schema": {"$ref": "#/definitions/Error"}
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           },
           "504": {
             "description": "Gateway request timed out",
-            "schema": {"$ref": "#/definitions/Error"}
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skill-drafts": {
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Draft a SKILL.md body through the organization's authoring agent",
+        "description": "Asks the organization's authoring agent for a SKILL.md draft. Stores nothing and creates no Gateway proposal, so it may be called repeatedly until the author is satisfied. Requires Admin.",
+        "parameters": [
+          {
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "goal"
+              ],
+              "properties": {
+                "goal": {
+                  "type": "string",
+                  "description": "The work to turn into a skill, in the author's own words"
+                },
+                "main": {
+                  "type": "string",
+                  "description": "The SKILL.md being revised, as it stands in the editor. Sent together with name so the agent edits the document instead of writing a new skill."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The name the revision has to keep. Ignored unless main is also sent."
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The drafted SKILL.md body",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillDraft"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "The organization has no authoring agent mapped",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "goal is missing, or main exceeds the size limit",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "OpenClaw gateway is not configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skill-inventory": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Report what the organization's execution agent actually holds, read live from the Gateway",
+        "description": "Calls the Gateway `skills.status` RPC for the organization's execution agent and returns the workspace-sourced entries unchanged. This is the Gateway's own view, which can disagree with CloudHub's record of what it published. Entry fields are defined by the Gateway, so the schema is intentionally left open. An organization with no mapped execution agent gets an empty list rather than an error, and no agent is provisioned by this call.",
+        "responses": {
+          "200": {
+            "description": "The Gateway's workspace skills for the organization's execution agent",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "agentId": {
+                  "type": "string",
+                  "description": "The execution agent the inventory was read from; empty when none is mapped"
+                },
+                "skills": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "Gateway skill entries, passed through. Field set is Gateway-defined."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Gateway request failed or returned an invalid payload",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "OpenClaw gateway is not configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skills": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "List the organization's authored skills",
+        "description": "Returns the skills this organization has authored, newest first. Retired skills are omitted.",
+        "responses": {
+          "200": {
+            "description": "Authored skills",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkills"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to read skills",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Store a drafted skill as revision 1",
+        "description": "Saves a draft. Nothing reaches the Gateway until an administrator approves a revision. The skill name is read from the SKILL.md frontmatter. Requires Admin.",
+        "parameters": [
+          {
+            "name": "skill",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The stored skill",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkill"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "The name, body, or a support file broke a validation rule",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to reach the skill store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skills/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "string",
+          "required": true,
+          "description": "Skill ID"
+        }
+      ],
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Get one skill with its revision history",
+        "responses": {
+          "200": {
+            "description": "The skill and its revisions",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillDetail"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to reach the skill store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Delete a skill",
+        "description": "Removes the skill completely: its files leave the Gateway agent workspace and its whole revision history leaves CloudHub. The workspace is cleared first, so a failure there leaves the skill in place to retry rather than orphaning files an agent still loads. Requires Admin.",
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "The organization has no execution agent mapped",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Gateway request failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "OpenClaw skill-admin server is not configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skills/{id}/revisions": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "string",
+          "required": true,
+          "description": "Skill ID"
+        }
+      ],
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Submit a new revision",
+        "description": "The request carries the complete file set: a revision replaces its predecessor rather than patching it, so a file left out is removed. Content identical to the previous revision is refused, as is a frontmatter name that differs from the skill's. Requires Admin.",
+        "parameters": [
+          {
+            "name": "revision",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The stored revision",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillRevision"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Validation failed, the content is unchanged, or the name does not match",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to reach the skill store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skills/{id}/revisions/{rev}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "string",
+          "required": true,
+          "description": "Skill ID"
+        },
+        {
+          "name": "rev",
+          "in": "path",
+          "type": "integer",
+          "required": true,
+          "description": "Revision number"
+        }
+      ],
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Get one revision with its complete file set",
+        "description": "The history listing omits file contents, and a new revision replaces the whole file set rather than patching it, so an editor reads the current files back through this endpoint before submitting a change.",
+        "responses": {
+          "200": {
+            "description": "The revision, including its files",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillRevision"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill or revision in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "The revision number is not a number",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to reach the skill store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Delete one revision from a skill's history",
+        "description": "Removes a revision and its files from CloudHub. Nothing is sent to the Gateway: it holds one file set per skill, the one the active revision published, and that revision cannot be deleted. The revision number is not reused - the next revision is still MAX+1, so a deleted number stays a gap. Requires Admin.",
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill or revision in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "The revision is the active one, is the only revision, or is not a number",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skills/{id}/revisions/{rev}/approve": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "string",
+          "required": true,
+          "description": "Skill ID"
+        },
+        {
+          "name": "rev",
+          "in": "path",
+          "type": "integer",
+          "required": true,
+          "description": "Revision number"
+        }
+      ],
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Approve a revision and publish it to the execution agent",
+        "description": "Publishes to the Gateway first and records the approval only if that succeeds, so a refused publish leaves the revision pending and safe to retry. Requires Admin.",
+        "parameters": [
+          {
+            "name": "review",
+            "in": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillReview"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The approved revision, including the Gateway scan",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillRevision"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill or revision in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "The organization has no execution agent mapped",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "The revision number is not a number",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Gateway request failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "OpenClaw gateway is not configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skills/{id}/revisions/{rev}/reject": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "string",
+          "required": true,
+          "description": "Skill ID"
+        },
+        {
+          "name": "rev",
+          "in": "path",
+          "type": "integer",
+          "required": true,
+          "description": "Revision number"
+        }
+      ],
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Reject a revision",
+        "description": "Records a rejection. The note is required so the author has something to act on. Requires Admin.",
+        "parameters": [
+          {
+            "name": "review",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillReview"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The rejected revision",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillRevision"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill or revision in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "The note is missing or the revision number is not a number",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to reach the skill store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/skills/{id}/rollback": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "string",
+          "required": true,
+          "description": "Skill ID"
+        }
+      ],
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Make an earlier revision the live one again",
+        "description": "Publishes the chosen revision to the agent workspace and points the skill at it. No revision is created: the revision keeps its identity and its original approval record, and only the skill's active revision changes. The target must be a revision that has been applied before and is not already the live one. Requires Admin.",
+        "parameters": [
+          {
+            "name": "rollback",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "toRevision"
+              ],
+              "properties": {
+                "toRevision": {
+                  "type": "integer",
+                  "description": "The revision to make live again. Must already have been applied, and must not be the live one."
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The revision that is now live",
+            "schema": {
+              "$ref": "#/definitions/OpenClawSkillRevision"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "No such skill or revision in this organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "409": {
+            "description": "The organization has no execution agent mapped",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "toRevision is missing or not positive",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Gateway request failed",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "OpenClaw gateway is not configured",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/org-agents": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Get the organization's Gateway agent mapping",
+        "description": "Returns which Gateway agent this organization uses for authoring and for execution. A purpose that is not mapped is omitted.",
+        "responses": {
+          "200": {
+            "description": "The agent mapping",
+            "schema": {
+              "$ref": "#/definitions/OpenClawOrgAgents"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to read the agent mapping",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Replace the organization's Gateway agent mapping",
+        "description": "Swaps the whole mapping: a purpose left out of the request is removed. Whether the agent exists on the Gateway is not checked, so this write does not depend on Gateway availability. Requires Admin.",
+        "parameters": [
+          {
+            "name": "agents",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OpenClawOrgAgents"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The stored mapping",
+            "schema": {
+              "$ref": "#/definitions/OpenClawOrgAgents"
+            }
+          },
+          "401": {
+            "description": "Unauthorized (authenticated organization context required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (Admin role required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "An unknown purpose, or a blank or over-long agent id",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "502": {
+            "description": "Unable to store the agent mapping",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "../v2/openclaw/workspaces/reclaim": {
+      "post": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Reclaim Gateway workspaces left by deleted organizations",
+        "description": "Deleting an organization removes its Gateway agents and their workspaces, but that runs against a Gateway that may be unreachable and the organization is deleted either way. What could not be cleared stays recorded, and this retries it. Deleting a workspace is idempotent, so a leftover that is in fact already gone is simply marked and reported as reclaimed. A run with nothing owed answers with an empty pending list, which is how an operator checks whether anything is outstanding. Spans every organization, so it requires SuperAdmin.",
+        "responses": {
+          "200": {
+            "description": "What the sweep cleared and what it left",
+            "schema": {
+              "$ref": "#/definitions/OpenClawWorkspaceReclaim"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden (SuperAdmin required)",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "500": {
+            "description": "Unable to read what is awaiting reclaim",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "503": {
+            "description": "OpenClaw skill-admin is not configured, so workspace files cannot be deleted",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
           }
         }
       }
@@ -9556,6 +10384,285 @@
     }
   },
   "definitions": {
+    "OpenClawSkillFile": {
+      "type": "object",
+      "required": [
+        "path",
+        "content"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Relative path under assets/, examples/, references/, scripts/, or templates/. SKILL.md is sent separately as main, not here."
+        },
+        "content": {
+          "type": "string",
+          "description": "UTF-8 text. Binary and executable files are rejected by the Gateway."
+        }
+      }
+    },
+    "OpenClawSkillRequest": {
+      "type": "object",
+      "required": [
+        "main"
+      ],
+      "properties": {
+        "main": {
+          "type": "string",
+          "description": "SKILL.md body, including YAML frontmatter with name and description. At most 40000 bytes; description at most 160 bytes."
+        },
+        "supportFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawSkillFile"
+          },
+          "description": "At most 50 files, 1 MiB in total with the body. Applied files carry no execute bit, so a script must be invoked through its interpreter."
+        },
+        "goal": {
+          "type": "string",
+          "description": "Why this revision was written"
+        }
+      },
+      "example": {
+        "main": "---\nname: cpu-threshold-report\ndescription: \"Report hosts over the CPU threshold\"\n---\n\n# CPU threshold report\n",
+        "supportFiles": [
+          {
+            "path": "scripts/collect.sh",
+            "content": "#!/usr/bin/env bash\necho collecting\n"
+          }
+        ],
+        "goal": "\uccab \uc791\uc131"
+      }
+    },
+    "OpenClawSkillDraft": {
+      "type": "object",
+      "properties": {
+        "main": {
+          "type": "string",
+          "description": "The SKILL.md body the authoring agent produced"
+        },
+        "supportFiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawSkillFile"
+          }
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "The authoring session this draft came from"
+        }
+      }
+    },
+    "OpenClawSkill": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "description": "Gateway slug, matching ^[a-z][a-z0-9_-]*$ and not a reserved command name"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "approved",
+            "retired"
+          ]
+        },
+        "activeRevision": {
+          "type": "integer",
+          "description": "The revision live on the Gateway, or 0 when none has been approved"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "OpenClawSkills": {
+      "type": "object",
+      "properties": {
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawSkill"
+          }
+        }
+      }
+    },
+    "OpenClawSkillRevision": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "skillId": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "integer"
+        },
+        "treeHash": {
+          "type": "string",
+          "description": "Fingerprint of the whole file set, used to refuse an unchanged resubmission"
+        },
+        "goal": {
+          "type": "string"
+        },
+        "authorId": {
+          "type": "string"
+        },
+        "reviewStatus": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ]
+        },
+        "reviewedBy": {
+          "type": "string"
+        },
+        "reviewedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "reviewNote": {
+          "type": "string"
+        },
+        "gatewayProposalId": {
+          "type": "string",
+          "description": "The Gateway proposal this revision was published through"
+        },
+        "gatewayScan": {
+          "type": "object",
+          "description": "The Gateway's security scan, stored verbatim and not interpreted by CloudHub"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawSkillFile"
+          },
+          "description": "Present when one revision is fetched; omitted from history listings"
+        }
+      }
+    },
+    "OpenClawSkillDetail": {
+      "type": "object",
+      "properties": {
+        "skill": {
+          "$ref": "#/definitions/OpenClawSkill"
+        },
+        "revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OpenClawSkillRevision"
+          }
+        }
+      }
+    },
+    "OpenClawSkillReview": {
+      "type": "object",
+      "properties": {
+        "note": {
+          "type": "string",
+          "description": "Required when rejecting; optional when approving"
+        }
+      }
+    },
+    "OpenClawOrgAgents": {
+      "type": "object",
+      "properties": {
+        "agents": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Purpose (authoring or execution) to Gateway agent id"
+        }
+      },
+      "example": {
+        "agents": {
+          "authoring": "cloudhub-authoring",
+          "execution": "cloudhub-main"
+        }
+      }
+    },
+    "OpenClawWorkspaceReclaim": {
+      "type": "object",
+      "properties": {
+        "reclaimed": {
+          "type": "integer",
+          "description": "Workspaces cleared and recorded by this run"
+        },
+        "failed": {
+          "type": "integer",
+          "description": "Leftovers this run could not clear or could not record"
+        },
+        "pending": {
+          "type": "array",
+          "description": "What is still owed after this run, each with the reason it was not cleared. Empty means nothing is outstanding.",
+          "items": {
+            "$ref": "#/definitions/OpenClawPendingReclaim"
+          }
+        }
+      },
+      "example": {
+        "reclaimed": 1,
+        "failed": 1,
+        "pending": [
+          {
+            "organizationId": "3",
+            "purpose": "execution",
+            "agentId": "cloudhub-3-4e074085-execution",
+            "deletedAt": "2026-08-20T02:11:44Z",
+            "error": "openclaw: delete workspace for agent \"cloudhub-3-4e074085-execution\": connect to skill-admin: dial tcp: connection refused"
+          }
+        ]
+      }
+    },
+    "OpenClawPendingReclaim": {
+      "type": "object",
+      "properties": {
+        "organizationId": {
+          "type": "string",
+          "description": "The deleted organization the workspace belonged to"
+        },
+        "purpose": {
+          "type": "string",
+          "enum": [
+            "authoring",
+            "execution"
+          ]
+        },
+        "agentId": {
+          "type": "string",
+          "description": "The Gateway agent whose workspace may still be on the host"
+        },
+        "deletedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the organization's mapping was retired, so an operator can see how long it has been owed"
+        },
+        "error": {
+          "type": "string",
+          "description": "Why this run left it, omitted when it is merely listed"
+        }
+      }
+    },
     "Organization": {
       "type": "object",
       "description": "A group of CloudHub users with various role-based access-control.",
@@ -16742,11 +17849,17 @@
     },
     "OpenClawRPCRequest": {
       "type": "object",
-      "required": ["method"],
+      "required": [
+        "method"
+      ],
       "properties": {
         "method": {
           "type": "string",
-          "enum": ["agents.list", "chat.history", "chat.send"]
+          "enum": [
+            "agents.list",
+            "chat.history",
+            "chat.send"
+          ]
         },
         "sessionId": {
           "type": "string",
@@ -16760,7 +17873,11 @@
       "example": {
         "method": "chat.history",
         "sessionId": "cloudhub-session-id",
-        "params": {"limit": 50, "offset": 0, "maxChars": 100000}
+        "params": {
+          "limit": 50,
+          "offset": 0,
+          "maxChars": 100000
+        }
       }
     }
   }

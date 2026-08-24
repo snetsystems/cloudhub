@@ -230,7 +230,7 @@ func TestServerOpenClawGatewayManagerUsesConfiguredCredentialsWithoutLoggingToke
 	if string(got.DevicePrivateKey) != string(wantKey) {
 		t.Fatal("device private key was not loaded from device private key file")
 	}
-	wantScopes := []string{"operator.read", "operator.write", "operator.approvals"}
+	wantScopes := []string{"operator.read", "operator.write", "operator.approvals", "operator.admin"}
 	if len(got.RequiredScopes) != len(wantScopes) {
 		t.Fatalf("required scopes = %v, want %v", got.RequiredScopes, wantScopes)
 	}

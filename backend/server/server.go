@@ -185,15 +185,19 @@ type Server struct {
 	DeployPlatform string            `long:"deploy-platform" description:"Deployment topology: k8s (in-cluster) or host — Linux/VM/docker/systemd direct install, not orchestrated by Kubernetes." env:"DEPLOY_PLATFORM"`
 
 	CollectorAuthToken string `long:"collector-auth-token" description:"Shared secret token for Collector Sidecar authentication" env:"COLLECTOR_AUTH_TOKEN"`
+	MCPAuthToken       string `long:"mcp-auth-token" description:"Shared secret token for MCP service authentication" env:"MCP_AUTH_TOKEN"`
 
 	OpenClawGatewayURL           string `long:"openclaw-gateway-url" description:"WebSocket URL for the OpenClaw Gateway chat relay" env:"OPENCLAW_GATEWAY_URL"`
 	OpenClawDevicePrivateKeyFile string `long:"openclaw-device-private-key-file" description:"Path to the paired OpenClaw device Ed25519 private key" env:"OPENCLAW_DEVICE_PRIVATE_KEY_FILE"`
 	OpenClawDeviceTokenFile      string `long:"openclaw-device-token-file" description:"Path to the paired OpenClaw device token" env:"OPENCLAW_DEVICE_TOKEN_FILE"`
 	OpenClawAgentID              string `long:"openclaw-agent-id" description:"OpenClaw agent new chat sessions are bound to; empty resolves the Gateway's default agent" env:"OPENCLAW_AGENT_ID"`
+	OpenClawSkillAdminURL        string `long:"openclaw-skill-admin-url" description:"MCP URL of the skill-admin server that deletes retired skills from agent workspaces" env:"OPENCLAW_SKILL_ADMIN_URL"`
+	OpenClawSkillAdminToken      string `long:"openclaw-skill-admin-token" description:"Bearer token for the skill-admin MCP server" env:"OPENCLAW_SKILL_ADMIN_TOKEN"`
+	OpenClawWorkspaceRoot        string `long:"openclaw-workspace-root" description:"Absolute path, as the Gateway process sees it, under which per-organization agent workspaces are created (a containerized Gateway needs its in-container path, not the host path); empty disables automatic provisioning" env:"OPENCLAW_WORKSPACE_ROOT"`
 
-	KafkaBrokers       string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
-	KafkaTopic         string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
-	MaxShards          int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
+	KafkaBrokers string `long:"kafka-brokers" description:"Comma-separated list of Kafka brokers" env:"KAFKA_BROKERS"`
+	KafkaTopic   string `long:"kafka-config-topic" description:"Kafka topic for collector configuration updates" env:"KAFKA_CONFIG_TOPIC" default:"collector-config-updates"`
+	MaxShards    int    `long:"max-shards" description:"Max number of shards (virtual partitions) for fallback" env:"MAX_SHARDS" default:"10"`
 
 	PgsqlHost     string `long:"pgsql-host" description:"PostgreSQL host" env:"CLOUDHUB_PGSQL_HOST" default:""`
 	PgsqlPort     int    `long:"pgsql-port" description:"PostgreSQL port" env:"CLOUDHUB_PGSQL_PORT" default:"5432"`
@@ -204,11 +208,11 @@ type Server struct {
 
 	Hubble                 map[string]string `long:"hubble" description:"Hubble Relay connection for one cluster. '--hubble=cluster:{name} --hubble=relay-url:{host:port} --hubble=plaintext:{true|false} --hubble=insecure-skip-verify:{true|false} --hubble=tls-ca:{path} --hubble=tls-cert:{path} --hubble=tls-key:{path} --hubble=tls-server-name:{name}'. E.g. via environment variable" env:"HUBBLE" env-delim:","`
 	HubbleWindow           time.Duration     `long:"hubble-window" description:"Hubble aggregation window (sliding) per cluster" env:"CLOUDHUB_HUBBLE_WINDOW_DURATION" default:"5m"`
-	HubbleBucket           time.Duration `long:"hubble-bucket" description:"Hubble bucket size within the aggregation window" env:"CLOUDHUB_HUBBLE_BUCKET_DURATION" default:"10s"`
-	HubbleSnapshotInterval time.Duration `long:"hubble-snapshot-interval" description:"Hubble snapshot publish interval (push to WS)" env:"CLOUDHUB_HUBBLE_SNAPSHOT_INTERVAL" default:"2s"`
-	HubbleMaxEdges         int           `long:"hubble-max-edges" description:"Max edges per cluster (LRU eviction beyond cap)" env:"CLOUDHUB_HUBBLE_MAX_EDGES_PER_CLUSTER" default:"10000"`
-	HubbleExcludedNS       []string      `long:"hubble-excluded-ns" description:"Glob patterns of system namespaces to mark/exclude (comma-separated)" env:"CLOUDHUB_HUBBLE_EXCLUDED_NS_PATTERNS" env-delim:","`
-	HubbleClustersFile     string        `long:"hubble-clusters-file" description:"Path to JSON file with Hubble cluster definitions (relayURL + mTLS paths)" env:"CLOUDHUB_HUBBLE_CLUSTERS_FILE"`
+	HubbleBucket           time.Duration     `long:"hubble-bucket" description:"Hubble bucket size within the aggregation window" env:"CLOUDHUB_HUBBLE_BUCKET_DURATION" default:"10s"`
+	HubbleSnapshotInterval time.Duration     `long:"hubble-snapshot-interval" description:"Hubble snapshot publish interval (push to WS)" env:"CLOUDHUB_HUBBLE_SNAPSHOT_INTERVAL" default:"2s"`
+	HubbleMaxEdges         int               `long:"hubble-max-edges" description:"Max edges per cluster (LRU eviction beyond cap)" env:"CLOUDHUB_HUBBLE_MAX_EDGES_PER_CLUSTER" default:"10000"`
+	HubbleExcludedNS       []string          `long:"hubble-excluded-ns" description:"Glob patterns of system namespaces to mark/exclude (comma-separated)" env:"CLOUDHUB_HUBBLE_EXCLUDED_NS_PATTERNS" env-delim:","`
+	HubbleClustersFile     string            `long:"hubble-clusters-file" description:"Path to JSON file with Hubble cluster definitions (relayURL + mTLS paths)" env:"CLOUDHUB_HUBBLE_CLUSTERS_FILE"`
 }
 
 // pgsqlDSN builds a PostgreSQL DSN from the individual pgsql-host/port/user/password/database/sslmode flags.
@@ -754,11 +758,40 @@ func (s *Server) Serve(ctx context.Context) {
 			Error("OpenClaw gateway initialization failed; continuing without the OpenClaw integration")
 	} else if openClawGateway != nil {
 		service.OpenClawGateway = openClawGateway
+		service.OpenClawSkillPublisher = openclaw.NewSkillPublisher(openClawGateway)
+		service.OpenClawSkillDrafter = openclaw.NewSkillDrafter(openClawGateway)
+		// Without a workspace root, organizations keep the manual mapping an
+		// administrator supplies through PUT /org-agents.
+		if root := strings.TrimSpace(s.OpenClawWorkspaceRoot); root != "" {
+			service.OpenClawAgentProvisioner = openclaw.NewAgentProvisioner(openClawGateway, root)
+			logger.
+				WithField("component", "openclaw-gateway").
+				WithField("workspace_root", root).
+				Info("OpenClaw agent workspaces are provisioned on first use")
+		}
 		defer openClawGateway.Close()
 		logger.
 			WithField("component", "openclaw-gateway").
 			WithField("device_id", openClawDeviceID).
 			Info("OpenClaw gateway reconnect manager started as a paired operator device")
+	}
+
+	// The skill-admin server is wired independently of the Gateway. It is a
+	// separate process reached over its own connection, and retirement has to
+	// keep working whether or not the Gateway is up.
+	if url := strings.TrimSpace(s.OpenClawSkillAdminURL); url != "" {
+		deleter, err := openclaw.NewSkillDeleter(url, s.OpenClawSkillAdminToken)
+		if err != nil {
+			logger.
+				WithField("component", "openclaw-skill-admin").
+				WithField("error", err.Error()).
+				Error("OpenClaw skill-admin initialization failed; skill retirement is unavailable")
+		} else {
+			service.OpenClawSkillDeleter = deleter
+			logger.
+				WithField("component", "openclaw-skill-admin").
+				Info("OpenClaw skill-admin client configured")
+		}
 	}
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
@@ -790,6 +823,7 @@ func (s *Server) Serve(ctx context.Context) {
 		AIConfig:            aiConfig,
 		URLMonitoringConfig: urlMonitoringConfig,
 		KubernetesConfig:    kubernetesConfig,
+		MCPAuthToken:        s.MCPAuthToken,
 		HubbleConfig:        hubbleConfig,
 	}
 	if !validBasepath(s.Basepath) {
@@ -1151,7 +1185,7 @@ func openService(
 	var recipientGroupStore cloudhub.RecipientGroupStore
 	var alertRecipientGroupStore cloudhub.AlertRecipientGroupStore
 	var alertRecipientMemberPrefsStore cloudhub.AlertRecipientMemberPrefsStore
-		var alertKapacitorStore cloudhub.AlertKapacitorStore
+	var alertKapacitorStore cloudhub.AlertKapacitorStore
 	var alertKapacitorMappingStore cloudhub.AlertKapacitorMappingStore
 	var alertGroupRuleStore cloudhub.AlertGroupRuleStore
 	if pgsqlClient != nil {
@@ -1165,9 +1199,13 @@ func openService(
 		logger.Info("PostgreSQL AlertGrouping stores initialized")
 	}
 	var openClawSessionStore cloudhub.OpenClawSessionStore = &noop.OpenClawSessionStore{}
+	var openClawSkillStore cloudhub.OpenClawSkillStore = &noop.OpenClawSkillStore{}
+	var openClawOrgAgentStore cloudhub.OpenClawOrgAgentStore = &noop.OpenClawOrgAgentStore{}
 	if pgsqlClient != nil {
 		openClawSessionStore = pgsql.NewOpenClawSessionStore(pgsqlClient)
-		logger.Info("PostgreSQL OpenClawSessionStore initialized")
+		openClawSkillStore = pgsql.NewOpenClawSkillStore(pgsqlClient)
+		openClawOrgAgentStore = pgsql.NewOpenClawOrgAgentStore(pgsqlClient)
+		logger.Info("PostgreSQL OpenClaw stores initialized")
 	}
 
 	// Builtin alert templates are file-embedded (go-bindata) and have no
@@ -1202,7 +1240,9 @@ func openService(
 			HostStore:               hostStore,
 			URLMonitoringStore:      urlMonitoringStore,
 			OrgNavMenuStore:         orgNavMenuStore,
-			OpenClawSessionStore: openClawSessionStore,
+			OpenClawSessionStore:    openClawSessionStore,
+			OpenClawSkillStore:      openClawSkillStore,
+			OpenClawOrgAgentStore:   openClawOrgAgentStore,
 		},
 		Logger:                    logger,
 		UseAuth:                   useAuth,

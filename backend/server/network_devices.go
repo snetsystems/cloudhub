@@ -495,7 +495,7 @@ func (s *Service) RemoveDevices(w http.ResponseWriter, r *http.Request) {
 				return
 			} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
 				for _, id := range devicesGroupByOrg[org.ID] {
-					addFailedDevice(failedDevices, id, fmt.Errorf(string(resp)))
+					addFailedDevice(failedDevices, id, fmt.Errorf("%s", resp))
 				}
 				response := map[string]interface{}{"failed_devices": convertFailedDevicesToArray(failedDevices)}
 				encodeJSON(w, http.StatusMultiStatus, response, s.Logger)

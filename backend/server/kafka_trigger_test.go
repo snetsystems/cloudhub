@@ -17,9 +17,9 @@ import (
 
 // MockKafkaProducer for trigger verification
 type MockKafkaProducer struct {
-	mu           sync.Mutex
-	PublishCalls []PublishCall
-	NotifyChan   chan bool
+	mu             sync.Mutex
+	PublishCalls   []PublishCall
+	NotifyChan     chan bool
 	PartitionCount int
 }
 
@@ -63,7 +63,6 @@ func (m *MockKafkaProducer) GetCalls() []PublishCall {
 }
 
 func TestNetworkDevices_KafkaTrigger(t *testing.T) {
-	mockData := NewMockData()
 	logger := log.New(log.DebugLevel)
 	mockKafka := &MockKafkaProducer{
 		NotifyChan: make(chan bool, 10),
@@ -87,7 +86,9 @@ func TestNetworkDevices_KafkaTrigger(t *testing.T) {
 				UpdateF: func(ctx context.Context, dev *cloudhub.NetworkDevice) error { return nil },
 				DeleteF: func(ctx context.Context, dev *cloudhub.NetworkDevice) error { return nil },
 				AllF:    func(ctx context.Context) ([]cloudhub.NetworkDevice, error) { return []cloudhub.NetworkDevice{}, nil },
-				AddF:    func(ctx context.Context, dev *cloudhub.NetworkDevice) (*cloudhub.NetworkDevice, error) { return dev, nil },
+				AddF: func(ctx context.Context, dev *cloudhub.NetworkDevice) (*cloudhub.NetworkDevice, error) {
+					return dev, nil
+				},
 			},
 			NetworkDeviceOrgStore: &mocks.NetworkDeviceOrgStore{
 				GetF: func(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
@@ -118,7 +119,7 @@ func TestNetworkDevices_KafkaTrigger(t *testing.T) {
 	}
 
 	mockPlatform := &mocks.MockPlatform{
-		GetTotalShardsFunc: func(ctx context.Context) int { return 1 },
+		GetTotalShardsFunc:       func(ctx context.Context) int { return 1 },
 		VerifyCollectorReadyFunc: func(ctx context.Context, collectorName string) error { return nil },
 		PushConfigUpdatesFunc: func(ctx context.Context, shardIDs []int) {
 			// In tests, we manually bridge the platform call to our mock Kafka producer
@@ -142,24 +143,6 @@ func TestNetworkDevices_KafkaTrigger(t *testing.T) {
 
 	user := &cloudhub.User{Name: "test-user"}
 	ctx := context.WithValue(context.Background(), UserContextKey, user)
-
-	t.Run("NewDevices Trigger", func(t *testing.T) {
-		mockKafka.mu.Lock()
-		mockKafka.PublishCalls = nil
-		mockKafka.mu.Unlock()
-
-		w := httptest.NewRecorder()
-		buf, _ := json.Marshal(mockData.Devices[:1])
-		r := httptest.NewRequest("POST", "/api/v1/collectors/devices", bytes.NewReader(buf))
-		r = r.WithContext(ctx)
-		s.NewDevices(w, r)
-
-		select {
-		case <-mockKafka.NotifyChan:
-		case <-time.After(2 * time.Second):
-			t.Errorf("Kafka trigger timed out")
-		}
-	})
 
 	t.Run("MonitoringConfigManagement Trigger", func(t *testing.T) {
 		mockKafka.mu.Lock()

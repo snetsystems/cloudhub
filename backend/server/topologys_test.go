@@ -112,8 +112,9 @@ func TestTopology(t *testing.T) {
 
 func TestUpdateTopology(t *testing.T) {
 	type fields struct {
-		TopologiesStore cloudhub.TopologiesStore
-		Logger          cloudhub.Logger
+		TopologiesStore    cloudhub.TopologiesStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w    *httptest.ResponseRecorder
@@ -152,6 +153,11 @@ func TestUpdateTopology(t *testing.T) {
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
+				OrganizationsStore: &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{ID: "225", Name: "snet_org"}, nil
+					},
+				},
 				TopologiesStore: &mocks.TopologiesStore{
 					UpdateF: func(ctx context.Context, tp *cloudhub.Topology) error {
 						return nil
@@ -180,7 +186,7 @@ func TestUpdateTopology(t *testing.T) {
 			id:              "1",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"],"topologyOptions":{"minimapVisible":true,"hostStatusVisible":false,"ipmiVisible":true,"linkVisible":true,"autoSaveOnLeave":false}}`,
+			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"preferences":["type:inlet,active:0,min:15,max:30","type:inside,active:1,min:56,max:55","type:outlet,active:0,min:34,max:50"],"topologyOptions":{"minimapVisible":true,"hostStatusVisible":false,"ipmiVisible":true,"linkVisible":true,"autoSaveOnLeave":false}}`,
 		},
 	}
 
@@ -188,7 +194,8 @@ func TestUpdateTopology(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					TopologiesStore: tt.fields.TopologiesStore,
+					TopologiesStore:    tt.fields.TopologiesStore,
+					OrganizationsStore: tt.fields.OrganizationsStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -226,8 +233,9 @@ func TestUpdateTopology(t *testing.T) {
 
 func TestRemoveTopology(t *testing.T) {
 	type fields struct {
-		TopologiesStore cloudhub.TopologiesStore
-		Logger          cloudhub.Logger
+		TopologiesStore    cloudhub.TopologiesStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -252,6 +260,11 @@ func TestRemoveTopology(t *testing.T) {
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
+				OrganizationsStore: &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{ID: "225", Name: "snet_org"}, nil
+					},
+				},
 				TopologiesStore: &mocks.TopologiesStore{
 					DeleteF: func(ctx context.Context, tp *cloudhub.Topology) error {
 						return nil
@@ -279,7 +292,8 @@ func TestRemoveTopology(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					TopologiesStore: tt.fields.TopologiesStore,
+					TopologiesStore:    tt.fields.TopologiesStore,
+					OrganizationsStore: tt.fields.OrganizationsStore,
 				},
 				Logger: tt.fields.Logger,
 			}

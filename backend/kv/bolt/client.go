@@ -1,11 +1,13 @@
 package bolt
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -163,14 +165,20 @@ func (tx *Tx) CreateBucketIfNotExists(b []byte) (kv.Bucket, error) {
 
 // Bucket retrieves the bucket named b.
 func (tx *Tx) Bucket(b []byte, extraPrefix ...string) kv.Bucket {
+	var prefix []byte
+	if len(extraPrefix) > 0 {
+		prefix = []byte(strings.Trim(extraPrefix[0], "/"))
+	}
 	return &Bucket{
 		bucket: tx.tx.Bucket(b),
+		prefix: prefix,
 	}
 }
 
 // Bucket implements kv.Bucket.
 type Bucket struct {
 	bucket *bolt.Bucket
+	prefix []byte
 }
 
 // Get retrieves the value at the provided key.
@@ -207,6 +215,16 @@ func (b *Bucket) Exists(key []byte) (bool, error) {
 // the error is returned to the caller. The provided function must not modify
 // the bucket; this will result in undefined behavior.
 func (b *Bucket) ForEach(fn func(k, v []byte) error) error {
+	if len(b.prefix) > 0 {
+		prefix := append(append([]byte{}, b.prefix...), '/')
+		cursor := b.bucket.Cursor()
+		for k, v := cursor.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = cursor.Next() {
+			if err := fn(bytes.TrimPrefix(k, prefix), v); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	return b.bucket.ForEach(fn)
 }
 

@@ -3,12 +3,23 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/snetsystems/cloudhub/backend/log"
 )
 
+func newSaltServiceTestServer() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"return":[{"data":{"success":true,"return":{"minions":[]}}}]}`))
+	}))
+}
+
 func TestService_SaltHTTPPost(t *testing.T) {
+	saltServer := newSaltServiceTestServer()
+	defer saltServer.Close()
+
 	type body struct {
 		Token    string `json:"token"`
 		Eauth    string `json:"eauth"`
@@ -54,6 +65,7 @@ func TestService_SaltHTTPPost(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.s.AddonURLs["salt"] = saltServer.URL
 			tt.body.Token = tt.s.AddonTokens["salt"]
 			payload, _ := json.Marshal(tt.body)
 			statusCode, resp, err := tt.s.SaltHTTPPost(payload)
@@ -71,6 +83,9 @@ func TestService_SaltHTTPPost(t *testing.T) {
 }
 
 func TestService_DaemonReload(t *testing.T) {
+	saltServer := newSaltServiceTestServer()
+	defer saltServer.Close()
+
 	type args struct {
 		name string
 	}
@@ -97,6 +112,7 @@ func TestService_DaemonReload(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.s.AddonURLs["salt"] = saltServer.URL
 			statusCode, resp, err := tt.s.DaemonReload(tt.args.name)
 			if err != nil {
 				t.Errorf("Service.DaemonReload() error = %v\n", err)
@@ -112,6 +128,8 @@ func TestService_DaemonReload(t *testing.T) {
 }
 
 func TestService_GetWheelKeyAcceptedListAll(t *testing.T) {
+	saltServer := newSaltServiceTestServer()
+	defer saltServer.Close()
 
 	tests := []struct {
 		name string
@@ -132,6 +150,7 @@ func TestService_GetWheelKeyAcceptedListAll(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.s.AddonURLs["salt"] = saltServer.URL
 			statusCode, resp, err := tt.s.GetWheelKeyAcceptedListAll()
 			if err != nil {
 				t.Errorf("Service.GetWheelKeyAcceptedListAll() error = %v\n", err)

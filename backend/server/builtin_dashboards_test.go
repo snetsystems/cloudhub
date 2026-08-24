@@ -26,7 +26,7 @@ func TestInitializeFixedCells(t *testing.T) {
 			name:           "Initialize builtin dashboards for new organization",
 			orgID:          "test-org-1",
 			existingDashes: []cloudhub.Dashboard{},
-			wantCount:      1, // hostpage.json
+			wantCount:      2, // server-details.json and server_overview.json
 			wantErr:        false,
 		},
 		{
@@ -34,7 +34,12 @@ func TestInitializeFixedCells(t *testing.T) {
 			orgID: "test-org-2",
 			existingDashes: []cloudhub.Dashboard{
 				{
-					Name:         "host_page",
+					Name:         "server-details",
+					Organization: "test-org-2",
+					Type:         cloudhub.DashboardTypeBuiltin,
+				},
+				{
+					Name:         "server_overview",
 					Organization: "test-org-2",
 					Type:         cloudhub.DashboardTypeBuiltin,
 				},
@@ -52,7 +57,7 @@ func TestInitializeFixedCells(t *testing.T) {
 					Type:         cloudhub.DashboardTypeNormal,
 				},
 			},
-			wantCount: 1, // Should still add builtin dashboard
+			wantCount: 2, // Should still add builtin dashboards
 			wantErr:   false,
 		},
 	}

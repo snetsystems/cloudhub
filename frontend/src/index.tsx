@@ -131,6 +131,11 @@ const Applications = React.lazy(() =>
 const AiChatPage = React.lazy(() =>
   import('src/ai_chat/containers/AiChatPage').then(m => ({default: m.AiChatPage}))
 )
+const OpenClawSkillsPage = React.lazy(() =>
+  import('src/openclaw_skills/containers/OpenClawSkillsPage').then(m => ({
+    default: m.OpenClawSkillsPage,
+  }))
+)
 const LogsPage = React.lazy(() =>
   import('src/logs').then(m => ({default: m.LogsPage}))
 )
@@ -521,6 +526,10 @@ class Root extends PureComponent<Record<string, never>, State> {
                   <Route path="applications" component={Applications} />
                   <Route path="ai-chat" component={AiChatPage} />
                   <Route path="ai-chat-test" component={AiChatPage} />
+                  <Route
+                    path="openclaw-skills"
+                    component={OpenClawSkillsPage}
+                  />
                   <Route path="alerts" component={AlertsApp} />
                   <Route path="alert-rules" component={KapacitorRulesPage} />
                   <Route

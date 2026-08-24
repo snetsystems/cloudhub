@@ -96,7 +96,7 @@ func TestNetworkDeviceOrgStore(t *testing.T) {
 	}
 
 	// Check if the org has been deleted.
-	if _, err := s.Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgToUpdate.ID}); !errors.Is(err, cloudhub.ErrDeviceNotFound) {
-		t.Fatalf("Org delete error: got %v, expected %v", err, cloudhub.ErrDeviceNotFound)
+	if _, err := s.Get(ctx, cloudhub.NetworkDeviceOrgQuery{ID: &orgToUpdate.ID}); !errors.Is(err, cloudhub.ErrDeviceOrgNotFound) {
+		t.Fatalf("Org delete error: got %v, expected %v", err, cloudhub.ErrDeviceOrgNotFound)
 	}
 }

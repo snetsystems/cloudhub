@@ -128,7 +128,7 @@ func TestGatewayWaitsForChallengeAndSendsNonceBoundDeviceProof(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		payload := fmt.Sprintf("v3|%s|%s|%s|operator|operator.read,operator.write,operator.approvals|%d|test-token|nonce-1|%s|", deviceID, gatewayClientID, gatewayClientMode, params.Device.SignedAt, runtime.GOOS)
+		payload := fmt.Sprintf("v3|%s|%s|%s|operator|operator.read,operator.write,operator.approvals,operator.admin|%d|test-token|nonce-1|%s|", deviceID, gatewayClientID, gatewayClientMode, params.Device.SignedAt, runtime.GOOS)
 		if !ed25519.Verify(publicKey, []byte(payload), signature) {
 			return errors.New("device proof signature is invalid")
 		}
@@ -1028,7 +1028,7 @@ func TestGatewayIgnoresEventsDuringConnectBeforeSubscription(t *testing.T) {
 			"type": "hello-ok", "protocol": gatewayProtocolVersion,
 			"auth": map[string]interface{}{
 				"role":        "operator",
-				"scopes":      []string{"operator.read", "operator.write", "operator.approvals"},
+				"scopes":      []string{"operator.read", "operator.write", "operator.approvals", "operator.admin"},
 				"deviceToken": "test-token",
 			},
 			"padding": strings.Repeat("x", 1024*1024),
@@ -1402,14 +1402,14 @@ func fakeGatewayHandshake(conn *websocket.Conn, protocol int) error {
 	if req.Method != "connect" {
 		return fmt.Errorf("handshake method = %q, want connect", req.Method)
 	}
-	if !jsonObjectContains(req.Params, `"minProtocol":4`, `"maxProtocol":4`, `"id":"cli"`, `"mode":"cli"`, `"displayName":"CloudHub"`, `"token":"test-token"`, `"scopes":["operator.read","operator.write","operator.approvals"]`) {
+	if !jsonObjectContains(req.Params, `"minProtocol":4`, `"maxProtocol":4`, `"id":"cli"`, `"mode":"cli"`, `"displayName":"CloudHub"`, `"token":"test-token"`, `"scopes":["operator.read","operator.write","operator.approvals","operator.admin"]`) {
 		return fmt.Errorf("unexpected connect params: %s", req.Params)
 	}
 	return writeHelloOK(conn, req.ID, protocol)
 }
 
 func writeHelloOK(conn *websocket.Conn, id string, protocol int) error {
-	return writeHelloOKWithAuth(conn, id, protocol, "operator", []string{"operator.read", "operator.write", "operator.approvals"}, "test-token")
+	return writeHelloOKWithAuth(conn, id, protocol, "operator", []string{"operator.read", "operator.write", "operator.approvals", "operator.admin"}, "test-token")
 }
 
 func writeHelloOKWithAuth(conn *websocket.Conn, id string, protocol int, role string, scopes []string, deviceToken string) error {

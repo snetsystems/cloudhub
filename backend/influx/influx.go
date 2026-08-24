@@ -356,7 +356,7 @@ func (c *Client) ping(u *url.URL) (string, string, error) {
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		var err = fmt.Errorf(string(body))
+		var err = fmt.Errorf("%s", body)
 		return "", "", err
 	}
 

@@ -32,6 +32,35 @@ const (
 	saltTargetMinion      = ""
 )
 
+func newSaltAPITestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			Client string `json:"client"`
+			Fun    string `json:"fun"`
+			Kwarg  struct {
+				Fun string `json:"fun"`
+			} `json:"kwarg"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		fun := payload.Fun
+		if payload.Kwarg.Fun != "" {
+			fun = payload.Kwarg.Fun
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if payload.Client == "local" && (fun == "test.ping" || fun == "file.directory_exists") {
+			fmt.Fprintf(w, `{"return":[{"%s":true}]}`, saltTargetMinion)
+			return
+		}
+		fmt.Fprint(w, `{"return":[true]}`)
+	}))
+}
+
 func TestCSPID(t *testing.T) {
 	type fields struct {
 		CSPStore cloudhub.CSPStore
@@ -228,6 +257,9 @@ func TestCSP(t *testing.T) {
 }
 
 func TestNewCSP(t *testing.T) {
+	saltServer := newSaltAPITestServer(t)
+	defer saltServer.Close()
+
 	type fields struct {
 		OrganizationsStore cloudhub.OrganizationsStore
 		CSPStore           cloudhub.CSPStore
@@ -611,7 +643,7 @@ func TestNewCSP(t *testing.T) {
 					},
 				},
 				AddonURLs: map[string]string{
-					"salt":          saltTestURL,
+					"salt":          saltServer.URL,
 					"salt-env-path": "/opt/miniconda3/envs/saltenv",
 				},
 				AddonTokens: map[string]string{
@@ -1066,6 +1098,9 @@ func TestUpdateCSP(t *testing.T) {
 }
 
 func TestRemoveCSP(t *testing.T) {
+	saltServer := newSaltAPITestServer(t)
+	defer saltServer.Close()
+
 	type fields struct {
 		CSPStore cloudhub.CSPStore
 		Logger   cloudhub.Logger
@@ -1161,7 +1196,7 @@ func TestRemoveCSP(t *testing.T) {
 					CSPStore: tt.fields.CSPStore,
 				},
 				AddonURLs: map[string]string{
-					"salt":          saltTestURL,
+					"salt":          saltServer.URL,
 					"salt-env-path": "/opt/miniconda3/envs/saltenv",
 				},
 				AddonTokens: map[string]string{
@@ -1191,6 +1226,9 @@ func TestRemoveCSP(t *testing.T) {
 }
 
 func TestService_generateSaltConfigForOSP(t *testing.T) {
+	saltServer := newSaltAPITestServer(t)
+	defer saltServer.Close()
+
 	tests := []struct {
 		name string
 		s    *Service
@@ -1223,6 +1261,7 @@ func TestService_generateSaltConfigForOSP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.s.AddonURLs["salt"] = saltServer.URL
 			statusCode, resp, err := tt.s.generateSaltConfigForOSP(tt.csp)
 			if err != nil {
 				t.Errorf("Service.generateSaltConfigForOSP() error = %v\n", err)
@@ -1238,6 +1277,9 @@ func TestService_generateSaltConfigForOSP(t *testing.T) {
 }
 
 func TestService_removeSaltConfigForOSP(t *testing.T) {
+	saltServer := newSaltAPITestServer(t)
+	defer saltServer.Close()
+
 	tests := []struct {
 		name string
 		s    *Service
@@ -1262,6 +1304,7 @@ func TestService_removeSaltConfigForOSP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.s.AddonURLs["salt"] = saltServer.URL
 			statusCode, resp, err := tt.s.removeSaltConfigForOSP(tt.csp)
 			if err != nil {
 				t.Errorf("Service.removeSaltConfigForOSP() error = %v\n", err)
@@ -1277,6 +1320,9 @@ func TestService_removeSaltConfigForOSP(t *testing.T) {
 }
 
 func TestService_generateTelegrafConfigForOSP(t *testing.T) {
+	saltServer := newSaltAPITestServer(t)
+	defer saltServer.Close()
+
 	tests := []struct {
 		name string
 		s    *Service
@@ -1339,6 +1385,7 @@ func TestService_generateTelegrafConfigForOSP(t *testing.T) {
 	ctx := context.Background()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.s.AddonURLs["salt"] = saltServer.URL
 			statusCode, resp, err := tt.s.generateTelegrafConfigForOSP(ctx, tt.csp)
 			if err != nil {
 				t.Errorf("Service.generateTelegrafConfigForOSP() error = %v\n", err)
@@ -1354,6 +1401,9 @@ func TestService_generateTelegrafConfigForOSP(t *testing.T) {
 }
 
 func TestService_removeTelegrafConfigForOSP(t *testing.T) {
+	saltServer := newSaltAPITestServer(t)
+	defer saltServer.Close()
+
 	tests := []struct {
 		name string
 		s    *Service
@@ -1378,6 +1428,7 @@ func TestService_removeTelegrafConfigForOSP(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.s.AddonURLs["salt"] = saltServer.URL
 			statusCode, resp, err := tt.s.removeTelegrafConfigForOSP(tt.csp)
 			if err != nil {
 				t.Errorf("Service.removeTelegrafConfigForOSP() error = %v\n", err)

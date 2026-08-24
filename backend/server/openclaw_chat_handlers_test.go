@@ -18,6 +18,7 @@ import (
 	"github.com/jessevdk/go-flags"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/noop"
 	"github.com/snetsystems/cloudhub/backend/openclaw"
 	"github.com/snetsystems/cloudhub/backend/organizations"
 )
@@ -1089,7 +1090,12 @@ func TestOpenClawEventsRejectsUpgradeWhenGatewayUnavailable(t *testing.T) {
 
 func newOpenClawChatService(store cloudhub.OpenClawSessionStore, gateway openClawGateway) *Service {
 	return &Service{
-		Store:           &Store{OpenClawSessionStore: store},
+		Store: &Store{
+			OpenClawSessionStore: store,
+			// A deployment without per-organization agents: chat then falls
+			// back to the Gateway's default agent.
+			OpenClawOrgAgentStore: &noop.OpenClawOrgAgentStore{},
+		},
 		Logger:          &mocks.TestLogger{},
 		OpenClawGateway: gateway,
 		OpenClawAgentID: "main",
@@ -1255,4 +1261,74 @@ func (g *fakeOpenClawGateway) SubscribeCalls() int {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	return g.subscribeCalls
+}
+
+// Chat has to run where the organization's skills are. While it bound to the
+// Gateway's default agent, a user asking for a skill their organization had
+// just applied was told it did not exist — the agent they were talking to had
+// a different workspace.
+func TestOpenClawSessionsCreateBindsToTheOrganizationsExecutionAgent(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	gateway := &fakeOpenClawGateway{agents: openclaw.AgentList{
+		DefaultID: "gateway-default",
+		Agents:    []openclaw.Agent{{ID: "gateway-default"}},
+	}}
+	agents := &fakeOrgAgentStore{agentID: "cloudhub-org-a-execution"}
+
+	svc := newOpenClawChatService(store, gateway)
+	svc.OpenClawAgentID = ""
+	svc.Store = &Store{
+		OpenClawSessionStore:  store,
+		OpenClawOrgAgentStore: agents,
+	}
+
+	rr := httptest.NewRecorder()
+	svc.OpenClawSessions(rr, openClawRequest(http.MethodPost, "/cloudhub/v2/openclaw/sessions", `{"title":"x"}`, 42, "org-a"))
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if agents.purposes[0] != cloudhub.OpenClawAgentExecution {
+		t.Fatalf("resolved the %q agent, want the execution one", agents.purposes[0])
+	}
+	if gateway.ListAgentsCalls() != 0 {
+		t.Fatal("the Gateway default was resolved even though the organization has an agent")
+	}
+	for _, session := range store.items {
+		if session.AgentID != "cloudhub-org-a-execution" {
+			t.Fatalf("agent ID = %q, want the organization's execution agent", session.AgentID)
+		}
+		if want := "agent:cloudhub-org-a-execution:cloudhub:org-a:42:" + session.ID; session.SessionKey != want {
+			t.Fatalf("session key = %q, want %q", session.SessionKey, want)
+		}
+	}
+}
+
+// The flag is how an operator pins every session to one agent, so it still
+// wins over the organization's own.
+func TestOpenClawSessionsCreateKeepsTheConfiguredAgentIDAhead(t *testing.T) {
+	store := newOpenClawSessionStoreContract()
+	agents := &fakeOrgAgentStore{agentID: "cloudhub-org-a-execution"}
+
+	svc := newOpenClawChatService(store, &fakeOpenClawGateway{})
+	svc.OpenClawAgentID = "pinned-agent"
+	svc.Store = &Store{
+		OpenClawSessionStore:  store,
+		OpenClawOrgAgentStore: agents,
+	}
+
+	rr := httptest.NewRecorder()
+	svc.OpenClawSessions(rr, openClawRequest(http.MethodPost, "/cloudhub/v2/openclaw/sessions", `{"title":"x"}`, 42, "org-a"))
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("status = %d, want %d: %s", rr.Code, http.StatusCreated, rr.Body.String())
+	}
+	if len(agents.purposes) != 0 {
+		t.Fatal("the organization mapping was consulted despite an explicit agent ID")
+	}
+	for _, session := range store.items {
+		if session.AgentID != "pinned-agent" {
+			t.Fatalf("agent ID = %q, want pinned-agent", session.AgentID)
+		}
+	}
 }

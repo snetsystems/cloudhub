@@ -46,6 +46,10 @@ type Service struct {
 	AlertGroupRules           cloudhub.AlertGroupRuleStore
 	AlertTemplates            cloudhub.AlertTemplatesStore
 	OpenClawGateway           openClawGateway
+	OpenClawSkillPublisher    openClawSkillPublisher
+	OpenClawSkillDeleter      openClawSkillDeleter
+	OpenClawAgentProvisioner  openClawAgentProvisioner
+	OpenClawSkillDrafter      openClawSkillDrafter
 	OpenClawAgentID           string
 	openClawManagedApprovals  *openClawManagedApprovalStore
 }
@@ -114,6 +118,44 @@ type openClawGateway interface {
 }
 
 var _ openClawGateway = (*openclaw.GatewayClient)(nil)
+
+// openClawSkillPublisher reflects an approved revision onto a Gateway agent,
+// and reads back what that agent actually holds.
+type openClawSkillPublisher interface {
+	Publish(ctx context.Context, agentID string, payload openclaw.SkillPayload) (openclaw.PublishResult, error)
+	Inventory(ctx context.Context, agentID string) ([]openclaw.SkillInventoryEntry, error)
+}
+
+var _ openClawSkillPublisher = (*openclaw.SkillPublisher)(nil)
+
+// openClawSkillDeleter removes a retired skill from an agent workspace. It is
+// separate from the publisher because it does not talk to the Gateway: the
+// Gateway has no skill-delete API, and it will not relay MCP tools until an
+// agent turn has connected them.
+type openClawSkillDeleter interface {
+	Delete(ctx context.Context, agentID, skillName string) error
+	DeleteWorkspace(ctx context.Context, agentID string) error
+}
+
+var _ openClawSkillDeleter = (*openclaw.SkillDeleter)(nil)
+
+// openClawAgentProvisioner creates the Gateway agent, and the workspace that
+// isolates it, for one organization and purpose.
+type openClawAgentProvisioner interface {
+	Ensure(ctx context.Context, name string) (string, error)
+	Remove(ctx context.Context, agentID string) error
+}
+
+var _ openClawAgentProvisioner = (*openclaw.AgentProvisioner)(nil)
+
+// openClawSkillDrafter asks an authoring agent for a SKILL.md draft. It is a
+// separate surface from the publisher on purpose: drafting must not be able to
+// create a Gateway proposal.
+type openClawSkillDrafter interface {
+	Draft(ctx context.Context, request openclaw.DraftRequest) (openclaw.SkillDraft, error)
+}
+
+var _ openClawSkillDrafter = (*openclaw.SkillDrafter)(nil)
 
 // openClawGatewayLifecycle is the additional client surface owned by the
 // process-wide lifecycle manager.

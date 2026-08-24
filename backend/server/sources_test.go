@@ -1899,6 +1899,9 @@ func TestService_RemoveSourceRole(t *testing.T) {
 					},
 					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return &mocks.RolesStore{
+							GetF: func(ctx context.Context, name string) (*cloudhub.Role, error) {
+								return &cloudhub.Role{Name: name}, nil
+							},
 							DeleteF: func(context.Context, *cloudhub.Role) error {
 								return nil
 							},
