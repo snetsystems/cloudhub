@@ -98,7 +98,11 @@ export const AiChatPage: FC<Props> = ({timeZone, onSetTimeZone}) => {
           />
         </Page.Header.Right>
       </Page.Header>
-      <Page.Contents fullWidth={true} scrollable={false}>
+      <Page.Contents
+        fullWidth={true}
+        scrollable={false}
+        className="ai-chat-page-contents"
+      >
         <div className="ai-chat-page-container">
           <CloudhubAiChatStandalone
             mode="full"

@@ -25,6 +25,7 @@ import CollapsibleSidePanelSlice from 'src/shared/components/CollapsibleSidePane
 
 // Cloudhub Reusable Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import PageSpinner from 'src/shared/components/PageSpinner'
 import AiChatSidebar from 'src/ai_chat/containers/AiChatSidebar'
 import SubagentInspectorPanel, {
   CustomPanelView,
@@ -724,7 +725,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     const textarea = textareaRef.current
     if (!textarea) return
     textarea.style.height = 'auto'
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, 38), 160)
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, 30), 160)
     textarea.style.height = `${newHeight}px`
   }
 
@@ -1451,7 +1452,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
   }
 
-  const scrollToBottom = (smooth = true) => {
+  const scrollToBottom = useCallback((smooth = true) => {
     setIsUserScrolledUp(false)
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({
@@ -1459,21 +1460,51 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         block: 'end',
       })
     }
-  }
+  }, [])
 
   useEffect(() => {
+    if (isLoadingHistory) return
+
     if (!isUserScrolledUp && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({
-        behavior: isStreamingActive ? 'auto' : 'smooth',
-        block: 'end',
+      const rafId = requestAnimationFrame(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({
+            behavior: isStreamingActive ? 'auto' : 'smooth',
+            block: 'end',
+          })
+        }
       })
+      return () => cancelAnimationFrame(rafId)
     }
   }, [
     activeSession?.messages,
     approvalIdSetKey,
+    isLoadingHistory,
     isUserScrolledUp,
     isStreamingActive,
   ])
+
+  useEffect(() => {
+    if (!isLoadingHistory && activeSessionId) {
+      setIsUserScrolledUp(false)
+      const timer = setTimeout(() => {
+        if (messagesEndRef.current) {
+          const scrollContainer = messagesEndRef.current.parentElement
+          const needsScroll =
+            scrollContainer &&
+            scrollContainer.scrollHeight > scrollContainer.clientHeight
+
+          if (needsScroll) {
+            messagesEndRef.current.scrollIntoView({
+              behavior: 'smooth',
+              block: 'end',
+            })
+          }
+        }
+      }, 60)
+      return () => clearTimeout(timer)
+    }
+  }, [isLoadingHistory, activeSessionId])
 
   const handleSelectSession = (id: string) => {
     if (activeSessionId === id) return
@@ -1481,6 +1512,10 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     setActiveSessionId(id)
     setInputPrompt('')
     setIsUserScrolledUp(false)
+
+    if (messagesEndRef.current?.parentElement) {
+      messagesEndRef.current.parentElement.scrollTop = 0
+    }
   }
 
   const handleCreateNewChat = () => {
@@ -1915,19 +1950,14 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       )}
 
       <div className="message-list-wrapper">
-        <FancyScrollbar autoHide={true} setScrollTop={handleScroll}>
+        <FancyScrollbar
+          key={activeSessionId || 'empty-session'}
+          autoHide={true}
+          setScrollTop={handleScroll}
+        >
           <div className="message-list">
             {isLoadingHistory && activeSessionId ? (
-              <div className="chat-history-loading">
-                <span className="loading-dots-container chat-history-loading-dots">
-                  <span className="loading-dot" />
-                  <span className="loading-dot" />
-                  <span className="loading-dot" />
-                </span>
-                <span className="chat-history-loading-text">
-                  대화 내역을 불러오는 중입니다...
-                </span>
-              </div>
+              <PageSpinner pageSpinnerHeight="240px" />
             ) : displayableMessages.length === 0 && approvals.length === 0 ? (
               <div className="chat-empty-state">
                 <div className="empty-state-hero">
