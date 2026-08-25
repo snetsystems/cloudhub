@@ -93,8 +93,8 @@ func (s *OpenClawSkillStore) Create(ctx context.Context, skill *cloudhub.OpenCla
 		if _, err := tx.ExecContext(ctx, `
 			INSERT INTO openclaw_skills (
 				id, organization_id, name, status, active_revision,
-				created_by, created_at, updated_at
-			) VALUES ($1, $2, $3, $4, NULL, $5, $6, $7)`,
+				next_revision, created_by, created_at, updated_at
+			) VALUES ($1, $2, $3, $4, NULL, 2, $5, $6, $7)`,
 			skill.ID, skill.OrganizationID, skill.Name, skill.Status,
 			skill.CreatedBy, skill.CreatedAt, skill.UpdatedAt); err != nil {
 			return fmt.Errorf("insert openclaw skill: %w", err)
@@ -114,34 +114,32 @@ func (s *OpenClawSkillStore) Create(ctx context.Context, skill *cloudhub.OpenCla
 // the same one.
 func (s *OpenClawSkillStore) AddRevision(ctx context.Context, organizationID, skillID string, rev *cloudhub.OpenClawSkillRevision) (*cloudhub.OpenClawSkillRevision, error) {
 	err := s.db.WithTx(ctx, func(ctx context.Context, tx rdb.Store) error {
-		var owned bool
-		if err := tx.QueryRowContext(ctx, `
-			SELECT EXISTS (
-				SELECT 1 FROM openclaw_skills
-				WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
-			)`, skillID, organizationID).Scan(&owned); err != nil {
-			return fmt.Errorf("check openclaw skill ownership: %w", err)
-		}
-		if !owned {
-			return cloudhub.ErrOpenClawSkillNotFound
-		}
+		/*
+			Taking the number from the skill's own counter, rather than from
+			MAX(revision) over the rows that happen to be left, is what keeps a
+			number from coming back. MAX only sees what survives, so deleting
+			the highest revision would hand its number to different content and
+			make an earlier reference to it mean something else.
 
+			The same statement checks ownership and touches updated_at: a skill
+			that is absent, retired, or another organization's matches nothing
+			and no number is issued.
+		*/
 		var next int
 		if err := tx.QueryRowContext(ctx, `
-			SELECT COALESCE(MAX(revision), 0) + 1
-			FROM openclaw_skill_revisions WHERE skill_id = $1`, skillID).Scan(&next); err != nil {
+			UPDATE openclaw_skills
+			SET next_revision = next_revision + 1, updated_at = $3
+			WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+			RETURNING next_revision - 1`,
+			skillID, organizationID, rev.CreatedAt).Scan(&next); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return cloudhub.ErrOpenClawSkillNotFound
+			}
 			return fmt.Errorf("next openclaw revision number: %w", err)
 		}
 		rev.SkillID = skillID
 		rev.Revision = next
-		if err := insertOpenClawRevision(ctx, tx, rev); err != nil {
-			return err
-		}
-		if _, err := tx.ExecContext(ctx, `
-			UPDATE openclaw_skills SET updated_at = $2 WHERE id = $1`, skillID, rev.CreatedAt); err != nil {
-			return fmt.Errorf("touch openclaw skill: %w", err)
-		}
-		return nil
+		return insertOpenClawRevision(ctx, tx, rev)
 	})
 	if err != nil {
 		return nil, err

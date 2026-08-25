@@ -16,14 +16,21 @@ func setupOpenClawSkillStore(t *testing.T) (*pgsql.OpenClawSkillStore, func()) {
 	t.Helper()
 	client, cleanup := setupTestDB(t)
 
-	sql, err := os.ReadFile("migrations/009_create_openclaw_skill_authoring.sql")
-	if err != nil {
-		cleanup()
-		t.Fatalf("read authoring migration: %v", err)
-	}
-	if _, err := client.ExecContext(context.Background(), string(sql)); err != nil {
-		cleanup()
-		t.Fatalf("run authoring migration: %v", err)
+	// The store reads next_revision, so the migration that adds it has to run
+	// here too - the schema these tests exercise is the deployed one.
+	for _, name := range []string{
+		"migrations/009_create_openclaw_skill_authoring.sql",
+		"migrations/013_openclaw_skill_next_revision.sql",
+	} {
+		sql, err := os.ReadFile(name)
+		if err != nil {
+			cleanup()
+			t.Fatalf("read %s: %v", name, err)
+		}
+		if _, err := client.ExecContext(context.Background(), string(sql)); err != nil {
+			cleanup()
+			t.Fatalf("run %s: %v", name, err)
+		}
 	}
 
 	store := pgsql.NewOpenClawSkillStore(client)
@@ -256,6 +263,20 @@ func TestOpenClawSkillStoreDeleteRevisionKeepsTheRestAndDoesNotReuseTheNumber(t 
 	}
 	if added.Revision != 4 {
 		t.Fatalf("next revision = %d, want 4", added.Revision)
+	}
+
+	// Deleting the highest revision is the case a MAX(revision) + 1 counter
+	// gets wrong: the number would drop back and the next revision would take
+	// one that has already been used.
+	if err := store.DeleteRevision(ctx, "org-a", skill.ID, 4); err != nil {
+		t.Fatalf("delete highest revision: %v", err)
+	}
+	after, err := store.AddRevision(ctx, "org-a", skill.ID, newTestRevision("11111111-2222-3333-4444-55555555555a", mainOnly("v5")))
+	if err != nil {
+		t.Fatalf("add revision after deleting the highest: %v", err)
+	}
+	if after.Revision != 5 {
+		t.Fatalf("next revision after deleting the highest = %d, want 5", after.Revision)
 	}
 
 	if err := store.DeleteRevision(ctx, "org-a", skill.ID, 2); err != cloudhub.ErrOpenClawSkillNotFound {
