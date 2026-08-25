@@ -128,7 +128,7 @@
     border-left: 0;
     border-radius: 0;
     height: 100%;
-    background-color: #0b0e14;
+    background-color: $g0-obsidian;
 
     &.is-open {
       transform: none;
@@ -136,12 +136,7 @@
 
     .message-list-wrapper {
       overflow-x: hidden;
-      background: radial-gradient(
-        ellipse 120% 80% at 50% 62%,
-        rgba($c-pool, 0.14) 0%,
-        rgba($c-laser, 0.06) 32%,
-        transparent 68%
-      );
+      background: $g0-obsidian;
 
       .fancy-scroll--container > div:nth-child(2),
       .fancy-scroll--track-h,
@@ -152,32 +147,32 @@
 
     .message-list .chat-empty-state {
       position: relative;
-      padding: 28px 18px 20px;
+      padding: 40px 18px 14px;
       max-width: none;
 
       .empty-state-hero {
         position: relative;
         z-index: 1;
-        margin-bottom: 22px;
+        margin-bottom: 26px;
 
         .empty-hero-icon {
           display: none;
         }
 
         .empty-hero-title {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 700;
           line-height: 1.35;
-          margin-bottom: 8px;
-          background: linear-gradient(90deg, $c-laser 0%, $c-pool 100%);
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
+          margin-bottom: 10px;
+          color: $c-hydrogen;
+          background: none;
+          -webkit-background-clip: unset;
+          background-clip: unset;
         }
 
         .empty-hero-subtitle {
           font-size: 12px;
-          color: $g9-mountain;
+          color: $g10-wolf;
           line-height: 1.5;
           max-width: 100%;
         }
@@ -185,24 +180,6 @@
 
       .prompt-suggestions-container {
         position: relative;
-
-        &::before {
-          content: '';
-          position: absolute;
-          top: 58%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          width: min(360px, 100%);
-          height: 86%;
-          background: radial-gradient(
-            ellipse at center,
-            rgba($c-pool, 0.2) 0%,
-            rgba($c-laser, 0.08) 40%,
-            transparent 72%
-          );
-          pointer-events: none;
-          z-index: 0;
-        }
 
         .suggestions-header,
         .suggestions-grid {
@@ -215,10 +192,10 @@
           align-items: center;
           gap: 8px;
           margin-bottom: 12px;
-          padding-left: 0;
+          padding-left: 2px;
           text-transform: none;
-          letter-spacing: 0;
-          font-size: 12px;
+          letter-spacing: 0.5px;
+          font-size: 11px;
           font-weight: 600;
           color: $g13-mist;
 
