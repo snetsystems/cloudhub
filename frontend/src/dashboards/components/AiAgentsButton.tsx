@@ -28,7 +28,7 @@ const AiAgentsButton: React.FC<Props> = ({
   return (
     <Button
       text="AI Agents"
-      icon={IconFont.AiIcon}
+      icon={IconFont.AiRobot}
       onClick={onToggle}
       active={isDrawerOpen}
       customClass="dashboard-ai-agents-button"

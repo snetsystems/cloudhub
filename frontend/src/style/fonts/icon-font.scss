@@ -539,4 +539,8 @@
   &.bell-add::before {
     content: '\e95d';
   }
+
+  &.ai-robot::before {
+    content: '\e95e';
+  }
 }
