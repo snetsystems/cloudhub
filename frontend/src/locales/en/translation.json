@@ -455,7 +455,9 @@
       "title": "Skills",
       "empty": "No skills have been authored yet.",
       "live_revision": "Revision {{revision}} in use",
-      "not_published": "No revision applied"
+      "not_published": "No revision applied",
+      "baseline": "Baseline skills",
+      "baseline_hint": "Provided when the organization was set up. They cannot be edited or retired here."
     },
     "gateway": {
       "blocked": "Disabled on the Gateway",

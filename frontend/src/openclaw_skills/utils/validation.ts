@@ -71,8 +71,8 @@ const RESERVED_NAMES = new Set([
 
 const encoder = new TextEncoder()
 
-// The backend counts bytes, not characters, so a Korean description hits the
-// 160 limit about three times sooner than its length suggests.
+// The backend counts bytes, not characters, so a Korean description reaches
+// the limit about three times sooner than its length suggests.
 export const byteLength = (text: string): number => encoder.encode(text).length
 
 export interface SkillIssue {

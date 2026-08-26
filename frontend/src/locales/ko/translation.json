@@ -450,7 +450,9 @@
       "title": "스킬",
       "empty": "저작된 스킬이 없습니다.",
       "live_revision": "리비전 {{revision}} 사용 중",
-      "not_published": "적용된 리비전 없음"
+      "not_published": "적용된 리비전 없음",
+      "baseline": "기본 스킬",
+      "baseline_hint": "조직 생성 시 함께 제공되는 스킬입니다. 편집하거나 폐기할 수 없습니다."
     },
     "gateway": {
       "blocked": "게이트웨이에서 비활성",

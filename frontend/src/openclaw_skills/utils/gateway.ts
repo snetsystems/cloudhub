@@ -89,3 +89,34 @@ export const syncState = (
       }
   }
 }
+
+/**
+ * The skills an agent holds that this organization did not author.
+ *
+ * A new organization's agent is provisioned with a set of baseline skills,
+ * copied into its workspace as files. They deliberately have no CloudHub
+ * record: the organization did not write them, and recording them would
+ * produce a skill whose next revision the editor would refuse over a
+ * description nobody here wrote. So the Gateway is the only place they are
+ * known, and "in the inventory, absent from the list" is what identifies them.
+ *
+ * Anything an administrator placed in the workspace by hand lands here too.
+ * That is the same kind of thing - a skill the organization did not author -
+ * so it is shown the same way rather than hidden.
+ */
+export const baselineSkills = (
+  inventory: Map<string, OpenClawGatewaySkill> | null,
+  skills: OpenClawSkill[]
+): OpenClawGatewaySkill[] => {
+  if (!inventory) {
+    return []
+  }
+  const authored = new Set(skills.map(skill => skill.name))
+  return [...inventory.values()]
+    .filter(entry => !authored.has(entry.name))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** The Gateway's own summary of a skill, when it supplied one. */
+export const gatewayDescription = (entry: OpenClawGatewaySkill): string =>
+  typeof entry.description === 'string' ? entry.description : ''

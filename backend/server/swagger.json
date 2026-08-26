@@ -9397,6 +9397,60 @@
         }
       }
     },
+    "../v2/openclaw/skill-inventory/{name}": {
+      "get": {
+        "tags": [
+          "openclaw"
+        ],
+        "summary": "Read one workspace skill's files",
+        "description": "Returns the files an organization's execution agent holds for one workspace skill, read live from the Gateway. This is how a baseline skill is read: those are copied into the workspace as files and have no CloudHub record, so there is no revision to fetch. Read-only - what is not recorded here cannot be edited here.",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "type": "string",
+            "required": true,
+            "description": "Skill directory name."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The skill's files, paths relative to the skill directory.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "agentId": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This organization has no execution agent yet."
+          },
+          "502": {
+            "description": "The Gateway could not be reached, or holds no such skill."
+          }
+        }
+      }
+    },
     "../v2/openclaw/skills": {
       "get": {
         "tags": [

@@ -383,6 +383,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v2/openclaw/skill-drafts", EnsureAdmin(service.OpenClawSkillDraft))
 	router.GET("/cloudhub/v2/openclaw/skills", EnsureViewer(service.OpenClawSkillsList))
 	router.GET("/cloudhub/v2/openclaw/skill-inventory", EnsureViewer(service.OpenClawSkillInventory))
+	router.GET("/cloudhub/v2/openclaw/skill-inventory/:name", EnsureViewer(service.OpenClawSkillInventoryFiles))
 	router.POST("/cloudhub/v2/openclaw/skills", EnsureAdmin(service.OpenClawSkillCreate))
 	router.GET("/cloudhub/v2/openclaw/skills/:id", EnsureViewer(service.OpenClawSkillGet))
 	router.POST("/cloudhub/v2/openclaw/skills/:id/revisions", EnsureAdmin(service.OpenClawSkillRevisionCreate))

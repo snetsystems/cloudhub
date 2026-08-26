@@ -125,6 +125,37 @@
 }
 
 /*
+  Skills the agent holds that this organization did not author: the baseline it
+  was provisioned with, copied into its workspace as files. They have no
+  CloudHub record, so there is nothing to open - the rows are inert on purpose,
+  and look it.
+*/
+.openclaw-skills--baseline {
+  margin-top: $ix-marg-c;
+  padding-top: $ix-marg-b;
+  border-top: 2px solid $g5-pepper;
+}
+
+.openclaw-skills--baseline-header {
+  padding: 0 $ix-marg-c $ix-marg-a $ix-marg-c;
+  color: $g11-sidewalk;
+  font-size: $ix-text-tiny;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.openclaw-skills--baseline .openclaw-skills--hint {
+  padding: 0 $ix-marg-c;
+}
+
+/* Lighter than an authored skill: it can be read, not changed. */
+.openclaw-skills--baseline .openclaw-skills--name {
+  color: $g13-mist;
+  font-weight: 400;
+}
+
+/*
   One dot for the whole state. In the ordinary case the skill's record status,
   its live revision and the Gateway's inventory all say the same thing, so
   showing three labels only added noise. Red is reserved for the case they

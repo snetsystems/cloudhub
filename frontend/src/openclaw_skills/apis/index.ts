@@ -4,6 +4,7 @@ import {
   OpenClawSkillDetail,
   OpenClawSkillDraft,
   OpenClawSkillInventory,
+  OpenClawWorkspaceSkill,
   OpenClawSkillRequest,
   OpenClawSkillRevision,
 } from 'src/types/openclawSkills'
@@ -57,6 +58,22 @@ export const getSkillInventory = async (): Promise<OpenClawSkillInventory> => {
   return request<OpenClawSkillInventory>({
     method: 'GET',
     url: SKILL_INVENTORY_URL,
+  })
+}
+
+/**
+ * Read one workspace skill's files, live from the Gateway.
+ *
+ * This is the only way to see a baseline skill. Those are copied into the
+ * agent's workspace as files and have no CloudHub record, so there is no
+ * revision to fetch.
+ */
+export const getWorkspaceSkill = async (
+  name: string
+): Promise<OpenClawWorkspaceSkill> => {
+  return request<OpenClawWorkspaceSkill>({
+    method: 'GET',
+    url: `${SKILL_INVENTORY_URL}/${encodeURIComponent(name)}`,
   })
 }
 

@@ -226,11 +226,40 @@ type DeleteWorkspaceResult struct {
 	FileCount int    `json:"fileCount"`
 }
 
-// DeleteWorkspace removes <workspaceRoot>/<agentId> and everything under it.
+// scaffoldFiles are the files a reclaimed workspace keeps.
+//
+// The Gateway records that it initialized a workspace, in state kept outside
+// the directory, and for 24 hours afterwards it refuses to create an agent
+// whose workspace has since gone - WorkspaceVanishedError, "refusing to reseed
+// over a recently attested workspace". Two of its checks have to stay happy: a
+// workspace with none of AGENTS/SOUL/IDENTITY/USER.md reads as brand new, and
+// BOOTSTRAP.md is what it accepts as evidence the workspace survived. An empty
+// directory satisfies neither, so reclaiming one that way would block the same
+// organization from being provisioned again for a day.
+//
+// Everything of size - skills, memory, whatever an agent wrote - is outside
+// this set, so the disk is still reclaimed.
+var scaffoldFiles = map[string]bool{
+	"AGENTS.md":                     true,
+	"SOUL.md":                       true,
+	"IDENTITY.md":                   true,
+	"USER.md":                       true,
+	"BOOTSTRAP.md":                  true,
+	"HEARTBEAT.md":                  true,
+	"TOOLS.md":                      true,
+	"openclaw-workspace-state.json": true,
+}
+
+// DeleteWorkspace strips <workspaceRoot>/<agentId> back to its scaffolding.
 //
 // This is how an organization's workspace is reclaimed when it is deleted:
 // the Gateway's agents.delete removes the agent's config entry but leaves the
 // directory on disk.
+//
+// What survives is the scaffold listed above and nothing else. An agent name
+// is derived from the organization id, so a name only ever belongs to one
+// organization - the instructions left behind can only ever be read again by
+// the organization that wrote them.
 //
 // Unlike Delete, the file list is not returned - a workspace holds every skill
 // an organization ever had - but it is counted and the removal is logged.
@@ -260,16 +289,29 @@ func (s *Service) DeleteWorkspace(_ context.Context, input DeleteWorkspaceInput)
 		return DeleteWorkspaceResult{}, newError(ErrorPathEscape, "refusing to delete %s", target)
 	}
 
-	files, err := listFiles(target)
+	entries, err := os.ReadDir(target)
 	if err != nil {
-		return DeleteWorkspaceResult{}, newError(ErrorDeleteFailed, "list %s: %v", target, err)
+		return DeleteWorkspaceResult{}, newError(ErrorDeleteFailed, "read %s: %v", target, err)
 	}
-	s.logf("deleting agent workspace agent=%s path=%s files=%d", input.AgentID, target, len(files))
 
-	if err := os.RemoveAll(target); err != nil {
-		return DeleteWorkspaceResult{}, newError(ErrorDeleteFailed, "delete %s: %v", target, err)
+	removed := 0
+	for _, entry := range entries {
+		if scaffoldFiles[entry.Name()] {
+			continue
+		}
+		path := filepath.Join(target, entry.Name())
+		files, err := listFiles(path)
+		if err != nil {
+			return DeleteWorkspaceResult{}, newError(ErrorDeleteFailed, "list %s: %v", path, err)
+		}
+		if err := os.RemoveAll(path); err != nil {
+			return DeleteWorkspaceResult{}, newError(ErrorDeleteFailed, "delete %s: %v", path, err)
+		}
+		removed += len(files)
 	}
+
+	s.logf("reclaimed agent workspace agent=%s path=%s files=%d", input.AgentID, target, removed)
 	result.Deleted = true
-	result.FileCount = len(files)
+	result.FileCount = removed
 	return result, nil
 }

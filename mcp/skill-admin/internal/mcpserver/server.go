@@ -13,10 +13,11 @@ import (
 )
 
 // SkillDirectoryService removes workspace skill directories and whole agent
-// workspaces.
+// workspaces, and places a template's skills in a new one.
 type SkillDirectoryService interface {
 	Delete(context.Context, skilldir.DeleteInput) (skilldir.DeleteResult, error)
 	DeleteWorkspace(context.Context, skilldir.DeleteWorkspaceInput) (skilldir.DeleteWorkspaceResult, error)
+	Copy(context.Context, skilldir.CopyInput) (skilldir.CopyResult, error)
 }
 
 type toolError struct {
@@ -90,6 +91,31 @@ func registerTools(server *mcp.Server, service SkillDirectoryService) {
 		},
 		func(ctx context.Context, _ *mcp.CallToolRequest, input skilldir.DeleteWorkspaceInput) (*mcp.CallToolResult, any, error) {
 			result, err := service.DeleteWorkspace(ctx, input)
+			if err != nil {
+				return failureResult(err), nil, nil
+			}
+			return nil, result, nil
+		},
+	)
+	// Copying adds nothing and removes nothing that was already there, so it
+	// is not marked destructive: a name the target already has is skipped
+	// rather than overwritten, which is also what makes it idempotent.
+	notDestructive := false
+	mcp.AddTool[skilldir.CopyInput, any](
+		server,
+		&mcp.Tool{
+			Name: "copy_workspace_skills",
+			Description: "Copy every skill directory from one agent workspace into another, skipping names the target already has. " +
+				"Used to give a newly provisioned organization its baseline skills. " +
+				"The Gateway's skills.proposals API caps a description at 160 bytes; skills placed as files have no such cap, which is why these are copied rather than proposed.",
+			Annotations: &mcp.ToolAnnotations{
+				DestructiveHint: &notDestructive,
+				IdempotentHint:  true,
+				OpenWorldHint:   &closedWorld,
+			},
+		},
+		func(ctx context.Context, _ *mcp.CallToolRequest, input skilldir.CopyInput) (*mcp.CallToolResult, any, error) {
+			result, err := service.Copy(ctx, input)
 			if err != nil {
 				return failureResult(err), nil, nil
 			}

@@ -44,16 +44,44 @@ only CloudHub, which holds the token.
 
 ## The tools
 
-| Name | Input | Removes |
+| Name | Input | Effect |
 |---|---|---|
-| `delete_workspace_skill` | `agentId`, `skillName` | `<root>/<agentId>/skills/<skillName>/` |
-| `delete_agent_workspace` | `agentId` | `<root>/<agentId>/` |
+| `delete_workspace_skill` | `agentId`, `skillName` | removes `<root>/<agentId>/skills/<skillName>/` |
+| `delete_agent_workspace` | `agentId` | strips `<root>/<agentId>/` back to its scaffold files |
+| `copy_workspace_skills` | `sourceAgentId`, `targetAgentId` | copies each `skills/<name>/` the target does not already have |
 
-Both are annotated destructive, idempotent, and closed-world.
+All three are idempotent and closed-world. The two deletes are annotated
+destructive; the copy is not, because it never overwrites - a name the target
+already has is skipped.
 
-The second reclaims a deleted organization's workspace. The Gateway's
-`agents.delete` removes the agent record but leaves its files, and its RPC has
-no option to change that.
+`delete_agent_workspace` reclaims a deleted organization's workspace. The
+Gateway's `agents.delete` removes the agent record but leaves its files, and
+its RPC has no option to change that.
+
+It leaves the scaffold behind on purpose: `AGENTS.md`, `SOUL.md`,
+`IDENTITY.md`, `USER.md`, `BOOTSTRAP.md`, `HEARTBEAT.md`, `TOOLS.md` and
+`openclaw-workspace-state.json`. The Gateway records that it initialized a
+workspace, in state kept outside the directory, and for 24 hours afterwards it
+refuses to create an agent whose workspace has since gone
+(`WorkspaceVanishedError`, "refusing to reseed over a recently attested
+workspace"). Two of its checks decide this: a workspace holding none of
+`AGENTS`/`SOUL`/`IDENTITY`/`USER.md` reads as brand new, and `BOOTSTRAP.md` is
+what it accepts as evidence the workspace survived. Stripping the directory
+bare - or removing it - satisfies neither, and would keep the same
+organization from being provisioned again for a day, which is exactly the
+recovery the soft-deleted mapping exists to allow.
+
+Everything of size is outside that set - skills, memory, whatever the agent
+wrote - so the disk is still reclaimed. An agent name is derived from the
+organization id, so a name only ever belongs to one organization: the
+instructions left behind can only be read again by whoever wrote them.
+
+`copy_workspace_skills` gives a newly provisioned organization its baseline
+skills. They are copied rather than published because the Gateway's
+`skills.proposals.*` API caps a skill description at 160 bytes
+(`MAX_SKILL_PROPOSAL_DESCRIPTION_BYTES`), while a skill placed in a workspace
+as files is read by a path with no such cap - which is how the Gateway's own
+operational skills, several hundred bytes of description each, exist at all.
 
 Deletion cannot be undone, so the input is checked rather than trusted:
 

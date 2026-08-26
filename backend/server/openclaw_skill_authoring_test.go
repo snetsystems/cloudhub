@@ -40,7 +40,7 @@ func TestValidateOpenClawSkillFiles(t *testing.T) {
 		{name: "missing frontmatter description", main: "---\nname: cpu-report\n---\n", wantErr: true},
 		{
 			name:    "description too long",
-			main:    "---\nname: cpu-report\ndescription: \"" + strings.Repeat("d", 161) + "\"\n---\n",
+			main:    "---\nname: cpu-report\ndescription: \"" + strings.Repeat("d", maxOpenClawSkillDescBytes+1) + "\"\n---\n",
 			wantErr: true,
 		},
 		{name: "body too large", main: strings.Repeat("x", 40001), wantErr: true},
@@ -205,6 +205,18 @@ type stubPublisher struct {
 	inventory    []openclaw.SkillInventoryEntry
 	inventoryErr error
 	inventoryFor []string
+
+	workspaceFiles []openclaw.SkillFile
+	workspaceErr   error
+	workspaceFor   []string
+}
+
+func (p *stubPublisher) WorkspaceSkill(_ context.Context, agentID, name string) ([]openclaw.SkillFile, error) {
+	p.workspaceFor = append(p.workspaceFor, agentID+"/"+name)
+	if p.workspaceErr != nil {
+		return nil, p.workspaceErr
+	}
+	return p.workspaceFiles, nil
 }
 
 func (p *stubPublisher) Inventory(_ context.Context, agentID string) ([]openclaw.SkillInventoryEntry, error) {

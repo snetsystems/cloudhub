@@ -127,17 +127,22 @@ var _ openClawGateway = (*openclaw.GatewayClient)(nil)
 type openClawSkillPublisher interface {
 	Publish(ctx context.Context, agentID string, payload openclaw.SkillPayload) (openclaw.PublishResult, error)
 	Inventory(ctx context.Context, agentID string) ([]openclaw.SkillInventoryEntry, error)
+	// WorkspaceSkill reads one skill's files out of an agent's workspace. It is
+	// the only way to see a baseline skill, which has no CloudHub record.
+	WorkspaceSkill(ctx context.Context, agentID, name string) ([]openclaw.SkillFile, error)
 }
 
 var _ openClawSkillPublisher = (*openclaw.SkillPublisher)(nil)
 
-// openClawSkillDeleter removes a retired skill from an agent workspace. It is
-// separate from the publisher because it does not talk to the Gateway: the
-// Gateway has no skill-delete API, and it will not relay MCP tools until an
-// agent turn has connected them.
+// openClawSkillDeleter reaches an agent workspace as files. It is separate
+// from the publisher because it does not talk to the Gateway: the Gateway has
+// no skill-delete API, its proposal API will not take a description longer
+// than 160 bytes, and it will not relay MCP tools until an agent turn has
+// connected them.
 type openClawSkillDeleter interface {
 	Delete(ctx context.Context, agentID, skillName string) error
 	DeleteWorkspace(ctx context.Context, agentID string) error
+	CopyBaselineSkills(ctx context.Context, sourceAgentID, targetAgentID string) error
 }
 
 var _ openClawSkillDeleter = (*openclaw.SkillDeleter)(nil)

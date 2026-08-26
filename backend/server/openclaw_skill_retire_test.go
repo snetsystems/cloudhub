@@ -73,6 +73,13 @@ type stubDeleter struct {
 	err               error
 	workspaceErr      error
 	failWorkspace     string // only this agent's workspace delete fails
+	copiedInto        []string
+	copyErr           error
+}
+
+func (d *stubDeleter) CopyBaselineSkills(_ context.Context, _, targetAgentID string) error {
+	d.copiedInto = append(d.copiedInto, targetAgentID)
+	return d.copyErr
 }
 
 func (d *stubDeleter) DeleteWorkspace(_ context.Context, agentID string) error {

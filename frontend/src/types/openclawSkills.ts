@@ -70,3 +70,15 @@ export interface OpenClawSkillInventory {
   agentId: string
   skills: OpenClawGatewaySkill[]
 }
+
+/**
+ * One workspace skill's files, read live from the Gateway.
+ *
+ * Baseline skills are copied into an agent's workspace as files and have no
+ * CloudHub record, so this is the only place their content comes from.
+ */
+export interface OpenClawWorkspaceSkill {
+  agentId: string
+  name: string
+  files: OpenClawSkillFile[]
+}

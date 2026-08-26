@@ -24,10 +24,25 @@ func (stubService) DeleteWorkspace(context.Context, skilldir.DeleteWorkspaceInpu
 	return skilldir.DeleteWorkspaceResult{}, nil
 }
 
+func (stubService) Copy(context.Context, skilldir.CopyInput) (skilldir.CopyResult, error) {
+	return skilldir.CopyResult{}, nil
+}
+
 type recordingService struct {
 	stubService
 	inputs          []skilldir.DeleteInput
 	workspaceInputs []skilldir.DeleteWorkspaceInput
+	copyInputs      []skilldir.CopyInput
+}
+
+func (s *recordingService) Copy(_ context.Context, input skilldir.CopyInput) (skilldir.CopyResult, error) {
+	s.copyInputs = append(s.copyInputs, input)
+	return skilldir.CopyResult{
+		SourceAgentID: input.SourceAgentID,
+		TargetAgentID: input.TargetAgentID,
+		Copied:        []string{"cpu-report"},
+		FileCount:     2,
+	}, nil
 }
 
 func (s *recordingService) DeleteWorkspace(_ context.Context, input skilldir.DeleteWorkspaceInput) (skilldir.DeleteWorkspaceResult, error) {
@@ -102,16 +117,22 @@ func TestHandlerAdvertisesExactlyTheDeleteTools(t *testing.T) {
 		names = append(names, tool.Name)
 	}
 	sort.Strings(names)
-	want := []string{"delete_agent_workspace", "delete_workspace_skill"}
+	want := []string{"copy_workspace_skills", "delete_agent_workspace", "delete_workspace_skill"}
 	if strings.Join(names, ",") != strings.Join(want, ",") {
 		t.Fatalf("tools = %v, want %v", names, want)
 	}
-	// Both tools delete things and both are safe to repeat. A caller that
-	// cannot see that from the annotations may treat them as ordinary reads.
+	// Every tool here is safe to repeat, and the two that delete say so. A
+	// caller that cannot see the difference from the annotations may treat a
+	// delete as an ordinary read - or refuse the copy as if it destroyed
+	// something.
+	destructive := map[string]bool{"delete_workspace_skill": true, "delete_agent_workspace": true}
 	for _, tool := range result.Tools {
 		annotations := tool.Annotations
-		if annotations == nil || annotations.DestructiveHint == nil || !*annotations.DestructiveHint {
-			t.Fatalf("%s DestructiveHint = %#v, want true", tool.Name, annotations)
+		if annotations == nil || annotations.DestructiveHint == nil {
+			t.Fatalf("%s has no DestructiveHint: %#v", tool.Name, annotations)
+		}
+		if *annotations.DestructiveHint != destructive[tool.Name] {
+			t.Fatalf("%s DestructiveHint = %v, want %v", tool.Name, *annotations.DestructiveHint, destructive[tool.Name])
 		}
 		if !annotations.IdempotentHint {
 			t.Fatalf("%s IdempotentHint = false, want true", tool.Name)

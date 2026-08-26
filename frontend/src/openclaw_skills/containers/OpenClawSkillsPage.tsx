@@ -10,6 +10,7 @@ import {
 } from 'src/reusable_ui'
 import SkillList from 'src/openclaw_skills/components/SkillList'
 import SkillDetail from 'src/openclaw_skills/components/SkillDetail'
+import BaselineSkillDetail from 'src/openclaw_skills/components/BaselineSkillDetail'
 import SkillAuthorOverlay from 'src/openclaw_skills/components/SkillAuthorOverlay'
 import {
   approveRevision,
@@ -48,6 +49,9 @@ export const OpenClawSkillsPage: FC = () => {
     OpenClawGatewaySkill
   > | null>(null)
   const [selectedID, setSelectedID] = useState('')
+  // A baseline skill has no CloudHub record, so it is held by name rather than
+  // id. The two selections are exclusive: one detail pane, one thing in it.
+  const [selectedBaseline, setSelectedBaseline] = useState('')
   const [detail, setDetail] = useState<OpenClawSkillDetail>(null)
   const [seed, setSeed] = useState<RevisionSeed>(null)
   const [authoring, setAuthoring] = useState(false)
@@ -228,7 +232,15 @@ export const OpenClawSkillsPage: FC = () => {
                   skills={skills}
                   inventory={inventory}
                   selectedID={selectedID}
-                  onSelect={setSelectedID}
+                  onSelect={skillID => {
+                    setSelectedBaseline('')
+                    setSelectedID(skillID)
+                  }}
+                  selectedBaseline={selectedBaseline}
+                  onSelectBaseline={name => {
+                    setSelectedID('')
+                    setSelectedBaseline(name)
+                  }}
                 />
               </Spinner>
             </div>
@@ -249,6 +261,13 @@ export const OpenClawSkillsPage: FC = () => {
                 onDeleteRevision={handleDeleteRevision}
                 onNewRevision={handleNewRevision}
                 onEditRevision={openRevisionEditor}
+              />
+            ) : selectedBaseline ? (
+              <BaselineSkillDetail
+                // Remounting per skill drops the file selection, which belongs
+                // to the skill that was showing.
+                key={selectedBaseline}
+                name={selectedBaseline}
               />
             ) : (
               <div className="openclaw-skills--empty">

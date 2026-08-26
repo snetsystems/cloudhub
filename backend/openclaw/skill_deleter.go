@@ -16,6 +16,7 @@ import (
 const (
 	deleteWorkspaceSkillTool = "delete_workspace_skill"
 	deleteAgentWorkspaceTool = "delete_agent_workspace"
+	copyWorkspaceSkillsTool  = "copy_workspace_skills"
 )
 
 // skillDeleterTimeout bounds one delete, connection included.
@@ -101,6 +102,24 @@ func (d *SkillDeleter) DeleteWorkspace(ctx context.Context, agentID string) erro
 	return d.call(ctx, deleteAgentWorkspaceTool, map[string]any{
 		"agentId": agentID,
 	}, fmt.Sprintf("delete workspace for agent %q", agentID))
+}
+
+// CopyBaselineSkills places the template agent's skills in a new agent's
+// workspace, leaving any the target already has.
+//
+// This does not go through skills.proposals.*, and that is the point: the
+// proposal API caps a skill description at 160 bytes, while a skill placed in
+// a workspace as files is read by a path with no such cap. The operational
+// skills a deployment inherits are the second kind - the Gateway's own run to
+// several hundred bytes of description - so proposing them is not open to us.
+//
+// A missing template succeeds with nothing copied, so a deployment that has
+// not set one up still provisions agents.
+func (d *SkillDeleter) CopyBaselineSkills(ctx context.Context, sourceAgentID, targetAgentID string) error {
+	return d.call(ctx, copyWorkspaceSkillsTool, map[string]any{
+		"sourceAgentId": sourceAgentID,
+		"targetAgentId": targetAgentID,
+	}, fmt.Sprintf("copy baseline skills into %q", targetAgentID))
 }
 
 // call opens a session, invokes one tool, and closes. Deleting is rare, so a

@@ -212,7 +212,7 @@ func TestCodeOfPassesThroughUnknownErrors(t *testing.T) {
 // Reclaiming a workspace is what keeps deleted organizations from accumulating
 // on disk: the Gateway's agents.delete removes the config entry but leaves the
 // directory.
-func TestDeleteWorkspaceRemovesTheWholeWorkspace(t *testing.T) {
+func TestDeleteWorkspaceStripsTheWorkspaceBackToItsScaffold(t *testing.T) {
 	root, service := newWorkspace(t)
 	writeSkill(t, root, "cpu-report", map[string]string{"SKILL.md": "# cpu"})
 	writeSkill(t, root, "other-skill", map[string]string{"SKILL.md": "# other"})
@@ -233,11 +233,28 @@ func TestDeleteWorkspaceRemovesTheWholeWorkspace(t *testing.T) {
 	if !result.Deleted {
 		t.Fatal("Deleted = false, want true")
 	}
-	if result.FileCount != 3 {
-		t.Fatalf("FileCount = %d, want 3", result.FileCount)
+	// The two skill files are gone; AGENTS.md is scaffolding and does not count.
+	if result.FileCount != 2 {
+		t.Fatalf("FileCount = %d, want 2", result.FileCount)
 	}
-	if _, err := os.Stat(root); !os.IsNotExist(err) {
-		t.Fatalf("workspace still present: %v", err)
+	// The scaffold stays. The Gateway keeps its own record that it initialized
+	// this workspace: for a day afterwards it refuses to create an agent whose
+	// workspace reads as brand new or shows no sign of having survived, so
+	// stripping it bare would keep the organization from being provisioned
+	// again.
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		t.Fatalf("workspace directory was removed: %v", err)
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	if len(names) != 1 || names[0] != "AGENTS.md" {
+		t.Fatalf("workspace holds %v, want the scaffold only", names)
+	}
+	if content, err := os.ReadFile(filepath.Join(root, "AGENTS.md")); err != nil || string(content) != "scaffold" {
+		t.Fatalf("AGENTS.md = %q, %v", content, err)
 	}
 	if _, err := os.Stat(neighbour); err != nil {
 		t.Fatalf("neighbouring workspace was removed: %v", err)
@@ -312,5 +329,67 @@ func TestDeleteWorkspaceLogsBeforeRemoving(t *testing.T) {
 	}
 	if len(logged) == 0 {
 		t.Fatal("a workspace was removed without logging anything")
+	}
+}
+
+// The workspace directory is never recreated, so a workspace the Gateway made
+// private stays private.
+func TestDeleteWorkspaceKeepsTheDirectoryMode(t *testing.T) {
+	root, service := newWorkspace(t)
+	if err := os.Chmod(root, 0o700); err != nil {
+		t.Fatalf("chmod: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "AGENTS.md"), []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	if _, err := service.DeleteWorkspace(context.Background(), DeleteWorkspaceInput{AgentID: "main"}); err != nil {
+		t.Fatalf("DeleteWorkspace: %v", err)
+	}
+
+	info, err := os.Stat(root)
+	if err != nil {
+		t.Fatalf("workspace directory was removed: %v", err)
+	}
+	if info.Mode().Perm() != 0o700 {
+		t.Fatalf("mode = %v, want 0700", info.Mode().Perm())
+	}
+}
+
+// The Gateway reads a workspace with none of AGENTS/SOUL/IDENTITY/USER.md as
+// brand new, and takes BOOTSTRAP.md as evidence one survived. Reclaiming must
+// leave both kinds of file behind, or the organization cannot be provisioned
+// again until the Gateway's 24-hour attestation expires.
+func TestDeleteWorkspaceKeepsWhatTheGatewayLooksFor(t *testing.T) {
+	root, service := newWorkspace(t)
+	scaffold := []string{"AGENTS.md", "SOUL.md", "IDENTITY.md", "USER.md", "BOOTSTRAP.md", "HEARTBEAT.md", "TOOLS.md", "openclaw-workspace-state.json"}
+	for _, name := range scaffold {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(name), 0o600); err != nil {
+			t.Fatalf("write %s: %v", name, err)
+		}
+	}
+	writeSkill(t, root, "cpu-report", map[string]string{"SKILL.md": "# cpu"})
+	if err := os.MkdirAll(filepath.Join(root, "memory"), 0o755); err != nil {
+		t.Fatalf("create memory: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "MEMORY.md"), []byte("remembered"), 0o600); err != nil {
+		t.Fatalf("write MEMORY.md: %v", err)
+	}
+
+	if _, err := service.DeleteWorkspace(context.Background(), DeleteWorkspaceInput{AgentID: "main"}); err != nil {
+		t.Fatalf("DeleteWorkspace: %v", err)
+	}
+
+	for _, name := range scaffold {
+		if _, err := os.Stat(filepath.Join(root, name)); err != nil {
+			t.Fatalf("%s was removed: %v", name, err)
+		}
+	}
+	// Everything the organization accumulated is gone - that is what reclaiming
+	// the workspace is for.
+	for _, name := range []string{"skills", "memory", "MEMORY.md"} {
+		if _, err := os.Stat(filepath.Join(root, name)); !os.IsNotExist(err) {
+			t.Fatalf("%s survived: %v", name, err)
+		}
 	}
 }

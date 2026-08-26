@@ -22,8 +22,15 @@ import (
 )
 
 const (
-	maxOpenClawSkillNameLength   = 64
-	maxOpenClawSkillBodyBytes    = 40000
+	maxOpenClawSkillNameLength = 64
+	maxOpenClawSkillBodyBytes  = 40000
+	// 160 is the Gateway's own limit on a skill proposal description
+	// (MAX_SKILL_PROPOSAL_DESCRIPTION_BYTES in skills/workshop/proposal-draft.ts),
+	// and a skill authored here reaches the Gateway as a proposal. Raising it
+	// only moves the refusal from the editor, where it is a message, to apply,
+	// where it is a failed publish. Skills placed in a workspace as files are
+	// read by a path that does not check this, which is why the Gateway can
+	// hold skills whose descriptions would be refused here.
 	maxOpenClawSkillDescBytes    = 160
 	maxOpenClawSupportFiles      = 50
 	maxOpenClawSupportTotalBytes = 1 << 20
@@ -415,7 +422,51 @@ func (s *Service) openClawAgentFor(ctx context.Context, orgID, purpose string) (
 	}
 	// Ensure keeps whatever is already bound, so a request that lost a race
 	// gets the agent that won it instead of its own.
-	return agents.Ensure(ctx, orgID, purpose, created)
+	bound, err := agents.Ensure(ctx, orgID, purpose, created)
+	if err != nil {
+		return "", err
+	}
+	// Skills live in the execution agent's workspace, so only that one gets the
+	// baseline. A request that lost the race binds to the winner's agent, which
+	// has already been seeded, so it does not seed again.
+	if bound == created && purpose == cloudhub.OpenClawAgentExecution {
+		s.seedOpenClawBaselineSkills(ctx, orgID, bound)
+	}
+	return bound, nil
+}
+
+// seedOpenClawBaselineSkills gives a new organization the skills the template
+// agent carries.
+//
+// They are copied as files rather than published as proposals. The Gateway's
+// skills.proposals API caps a description at 160 bytes, while a skill placed in
+// a workspace as files is read by a path with no such cap - which is how the
+// Gateway's own operational skills, several hundred bytes of description each,
+// exist at all. Proposing them is not open to us.
+//
+// The consequence is that these are not CloudHub records, and that is the right
+// shape: the organization did not author them, and recording them would produce
+// a skill whose next revision the editor refuses over a description nobody here
+// wrote. They are read back from the Gateway inventory and shown as baseline
+// skills instead.
+//
+// Failures are logged, never returned. The caller is provisioning an agent for
+// a request that is waiting on it, and an organization with no baseline skills
+// still works - it just starts empty.
+func (s *Service) seedOpenClawBaselineSkills(ctx context.Context, orgID, agentID string) {
+	if s.OpenClawSkillDeleter == nil {
+		// The skill-admin server is what can write into a workspace. Without it
+		// the agent keeps the Gateway's stock scaffolding.
+		return
+	}
+	if err := s.OpenClawSkillDeleter.CopyBaselineSkills(ctx, openclaw.TemplateAgentID, agentID); err != nil {
+		s.Logger.
+			WithField("component", "openclaw-skill-baseline").
+			WithField("organization", orgID).
+			WithField("agent", agentID).
+			WithField("error", err.Error()).
+			Error("unable to place the baseline skills")
+	}
 }
 
 func (s *Service) openClawAgentMappingError(w http.ResponseWriter, err error, purpose string) {
@@ -568,6 +619,59 @@ func (s *Service) OpenClawSkillInventory(w http.ResponseWriter, r *http.Request)
 			continue
 		}
 		response.Skills = append(response.Skills, entry.Raw)
+	}
+	encodeJSON(w, http.StatusOK, response, s.Logger)
+}
+
+type openClawWorkspaceSkillResponse struct {
+	AgentID string                 `json:"agentId"`
+	Name    string                 `json:"name"`
+	Files   []openClawSkillFileDTO `json:"files"`
+}
+
+// OpenClawSkillInventoryFiles returns one workspace skill's files, read live
+// from the Gateway.
+//
+// This is how a baseline skill is read. Those are copied into the agent's
+// workspace as files and have no CloudHub record, so there is no revision to
+// fetch - the Gateway is the only place their content exists. It answers for
+// any workspace skill, including one an administrator placed by hand, because
+// the same is true of those.
+//
+// Read-only by design: what is not recorded here cannot be edited here.
+func (s *Service) OpenClawSkillInventoryFiles(w http.ResponseWriter, r *http.Request) {
+	ctx, _, orgID, ok := s.openClawOwnerContext(r)
+	if !ok {
+		Error(w, http.StatusUnauthorized, "authenticated organization context required", s.Logger)
+		return
+	}
+	if s.OpenClawSkillPublisher == nil {
+		Error(w, http.StatusServiceUnavailable, "OpenClaw gateway is not configured", s.Logger)
+		return
+	}
+	name := httprouter.GetParamFromContext(ctx, "name")
+
+	// The mapping is read, never created, for the same reason the inventory
+	// reads it that way: looking at a skill must not provision an agent.
+	agentID, err := s.Store.OpenClawOrgAgents(ctx).Get(ctx, orgID, cloudhub.OpenClawAgentExecution)
+	if err != nil {
+		s.openClawAgentMappingError(w, err, cloudhub.OpenClawAgentExecution)
+		return
+	}
+
+	files, err := s.OpenClawSkillPublisher.WorkspaceSkill(ctx, agentID, name)
+	if err != nil {
+		s.openClawGatewayError(w, err)
+		return
+	}
+
+	response := openClawWorkspaceSkillResponse{
+		AgentID: agentID,
+		Name:    name,
+		Files:   make([]openClawSkillFileDTO, 0, len(files)),
+	}
+	for _, file := range files {
+		response.Files = append(response.Files, openClawSkillFileDTO{Path: file.Path, Content: file.Content})
 	}
 	encodeJSON(w, http.StatusOK, response, s.Logger)
 }
