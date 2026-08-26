@@ -51,7 +51,10 @@ type Service struct {
 	OpenClawAgentProvisioner  openClawAgentProvisioner
 	OpenClawSkillDrafter      openClawSkillDrafter
 	OpenClawAgentID           string
-	openClawManagedApprovals  *openClawManagedApprovalStore
+	// OpenClawAgentNamespace separates this deployment's agents from
+	// another deployment's on a shared Gateway. See openclaw.AgentName.
+	OpenClawAgentNamespace   string
+	openClawManagedApprovals *openClawManagedApprovalStore
 }
 
 // KafkaProducer defines the interface for publishing configuration updates

@@ -378,8 +378,8 @@ func (s *Service) openClawSkillStoreError(w http.ResponseWriter, err error) {
 // request is well formed but the organization has not been set up yet.
 // openclawAgentName is the Gateway agent name for one organization and
 // purpose. It is a thin alias so tests and handlers agree on the scheme.
-func openclawAgentName(organizationID, purpose string) string {
-	return openclaw.AgentName(organizationID, purpose)
+func (s *Service) openclawAgentName(organizationID, purpose string) string {
+	return openclaw.AgentName(s.OpenClawAgentNamespace, organizationID, purpose)
 }
 
 // openClawAgentFor resolves the agent an organization uses for a purpose,
@@ -407,7 +407,7 @@ func (s *Service) openClawAgentFor(ctx context.Context, orgID, purpose string) (
 		return "", err
 	}
 
-	created, err := s.OpenClawAgentProvisioner.Ensure(ctx, openclawAgentName(orgID, purpose))
+	created, err := s.OpenClawAgentProvisioner.Ensure(ctx, s.openclawAgentName(orgID, purpose))
 	if err != nil {
 		// Nothing is bound, so the next request retries rather than
 		// addressing an agent that was never created.

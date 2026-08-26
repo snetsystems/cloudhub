@@ -191,6 +191,7 @@ type Server struct {
 	OpenClawDevicePrivateKeyFile string `long:"openclaw-device-private-key-file" description:"Path to the paired OpenClaw device Ed25519 private key" env:"OPENCLAW_DEVICE_PRIVATE_KEY_FILE"`
 	OpenClawDeviceTokenFile      string `long:"openclaw-device-token-file" description:"Path to the paired OpenClaw device token" env:"OPENCLAW_DEVICE_TOKEN_FILE"`
 	OpenClawAgentID              string `long:"openclaw-agent-id" description:"OpenClaw agent new chat sessions are bound to; empty resolves the Gateway's default agent" env:"OPENCLAW_AGENT_ID"`
+	OpenClawAgentNamespace       string `long:"openclaw-agent-namespace" description:"Distinguishes this deployment's per-organization OpenClaw agents from another deployment's on a shared Gateway; organization ids are unique within a CloudHub, not across installations, so two deployments sharing a Gateway need different values here. Empty keeps the original names." env:"OPENCLAW_AGENT_NAMESPACE"`
 	OpenClawSkillAdminURL        string `long:"openclaw-skill-admin-url" description:"MCP URL of the skill-admin server that deletes retired skills from agent workspaces" env:"OPENCLAW_SKILL_ADMIN_URL"`
 	OpenClawSkillAdminToken      string `long:"openclaw-skill-admin-token" description:"Bearer token for the skill-admin MCP server" env:"OPENCLAW_SKILL_ADMIN_TOKEN"`
 	OpenClawWorkspaceRoot        string `long:"openclaw-workspace-root" description:"Absolute path, as the Gateway process sees it, under which per-organization agent workspaces are created (a containerized Gateway needs its in-container path, not the host path); empty disables automatic provisioning" env:"OPENCLAW_WORKSPACE_ROOT"`
@@ -750,6 +751,7 @@ func (s *Server) Serve(ctx context.Context) {
 	// protocol/scope detail but never the device token, private key, or
 	// signature. The device ID is a public SHA-256 of the public key.
 	service.OpenClawAgentID = strings.TrimSpace(s.OpenClawAgentID)
+	service.OpenClawAgentNamespace = strings.TrimSpace(s.OpenClawAgentNamespace)
 	openClawGateway, openClawDeviceID, err := s.newOpenClawGatewayManager(ctx, logger)
 	if err != nil {
 		logger.

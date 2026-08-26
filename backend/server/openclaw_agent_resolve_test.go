@@ -110,7 +110,7 @@ func TestOpenClawAgentForProvisionsOnFirstUse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("openClawAgentFor: %v", err)
 	}
-	want := openclawAgentName("org-1", cloudhub.OpenClawAgentExecution)
+	want := service.openclawAgentName("org-1", cloudhub.OpenClawAgentExecution)
 	if agentID != want {
 		t.Fatalf("agentID = %q, want %q", agentID, want)
 	}
