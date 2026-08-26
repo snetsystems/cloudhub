@@ -199,6 +199,27 @@ class SideNav extends PureComponent<Props, State> {
     const navItem = () => {
       return (
         <>
+          {/* AI Assistant */}
+          <NavBlock
+            visible={enabled('ai-chat')}
+            highlightWhen={['ai-chat', 'ai-chat-test', 'openclaw-skills']}
+            icon="ai-robot"
+            link={`${sourcePrefix}/ai-chat`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/ai-chat`} title="AI Assistant" />
+            {enabled('ai-chatbot') && (
+              <NavListItem link={`${sourcePrefix}/ai-chat`}>
+                AI Chatbot
+              </NavListItem>
+            )}
+            {isAdminRole && enabled('openclaw-skills') && (
+              <NavListItem link={`${sourcePrefix}/openclaw-skills`}>
+                Skills
+              </NavListItem>
+            )}
+          </NavBlock>
+
           <NavBlock
             visible={enabled('visualize')}
             highlightWhen={['visualize']}
@@ -416,30 +437,6 @@ class SideNav extends PureComponent<Props, State> {
             {enabled('activity-logs') && (
               <NavListItem link={`${sourcePrefix}/activity-logs`}>
                 Activity Logs
-              </NavListItem>
-            )}
-          </NavBlock>
-
-          {/* AI Assistant */}
-          <NavBlock
-            visible={enabled('ai-chat')}
-            highlightWhen={['ai-chat', 'ai-chat-test', 'openclaw-skills']}
-            icon="ai-icon"
-            link={`${sourcePrefix}/ai-chat`}
-            location={location}
-          >
-            <NavHeader
-              link={`${sourcePrefix}/ai-chat`}
-              title="AI Assistant"
-            />
-            {enabled('ai-chatbot') && (
-              <NavListItem link={`${sourcePrefix}/ai-chat`}>
-                AI Chatbot
-              </NavListItem>
-            )}
-            {isAdminRole && enabled('openclaw-skills') && (
-              <NavListItem link={`${sourcePrefix}/openclaw-skills`}>
-                Skills
               </NavListItem>
             )}
           </NavBlock>
