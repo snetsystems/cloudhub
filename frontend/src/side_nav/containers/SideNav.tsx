@@ -210,7 +210,7 @@ class SideNav extends PureComponent<Props, State> {
             <NavHeader link={`${sourcePrefix}/ai-chat`} title="AI Assistant" />
             {enabled('ai-chatbot') && (
               <NavListItem link={`${sourcePrefix}/ai-chat`}>
-                AI Chatbot
+                Chatbot
               </NavListItem>
             )}
             {isAdminRole && enabled('openclaw-skills') && (

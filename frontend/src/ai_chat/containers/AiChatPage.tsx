@@ -21,7 +21,7 @@ export const AiChatPage: FC<Props> = ({timeZone, onSetTimeZone}) => {
     <Page>
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
-          <Page.Title title="CloudHub AI Ops Assistant" />
+          <Page.Title title="Chatbot" />
         </Page.Header.Left>
         <Page.Header.Right>
           <TimeZoneToggle timeZone={timeZone} onSetTimeZone={onSetTimeZone} />

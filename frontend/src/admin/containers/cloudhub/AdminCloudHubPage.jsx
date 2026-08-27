@@ -142,7 +142,7 @@ const AdminCloudHubPage = props => {
     <Page>
       <Page.Header>
         <Page.Header.Left>
-          <Page.Title title="CloudHub Admin" />
+          <Page.Title title="Admin" />
         </Page.Header.Left>
         <Page.Header.Right>
           <SourceIndicator />
