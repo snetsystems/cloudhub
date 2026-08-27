@@ -543,4 +543,12 @@
   &.ai-robot::before {
     content: '\e95e';
   }
+
+  &.side-show::before {
+    content: '\e95f';
+  }
+
+  &.side-hide::before {
+    content: '\e969';
+  }
 }
