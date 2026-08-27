@@ -246,6 +246,8 @@ const mockStats = (over: Partial<NodeTrafficStats> = {}): NodeTrafficStats => ({
   ingressDenied: false,
   egressDenied: false,
   hadRecentDeny: false,
+  infraDroppedFlows: 0,
+  infraDropReasons: [],
   ...over,
 })
 
@@ -310,9 +312,9 @@ const NODES_STEPS: TutorialStep[] = [
     ),
   },
   {
-    title: '차단 신호 — Dropped vs ⚠ recovered',
+    title: '차단 신호 — Dropped · ⚠ recovered · 인프라 드랍',
     description:
-      '왼쪽 카드처럼 빨간 "DROPPED n" 뱃지 + 하단 Ingress/Egress drop 줄은 차단이 진행 중이라는 뜻입니다. 오른쪽 카드의 노란 "⚠ recovered"는 최근 5분 안에 drop이 있었지만 지금(최근 10초)은 정상이라는 이력 신호입니다.',
+      '왼쪽 카드처럼 빨간 "DROPPED n" 뱃지 + 하단 Ingress/Egress drop 줄은 정책에 의한 차단이 진행 중이라는 뜻입니다. 가운데 노란 "⚠ recovered"는 최근 5분 안에 drop이 있었지만 지금(최근 10초)은 정상이라는 이력 신호입니다. 오른쪽 파란 뱃지는 NetworkPolicy 판정 이전에 데이터패스가 버린 패킷 — 예를 들어 IPv4 전용 클러스터에 올라온 IPv6 패킷 — 이라 정책을 바꿔도 사라지지 않습니다. 사유는 뱃지에 표시되고 전체 목록은 툴팁에 있습니다.',
     render: () => (
       <div className="hubble-tutorial-map" style={{height: 190}}>
         <MockCard
@@ -325,9 +327,17 @@ const NODES_STEPS: TutorialStep[] = [
           })}
         />
         <MockCard
-          x={300}
+          x={200}
           node={nsNode('beyla-trace-demo', '53 UDP')}
           stats={mockStats({hadRecentDeny: true})}
+        />
+        <MockCard
+          x={400}
+          node={nsNode('network-repair-demo', '53 UDP')}
+          stats={mockStats({
+            infraDroppedFlows: 1,
+            infraDropReasons: [{name: 'UNSUPPORTED_L3_PROTOCOL', count: 1}],
+          })}
         />
       </div>
     ),

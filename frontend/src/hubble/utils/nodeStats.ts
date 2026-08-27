@@ -1,5 +1,10 @@
-import {HubbleSnapshot} from 'src/hubble/types'
+import {HubbleNamedCount, HubbleSnapshot} from 'src/hubble/types'
 import {edgeVerdict} from 'src/hubble/utils/edgeVerdict'
+import {
+  mergeReasons,
+  recentDropSplit,
+  windowDropSplit,
+} from 'src/hubble/utils/dropReasons'
 
 // Hubble flow proto does not carry payload byte counts, so only flow-event
 // counts are tracked. Byte-level metrics would have to come from a separate
@@ -17,6 +22,11 @@ export interface NodeTrafficStats {
   // the node. Lets the UI show a soft warning on nodes whose edges were
   // blocked within the window but are currently flowing again.
   hadRecentDeny: boolean
+  // Drops the datapath made before any policy was consulted — wrong L3
+  // protocol, MTU, no route. Counted apart from deniedFlows so infrastructure
+  // noise cannot read as a policy violation.
+  infraDroppedFlows: number
+  infraDropReasons: HubbleNamedCount[]
 }
 
 const emptyStats = (): NodeTrafficStats => ({
@@ -29,6 +39,8 @@ const emptyStats = (): NodeTrafficStats => ({
   ingressDenied: false,
   egressDenied: false,
   hadRecentDeny: false,
+  infraDroppedFlows: 0,
+  infraDropReasons: [],
 })
 
 export const buildNodeStats = (
@@ -47,11 +59,20 @@ export const buildNodeStats = (
 
   for (const edge of snapshot.edges || []) {
     const verdict = edgeVerdict(edge)
+    const recentPolicy = recentDropSplit(edge).policy
     const denied =
       verdict === 'denied'
-        ? edge.recentVerdictCounts?.DROPPED || edge.verdictCounts?.DROPPED || 1
+        ? recentPolicy || windowDropSplit(edge).policy || 1
         : 0
     const hadDeny = verdict === 'denied' || verdict === 'recovered'
+    const {infra, infraReasons} = windowDropSplit(edge)
+
+    const addInfra = (id: string) => {
+      if (infra <= 0) return
+      const s = get(id)
+      s.infraDroppedFlows += infra
+      s.infraDropReasons = mergeReasons(s.infraDropReasons, infraReasons)
+    }
 
     if (edge.src === edge.dst) {
       const s = get(edge.src)
@@ -64,6 +85,7 @@ export const buildNodeStats = (
         s.egressDenied = true
       }
       if (hadDeny) s.hadRecentDeny = true
+      addInfra(edge.src)
       continue
     }
 
@@ -80,6 +102,9 @@ export const buildNodeStats = (
     dst.ingressDeniedFlows += denied
     if (denied > 0) dst.ingressDenied = true
     if (hadDeny) dst.hadRecentDeny = true
+
+    addInfra(edge.src)
+    addInfra(edge.dst)
   }
 
   return stats

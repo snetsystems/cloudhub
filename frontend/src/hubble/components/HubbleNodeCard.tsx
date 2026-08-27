@@ -2,6 +2,7 @@ import React from 'react'
 import {HubbleNode} from 'src/hubble/types'
 import {NodeTrafficStats} from 'src/hubble/utils/nodeStats'
 import {CARD_WIDTH} from 'src/hubble/utils/cardLayout'
+import {shortReasonLabel} from 'src/hubble/utils/dropReasons'
 interface Props {
   node: HubbleNode
   stats: NodeTrafficStats
@@ -73,6 +74,14 @@ const HubbleNodeCard: React.FC<Props> = ({
   // 5m window, but the recent short interval is clean. We only surface this
   // when there is no live deny so the two badges don't overlap.
   const hasRecovered = stats.hadRecentDeny && !hasDenied
+  // Infrastructure drops are shown regardless of policy state: they are a
+  // separate axis, and hiding them behind a policy denial would lose the one
+  // signal that explains an otherwise inexplicable red badge.
+  const hasInfraDropped = stats.infraDroppedFlows > 0
+  const topInfraReason = stats.infraDropReasons[0]
+  const infraTooltip = stats.infraDropReasons
+    .map(r => `${r.name || r.reason} ${r.count.toLocaleString()}건`)
+    .join(', ')
   const title = nodeTitle(node)
   const subtitle = nodeSubtitle(node, title)
   const topInPort = node.topInPorts?.[0]
@@ -144,6 +153,15 @@ const HubbleNodeCard: React.FC<Props> = ({
                 title="이 노드와 연결된 flow 중 정책에 의해 차단(deny)된 것이 있습니다"
               >
                 Dropped {formatFlows(stats.deniedFlows)}
+              </span>
+            )}
+            {hasInfraDropped && (
+              <span
+                className="hubble-node-card-badge hubble-node-card-badge--infra"
+                title={`정책과 무관한 인프라 계층 드랍입니다. NetworkPolicy 판정 이전에 데이터패스가 버린 패킷으로, 정책을 바꿔도 사라지지 않습니다 — ${infraTooltip}`}
+              >
+                ⚠ {topInfraReason ? shortReasonLabel(topInfraReason) : 'infra'}{' '}
+                {formatFlows(stats.infraDroppedFlows)}
               </span>
             )}
             {hasRecovered && (

@@ -1,4 +1,5 @@
 import {HubbleEdge} from 'src/hubble/types'
+import {recentDropSplit, windowDropSplit} from 'src/hubble/utils/dropReasons'
 
 // 'recovered' = recent short interval (bucketDur) has only successful traffic,
 // but the wider window (window) still contains DROPPED flows. Visually this
@@ -14,7 +15,9 @@ export type EdgeVerdictCategory =
 
 export const edgeVerdict = (edge: HubbleEdge): EdgeVerdictCategory => {
   const recent = edge.recentVerdictCounts || {}
-  const recentDropped = recent.DROPPED || 0
+  // Only policy denials colour an edge red. Infrastructure drops travel on
+  // their own badge so a stray NDP packet cannot masquerade as a violation.
+  const recentDropped = recentDropSplit(edge).policy
   const recentErrored = recent.ERROR || 0
   const recentForwarded = recent.FORWARDED || 0
   if (recentDropped > 0) return 'denied'
@@ -24,7 +27,10 @@ export const edgeVerdict = (edge: HubbleEdge): EdgeVerdictCategory => {
   }
 
   const latest = (edge.lastVerdict || '').toUpperCase()
-  if (latest === 'DROPPED') return 'denied'
+  // lastVerdict is a bare string with no reason attached, so it cannot be
+  // split on its own. Fall back to the window: an edge whose only drops were
+  // infrastructure-level is not a policy problem, whatever its last flow was.
+  if (latest === 'DROPPED') return hasWindowDeny(edge) ? 'denied' : 'forwarded'
   if (latest === 'ERROR') return 'errored'
   if (latest === 'FORWARDED') {
     return hasWindowDeny(edge) ? 'recovered' : 'forwarded'
@@ -32,7 +38,7 @@ export const edgeVerdict = (edge: HubbleEdge): EdgeVerdictCategory => {
 
   const v = edge.verdictCounts || {}
   const forwarded = v.FORWARDED || 0
-  const denied = v.DROPPED || 0
+  const denied = windowDropSplit(edge).policy
   const errored = v.ERROR || 0
   if (denied > 0 && forwarded > 0) return 'mixed'
   if (denied > 0) return 'denied'
@@ -41,7 +47,7 @@ export const edgeVerdict = (edge: HubbleEdge): EdgeVerdictCategory => {
 }
 
 const hasWindowDeny = (edge: HubbleEdge): boolean =>
-  (edge.verdictCounts?.DROPPED || 0) > 0
+  windowDropSplit(edge).policy > 0
 
 export const edgeVerdictColor = (verdict: EdgeVerdictCategory): string => {
   switch (verdict) {

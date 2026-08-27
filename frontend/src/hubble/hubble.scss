@@ -3018,3 +3018,19 @@ body.hubble-is-panning {
 .hubble-tutorial-dot.is-active {
   background: #22adf6;
 }
+
+// "infra" — the datapath dropped these before any NetworkPolicy was consulted
+// (wrong L3 protocol, MTU, no route). Blue, not amber: amber already means
+// "recovered" and red already means "policy denied", and this is a third,
+// unrelated axis — changing policy will not make it go away.
+.hubble-node-card-badge--infra {
+  background: rgba(34, 173, 246, 0.15);
+  color: #22adf6;
+  cursor: help;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
