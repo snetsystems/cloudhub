@@ -155,6 +155,8 @@ export enum IconFont {
   GitCommit = 'git-commit',
   GitPullRequest = 'git-pull-request',
   AiRobot = 'ai-robot',
+  SideShow = 'side-show',
+  SideHide = 'side-hide',
 }
 
 export enum Columns {

@@ -17,6 +17,7 @@ import {
   ComponentSize,
   ButtonShape,
   ComponentStatus,
+  IconFont,
 } from 'src/reusable_ui/types'
 import Button from 'src/reusable_ui/components/Button'
 
@@ -2273,6 +2274,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     ]
   }
 
+  const inspectorCount = showSubagentPanel
+    ? undefined
+    : subagents.length > 0
+    ? subagents.length
+    : targetInspectorMessage?.activities &&
+      targetInspectorMessage.activities.length > 0
+    ? targetInspectorMessage.activities.length
+    : undefined
+
   const renderChatThread = () => (
     <div className="chat-thread-container">
       {!chatOnly && (
@@ -2282,23 +2292,20 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           </div>
           <div className="thread-header-actions">
             <Button
-              text={
-                showSubagentPanel
-                  ? '패널 닫기'
-                  : subagents.length > 0
-                  ? `Subagents (${subagents.length})`
-                  : targetInspectorMessage?.activities &&
-                    targetInspectorMessage.activities.length > 0
-                  ? `도구 내역 (${targetInspectorMessage.activities.length})`
-                  : '작업 인스펙터'
-              }
+              icon={showSubagentPanel ? IconFont.SideHide : IconFont.SideShow}
+              text={inspectorCount != null ? `(${inspectorCount})` : undefined}
               color={
                 showSubagentPanel || subagents.some(s => s.status === 'RUNNING')
                   ? ComponentColor.Success
                   : ComponentColor.Default
               }
               size={ComponentSize.Small}
-              shape={ButtonShape.Default}
+              shape={
+                inspectorCount != null
+                  ? ButtonShape.Default
+                  : ButtonShape.Square
+              }
+              titleText={showSubagentPanel ? '패널 닫기' : '작업 인스펙터'}
               onClick={handleToggleSubagentPanel}
             />
             {mode === 'drawer' && (
