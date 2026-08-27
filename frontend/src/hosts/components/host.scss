@@ -635,26 +635,13 @@
   }
 
   // Ask AI Chat about a row. Sits in the Server header group beside the
-  // status icon, so the buttons line up down the table.
-  .server-ai-attach--button {
-    padding: 0;
-    width: 20px;
-    height: 20px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    background: transparent;
-    color: $g11-sidewalk;
-    font-size: 12px;
-    line-height: 1;
-    cursor: pointer;
-    transition: color 0.2s ease, border-color 0.2s ease,
-      background-color 0.2s ease;
-
-    &:hover {
-      color: $s-orange;
-      border-color: rgba($s-orange, 0.5);
-    }
-  }
+  // status icon, so the buttons line up down the table. The reusable Button
+  // carries the colours; only the row-height trim belongs here.
+  // .server-ai-attach--button {
+  //   height: 20px;
+  //   width: 20px;
+  //   line-height: 20px;
+  // }
 
   td {
     max-width: 0;

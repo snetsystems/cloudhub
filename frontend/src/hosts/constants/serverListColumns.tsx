@@ -20,6 +20,13 @@ import {toLineValues} from 'src/dashboards/utils/tableLineChart'
 import AlertStatusIcon from 'src/hosts/components/AlertStatusIcon'
 import {AlertStatusMap} from 'src/hosts/types/alertStatus'
 import QuestionMarkTooltip from 'src/shared/components/QuestionMarkTooltip'
+import Button from 'src/reusable_ui/components/Button'
+import {
+  ButtonShape,
+  ComponentColor,
+  ComponentSize,
+  IconFont,
+} from 'src/reusable_ui/types'
 
 export interface ServerListQuery {
   id: string
@@ -75,14 +82,15 @@ export const serverListColumns = ({
             },
           },
           render: (value: string, rowData: DataTableObject) => (
-            <button
-              type="button"
-              className="server-ai-attach--button"
-              title={`${value} 점검을 AI에게 요청`}
+            <Button
+              shape={ButtonShape.Square}
+              size={ComponentSize.ExtraSmall}
+              color={ComponentColor.Primary}
+              icon={IconFont.Wrench}
+              customClass="server-ai-attach--button"
+              titleText={`${value} 점검을 AI에게 요청`}
               onClick={() => onAiDiagnoseClick(value, rowData)}
-            >
-              ✦
-            </button>
+            />
           ),
         },
       ]
