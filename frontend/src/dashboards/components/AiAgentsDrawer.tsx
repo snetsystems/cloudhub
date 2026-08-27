@@ -5,17 +5,19 @@ import CloudhubAiChatStandalone from 'src/ai_chat/containers/CloudhubAiChatStand
 import {isOrgNavMenuEnabled} from 'src/side_nav/utils/orgNavMenuVisibility'
 import {OrgNavMenuState} from 'src/shared/actions/orgNavMenu'
 import {AiAgentsDrawerState} from 'src/shared/reducers/aiAgentsDrawer'
-
-const DEFAULT_WIDTH = 480
-const MIN_WIDTH = 360
-const MIN_MAIN_WIDTH = 280
-const SIDE_NAV_WIDTH = 45
-const WIDTH_STORAGE_KEY = 'cloudhub.aiAgentsDrawer.width'
+import {
+  clampDrawerWidth,
+  DEFAULT_WIDTH,
+  MIN_MAIN_WIDTH,
+  WIDTH_STORAGE_KEY,
+} from 'src/dashboards/utils/aiDrawerWidth'
 
 interface Props {
   isOpen: boolean
   orgNavMenu: OrgNavMenuState
   inPresentationMode?: boolean
+  /** Width the page beneath keeps for itself. See aiDrawerWidth. */
+  minMainWidth?: number
 }
 
 const readStoredWidth = (): number => {
@@ -34,16 +36,6 @@ const persistWidth = (width: number): void => {
   } catch {
     // Ignore quota / private-mode failures.
   }
-}
-
-const clampDrawerWidth = (width: number): number => {
-  const pageWidth = window.innerWidth - SIDE_NAV_WIDTH
-  const maxWidth = Math.max(
-    MIN_WIDTH,
-    Math.min(Math.floor(pageWidth * 0.7), pageWidth - MIN_MAIN_WIDTH)
-  )
-
-  return Math.min(maxWidth, Math.max(MIN_WIDTH, width))
 }
 
 const layoutNotifier = (() => {
@@ -75,6 +67,7 @@ const AiAgentsDrawer: React.FC<Props> = ({
   isOpen,
   orgNavMenu,
   inPresentationMode = false,
+  minMainWidth = MIN_MAIN_WIDTH,
 }) => {
   const [hasOpened, setHasOpened] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
@@ -84,8 +77,8 @@ const AiAgentsDrawer: React.FC<Props> = ({
   const widthRef = useRef(width)
 
   useEffect(() => {
-    setWidth(clampDrawerWidth(readStoredWidth()))
-  }, [])
+    setWidth(clampDrawerWidth(readStoredWidth(), minMainWidth))
+  }, [minMainWidth])
 
   useEffect(() => {
     if (isOpen) {
@@ -127,7 +120,7 @@ const AiAgentsDrawer: React.FC<Props> = ({
       }
 
       setWidth(current => {
-        const next = clampDrawerWidth(current)
+        const next = clampDrawerWidth(current, minMainWidth)
         if (next !== current) {
           persistWidth(next)
         }
@@ -137,7 +130,7 @@ const AiAgentsDrawer: React.FC<Props> = ({
 
     window.addEventListener('resize', handleWindowResize)
     return () => window.removeEventListener('resize', handleWindowResize)
-  }, [])
+  }, [minMainWidth])
 
   const handleResizeMove = useCallback((event: MouseEvent) => {
     if (!dragRef.current) {
@@ -145,19 +138,20 @@ const AiAgentsDrawer: React.FC<Props> = ({
     }
 
     const nextWidth = clampDrawerWidth(
-      dragRef.current.startWidth + (dragRef.current.startX - event.clientX)
+      dragRef.current.startWidth + (dragRef.current.startX - event.clientX),
+      minMainWidth
     )
     setWidth(nextWidth)
-  }, [])
+  }, [minMainWidth])
 
   const handleResizeEnd = useCallback(() => {
-    persistWidth(clampDrawerWidth(widthRef.current))
+    persistWidth(clampDrawerWidth(widthRef.current, minMainWidth))
     dragRef.current = null
     setIsResizing(false)
     document.body.classList.remove('ai-agents-drawer-resizing')
     window.removeEventListener('mousemove', handleResizeMove)
     window.removeEventListener('mouseup', handleResizeEnd)
-  }, [handleResizeMove])
+  }, [handleResizeMove, minMainWidth])
 
   const handleResizeStart = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
@@ -240,11 +234,17 @@ const ConnectedAiAgentsDrawer = connect(mapStateToProps)(AiAgentsDrawer)
 interface DashboardsAiSplitProps {
   children: React.ReactNode
   inPresentationMode?: boolean
+  /**
+   * Width this page keeps for itself when the drawer is dragged wide. Defaults
+   * to MIN_MAIN_WIDTH; pass a larger one for a dense layout.
+   */
+  minMainWidth?: number
 }
 
 export const DashboardsAiSplit: React.FC<DashboardsAiSplitProps> = ({
   children,
   inPresentationMode = false,
+  minMainWidth,
 }) => (
   <div
     className={classnames('page-contents--split', 'dashboards-ai-split', {
@@ -252,7 +252,10 @@ export const DashboardsAiSplit: React.FC<DashboardsAiSplitProps> = ({
     })}
   >
     <div className="dashboards-ai-split--main">{children}</div>
-    <ConnectedAiAgentsDrawer inPresentationMode={inPresentationMode} />
+    <ConnectedAiAgentsDrawer
+      inPresentationMode={inPresentationMode}
+      minMainWidth={minMainWidth}
+    />
   </div>
 )
 
