@@ -46,6 +46,7 @@ import {
   OpenClawSessionDTO,
   openClawUrl,
 } from 'src/ai_chat/apis/openclawApi'
+import {AiChatSkill, getAiChatSkills} from 'src/ai_chat/apis/openclawSkills'
 import {useOpenClawApprovals} from 'src/ai_chat/hooks/useOpenClawApprovals'
 import {
   buildPromptWithContext,
@@ -1671,45 +1672,6 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
   }
 
-  const MOCK_SKILLS = [
-    {
-      name: 'cloudhub-code-review',
-      command: '/cloudhub-code-review',
-      description: 'Go 백엔드 및 React 프론트엔드 변경사항 코드 리뷰',
-      category: 'Review',
-    },
-    {
-      name: 'run-security-scanner',
-      command: '/run-security-scanner',
-      description: '보안 취약점(XSS, SQLi, Secret) 소스코드 스캔',
-      category: 'Security',
-    },
-    {
-      name: 'determine-threat-model',
-      command: '/determine-threat-model',
-      description: '레포지토리 위협 모델 구축 및 진입점/신뢰경계 분석',
-      category: 'Security',
-    },
-    {
-      name: 'create-security-implementation-plan',
-      command: '/create-security-implementation-plan',
-      description: '보안 검증 및 취약점 조치 계획서 자동 생성',
-      category: 'Plan',
-    },
-    {
-      name: 'scan_dependencies',
-      command: '/scan_dependencies',
-      description: '새로운 패키지 의존성 라이선스 및 안전성 검증',
-      category: 'Dependency',
-    },
-    {
-      name: 'run-poc',
-      command: '/run-poc',
-      description: '보안 패치 적용 후 PoC 테스트 수행 및 검증',
-      category: 'Test',
-    },
-  ]
-
   const PROMPT_SUGGESTIONS = [
     {
       id: 'sug-1',
@@ -1746,8 +1708,52 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
   const [showSkillMenu, setShowSkillMenu] = useState<boolean>(false)
   const [selectedSkillIndex, setSelectedSkillIndex] = useState<number>(0)
+  const [skills, setSkills] = useState<AiChatSkill[]>([])
+  const [skillsStatus, setSkillsStatus] = useState<
+    'loading' | 'ready' | 'failed'
+  >('loading')
 
-  const filteredSkills = MOCK_SKILLS.filter(skill => {
+  // Read once per mount. The list changes only when a skill is published from
+  // the skills page, which is a reload away, and a failure only empties the
+  // menu rather than interrupting the chat.
+  useEffect(() => {
+    let cancelled = false
+
+    getAiChatSkills()
+      .then(loaded => {
+        if (!cancelled) {
+          setSkills(loaded)
+          setSkillsStatus('ready')
+        }
+      })
+      .catch(err => {
+        console.warn('Failed to load skills:', err)
+        if (!cancelled) {
+          setSkillsStatus('failed')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Why the menu has nothing to offer, so an empty list reads as an answer
+  // instead of a broken key. Null means there is a list to show.
+  const skillsEmptyReason = (): string => {
+    if (skillsStatus === 'loading') {
+      return '스킬 목록을 불러오는 중...'
+    }
+    if (skillsStatus === 'failed') {
+      return '스킬 목록을 불러오지 못했습니다'
+    }
+    if (!skills.length) {
+      return '이 조직의 에이전트에 등록된 스킬이 없습니다'
+    }
+    return ''
+  }
+
+  const filteredSkills = skills.filter(skill => {
     if (!inputPrompt.startsWith('/')) return false
     const query = inputPrompt.slice(1).toLowerCase()
     return (
@@ -2397,7 +2403,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       </div>
 
       <div className="composer-footer">
-        {showSkillMenu && filteredSkills.length > 0 && (
+        {showSkillMenu && (filteredSkills.length > 0 || !!skillsEmptyReason()) && (
           <div className="slash-skill-menu">
             <div className="slash-skill-header">
               <span>Available Skills & Commands</span>
@@ -2406,6 +2412,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
               </span>
             </div>
             <div className="slash-skill-list">
+              {!!skillsEmptyReason() && (
+                <div className="slash-skill-item slash-skill-item__empty">
+                  <div className="skill-desc">{skillsEmptyReason()}</div>
+                </div>
+              )}
               {filteredSkills.map((skill, index) => (
                 <div
                   key={skill.name}

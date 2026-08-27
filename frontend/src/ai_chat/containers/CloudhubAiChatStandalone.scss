@@ -2271,6 +2271,14 @@
           flex-direction: column;
           gap: 2px;
 
+          .slash-skill-item__empty {
+            cursor: default;
+
+            &:hover {
+              background: transparent;
+            }
+          }
+
           .slash-skill-item {
             padding: 8px 12px;
             border-radius: $radius-small;
