@@ -433,7 +433,7 @@
 .openclaw-skills--author-brief {
   display: flex;
   flex-direction: column;
-  flex: 0 0 320px;
+  flex: 0 0 380px;
   overflow-y: auto;
   padding-right: $ix-marg-b;
 
@@ -449,9 +449,21 @@
   }
 }
 
+/*
+  The goal is a work procedure written out in full — the ones that produce a
+  usable skill run to a few thousand characters — so this is a writing
+  surface, not a one-line field. It takes whatever height the overlay has left
+  rather than a fixed few lines, and reads at the larger form size with prose
+  line spacing. min-height keeps it usable on a short viewport: the column
+  scrolls instead of squeezing the box shut.
+*/
 .openclaw-skills--goal {
-  height: 130px;
-  resize: none;
+  flex: 1 1 auto;
+  min-height: 220px;
+  resize: vertical;
+  padding: $form-md-padding;
+  font-size: $form-md-font;
+  line-height: 1.65;
 }
 
 .openclaw-skills--hint {

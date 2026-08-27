@@ -202,6 +202,40 @@ func lastAssistantText(messages []Message) string {
 // treating the first nested fence as the close truncated the document at
 // exactly the point it started showing a command.
 func extractFencedBlock(reply string) string {
+	block := fencedBlock(reply)
+	if !containsReasoningTag(block) {
+		return block
+	}
+
+	// The extraction swept a reasoning block up with the document. A model
+	// that rehearses puts its answer after the closing tag, so that side is
+	// tried — but only when it is a document. Two other shapes reach here and
+	// must keep the block as extracted: an answer that sits *before* a tag the
+	// model never opened, and a document that merely mentions the tag. Taking
+	// the tail on either of those would hand the author the model's "NO_REPLY"
+	// instead of their skill.
+	if _, after, ok := splitOnReasoning(reply); ok {
+		if candidate := fencedBlock(after); startsWithFrontmatter(candidate) {
+			return candidate
+		}
+	}
+	return block
+}
+
+func startsWithFrontmatter(document string) bool {
+	return strings.HasPrefix(strings.TrimSpace(document), "---")
+}
+
+func containsReasoningTag(text string) bool {
+	for _, tag := range reasoningCloseTags {
+		if strings.Contains(text, tag) {
+			return true
+		}
+	}
+	return false
+}
+
+func fencedBlock(reply string) string {
 	lines := strings.Split(reply, "\n")
 
 	open := -1
@@ -227,6 +261,31 @@ func extractFencedBlock(reply string) string {
 	}
 
 	return strings.TrimSpace(strings.Join(lines[open+1:close], "\n"))
+}
+
+// reasoningCloseTags end the block a thinking model streams before its answer.
+var reasoningCloseTags = []string{"</think>", "</thinking>", "</reasoning>"}
+
+// dropReasoning removes the reasoning a thinking model streams ahead of its
+// answer. The Gateway hands it over inline in the same text part rather than
+// as a part of its own, and the reasoning routinely rehearses the document in
+// a fenced block. extractFencedBlock would then open on the rehearsal and
+// close on the real answer, saving both — plus the closing tag between them —
+// as one SKILL.md.
+//
+// splitOnReasoning divides a reply at its last closing reasoning tag. ok is
+// false when the reply carries no tag at all.
+func splitOnReasoning(reply string) (before string, after string, ok bool) {
+	cut, tagLen := -1, 0
+	for _, tag := range reasoningCloseTags {
+		if i := strings.LastIndex(reply, tag); i > cut {
+			cut, tagLen = i, len(tag)
+		}
+	}
+	if cut < 0 {
+		return "", "", false
+	}
+	return reply[:cut], reply[cut+tagLen:], true
 }
 
 // isFenceLine reports whether a line is nothing but a code fence, which is
