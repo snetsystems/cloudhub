@@ -252,3 +252,100 @@ func TestSkillDrafterFallsBackToTheNewSkillInstruction(t *testing.T) {
 		}
 	}
 }
+
+// A thinking model streams its reasoning inline in the same text part, and
+// that reasoning routinely rehearses the document in a fenced block. Opening
+// on the rehearsal saved it, the closing tag and the real answer as one
+// document — an author was handed the same skill twice with "</think>" in the
+// middle.
+func TestSkillDrafterDropsReasoningThatRehearsesTheDocument(t *testing.T) {
+	reply := "```markdown\n" +
+		"---\nname: draft-attempt\ndescription: rehearsal\n---\n\n# Rehearsal\n" +
+		"```\n" +
+		"이제 최종본을 쓰자.\n" +
+		"</think>\n\n" +
+		"```markdown\n" +
+		"---\nname: cpu-report\ndescription: one line\n---\n\n# CPU Report\n" +
+		"```"
+
+	chat := &fakeSkillChat{messages: []Message{assistantMessage(reply)}}
+
+	draft, err := NewSkillDrafter(chat).Draft(context.Background(), DraftRequest{AgentID: "agent-1", SessionKey: "sess-1", Goal: "goal"})
+	if err != nil {
+		t.Fatalf("draft: %v", err)
+	}
+	if strings.Contains(draft.Main, "</think>") {
+		t.Fatalf("the reasoning tag leaked into the document: %q", draft.Main)
+	}
+	if strings.Contains(draft.Main, "draft-attempt") {
+		t.Fatalf("the rehearsal was saved alongside the answer: %q", draft.Main)
+	}
+	if !strings.HasPrefix(draft.Main, "---\nname: cpu-report") {
+		t.Fatalf("main = %q", draft.Main)
+	}
+	if strings.Count(draft.Main, "# CPU Report") != 1 {
+		t.Fatalf("the document was not returned exactly once: %q", draft.Main)
+	}
+}
+
+// Stripping is guarded: a document that mentions the tag but has no fence
+// after it must come back whole rather than empty.
+func TestSkillDrafterKeepsAReplyWhoseTagHasNoFenceAfterIt(t *testing.T) {
+	reply := "```markdown\n" +
+		"---\nname: tag-doc\ndescription: one line\n---\n\n" +
+		"# Tag Doc\n\n모델 출력에서 </think> 를 지웁니다.\n" +
+		"```"
+
+	chat := &fakeSkillChat{messages: []Message{assistantMessage(reply)}}
+
+	draft, err := NewSkillDrafter(chat).Draft(context.Background(), DraftRequest{AgentID: "agent-1", SessionKey: "sess-1", Goal: "goal"})
+	if err != nil {
+		t.Fatalf("draft: %v", err)
+	}
+	if !strings.HasPrefix(draft.Main, "---\nname: tag-doc") {
+		t.Fatalf("main = %q", draft.Main)
+	}
+	if !strings.Contains(draft.Main, "</think>") {
+		t.Fatalf("the document's own mention of the tag was dropped: %q", draft.Main)
+	}
+}
+
+// Replies with no reasoning at all must be untouched.
+func TestSkillDrafterLeavesAPlainReplyAlone(t *testing.T) {
+	chat := &fakeSkillChat{messages: []Message{
+		assistantMessage("```markdown\n---\nname: cpu-report\n---\n\n# Body\n```"),
+	}}
+
+	draft, err := NewSkillDrafter(chat).Draft(context.Background(), DraftRequest{AgentID: "agent-1", SessionKey: "sess-1", Goal: "goal"})
+	if err != nil {
+		t.Fatalf("draft: %v", err)
+	}
+	if draft.Main != "---\nname: cpu-report\n---\n\n# Body" {
+		t.Fatalf("main = %q", draft.Main)
+	}
+}
+
+// The opposite shape: the model wrote the document, then closed a reasoning
+// block it never opened, and said nothing after it. Taking the tail here would
+// hand the author "NO_REPLY" instead of the skill they asked for.
+func TestSkillDrafterKeepsADocumentThatPrecedesTheTag(t *testing.T) {
+	reply := "---\nname: telegraf-missing-diagnosis\ndescription: one line\n---\n\n" +
+		"# 진단\n\n## 순서\n\n1. 호스트를 확인한다.\n" +
+		"</think>\n\nNO_REPLY"
+
+	chat := &fakeSkillChat{messages: []Message{assistantMessage(reply)}}
+
+	draft, err := NewSkillDrafter(chat).Draft(context.Background(), DraftRequest{AgentID: "agent-1", SessionKey: "sess-1", Goal: "goal"})
+	if err != nil {
+		t.Fatalf("draft: %v", err)
+	}
+	if strings.TrimSpace(draft.Main) == "NO_REPLY" {
+		t.Fatal("the document was thrown away for the text after the tag")
+	}
+	if !strings.HasPrefix(draft.Main, "---\nname: telegraf-missing-diagnosis") {
+		t.Fatalf("main = %q", draft.Main)
+	}
+	if !strings.Contains(draft.Main, "1. 호스트를 확인한다.") {
+		t.Fatalf("the body was lost: %q", draft.Main)
+	}
+}
