@@ -9,7 +9,14 @@ import {
 import {connect, useDispatch} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import ReactObserver from 'react-resize-observer'
-import {Radio} from 'src/reusable_ui'
+import {
+  Button,
+  ButtonShape,
+  ComponentColor,
+  ComponentSize,
+  IconFont,
+  Radio,
+} from 'src/reusable_ui'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -39,6 +46,11 @@ import {LogConfig} from 'src/types/logs'
 
 // Util
 import {formattedTime} from 'src/log_analysis/util'
+import {
+  buildLogAnalysisPrompt,
+  buildLogContextPayload,
+} from 'src/log_analysis/util/aiLogContext'
+import useAiContext from 'src/ai_chat/hooks/useAiContext'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import _ from 'lodash'
 import {colorForSeverity, getBrighterColor} from 'src/logs/utils/colors'
@@ -189,6 +201,14 @@ function LogAnalysisSyslogTable<_>({
 
   const baseColumns = useMemo(
     () => [
+      {
+        id: 'aiAnalysis',
+        display: 'Analysis',
+        isExpandable: false,
+        isSortable: false,
+        // Matches Metrics, the column's only sibling that holds a bare icon.
+        initialWidth: 65,
+      },
       {
         id: '@timestamp',
         display: 'Timestamp',
@@ -453,6 +473,39 @@ function LogAnalysisSyslogTable<_>({
     [debouncedFilterAction]
   )
 
+  const {sendToAiChat, clear: clearAiContext} = useAiContext()
+
+  const handleAiAnalyzeClick = useCallback(
+    (row: SyslogTableRows) => {
+      // One row per question: clearing first means a second click replaces the
+      // log being analysed instead of piling onto the previous one. To let
+      // rows accumulate later, drop this call and send with autoSend false.
+      clearAiContext()
+
+      // The severity and facility names the table is showing, so the agent is
+      // told what the user is looking at rather than a second reading of the
+      // same codes.
+      const severityCode = row['log.syslog.severity.code']?.[0]
+      const facilityCode = row['log.syslog.facility.code']?.[0]
+      const payload = buildLogContextPayload(row, {
+        severity:
+          severityCode == null
+            ? undefined
+            : getSeverityLevelFromCode(Number(severityCode)),
+        facility:
+          facilityCode == null
+            ? undefined
+            : SYSLOG_FACILITY_MAP[facilityCode] || undefined,
+      })
+
+      // The row is written into the question itself rather than attached as
+      // context: the report asks for named sections, and a capsule would
+      // repeat every value again underneath the filled-in template.
+      sendToAiChat({autoSend: true, prompt: buildLogAnalysisPrompt(payload)})
+    },
+    [clearAiContext, sendToAiChat]
+  )
+
   useEffect(() => {
     return () => {
       debouncedFilterAction.cancel()
@@ -521,6 +574,22 @@ function LogAnalysisSyslogTable<_>({
         'facility.code',
         'message_tokens',
       ]
+
+      if (columnId === 'aiAnalysis') {
+        return (
+          <div className="log-analysis-ai-attach--cell">
+            <Button
+              shape={ButtonShape.Square}
+              size={ComponentSize.ExtraSmall}
+              color={ComponentColor.Primary}
+              icon={IconFont.Wrench}
+              customClass="log-analysis-ai-attach--button"
+              titleText="이 로그를 AI에게 분석 요청"
+              onClick={() => handleAiAnalyzeClick(row)}
+            />
+          </div>
+        )
+      }
 
       if (columnId === 'message_tokens') {
         const tokens = row['message_tokens'] || []
@@ -709,6 +778,7 @@ function LogAnalysisSyslogTable<_>({
       pageIndex,
       pageSize,
       handleCellClick,
+      handleAiAnalyzeClick,
       handleExpandSideBar,
       logConfig?.isTruncated,
       logConfig?.severityFormat,

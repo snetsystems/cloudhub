@@ -685,6 +685,43 @@ button[data-test-subj='pagination-button-next'][disabled] {
   }
 }
 
+// Hand one syslog row to AI Chat.
+//
+// Drawn as a bare primary-coloured icon rather than a filled button, because
+// Metrics sits two columns away and renders its own icon that way: a solid
+// block beside it would read as a different kind of control.
+.log-analysis-ai-attach--cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+
+  .log-analysis-ai-attach--button {
+    width: 20px;
+    height: 20px;
+    line-height: 18px;
+    padding: 0;
+    background-color: transparent;
+    border-color: transparent;
+    color: $primary;
+
+    .button-icon {
+      font-size: 15px;
+    }
+
+    &:hover,
+    &:active,
+    &:active:hover,
+    &.active,
+    &.active:hover {
+      background-color: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      color: lighten($primary, 12%);
+    }
+  }
+}
+
 .chart-options-container {
   .option-section {
     display: flex;
