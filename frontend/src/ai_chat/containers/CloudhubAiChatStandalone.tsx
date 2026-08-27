@@ -49,6 +49,10 @@ import {
 import {AiChatSkill, getAiChatSkills} from 'src/ai_chat/apis/openclawSkills'
 import {useOpenClawApprovals} from 'src/ai_chat/hooks/useOpenClawApprovals'
 import {
+  OpenClawApprovalView,
+  placeApprovals,
+} from 'src/ai_chat/utils/openclawApprovalState'
+import {
   buildPromptWithContext,
   getAiContextDefaultPrompt,
   getAiContextLabel,
@@ -2068,6 +2072,207 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
   )
 
+  // Approval cards belong where the agent asked, not in one pile at the end:
+  // a second request would otherwise stack its card under the first one's,
+  // below every message that arrived after either was answered.
+  const approvalPlacement = placeApprovals(displayableMessages, approvals)
+
+  const renderApprovalCards = (queued: OpenClawApprovalView[] = []) =>
+    queued.map(approval => (
+      <div
+        key={`approval-${approval.id}`}
+        className="message-item ai approval-message-item"
+      >
+        <AiChatMessageAvatar sender="tool" />
+        <OpenClawApprovalCard
+          approval={approval}
+          now={now}
+          onResolve={resolveApproval}
+        />
+      </div>
+    ))
+
+  const renderChatMessage = (msg: ChatMessage): React.ReactNode[] => {
+    if (msg.sender === 'user') {
+      return [
+        <div
+          key={msg.id}
+          className={classnames('message-item user', {
+            'is-failed': msg.isFailed,
+          })}
+        >
+          <div className="message-bubble">
+            <div className="message-text-content">{msg.text}</div>
+            <div className="message-bubble-footer">
+              {msg.isFailed ? (
+                <div className="user-message-failed-row">
+                  <span className="failed-label">전송 실패</span>
+                  <button
+                    type="button"
+                    className="retry-send-btn"
+                    onClick={() => handleRetryMessage(msg.id, msg.text)}
+                    title="클릭하여 즉시 재전송"
+                  >
+                    재시도
+                  </button>
+                </div>
+              ) : (
+                (msg.timestampRaw || msg.timestamp) && (
+                  <span className="message-timestamp">
+                    {formatChatTimestamp(
+                      msg.timestampRaw || msg.timestamp,
+                      effectiveTimeZone
+                    )}
+                  </span>
+                )
+              )}
+            </div>
+          </div>
+          <AiChatMessageAvatar sender="user" />
+        </div>,
+      ]
+    }
+
+    const hasActivities = Boolean(msg.activities && msg.activities.length > 0)
+    const hasText = Boolean(msg.text)
+    const isTargetSelected = targetInspectorMessage?.id === msg.id
+
+    return [
+      <div key={`msg-${msg.id}`} className="message-item ai">
+        <AiChatMessageAvatar sender="ai" />
+        <div className="message-content-col">
+          {hasActivities ? (
+            <div className="message-bubble has-activities">
+              <div className="ai-tool-activity-summary-bar">
+                <div className="summary-bar-left">
+                  <span className="summary-label">
+                    {`도구 ${msg.activities!.length}개 실행`}
+                  </span>
+                </div>
+                {/* chatOnly(드로어/모달) 모드에는 우측 인스펙터
+                                패널이 없어 열 대상이 없으므로 감춘다. */}
+                {!chatOnly && (
+                  <button
+                    type="button"
+                    className={classnames('view-activity-inspector-btn', {
+                      active:
+                        isTargetSelected &&
+                        showSubagentPanel &&
+                        activeInspectorTab === 'activity',
+                    })}
+                    onClick={() => handleOpenActivityInspector(msg.id)}
+                    title="우측 패널에서 상세 실행 내역 보기"
+                  >
+                    작업 내용 보기 ↗
+                  </button>
+                )}
+              </div>
+
+              {hasText && (
+                <div className="message-text-content">
+                  <AiChatMessageMarkdown content={msg.text} />
+                  {msg.isStreaming && <span className="blinking-cursor" />}
+                </div>
+              )}
+
+              {!hasText && msg.isStreaming && (
+                <div className="inline-streaming-dots">
+                  <span className="loading-dot" />
+                  <span className="loading-dot" />
+                  <span className="loading-dot" />
+                </div>
+              )}
+
+              {!msg.isStreaming && (
+                <div className="message-bubble-footer ai-completed-footer">
+                  <div className="ai-footer-left">
+                    <AiChatBadge variant="done" icon="✓">
+                      답변 완료
+                    </AiChatBadge>
+                    {(msg.timestampRaw || msg.timestamp) && (
+                      <span className="message-timestamp">
+                        {formatChatTimestamp(
+                          msg.timestampRaw || msg.timestamp,
+                          effectiveTimeZone
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="ai-footer-actions">
+                    {hasText && (
+                      <button
+                        type="button"
+                        className={classnames('ai-copy-btn', {
+                          copied: copiedMessageId === msg.id,
+                        })}
+                        onClick={() => handleCopyMessageText(msg.id, msg.text)}
+                        title="답변 내용 복사"
+                      >
+                        {copiedMessageId === msg.id ? '복사됨' : '복사'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="message-bubble">
+              {hasText && (
+                <div className="message-text-content">
+                  <AiChatMessageMarkdown content={msg.text} />
+                  {msg.isStreaming && <span className="blinking-cursor" />}
+                </div>
+              )}
+
+              {!msg.isStreaming && (
+                <div className="message-bubble-footer ai-completed-footer">
+                  <div className="ai-footer-left">
+                    <AiChatBadge variant="done" icon="✓">
+                      답변 완료
+                    </AiChatBadge>
+                    {(msg.timestampRaw || msg.timestamp) && (
+                      <span className="message-timestamp">
+                        {formatChatTimestamp(
+                          msg.timestampRaw || msg.timestamp,
+                          effectiveTimeZone
+                        )}
+                      </span>
+                    )}
+                  </div>
+                  <div className="ai-footer-actions">
+                    {hasText && (
+                      <button
+                        type="button"
+                        className={classnames('ai-copy-btn', {
+                          copied: copiedMessageId === msg.id,
+                        })}
+                        onClick={() => handleCopyMessageText(msg.id, msg.text)}
+                        title="답변 내용 복사"
+                      >
+                        {copiedMessageId === msg.id ? '복사됨' : '복사'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {msg.action === 'BLOCKED' && (
+            <AiChatBadge variant="blocked" size="md">
+              Security Gateway Intercepted (Dropped in Trash)
+            </AiChatBadge>
+          )}
+          {msg.action === 'REDACTED' && (
+            <AiChatBadge variant="redacted" size="md">
+              Sensitive Secret / PII Data Masked
+            </AiChatBadge>
+          )}
+        </div>
+      </div>,
+    ]
+  }
+
   const renderChatThread = () => (
     <div className="chat-thread-container">
       {!chatOnly && (
@@ -2154,221 +2359,16 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 </div>
               </div>
             ) : (
-              displayableMessages.flatMap(msg => {
-                if (msg.sender === 'user') {
-                  return [
-                    <div
-                      key={msg.id}
-                      className={classnames('message-item user', {
-                        'is-failed': msg.isFailed,
-                      })}
-                    >
-                      <div className="message-bubble">
-                        <div className="message-text-content">{msg.text}</div>
-                        <div className="message-bubble-footer">
-                          {msg.isFailed ? (
-                            <div className="user-message-failed-row">
-                              <span className="failed-label">전송 실패</span>
-                              <button
-                                type="button"
-                                className="retry-send-btn"
-                                onClick={() =>
-                                  handleRetryMessage(msg.id, msg.text)
-                                }
-                                title="클릭하여 즉시 재전송"
-                              >
-                                재시도
-                              </button>
-                            </div>
-                          ) : (
-                            (msg.timestampRaw || msg.timestamp) && (
-                              <span className="message-timestamp">
-                                {formatChatTimestamp(
-                                  msg.timestampRaw || msg.timestamp,
-                                  effectiveTimeZone
-                                )}
-                              </span>
-                            )
-                          )}
-                        </div>
-                      </div>
-                      <AiChatMessageAvatar sender="user" />
-                    </div>,
-                  ]
-                }
-
-                const hasActivities = Boolean(
-                  msg.activities && msg.activities.length > 0
-                )
-                const hasText = Boolean(msg.text)
-                const isTargetSelected = targetInspectorMessage?.id === msg.id
-
-                return (
-                  <div key={`msg-${msg.id}`} className="message-item ai">
-                    <AiChatMessageAvatar sender="ai" />
-                    <div className="message-content-col">
-                      {hasActivities ? (
-                        <div className="message-bubble has-activities">
-                          <div className="ai-tool-activity-summary-bar">
-                            <div className="summary-bar-left">
-                              <span className="summary-label">
-                                {`도구 ${msg.activities!.length}개 실행`}
-                              </span>
-                            </div>
-                            {/* chatOnly(드로어/모달) 모드에는 우측 인스펙터
-                                패널이 없어 열 대상이 없으므로 감춘다. */}
-                            {!chatOnly && (
-                              <button
-                                type="button"
-                                className={classnames(
-                                  'view-activity-inspector-btn',
-                                  {
-                                    active:
-                                      isTargetSelected &&
-                                      showSubagentPanel &&
-                                      activeInspectorTab === 'activity',
-                                  }
-                                )}
-                                onClick={() =>
-                                  handleOpenActivityInspector(msg.id)
-                                }
-                                title="우측 패널에서 상세 실행 내역 보기"
-                              >
-                                작업 내용 보기 ↗
-                              </button>
-                            )}
-                          </div>
-
-                          {hasText && (
-                            <div className="message-text-content">
-                              <AiChatMessageMarkdown content={msg.text} />
-                              {msg.isStreaming && (
-                                <span className="blinking-cursor" />
-                              )}
-                            </div>
-                          )}
-
-                          {!hasText && msg.isStreaming && (
-                            <div className="inline-streaming-dots">
-                              <span className="loading-dot" />
-                              <span className="loading-dot" />
-                              <span className="loading-dot" />
-                            </div>
-                          )}
-
-                          {!msg.isStreaming && (
-                            <div className="message-bubble-footer ai-completed-footer">
-                              <div className="ai-footer-left">
-                                <AiChatBadge variant="done" icon="✓">
-                                  답변 완료
-                                </AiChatBadge>
-                                {(msg.timestampRaw || msg.timestamp) && (
-                                  <span className="message-timestamp">
-                                    {formatChatTimestamp(
-                                      msg.timestampRaw || msg.timestamp,
-                                      effectiveTimeZone
-                                    )}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="ai-footer-actions">
-                                {hasText && (
-                                  <button
-                                    type="button"
-                                    className={classnames('ai-copy-btn', {
-                                      copied: copiedMessageId === msg.id,
-                                    })}
-                                    onClick={() =>
-                                      handleCopyMessageText(msg.id, msg.text)
-                                    }
-                                    title="답변 내용 복사"
-                                  >
-                                    {copiedMessageId === msg.id
-                                      ? '복사됨'
-                                      : '복사'}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="message-bubble">
-                          {hasText && (
-                            <div className="message-text-content">
-                              <AiChatMessageMarkdown content={msg.text} />
-                              {msg.isStreaming && (
-                                <span className="blinking-cursor" />
-                              )}
-                            </div>
-                          )}
-
-                          {!msg.isStreaming && (
-                            <div className="message-bubble-footer ai-completed-footer">
-                              <div className="ai-footer-left">
-                                <AiChatBadge variant="done" icon="✓">
-                                  답변 완료
-                                </AiChatBadge>
-                                {(msg.timestampRaw || msg.timestamp) && (
-                                  <span className="message-timestamp">
-                                    {formatChatTimestamp(
-                                      msg.timestampRaw || msg.timestamp,
-                                      effectiveTimeZone
-                                    )}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="ai-footer-actions">
-                                {hasText && (
-                                  <button
-                                    type="button"
-                                    className={classnames('ai-copy-btn', {
-                                      copied: copiedMessageId === msg.id,
-                                    })}
-                                    onClick={() =>
-                                      handleCopyMessageText(msg.id, msg.text)
-                                    }
-                                    title="답변 내용 복사"
-                                  >
-                                    {copiedMessageId === msg.id
-                                      ? '복사됨'
-                                      : '복사'}
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {msg.action === 'BLOCKED' && (
-                        <AiChatBadge variant="blocked" size="md">
-                          Security Gateway Intercepted (Dropped in Trash)
-                        </AiChatBadge>
-                      )}
-                      {msg.action === 'REDACTED' && (
-                        <AiChatBadge variant="redacted" size="md">
-                          Sensitive Secret / PII Data Masked
-                        </AiChatBadge>
-                      )}
-                    </div>
-                  </div>
-                )
-              })
+              <>
+                {renderApprovalCards(approvalPlacement.leading)}
+                {displayableMessages.flatMap(msg => [
+                  ...renderChatMessage(msg),
+                  ...renderApprovalCards(
+                    approvalPlacement.afterMessage[msg.id]
+                  ),
+                ])}
+              </>
             )}
-            {approvals.map(approval => (
-              <div
-                key={`approval-${approval.id}`}
-                className="message-item ai approval-message-item"
-              >
-                <AiChatMessageAvatar sender="tool" />
-                <OpenClawApprovalCard
-                  approval={approval}
-                  now={now}
-                  onResolve={resolveApproval}
-                />
-              </div>
-            ))}
             {isStreamingActive && !isAnyAiWorking && (
               <div
                 key="active-streaming-global-indicator"

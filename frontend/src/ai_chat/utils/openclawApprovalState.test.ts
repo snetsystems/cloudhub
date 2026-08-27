@@ -1,6 +1,8 @@
 import {
   activeSessionApprovals,
   openClawApprovalReducer,
+  OpenClawApprovalView,
+  placeApprovals,
 } from './openclawApprovalState'
 import {OpenClawApprovalDTO} from 'src/ai_chat/apis/openclawApi'
 
@@ -429,6 +431,68 @@ describe('OpenClaw approval state', () => {
     expect(activeSessionApprovals(resolvedFirstSession, 'session-a')[0].state).toBe('denied')
     expect(activeSessionApprovals(resolvedFirstSession, 'session-b')).toEqual([
       expect.objectContaining({id: 'approval-b', state: 'pending'}),
+    ])
+  })
+})
+
+describe('approval placement in the transcript', () => {
+  const view = (id: string, createdAt: number): OpenClawApprovalView => ({
+    ...approval(id, createdAt),
+    state: 'allowed',
+    decision: 'allow-once',
+  })
+
+  const messages = [
+    {id: 'msg-1', timestampRaw: 1_000},
+    {id: 'msg-2', timestampRaw: 2_000},
+    {id: 'msg-3', timestampRaw: 3_000},
+  ]
+
+  it('anchors each approval to the last message that preceded it', () => {
+    const placement = placeApprovals(messages, [
+      view('first', 1_500),
+      view('second', 2_500),
+    ])
+
+    expect(placement.leading).toEqual([])
+    expect(placement.afterMessage['msg-1'].map(a => a.id)).toEqual(['first'])
+    expect(placement.afterMessage['msg-2'].map(a => a.id)).toEqual(['second'])
+    expect(placement.afterMessage['msg-3']).toBeUndefined()
+  })
+
+  it('keeps an approval newer than every message at the bottom', () => {
+    const placement = placeApprovals(messages, [view('pending', 9_000)])
+
+    expect(placement.afterMessage['msg-3'].map(a => a.id)).toEqual(['pending'])
+  })
+
+  it('leads with an approval older than the first message', () => {
+    const placement = placeApprovals(messages, [view('early', 10)])
+
+    expect(placement.leading.map(a => a.id)).toEqual(['early'])
+    expect(placement.afterMessage).toEqual({})
+  })
+
+  it('inherits the last timestamp for a message that carries none', () => {
+    const placement = placeApprovals(
+      [{id: 'msg-1', timestampRaw: 1_000}, {id: 'msg-2'}],
+      [view('after-both', 1_500)]
+    )
+
+    expect(placement.afterMessage['msg-2'].map(a => a.id)).toEqual([
+      'after-both',
+    ])
+  })
+
+  it('keeps two approvals under the same message in request order', () => {
+    const placement = placeApprovals(messages, [
+      view('older', 3_100),
+      view('newer', 3_200),
+    ])
+
+    expect(placement.afterMessage['msg-3'].map(a => a.id)).toEqual([
+      'older',
+      'newer',
     ])
   })
 })

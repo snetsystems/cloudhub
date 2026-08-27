@@ -44,6 +44,9 @@ jest.mock(
   'src/ai_chat/components/SubagentInspectorPanel',
   () => () => null
 )
+jest.mock('src/ai_chat/apis/openclawSkills', () => ({
+  getAiChatSkills: jest.fn().mockResolvedValue([]),
+}))
 jest.mock('src/shared/actions/notifications', () => ({notify: jest.fn()}))
 jest.mock('src/shared/copy/notifications', () => ({
   defaultErrorNotification: {},

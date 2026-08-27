@@ -208,3 +208,63 @@ export const activeSessionApprovals = (
   Object.keys(store[sessionId] || {})
     .map(approvalId => store[sessionId][approvalId])
     .sort((left, right) => left.createdAt - right.createdAt || left.id.localeCompare(right.id))
+
+/** A message, as far as approval placement is concerned. */
+export interface OpenClawApprovalAnchor {
+  id: string
+  timestampRaw?: number
+}
+
+export interface OpenClawApprovalPlacement {
+  /** Approvals requested before the first message on screen. */
+  leading: OpenClawApprovalView[]
+  /** Approvals to render under the message they interrupted, by message id. */
+  afterMessage: {[messageId: string]: OpenClawApprovalView[]}
+}
+
+/**
+ * Put every approval card where the agent asked for it.
+ *
+ * Rendering them all after the transcript reads as one queue: a second
+ * request stacks its card under the first one's, both sitting below every
+ * message that arrived after either was answered. An approval belongs after
+ * the last message that was already on screen when it was requested, which
+ * still leaves a pending one at the bottom, where it was.
+ *
+ * Messages and approvals timestamp on the same clock, in milliseconds. A
+ * message that carries no timestamp inherits the last one seen, so a gap
+ * cannot push later messages ahead of earlier ones.
+ */
+export const placeApprovals = (
+  messages: OpenClawApprovalAnchor[],
+  approvals: OpenClawApprovalView[]
+): OpenClawApprovalPlacement => {
+  const placement: OpenClawApprovalPlacement = {leading: [], afterMessage: {}}
+
+  let latest = 0
+  const anchors = messages.map(message => {
+    latest = message.timestampRaw || latest
+    return {id: message.id, at: latest}
+  })
+
+  approvals.forEach(approval => {
+    let anchorID = ''
+    anchors.forEach(anchor => {
+      if (anchor.at <= approval.createdAt) {
+        anchorID = anchor.id
+      }
+    })
+
+    if (!anchorID) {
+      placement.leading.push(approval)
+      return
+    }
+
+    placement.afterMessage[anchorID] = [
+      ...(placement.afterMessage[anchorID] || []),
+      approval,
+    ]
+  })
+
+  return placement
+}
