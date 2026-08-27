@@ -1,8 +1,62 @@
 import {
   getOpenClawApprovals,
+  getOpenClawSessions,
+  openClawUrl,
   OpenClawApprovalEventDTO,
   resolveOpenClawApproval,
+  sendOpenClawMessage,
 } from './openclawApi'
+
+describe('OpenClaw request addressing', () => {
+  const fetchMock = jest.fn()
+  const originalBasepath = window.basepath
+
+  beforeEach(() => {
+    fetchMock.mockReset()
+    global.fetch = (fetchMock as unknown) as typeof fetch
+  })
+
+  afterEach(() => {
+    window.basepath = originalBasepath
+  })
+
+  it('mounts requests under the basepath the server was started with', async () => {
+    window.basepath = '/cloudhub'
+    fetchMock.mockResolvedValue({ok: true, json: async () => ({sessions: []})})
+
+    await getOpenClawSessions()
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/cloudhub/cloudhub/v2/openclaw/sessions',
+      expect.anything()
+    )
+  })
+
+  it('reads the basepath per call, since bootstrap assigns it after this module loads', () => {
+    window.basepath = undefined
+    expect(openClawUrl('/events/ws')).toBe('/cloudhub/v2/openclaw/events/ws')
+
+    window.basepath = '/cloudhub'
+    expect(openClawUrl('/events/ws')).toBe(
+      '/cloudhub/cloudhub/v2/openclaw/events/ws'
+    )
+  })
+
+  it('sends the session credentials the API authorizes the caller with', async () => {
+    fetchMock.mockResolvedValue({ok: true})
+
+    await sendOpenClawMessage('session/one', 'hello', 'idem-1')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/cloudhub/v2/openclaw/sessions/session%2Fone/messages',
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({message: 'hello', idempotencyKey: 'idem-1'}),
+      })
+    )
+  })
+})
 
 describe('OpenClaw approval API', () => {
   const fetchMock = jest.fn()
