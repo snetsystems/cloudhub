@@ -1,11 +1,12 @@
 import React from 'react'
 import {connect} from 'react-redux'
 import {withRouter, WithRouterProps} from 'react-router'
-import {Button, IconFont} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
 import {toggleAiAgentsDrawer} from 'src/shared/actions/aiAgentsDrawer'
 import {OrgNavMenuState} from 'src/shared/actions/orgNavMenu'
 import {isOrgNavMenuEnabled} from 'src/side_nav/utils/orgNavMenuVisibility'
 import {AiAgentsDrawerState} from 'src/shared/reducers/aiAgentsDrawer'
+import Tooltip from 'src/shared/components/Tooltip'
 import {Source} from 'src/types'
 
 interface Props extends WithRouterProps {
@@ -26,14 +27,15 @@ const AiAgentsButton: React.FC<Props> = ({
   }
 
   return (
-    <Button
-      text="AI Agents"
-      icon={IconFont.AiRobot}
-      onClick={onToggle}
-      active={isDrawerOpen}
-      customClass="dashboard-ai-agents-button"
-      titleText="Open AI Agents"
-    />
+    <Tooltip tip="AI Assistant">
+      <Button
+        icon={IconFont.AiRobot}
+        onClick={onToggle}
+        active={isDrawerOpen}
+        shape={ButtonShape.Square}
+        customClass="dashboard-ai-agents-button"
+      />
+    </Tooltip>
   )
 }
 

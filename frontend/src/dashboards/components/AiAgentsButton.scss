@@ -1,5 +1,23 @@
 @import 'src/style/modules/modules';
 
+$ai-agents-gradient: linear-gradient(135deg, $c-laser 0%, $c-rainforest 100%);
+
+@mixin ai-agents-icon-gradient {
+  background-image: $ai-agents-gradient;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+@mixin ai-agents-icon-solid($fill) {
+  background-image: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: $fill;
+  -webkit-text-fill-color: $fill;
+}
+
 .dashboard-ai-agents-button.button {
   border-radius: $form-sm-height;
   @include buttonColorModifier(
@@ -9,6 +27,22 @@
     $c-laser,
     $g20-white
   );
+
+  .button-icon,
+  .button-icon::before {
+    @include ai-agents-icon-gradient;
+  }
+
+  &:hover,
+  &:active,
+  &:active:hover,
+  &.active,
+  &.active:hover {
+    .button-icon,
+    .button-icon::before {
+      @include ai-agents-icon-solid($g20-white);
+    }
+  }
 }
 
 .dashboard-ai-agents-button.button.active,
@@ -17,4 +51,26 @@
   background-color: $c-laser;
   border-color: mix($c-laser, $c-pool, 55%);
   box-shadow: 0 0 8px rgba($c-laser, 0.35);
+}
+
+:has(.dashboard-ai-agents-button) > .__react_component_tooltip.influx-tooltip {
+  &.type-dark {
+    border-color: $c-laser;
+  }
+
+  &.type-dark.place-top:after {
+    border-top-color: $c-laser;
+  }
+
+  &.type-dark.place-right:after {
+    border-right-color: $c-laser;
+  }
+
+  &.type-dark.place-bottom:after {
+    border-bottom-color: $c-laser;
+  }
+
+  &.type-dark.place-left:after {
+    border-left-color: $c-laser;
+  }
 }
