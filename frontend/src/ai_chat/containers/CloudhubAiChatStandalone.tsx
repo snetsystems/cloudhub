@@ -2561,6 +2561,10 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     false
   )
 
+  // Only the crossing into a narrow panel collapses the list; staying narrow
+  // must not, or the user could never hold it open.
+  const wasTooNarrowForSidebar = useRef<boolean>(false)
+
   useEffect(() => {
     const el = wrapperRef.current
     if (!el || typeof ResizeObserver === 'undefined') {
@@ -2568,9 +2572,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
 
     const update = () => {
-      setIsTooNarrowForSidebar(
+      const tooNarrow =
         el.clientWidth > 0 && el.clientWidth < CHAT_SIDEBAR_EXPANDED_MIN_WIDTH
-      )
+      if (tooNarrow && !wasTooNarrowForSidebar.current) {
+        setIsSidebarCollapsed(true)
+      }
+      wasTooNarrowForSidebar.current = tooNarrow
+      setIsTooNarrowForSidebar(tooNarrow)
     }
 
     update()
@@ -2579,8 +2587,21 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     return () => observer.disconnect()
   }, [])
 
-  const isSidebarEffectivelyCollapsed =
-    isSidebarCollapsed || isTooNarrowForSidebar
+  /*
+    Below CHAT_SIDEBAR_EXPANDED_MIN_WIDTH the list cannot sit beside the thread
+    — .chat-sidebar and .chat-thread-container both carry hard min-widths — so
+    it opens over the thread instead. Dropping the toggle there, as this used
+    to, left the drawer-sized chat with no way to reach its own session list.
+  */
+  // Covering the thread, as opposed to merely sitting over it as a collapsed
+  // rail: what the scrim and the click-away close react to.
+  const isSidebarOverlaid = isTooNarrowForSidebar && !isSidebarCollapsed
+
+  const closeOverlaidSidebar = () => {
+    if (isSidebarOverlaid) {
+      setIsSidebarCollapsed(true)
+    }
+  }
 
   // Attaching a whole rack should not bury the composer, so past a handful the
   // rest collapse into a count the user can expand.
@@ -2607,21 +2628,38 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
   return (
     <div className={wrapperClass} ref={wrapperRef}>
-      <div className="chat-layout">
+      <div
+        className={classnames('chat-layout', {
+          'sidebar-overlaid': isTooNarrowForSidebar,
+        })}
+      >
         <AiChatSidebar
           sessions={sessions}
           activeSessionId={activeSessionId}
-          isCollapsed={isSidebarEffectivelyCollapsed}
+          isCollapsed={isSidebarCollapsed}
           isStreamingActive={isStreamingActive}
-          onSelectSession={handleSelectSession}
+          onSelectSession={id => {
+            handleSelectSession(id)
+            closeOverlaidSidebar()
+          }}
           onDeleteSession={handleDeleteSession}
-          onCreateNewChat={handleCreateNewChat}
-          onToggleCollapse={
-            isTooNarrowForSidebar
-              ? undefined
-              : () => setIsSidebarCollapsed(prev => !prev)
-          }
+          onCreateNewChat={() => {
+            handleCreateNewChat()
+            closeOverlaidSidebar()
+          }}
+          onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
         />
+        {/* Kept mounted while the panel is narrow so it fades with the list
+            rather than blinking out the moment the list starts closing. */}
+        {isTooNarrowForSidebar && (
+          <div
+            className={classnames('chat-sidebar--scrim', {
+              'is-visible': isSidebarOverlaid,
+            })}
+            onClick={closeOverlaidSidebar}
+            title="대화 목록 닫기"
+          />
+        )}
 
         {chatOnly ? (
           renderChatThread()
