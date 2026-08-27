@@ -22,6 +22,7 @@ export * from './tableType'
 export * from './deviceManagement'
 
 export * from './aiModal'
+export * from './aiChatContext'
 
 export * from './prediction'
 

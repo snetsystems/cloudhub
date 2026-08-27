@@ -18,6 +18,8 @@ const aiAgentsDrawerReducer = (
   switch (action.type) {
     case AiAgentsDrawerActionTypes.TOGGLE:
       return {...state, isOpen: !state.isOpen}
+    case AiAgentsDrawerActionTypes.OPEN:
+      return {...state, isOpen: true}
     default:
       return state
   }

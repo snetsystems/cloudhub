@@ -24,6 +24,7 @@ import kubernetesDetailsDashboard from 'src/clouds/reducers/kubernetesDetailsDas
 import source from 'src/sources/reducers'
 import aiModal from 'src/shared/reducers/aiModal'
 import aiAgentsDrawer from 'src/shared/reducers/aiAgentsDrawer'
+import aiChatContext from 'src/shared/reducers/aiChatContext'
 import predictionDashboard from 'src/device_management/reducers/predictionDashboard'
 import gpuMonitoringDashboard from 'src/gpu_monitoring/reducers/gpuMonitoringDashboard'
 import esSourcesReducer from 'src/shared/reducers/esSources'
@@ -57,6 +58,7 @@ const rootReducer = combineReducers({
   source,
   aiModal,
   aiAgentsDrawer,
+  aiChatContext,
   predictionDashboard,
   gpuMonitoringDashboard,
   esSources: esSourcesReducer,
