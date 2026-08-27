@@ -28,7 +28,7 @@ const readCellNumber = (value: unknown): number | undefined => {
  * Seeded into the composer as editable text, so a user who wants something
  * other than an inspection can simply delete it.
  */
-export const SERVER_ATTACH_SKILL = '/cloudhub_critical_alerts_audit'
+export const SERVER_ATTACH_SKILL = '/ops-server-health-check'
 
 /** Question sent with the skill when a server row is diagnosed. */
 export const SERVER_DIAGNOSE_MESSAGE = '점검해줘'
