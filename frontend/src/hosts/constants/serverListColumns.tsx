@@ -86,7 +86,7 @@ export const serverListColumns = ({
               shape={ButtonShape.Square}
               size={ComponentSize.ExtraSmall}
               color={ComponentColor.Primary}
-              icon={IconFont.Wrench}
+              icon={IconFont.AiRobot}
               customClass="server-ai-attach--button"
               titleText={`${value} 점검을 AI에게 요청`}
               onClick={() => onAiDiagnoseClick(value, rowData)}
