@@ -31,6 +31,8 @@ interface Props {
   chartMode?: 'gauge' | 'line'
   alertStatusMap?: AlertStatusMap
   onStatusIconClick?: (host: string) => void
+  /** Ask AI Chat about a row. The column is omitted when not supplied. */
+  onAiDiagnoseClick?: (host: string, rowData: DataTableObject) => void
   isAlertsEnabled?: boolean
   hosts?: Host[]
   hasFetched?: boolean
@@ -49,12 +51,42 @@ export const serverListColumns = ({
   chartMode = 'gauge',
   alertStatusMap = {},
   onStatusIconClick,
+  onAiDiagnoseClick,
   isAlertsEnabled = true,
   hosts = [],
   hasFetched = false,
   t = (k: string) => k,
 }: Props): ColumnInfo[] => {
   const isLineChart = chartMode === 'line'
+
+  const aiColumn: ColumnInfo[] = onAiDiagnoseClick
+    ? [
+        {
+          key: 'host',
+          name: 'AI',
+          align: AlignType.CENTER,
+          className: 'server-ai-attach--cell',
+          parentHeader: 'Server',
+          parentHeaderClassName: 'parent-header-server',
+          options: {
+            thead: {
+              align: AlignType.CENTER,
+              style: {width: '3%'},
+            },
+          },
+          render: (value: string, rowData: DataTableObject) => (
+            <button
+              type="button"
+              className="server-ai-attach--button"
+              title={`${value} 점검을 AI에게 요청`}
+              onClick={() => onAiDiagnoseClick(value, rowData)}
+            >
+              ✦
+            </button>
+          ),
+        },
+      ]
+    : []
 
   return [
     {
@@ -138,6 +170,7 @@ export const serverListColumns = ({
         )
       },
     },
+    ...aiColumn,
     {
       key: 'CPU Usage',
       name: 'CPU Usage',

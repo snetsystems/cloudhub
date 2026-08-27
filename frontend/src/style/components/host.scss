@@ -65,6 +65,14 @@
           border: 0;
           border-right: $ix-border solid $g5-pepper;
           border-bottom: $ix-border solid $g5-pepper;
+
+          // The AI column holds one centered 20px button, so the padding above
+          // buys nothing and costs the table 24px per row that the metric
+          // columns need once the AI chat panel narrows the page. Qualified
+          // with td to outrank the rule it sits inside.
+          &.server-ai-attach--cell {
+            padding: 0;
+          }
         }
       }
     }

@@ -603,6 +603,21 @@
 }
 
 .server-list-table {
+  // Every column in serverListColumns is sized in percentages, so without a
+  // floor the table keeps shrinking with its container instead of overflowing
+  // — the AI drawer can squeeze the page to MIN_MAIN_WIDTH (280px) and all
+  // eleven columns still try to fit. Past this width Page.Contents'
+  // FancyScrollbar scrolls horizontally instead.
+  //
+  // The columns cannot honestly render below ~845px: the five gauges are
+  // pinned by `.table-gauge-cell-value { flex: 0 0 45px }`, the Mem cells
+  // cannot wrap under `white-space: pre`, and every cell but AI carries 24px
+  // of padding. The margin above that floor is what absorbs a value growing
+  // a digit, so keep it when tuning this.
+  table {
+    min-width: 1100px;
+  }
+
   .server-host {
     max-width: 150px;
     overflow: hidden;
@@ -617,6 +632,28 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  // Ask AI Chat about a row. Sits in the Server header group beside the
+  // status icon, so the buttons line up down the table.
+  .server-ai-attach--button {
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: $g11-sidewalk;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover {
+      color: $s-orange;
+      border-color: rgba($s-orange, 0.5);
+    }
   }
 
   td {
@@ -639,7 +676,7 @@
     }
     .network-interface {
       width: 50px;
-      min-width: 35px;
+      min-width: 24px;
       max-width: none;
       text-align: left;
       overflow: hidden;
@@ -658,7 +695,7 @@
     }
     .disk-usage-path {
       width: 50px;
-      min-width: 35px;
+      min-width: 12px;
       text-align: left;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -709,10 +746,17 @@
 
 .hosts-page {
   .host-page-graph-table-container-wrapper.host-page-graph-table-container {
-    margin: 12px;
     box-sizing: border-box;
     width: fit-content;
-    min-width: calc(100% - 32px);
+    min-width: calc(100% - 16px);
+  }
+
+  // The table header is sticky at z-index 10 (src/style/components/host.scss)
+  // and the scroll track renders at z-index auto, so the header paints over
+  // the scrollbar down the length of the sticky row. Raising the track carries
+  // its thumb with it.
+  .fancy-scroll--track-v {
+    z-index: 11;
   }
 
   .panel-body {

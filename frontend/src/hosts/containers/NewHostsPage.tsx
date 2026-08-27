@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {useTranslation} from 'react-i18next'
 import {Source, Links, RefreshRate, TimeZones, Me} from 'src/types'
 import {EDITOR_ROLE, isUserAuthorized} from 'src/auth/Authorized'
@@ -44,6 +44,15 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import AlertStatusSummary from 'src/hosts/components/AlertStatusSummary'
 import AlertStatusModal from 'src/hosts/components/AlertStatusModal'
 import {AlertLevel, AlertStatusMap} from 'src/hosts/types/alertStatus'
+import AiAgentsButton from 'src/dashboards/components/AiAgentsButton'
+import {DashboardsAiSplit} from 'src/dashboards/components/AiAgentsDrawer'
+import {useAiContext} from 'src/ai_chat/hooks/useAiContext'
+import {
+  buildServerContextPayload,
+  buildServerContextSummary,
+  SERVER_ATTACH_SKILL,
+  SERVER_DIAGNOSE_MESSAGE,
+} from 'src/hosts/utils/aiServerContext'
 
 type HostCellValue = TimeSeriesValue | TimeSeriesValue[] | TableLineChartPoint[]
 type FetchIntent = 'mode-switch' | 'refresh'
@@ -88,6 +97,7 @@ interface Props {
   timeZone: TimeZones
   me: Me
   isUsingAuth: boolean
+  inPresentationMode?: boolean
   onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   onChooseCloudTimeRange: (timeRange: CloudTimeRange) => void
   setTimeZone: typeof appActions.setTimeZone
@@ -103,6 +113,7 @@ export function NewHostsPage({
   timeZone,
   me,
   isUsingAuth,
+  inPresentationMode = false,
   onChooseCloudAutoRefresh,
   onChooseCloudTimeRange,
   setTimeZone,
@@ -260,6 +271,39 @@ export function NewHostsPage({
 
   const [frozenAlertStatus, setFrozenAlertStatus] = useState<any>(null)
 
+  const {sendToAiChat, clear: clearAiContext} = useAiContext()
+
+  const handleAiDiagnoseClick = useCallback(
+    (host: string, rowData: Record<string, HostCellValue>) => {
+      // One host per question for now: the agent cannot yet inspect several
+      // servers in a single run. Clearing first means a second click replaces
+      // the subject instead of piling onto it. To let selections accumulate
+      // later, drop this call and send with autoSend false.
+      clearAiContext()
+
+      sendToAiChat({
+        autoSend: true,
+        skill: SERVER_ATTACH_SKILL,
+        prompt: SERVER_DIAGNOSE_MESSAGE,
+        context: {
+          id: `host:${host}`,
+          type: 'server',
+          sourcePage: 'server-list',
+          title: host,
+          summary: buildServerContextSummary(rowData),
+          payload: buildServerContextPayload(
+            host,
+            rowData,
+            dbHosts,
+            alertStatusMap
+          ),
+          capturedAt: Date.now(),
+        },
+      })
+    },
+    [clearAiContext, sendToAiChat, dbHosts, alertStatusMap]
+  )
+
   const columns = useMemo(
     () =>
       serverListColumns({
@@ -274,6 +318,7 @@ export function NewHostsPage({
           setFrozenAlertStatus(alertStatusMap[host] ?? null)
           setIsAlertModalOpen(true)
         },
+        onAiDiagnoseClick: handleAiDiagnoseClick,
         t,
       }),
     [
@@ -283,6 +328,7 @@ export function NewHostsPage({
       isAlertsEnabled,
       dbHosts,
       hasFetched,
+      handleAiDiagnoseClick,
       t,
     ]
   )
@@ -567,6 +613,7 @@ export function NewHostsPage({
           <Page.Title title="Server List" />
         </Page.Header.Left>
         <Page.Header.Right>
+          <AiAgentsButton />
           <SourceIndicator />
           <AutoRefreshDropdown
             onChoose={handleChooseAutoRefresh}
@@ -583,126 +630,128 @@ export function NewHostsPage({
           <TimeZoneToggle onSetTimeZone={setTimeZone} timeZone={timeZone} />
         </Page.Header.Right>
       </Page.Header>
-      <Page.Contents fullWidth={true}>
-        <div className="host-page-graph-table-container-wrapper host-page-graph-table-container">
-          {!isError ? (
-            <TableComponent
-              data={finalTableData}
-              bodyClassName="server-list-table"
-              columns={columns}
-              isLoading={isTableLoading}
-              isSearchDisplay={true}
-              isDotKey={true}
-              enableSharedChartHover={displayedChartMode === 'line'}
-              toprightRender={
-                <>
-                  {isRefreshing && (
-                    <LoadingDots className="server-list-loading-dots" />
-                  )}
-                  {isEditorRole && (
-                    <div className="topright-render-container">
+      <DashboardsAiSplit inPresentationMode={inPresentationMode}>
+        <Page.Contents fullWidth={true}>
+          <div className="host-page-graph-table-container-wrapper host-page-graph-table-container">
+            {!isError ? (
+              <TableComponent
+                data={finalTableData}
+                bodyClassName="server-list-table"
+                columns={columns}
+                isLoading={isTableLoading}
+                isSearchDisplay={true}
+                isDotKey={true}
+                enableSharedChartHover={displayedChartMode === 'line'}
+                toprightRender={
+                  <>
+                    {isRefreshing && (
+                      <LoadingDots className="server-list-loading-dots" />
+                    )}
+                    {isEditorRole && (
+                      <div className="topright-render-container">
+                        <Button
+                          text={t('server_alert.add_event', '이벤트 추가')}
+                          icon={IconFont.BellAdd}
+                          size={ComponentSize.Small}
+                          color={ComponentColor.Primary}
+                          onClick={() => {
+                            if (location && location.pathname && router) {
+                              router.push({
+                                pathname: location.pathname.replace(
+                                  '/server-list',
+                                  '/alert-setup'
+                                ),
+                                state: {returnTo: location.pathname},
+                              })
+                            }
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                }
+                topLeftRender={
+                  <>
+                    <div className="server-list-topleft">
+                      <Radio shape={ButtonShape.Default}>
+                        <Radio.Button
+                          id="host-chart-mode-gauge"
+                          titleText="Gauge"
+                          value="gauge"
+                          active={pendingChartMode === 'gauge'}
+                          onClick={() => {
+                            if (
+                              pendingChartMode !== 'gauge' &&
+                              !isModeSwitching
+                            ) {
+                              setPendingChartMode('gauge')
+                            }
+                          }}
+                        >
+                          Gauge
+                        </Radio.Button>
+                        <Radio.Button
+                          id="host-chart-mode-line"
+                          titleText="Trend"
+                          value="line"
+                          active={pendingChartMode === 'line'}
+                          onClick={() => {
+                            if (pendingChartMode !== 'line' && !isModeSwitching) {
+                              setPendingChartMode('line')
+                            }
+                          }}
+                        >
+                          Trend
+                        </Radio.Button>
+                      </Radio>
+                      <div className="alert-status-summary-container">
+                        <AlertStatusSummary
+                          alertStatusMap={alertStatusMap}
+                          tableData={tableData}
+                          isAlertsEnabled={isAlertsEnabled}
+                        />
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        width: '100%',
+                      }}
+                    >
                       <Button
-                        text={t('server_alert.add_event', '이벤트 추가')}
-                        icon={IconFont.BellAdd}
+                        titleText={isFetching ? 'Fetching...' : 'Fetch'}
+                        onClick={handleFetch}
+                        icon={IconFont.SyncAlt}
+                        shape={ButtonShape.Square}
+                        color={ComponentColor.Default}
                         size={ComponentSize.Small}
-                        color={ComponentColor.Primary}
-                        onClick={() => {
-                          if (location && location.pathname && router) {
-                            router.push({
-                              pathname: location.pathname.replace(
-                                '/server-list',
-                                '/alert-setup'
-                              ),
-                              state: {returnTo: location.pathname},
-                            })
-                          }
-                        }}
+                        status={
+                          isFetching
+                            ? ComponentStatus.Loading
+                            : ComponentStatus.Default
+                        }
                       />
                     </div>
-                  )}
-                </>
-              }
-              topLeftRender={
-                <>
-                  <div className="server-list-topleft">
-                    <Radio shape={ButtonShape.Default}>
-                      <Radio.Button
-                        id="host-chart-mode-gauge"
-                        titleText="Gauge"
-                        value="gauge"
-                        active={pendingChartMode === 'gauge'}
-                        onClick={() => {
-                          if (
-                            pendingChartMode !== 'gauge' &&
-                            !isModeSwitching
-                          ) {
-                            setPendingChartMode('gauge')
-                          }
-                        }}
-                      >
-                        Gauge
-                      </Radio.Button>
-                      <Radio.Button
-                        id="host-chart-mode-line"
-                        titleText="Trend"
-                        value="line"
-                        active={pendingChartMode === 'line'}
-                        onClick={() => {
-                          if (pendingChartMode !== 'line' && !isModeSwitching) {
-                            setPendingChartMode('line')
-                          }
-                        }}
-                      >
-                        Trend
-                      </Radio.Button>
-                    </Radio>
-                    <div className="alert-status-summary-container">
-                      <AlertStatusSummary
-                        alertStatusMap={alertStatusMap}
-                        tableData={tableData}
-                        isAlertsEnabled={isAlertsEnabled}
-                      />
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      width: '100%',
-                    }}
-                  >
-                    <Button
-                      titleText={isFetching ? 'Fetching...' : 'Fetch'}
-                      onClick={handleFetch}
-                      icon={IconFont.SyncAlt}
-                      shape={ButtonShape.Square}
-                      color={ComponentColor.Default}
-                      size={ComponentSize.Small}
-                      status={
-                        isFetching
-                          ? ComponentStatus.Loading
-                          : ComponentStatus.Default
-                      }
-                    />
-                  </div>
-                </>
-              }
-            />
-          ) : (
-            <div className="empty-table-container">
-              <div className="empty-table-content empty-table-retry">
-                <p>{t('hosts.failed_to_load')}</p>
-                <Button
-                  text="Retry"
-                  icon={IconFont.Refresh}
-                  onClick={handleManualRefresh}
-                  color={ComponentColor.Primary}
-                />
+                  </>
+                }
+              />
+            ) : (
+              <div className="empty-table-container">
+                <div className="empty-table-content empty-table-retry">
+                  <p>{t('hosts.failed_to_load')}</p>
+                  <Button
+                    text="Retry"
+                    icon={IconFont.Refresh}
+                    onClick={handleManualRefresh}
+                    color={ComponentColor.Primary}
+                  />
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </Page.Contents>
+            )}
+          </div>
+        </Page.Contents>
+      </DashboardsAiSplit>
       <AlertStatusModal
         source={source}
         isVisible={isAlertModalOpen}
