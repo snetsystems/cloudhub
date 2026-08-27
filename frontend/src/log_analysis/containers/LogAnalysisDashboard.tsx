@@ -29,7 +29,19 @@ import SourceIndicator from 'src/shared/components/SourceIndicator'
 import LogAnalysisAlertBarWarpper from 'src/log_analysis/components/LogAnalysisAlertBarWrapper'
 import LogSearchFilterBar from 'src/log_analysis/components/LogSearchFilterBar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import AiAgentsButton from 'src/dashboards/components/AiAgentsButton'
+import {DashboardsAiSplit} from 'src/dashboards/components/AiAgentsDrawer'
 import NotFound from 'src/shared/components/NotFound'
+
+/**
+ * Width this page keeps for itself when the AI chat drawer is dragged wide.
+ *
+ * The syslog grid, the KQL filter bar (`.kql-label` alone is pinned at 250px)
+ * and SidePanelSlice all share this column, and unlike the server list table
+ * the grid scrolls internally rather than growing a horizontal scrollbar — so
+ * below this the page does not scroll, it just becomes unusable.
+ */
+const MIN_MAIN_WIDTH = 720
 
 // Type
 import * as DashboardsModels from 'src/types/dashboards'
@@ -370,6 +382,7 @@ function LogAnalysisDashboard({
   const renderHeaderRight = () => {
     return (
       <>
+        <AiAgentsButton />
         <LogAnalysisTips />
         <SourceIndicator />
         <Authorized requiredRole={EDITOR_ROLE}>
@@ -541,12 +554,17 @@ function LogAnalysisDashboard({
           <Page.Header.Center>{renderHeaderCenter()}</Page.Header.Center>
           <Page.Header.Right>{renderHeaderRight()}</Page.Header.Right>
         </Page.Header>
-        <LogSearchFilterBar />
-        <Threesizer
-          orientation={HANDLE_HORIZONTAL}
-          divisions={horizontalDivisions}
-          onResize={horizontalHandleResize}
-        />
+        <DashboardsAiSplit
+          inPresentationMode={inPresentationMode}
+          minMainWidth={MIN_MAIN_WIDTH}
+        >
+          <LogSearchFilterBar />
+          <Threesizer
+            orientation={HANDLE_HORIZONTAL}
+            divisions={horizontalDivisions}
+            onResize={horizontalHandleResize}
+          />
+        </DashboardsAiSplit>
       </Page>
       {renderImportOverlay()}
     </>

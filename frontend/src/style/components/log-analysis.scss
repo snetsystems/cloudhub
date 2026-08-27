@@ -14,6 +14,15 @@ $highlight: #25262e;
   scrollbar-width: thin;
   scrollbar-color: rgba(152, 162, 179, 0.5) transparent;
 
+  // Inside the AI chat split the threesizer shares a column with the search
+  // filter bar. Its base `height: 100%` would then ask for the whole column on
+  // top of the bar and get clipped, so let it take the remaining space instead.
+  .dashboards-ai-split--main > .threesizer {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+  }
+
   .close-button {
     > button {
       height: 30px;
@@ -26,6 +35,14 @@ $highlight: #25262e;
   }
   .threesizer--division {
     overflow: visible;
+  }
+
+  // The scroll track renders at z-index auto, so the filter bar above it
+  // (.kql-filter-bar, position: relative at 7) paints over the scrollbar. 11
+  // clears that without reaching the KQL suggestion list (100) or the tree map
+  // modal (2000), both of which belong above it.
+  .fancy-scroll--track-v {
+    z-index: 11;
   }
 }
 

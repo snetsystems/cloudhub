@@ -1,5 +1,7 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {Page} from 'src/reusable_ui'
+import AiAgentsButton from 'src/dashboards/components/AiAgentsButton'
+import {DashboardsAiSplit} from 'src/dashboards/components/AiAgentsDrawer'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
 import ServiceMap from 'src/hubble/components/ServiceMap'
@@ -501,54 +503,57 @@ const HubblePage: React.FC = () => {
               ))}
             </select>
           )}
+          <AiAgentsButton />
         </Page.Header.Right>
       </Page.Header>
-      <Page.Contents fullWidth={true} scrollable={false}>
-        <div className="hubble-page-content">
-          {displayError && <div className="hubble-error">{displayError}</div>}
-          {clusters.length === 0 && !clusterListError && (
-            <div className="hubble-empty">
-              Hubble is not configured. Set CLOUDHUB_HUBBLE_CLUSTERS_FILE.
-            </div>
-          )}
-          {clusters.length > 0 && (
-            <div className="hubble-threesizer-host">
-              <Threesizer
-                orientation={HANDLE_HORIZONTAL}
-                divisions={[
-                  {
-                    name: '',
-                    handleDisplay: 'none',
-                    menuOptions: [],
-                    render: renderTopDivision,
-                    size: topProps[0],
-                  },
-                  {
-                    name: '',
-                    handlePixels: 8,
-                    menuOptions: [],
-                    render: renderFlowTableDivision,
-                    size: topProps[1],
-                  },
-                ]}
-                onResize={setTopProps}
-              />
-            </div>
-          )}
-          <FlowDetailsModal
-            flow={flowModal}
-            cluster={cluster}
-            onClose={() => setFlowModal(null)}
-          />
-          {tutorial && (
-            <SidePanelTutorial
-              initialTab={tutorial.initial}
-              tabs={tutorial.tabs}
-              onClose={() => setTutorial(null)}
+      <DashboardsAiSplit>
+        <Page.Contents fullWidth={true} scrollable={false}>
+          <div className="hubble-page-content">
+            {displayError && <div className="hubble-error">{displayError}</div>}
+            {clusters.length === 0 && !clusterListError && (
+              <div className="hubble-empty">
+                Hubble is not configured. Set CLOUDHUB_HUBBLE_CLUSTERS_FILE.
+              </div>
+            )}
+            {clusters.length > 0 && (
+              <div className="hubble-threesizer-host">
+                <Threesizer
+                  orientation={HANDLE_HORIZONTAL}
+                  divisions={[
+                    {
+                      name: '',
+                      handleDisplay: 'none',
+                      menuOptions: [],
+                      render: renderTopDivision,
+                      size: topProps[0],
+                    },
+                    {
+                      name: '',
+                      handlePixels: 8,
+                      menuOptions: [],
+                      render: renderFlowTableDivision,
+                      size: topProps[1],
+                    },
+                  ]}
+                  onResize={setTopProps}
+                />
+              </div>
+            )}
+            <FlowDetailsModal
+              flow={flowModal}
+              cluster={cluster}
+              onClose={() => setFlowModal(null)}
             />
-          )}
-        </div>
-      </Page.Contents>
+            {tutorial && (
+              <SidePanelTutorial
+                initialTab={tutorial.initial}
+                tabs={tutorial.tabs}
+                onClose={() => setTutorial(null)}
+              />
+            )}
+          </div>
+        </Page.Contents>
+      </DashboardsAiSplit>
     </Page>
   )
 }

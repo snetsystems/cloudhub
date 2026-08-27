@@ -4,7 +4,12 @@
   height: 100%;
   min-height: 0;
 
-  > .page-contents {
+  // The AI chat drawer wraps page contents in .dashboards-ai-split, so the
+  // contents are a grandchild whenever the drawer is mounted. Both shapes are
+  // matched rather than relaxing this to a descendant selector, so a nested
+  // .page-contents can never pick these rules up by accident.
+  > .page-contents,
+  > .page-contents--split > .dashboards-ai-split--main > .page-contents {
     display: flex;
     flex-direction: column;
     min-height: 0;
