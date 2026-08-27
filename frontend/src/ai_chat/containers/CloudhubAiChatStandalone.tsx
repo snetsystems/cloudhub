@@ -1686,16 +1686,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     },
     {
       id: 'sug-2',
-      icon: '🌐',
-      title: '연결된 서버 목록 조회',
-      prompt: '연결된 서버목록 알려줘',
+      icon: '💥',
+      title: '네트워크 장애 주입',
+      prompt: 'k8s_network 장애 만들어줘',
     },
     {
       id: 'sug-3',
       icon: '🔌',
-      title: '네트워크 통신 장애 분석',
-      prompt:
-        'network-repair-demo 네임스페이스에서 frontend가 backend(8080)로 접속이 안 됩니다.',
+      title: '네트워크 통신 장애 복구',
+      prompt: 'k8s_network 복구해줘',
     },
     {
       id: 'sug-4',
