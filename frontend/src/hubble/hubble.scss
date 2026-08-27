@@ -1382,6 +1382,42 @@ $hubble-fancy-scroll-gutter: 28px;
   color: #f0f1f4;
 }
 
+.hubble-edge-list-counts {
+  flex: 0 0 auto;
+}
+
+// Sits at the end of a connection row, next to the counts, and only appears
+// on rows that actually have drops to explain. Carries the same ai-robot mark
+// and brand orange as the AI Agents nav button, so the two read as one feature.
+.hubble-edge-inspect {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba($s-orange, 0.5);
+  border-radius: $radius;
+  background: rgba($s-orange, 0.12);
+  color: $s-orange;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.hubble-edge-inspect:hover {
+  border-color: $s-orange;
+  background: $s-orange;
+  color: $g0-obsidian;
+}
+
+.hubble-edge-inspect:focus-visible {
+  outline: 2px solid $s-orange;
+  outline-offset: 1px;
+}
+
 .hubble-edge-list-search {
   display: flex;
   gap: 6px;

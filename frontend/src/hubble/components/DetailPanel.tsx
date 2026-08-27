@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useState} from 'react'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {
   HubbleEdge,
@@ -8,6 +8,13 @@ import {
   HubbleSnapshot,
 } from 'src/hubble/types'
 import {useEdgeFlows} from 'src/hubble/hooks/useEdgeFlows'
+import useAiContext from 'src/ai_chat/hooks/useAiContext'
+import {
+  buildConnectionContextPayload,
+  buildConnectionContextSummary,
+  CONNECTION_ATTACH_SKILL,
+  CONNECTION_DIAGNOSE_MESSAGE,
+} from 'src/hubble/utils/aiConnectionContext'
 import FlowDetailsModal from 'src/hubble/components/FlowDetailsModal'
 import PolicyModal from 'src/hubble/components/PolicyModal'
 
@@ -70,6 +77,35 @@ const DetailPanel: React.FC<Props> = ({
       20,
       livePaused
     )
+  const {sendToAiChat, clear: clearAiContext} = useAiContext()
+
+  // The hook lives here rather than in EdgeListView: that view is called as a
+  // plain function (see the warning below), so a hook inside it would attach
+  // to this component's fiber. The handler goes down as a prop instead.
+  const handleAiInspect = useCallback(
+    (e: HubbleEdge) => {
+      // One connection per question: a second click replaces the subject
+      // instead of piling onto it, matching the server list's diagnose action.
+      clearAiContext()
+
+      sendToAiChat({
+        autoSend: true,
+        skill: CONNECTION_ATTACH_SKILL,
+        prompt: CONNECTION_DIAGNOSE_MESSAGE,
+        context: {
+          id: `hubble-edge:${edgeId(e.src, e.dst)}`,
+          type: 'k8s-connection',
+          sourcePage: 'traffic-map',
+          title: `${shortNodeId(e.src)} → ${shortNodeId(e.dst)}`,
+          summary: buildConnectionContextSummary(e),
+          payload: buildConnectionContextPayload(e),
+          capturedAt: Date.now(),
+        },
+      })
+    },
+    [clearAiContext, sendToAiChat]
+  )
+
   const [detailFlow, setDetailFlow] = useState<HubbleFlowRecord | null>(null)
   const [selectedPolicy, setSelectedPolicy] = useState<HubblePolicyRef | null>(
     null
@@ -104,6 +140,7 @@ const DetailPanel: React.FC<Props> = ({
         dstSearch: edgeDstSearch,
         onSrcSearchChange: setEdgeSrcSearch,
         onDstSearchChange: setEdgeDstSearch,
+        onAiInspect: handleAiInspect,
       })
     }
     return (
@@ -401,6 +438,7 @@ const EdgeListView: React.FC<{
   dstSearch: string
   onSrcSearchChange: (value: string) => void
   onDstSearchChange: (value: string) => void
+  onAiInspect: (edge: HubbleEdge) => void
 }> = ({
   snapshot,
   activeNodeId,
@@ -410,6 +448,7 @@ const EdgeListView: React.FC<{
   dstSearch,
   onSrcSearchChange,
   onDstSearchChange,
+  onAiInspect,
 }) => {
   const activeNode = snapshot?.nodes.find(n => n.id === activeNodeId) ?? null
   const activeNodeLabel = activeNode
@@ -507,7 +546,7 @@ const EdgeListView: React.FC<{
                       )}
                     </span>
                   </span>
-                  <span>
+                  <span className="hubble-edge-list-counts">
                     <strong>{e.flowCount.toLocaleString()}</strong>
                     {denied > 0 && (
                       <span className="hubble-verdict-dropped">
@@ -516,6 +555,21 @@ const EdgeListView: React.FC<{
                       </span>
                     )}
                   </span>
+                  {denied > 0 && (
+                    <button
+                      className="hubble-edge-inspect icon ai-robot"
+                      title="이 연결을 AI에게 점검 요청"
+                      aria-label={`Inspect ${shortNodeId(
+                        e.src
+                      )} to ${shortNodeId(e.dst)} with AI`}
+                      onClick={ev => {
+                        // The row itself opens edge details; keep the two
+                        // actions from firing together.
+                        ev.stopPropagation()
+                        onAiInspect(e)
+                      }}
+                    />
+                  )}
                 </li>
               )
             })}
