@@ -1701,7 +1701,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       icon: '🚨',
       title: '주요 Critical 알림 진단',
       prompt:
-        '확인해야될 알림 알려줘 ( influxDB에서 alert 뒤져서 12시간 안에 쌓인 critical alert 들 중 꼭 확인해야할 message 알려줘)',
+        '/cloudhub-critical-alerts-audit 최근 7일간 CRITICAL 알림 점검해줘',
     },
   ]
 
