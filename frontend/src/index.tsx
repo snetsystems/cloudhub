@@ -126,15 +126,11 @@ const DataExplorerPage = React.lazy(() => import('src/data_explorer'))
 const Applications = React.lazy(() =>
   import('src/applications').then(m => ({default: m.Applications}))
 )
-const AiChatPage = React.lazy(() =>
-  import('src/ai_chat/containers/AiChatPage').then(m => ({
-    default: m.AiChatPage,
-  }))
+const AiChatPage = React.lazy(
+  () => import('src/ai_chat/containers/AiChatPage')
 )
-const OpenClawSkillsPage = React.lazy(() =>
-  import('src/openclaw_skills/containers/OpenClawSkillsPage').then(m => ({
-    default: m.OpenClawSkillsPage,
-  }))
+const OpenClawSkillsPage = React.lazy(
+  () => import('src/openclaw_skills/containers/OpenClawSkillsPage')
 )
 const LogsPage = React.lazy(() =>
   import('src/logs').then(m => ({default: m.LogsPage}))

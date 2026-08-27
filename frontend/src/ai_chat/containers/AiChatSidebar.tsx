@@ -13,7 +13,12 @@ interface Props {
   onSelectSession: (id: string) => void
   onDeleteSession?: (id: string) => void
   onCreateNewChat: () => void
-  onToggleCollapse: () => void
+  /**
+   * Omitted when the panel is too narrow to show the list at all, so the
+   * expand affordance disappears instead of becoming a button that does
+   * nothing.
+   */
+  onToggleCollapse?: () => void
 }
 
 export const formatTimeAgo = (dateInput?: string | number | Date): string => {
@@ -64,13 +69,15 @@ export const AiChatSidebar: FC<Props> = ({
     return (
       <div className="chat-sidebar collapsed">
         <div className="sidebar-action-header">
-          <Button
-            icon={IconFont.CaretRight}
-            onClick={onToggleCollapse}
-            shape={ButtonShape.Square}
-            color={ComponentColor.Default}
-            titleText="대화 목록 펼치기"
-          />
+          {onToggleCollapse && (
+            <Button
+              icon={IconFont.CaretRight}
+              onClick={onToggleCollapse}
+              shape={ButtonShape.Square}
+              color={ComponentColor.Default}
+              titleText="대화 목록 펼치기"
+            />
+          )}
         </div>
         <div className="collapsed-icon-list">
           <Button
@@ -125,13 +132,15 @@ export const AiChatSidebar: FC<Props> = ({
           color={ComponentColor.Primary}
           customClass="full-width"
         />
-        <Button
-          icon={IconFont.CaretLeft}
-          onClick={onToggleCollapse}
-          shape={ButtonShape.Square}
-          color={ComponentColor.Default}
-          titleText="사이드바 접기"
-        />
+        {onToggleCollapse && (
+          <Button
+            icon={IconFont.CaretLeft}
+            onClick={onToggleCollapse}
+            shape={ButtonShape.Square}
+            color={ComponentColor.Default}
+            titleText="사이드바 접기"
+          />
+        )}
       </div>
 
       <div className="session-list-wrapper">

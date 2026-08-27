@@ -110,6 +110,10 @@ describe('CloudhubAiChatStandalone approval integration', () => {
     lifecycle.length = 0
     FakeWebSocket.instances = []
     mountedWrapper = null
+    // These cases are about an ongoing conversation, so put the tab back in the
+    // one it was working in. Without this the chat opens on a blank draft and
+    // never connects a socket.
+    window.sessionStorage.setItem('cloudhub.aiChat.activeSessionId', 'owned')
     refreshApprovals.mockClear()
     handleApprovalEvent.mockClear()
     resolveApproval.mockClear()
@@ -166,6 +170,7 @@ describe('CloudhubAiChatStandalone approval integration', () => {
 
   afterEach(() => {
     mountedWrapper?.unmount()
+    window.sessionStorage.clear()
     global.fetch = originalFetch
     global.WebSocket = originalWebSocket
     global.requestAnimationFrame = originalRequestAnimationFrame
@@ -245,6 +250,212 @@ describe('CloudhubAiChatStandalone approval integration', () => {
       behavior: 'smooth',
       block: 'end',
     })
+  })
+
+  describe('which conversation opens', () => {
+    it('resumes the one this tab was working in', async () => {
+      act(() => {
+        mountedWrapper = mount(
+          <CloudhubAiChatStandaloneUnconnected notify={jest.fn()} />
+        )
+      })
+      await flushEffects()
+
+      // Resuming means loading that conversation's history and listening to it.
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).endsWith('/sessions/owned/messages')
+        )
+      ).toBe(true)
+      expect(FakeWebSocket.instances).toHaveLength(1)
+    })
+
+    it('starts on a blank draft for a tab that has not opened chat yet', async () => {
+      window.sessionStorage.clear()
+
+      act(() => {
+        mountedWrapper = mount(
+          <CloudhubAiChatStandaloneUnconnected notify={jest.fn()} />
+        )
+      })
+      await flushEffects()
+
+      // A first visit must not drop the user into whatever was last discussed.
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          String(input).includes('/messages')
+        )
+      ).toBe(false)
+      expect(FakeWebSocket.instances).toHaveLength(0)
+    })
+
+    it('starts on a blank draft when the remembered conversation is gone', async () => {
+      window.sessionStorage.setItem(
+        'cloudhub.aiChat.activeSessionId',
+        'deleted-elsewhere'
+      )
+
+      act(() => {
+        mountedWrapper = mount(
+          <CloudhubAiChatStandaloneUnconnected notify={jest.fn()} />
+        )
+      })
+      await flushEffects()
+
+      expect(FakeWebSocket.instances).toHaveLength(0)
+      expect(
+        window.sessionStorage.getItem('cloudhub.aiChat.activeSessionId')
+      ).toBeNull()
+    })
+  })
+
+  it('stamps a streamed reply with when it arrived, not with the current clock', async () => {
+    const arrivedAt = new Date('2026-08-26T10:00:00Z').getTime()
+    const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(arrivedAt)
+
+    try {
+      act(() => {
+        mountedWrapper = mount(
+          <CloudhubAiChatStandaloneUnconnected notify={jest.fn()} />
+        )
+      })
+      await flushEffects()
+
+      const socket = FakeWebSocket.instances[0]
+      const emit = (payload: Record<string, unknown>) =>
+        act(() => {
+          socket.onmessage?.({
+            data: JSON.stringify({sessionId: 'owned', ...payload}),
+          } as MessageEvent)
+        })
+
+      emit({
+        type: 'message',
+        state: 'delta',
+        message: {
+          role: 'assistant',
+          content: [{type: 'text', text: '진단 결과입니다'}],
+        },
+      })
+      emit({
+        type: 'message',
+        state: 'final',
+        message: {
+          role: 'assistant',
+          content: [{type: 'text', text: '진단 결과입니다'}],
+        },
+      })
+      mountedWrapper!.update()
+
+      const shown = () =>
+        mountedWrapper!
+          .find('.message-timestamp')
+          .last()
+          .text()
+
+      const atArrival = shown()
+
+      // An hour later the reply still arrived an hour ago. The bubble renders
+      // from timestampRaw; without it the render falls back to the
+      // preformatted "HH:mm" string, which never parses, and the message would
+      // report the current time on every re-render.
+      nowSpy.mockReturnValue(arrivedAt + 60 * 60 * 1000)
+      act(() => {
+        mountedWrapper!.setProps({customClass: 'later'})
+      })
+      mountedWrapper!.update()
+
+      expect(shown()).toBe(atArrival)
+    } finally {
+      nowSpy.mockRestore()
+    }
+  })
+
+  it('re-reads history on reconnect, so a reply that finished during an outage is not left streaming', async () => {
+    jest.useFakeTimers()
+
+    try {
+      act(() => {
+        mountedWrapper = mount(
+          <CloudhubAiChatStandaloneUnconnected notify={jest.fn()} />
+        )
+      })
+      await flushEffects()
+
+      const first = FakeWebSocket.instances[0]
+
+      act(() => {
+        first.onopen?.({} as Event)
+      })
+
+      const historyReadsBefore = fetchMock.mock.calls.filter(([input]) =>
+        String(input).endsWith('/sessions/owned/messages')
+      ).length
+
+      // The gateway drops the socket mid-reply.
+      act(() => {
+        first.onclose?.({} as CloseEvent)
+      })
+      act(() => {
+        jest.advanceTimersByTime(2_000)
+      })
+
+      expect(FakeWebSocket.instances).toHaveLength(2)
+
+      act(() => {
+        FakeWebSocket.instances[1].onopen?.({} as Event)
+      })
+
+      // Whatever the run did while the socket was down only exists in history.
+      // Without this read the placeholder stays isStreaming and the composer
+      // stays disabled until the page is reloaded.
+      const historyReadsAfter = fetchMock.mock.calls.filter(([input]) =>
+        String(input).endsWith('/sessions/owned/messages')
+      ).length
+
+      expect(historyReadsAfter).toBeGreaterThan(historyReadsBefore)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('backs off instead of hammering a gateway that stays down', async () => {
+    jest.useFakeTimers()
+
+    try {
+      act(() => {
+        mountedWrapper = mount(
+          <CloudhubAiChatStandaloneUnconnected notify={jest.fn()} />
+        )
+      })
+      await flushEffects()
+
+      const dropAndWait = (ms: number) => {
+        act(() => {
+          FakeWebSocket.instances[
+            FakeWebSocket.instances.length - 1
+          ].onclose?.({} as CloseEvent)
+        })
+        act(() => {
+          jest.advanceTimersByTime(ms)
+        })
+      }
+
+      dropAndWait(2_000)
+      expect(FakeWebSocket.instances).toHaveLength(2)
+
+      // The second retry waits longer than the first, so a gateway that is
+      // down is not retried every two seconds forever.
+      dropAndWait(2_000)
+      expect(FakeWebSocket.instances).toHaveLength(2)
+
+      act(() => {
+        jest.advanceTimersByTime(2_000)
+      })
+      expect(FakeWebSocket.instances).toHaveLength(3)
+    } finally {
+      jest.useRealTimers()
+    }
   })
 
   it('routes approval WebSocket events and refreshes approvals with session changes', async () => {

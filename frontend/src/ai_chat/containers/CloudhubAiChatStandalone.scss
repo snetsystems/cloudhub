@@ -2049,8 +2049,92 @@
       background-color: $g1-raven;
       display: flex;
       align-items: flex-end;
+      flex-wrap: wrap;
       gap: 10px;
       flex-shrink: 0;
+
+      // Context attached from another page. Takes a full row above the input
+      // rather than competing with it for width.
+      .chat-context-chips {
+        order: -1;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .chat-context-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        max-width: 100%;
+        padding: 3px 6px 3px 8px;
+        font-size: 11px;
+        line-height: 16px;
+        border: 1px solid rgba($s-orange, 0.5);
+        border-radius: 10px;
+        background-color: rgba($s-orange, 0.12);
+        color: $g15-platinum;
+
+        .chat-context-chip--label {
+          color: $s-orange;
+          font-weight: 600;
+          white-space: nowrap;
+        }
+
+        .chat-context-chip--title {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .chat-context-chip--remove {
+          padding: 0;
+          border: none;
+          background: transparent;
+          color: $g11-sidewalk;
+          font-size: 10px;
+          line-height: 1;
+          cursor: pointer;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: $g18-cloud;
+          }
+        }
+      }
+
+      .chat-context-chip--more,
+      .chat-context-chip--clear {
+        padding: 3px 8px;
+        font-size: 11px;
+        line-height: 16px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: color 0.2s ease, border-color 0.2s ease;
+      }
+
+      .chat-context-chip--more {
+        border: 1px solid rgba($s-orange, 0.5);
+        background-color: rgba($s-orange, 0.12);
+        color: $s-orange;
+        font-weight: 600;
+
+        &:hover {
+          border-color: $s-orange;
+        }
+      }
+
+      .chat-context-chip--clear {
+        margin-left: auto;
+        border: 1px solid transparent;
+        background: transparent;
+        color: $g11-sidewalk;
+
+        &:hover {
+          color: $g18-cloud;
+        }
+      }
 
       .chat-textarea {
         flex: 1;

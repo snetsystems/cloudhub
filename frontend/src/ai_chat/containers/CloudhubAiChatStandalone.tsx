@@ -35,10 +35,35 @@ import AiChatMessageAvatar from 'src/ai_chat/components/AiChatMessageAvatar'
 import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
 import OpenClawApprovalCard from 'src/ai_chat/components/OpenClawApprovalCard'
 import {
+  createOpenClawSession,
   deleteOpenClawSession,
+  getOpenClawMessages,
+  getOpenClawSessions,
+  sendOpenClawMessage,
+  OpenClawAPIError,
   OpenClawApprovalEventDTO,
+  OpenClawMessageDTO,
+  OpenClawSessionDTO,
+  openClawUrl,
 } from 'src/ai_chat/apis/openclawApi'
 import {useOpenClawApprovals} from 'src/ai_chat/hooks/useOpenClawApprovals'
+import {
+  buildPromptWithContext,
+  getAiContextDefaultPrompt,
+  getAiContextLabel,
+} from 'src/ai_chat/utils/aiContextRegistry'
+// Registers the context types CloudHub screens can attach.
+import 'src/ai_chat/utils/aiContextTypes'
+import {
+  clearAiChatContext,
+  consumeAiChatIntent,
+  detachAiChatContext,
+} from 'src/shared/actions/aiChatContext'
+import {
+  AiChatContextState,
+  AiContextCapsule,
+  PendingAiChatIntent,
+} from 'src/types/aiChatContext'
 
 // Cloudhub Redux Notification Action & Helpers
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -115,25 +140,55 @@ export interface CloudhubAiChatProps {
   timeZone?: TimeZones
 }
 
-/* REAL OPENCLAW REST & WEBSOCKET API INTEGRATION */
-const OPENCLAW_BASE_URL = '/cloudhub/v2/openclaw'
+/** Chips shown before the rest collapse into a "+N" count. */
+const MAX_VISIBLE_CONTEXT_CHIPS = 3
 
-interface OpenClawSessionDTO {
-  id: string
-  title: string
-  createdAt: string
-  updatedAt: string
+/**
+ * Panel width the expanded session list needs.
+ *
+ * .chat-sidebar (200) + .chat-thread-container (420) in
+ * CloudhubAiChatStandalone.scss. Both are hard min-widths, so below this the
+ * list cannot shrink — it overflows the panel. Keep in step with that file.
+ */
+const CHAT_SIDEBAR_EXPANDED_MIN_WIDTH = 620
+
+/** Event socket reconnect pacing. */
+const RECONNECT_BASE_DELAY_MS = 2000
+const RECONNECT_MAX_DELAY_MS = 30000
+/** Retries to ride out quietly before telling the user the link is down. */
+const RECONNECT_NOTIFY_AFTER = 3
+
+/**
+ * Which conversation this browser tab was last looking at.
+ *
+ * Session storage rather than local: reopening the drawer, or coming back from
+ * another page, should land on the conversation the user was working in, while
+ * a fresh visit should start on a blank one. Tab scope draws that line without
+ * a timer, so the same action always behaves the same way.
+ *
+ * It cannot be React state today, because the chat re-mounts on every route
+ * change (see ai_chat_global_provider_plan.md).
+ */
+const ACTIVE_SESSION_STORAGE_KEY = 'cloudhub.aiChat.activeSessionId'
+
+const readStoredSessionId = (): string => {
+  try {
+    return window.sessionStorage.getItem(ACTIVE_SESSION_STORAGE_KEY) || ''
+  } catch {
+    return ''
+  }
 }
 
-interface OpenClawContentPart {
-  type: string
-  text: string
-}
-
-interface OpenClawMessageDTO {
-  role: string
-  content: OpenClawContentPart[]
-  timestamp: number
+const persistSessionId = (sessionId: string): void => {
+  try {
+    if (sessionId) {
+      window.sessionStorage.setItem(ACTIVE_SESSION_STORAGE_KEY, sessionId)
+    } else {
+      window.sessionStorage.removeItem(ACTIVE_SESSION_STORAGE_KEY)
+    }
+  } catch {
+    // Ignore quota / private-mode failures: this is a convenience, not state.
+  }
 }
 
 const toChatSession = (dto: OpenClawSessionDTO): ChatSession => ({
@@ -538,6 +593,11 @@ const mergeHistoryWithLocal = (
 interface ComponentProps extends CloudhubAiChatProps {
   notify?: (notification: any) => void
   persistedTimeZone?: TimeZones
+  pendingIntent?: PendingAiChatIntent | null
+  attachments?: AiContextCapsule[]
+  onConsumeIntent?: typeof consumeAiChatIntent
+  onDetachContext?: typeof detachAiChatContext
+  onClearContext?: typeof clearAiChatContext
 }
 
 export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
@@ -552,6 +612,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   timeZone: timeZoneProp,
   persistedTimeZone,
   notify,
+  pendingIntent = null,
+  attachments = [],
+  onConsumeIntent,
+  onDetachContext,
+  onClearContext,
 }) => {
   const effectiveTimeZone = timeZoneProp ?? persistedTimeZone ?? TimeZones.Local
 
@@ -573,8 +638,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState<boolean>(true)
   const wsRef = useRef<WebSocket | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const pendingRunsRef = useRef<Record<string, string>>({})
+
+  // activeSessionId starts empty on every mount. Without this guard the persist
+  // effect would erase the stored id before the restore ever ran.
+  const hasRestoredSessionRef = useRef<boolean>(false)
   const sessionsRef = useRef<ChatSession[]>(sessions)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [isJustCompleted, setIsJustCompleted] = useState<boolean>(false)
@@ -765,20 +835,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   // Original clean session fetcher with safe message preservation
   const fetchSessions = async () => {
     try {
-      const res = await fetch(`${OPENCLAW_BASE_URL}/sessions`, {
-        headers: {
-          'X-Organization-Id': 'org-default',
-          'X-User-Id': 'user-admin',
-        },
-      })
-      if (!res.ok) {
-        setIsLoadingHistory(false)
-        return
-      }
-      const data: {
-        sessions: OpenClawSessionDTO[]
-      } = await res.json().catch(() => ({sessions: []}))
-      const loadedDtos = data.sessions || []
+      const loadedDtos: OpenClawSessionDTO[] = await getOpenClawSessions()
 
       setSessions(prev => {
         const prevMap = new Map(prev.map(s => [s.id, s]))
@@ -803,6 +860,19 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         return merged
       })
 
+      // Resume what this tab was working in. A first visit, or a conversation
+      // that has since been deleted, falls through to a blank draft rather than
+      // to whatever was last discussed.
+      const stored = readStoredSessionId()
+      const resumable = Boolean(stored) && loadedDtos.some(d => d.id === stored)
+
+      if (stored && !resumable) {
+        // Forget it here rather than leaving the persist effect to notice:
+        // resolving to a draft is a no-op state update, so that effect would
+        // never run and the dead id would linger.
+        persistSessionId('')
+      }
+
       setActiveSessionId(currentActive => {
         // If currentActive is already set and exists, KEEP IT!
         if (
@@ -812,12 +882,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         ) {
           return currentActive
         }
-        // Only if no active session is selected, pick the first one
-        if (!currentActive && loadedDtos.length > 0) {
-          return loadedDtos[0].id
+        if (!currentActive) {
+          return resumable ? stored : ''
         }
         return currentActive
       })
+
+      hasRestoredSessionRef.current = true
     } catch (err: any) {
       console.warn('[OpenClaw AI Chat]: Failed to fetch sessions:', err)
       setIsLoadingHistory(false)
@@ -827,6 +898,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   useEffect(() => {
     fetchSessions()
   }, [])
+
+  // Selecting, creating and deleting all go through setActiveSessionId, so one
+  // effect keeps the tab's memory in step with every one of them.
+  useEffect(() => {
+    if (!hasRestoredSessionRef.current) {
+      return
+    }
+    persistSessionId(activeSessionId)
+  }, [activeSessionId])
 
   // Original clean history fetcher & WebSocket connection
   useEffect(() => {
@@ -838,6 +918,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       }
       return
     }
+
+    // sessions.changed, stream completion and reconnect can each ask for
+    // history, so replies could land out of order and an older one overwrite a
+    // newer. Only the newest request is allowed to finish.
+    let historyRequest: AbortController | null = null
 
     const fetchMessages = async (isBackground = false) => {
       const currentSession = sessionsRef.current.find(
@@ -852,29 +937,16 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       if (!isBackground && !hasExistingMessages) {
         setIsLoadingHistory(true)
       }
-      try {
-        const res = await fetch(
-          `${OPENCLAW_BASE_URL}/sessions/${activeSessionId}/messages`,
-          {
-            headers: {
-              'X-Organization-Id': 'org-default',
-              'X-User-Id': 'user-admin',
-            },
-          }
-        )
-        if (!res.ok) return
 
-        const rawJson: any = await res.json().catch(() => null)
-        let rawList: any[] = []
-        if (Array.isArray(rawJson)) {
-          rawList = rawJson
-        } else if (rawJson && Array.isArray(rawJson.messages)) {
-          rawList = rawJson.messages
-        } else if (rawJson && Array.isArray(rawJson.data)) {
-          rawList = rawJson.data
-        } else if (rawJson && Array.isArray(rawJson.history)) {
-          rawList = rawJson.history
-        }
+      historyRequest?.abort()
+      const request = new AbortController()
+      historyRequest = request
+
+      try {
+        const rawList = await getOpenClawMessages(
+          activeSessionId,
+          request.signal
+        )
         const msgs = parseOpenClawHistory(rawList)
         setSessions(prev =>
           prev.map(s => {
@@ -886,6 +958,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           })
         )
       } catch (err: any) {
+        // Superseded by a newer request, or the effect tore down. Neither is a
+        // failure worth reporting.
+        if (request.signal.aborted || err?.name === 'AbortError') {
+          return
+        }
         console.warn(
           '[OpenClaw AI Chat]: Failed to fetch message history:',
           err
@@ -905,6 +982,8 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     let isTornDown = false
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+    let reconnectAttempts = 0
+    let hasConnected = false
 
     const mergeActivityCardIntoSession = (actData: any) => {
       if (!actData) return
@@ -1028,13 +1107,19 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 pendingRunsRef.current[activeSessionId] = msgs[lastIdx].id
               } else {
                 // Spawn the single AI response message for this turn
-                const newAiMsgId = `m-ai-${Date.now()}`
+                // timestampRaw is what the bubble renders from, in the time
+                // zone selected at render time. Without it the fallback
+                // re-formats the "HH:mm" string below, which never parses, so
+                // the message would keep reporting the current time.
+                const createdAt = Date.now()
+                const newAiMsgId = `m-ai-${createdAt}`
                 pendingRunsRef.current[activeSessionId] = newAiMsgId
                 const newAiMsg: ChatMessage = {
                   id: newAiMsgId,
                   sender: 'ai',
                   text: '',
-                  timestamp: formatChatTimestamp(Date.now()),
+                  timestamp: formatChatTimestamp(createdAt),
+                  timestampRaw: createdAt,
                   isStreaming: true,
                   activities: [newEntry],
                 }
@@ -1065,7 +1150,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     const connect = () => {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsUrl = `${wsProtocol}//${window.location.host}${OPENCLAW_BASE_URL}/events/ws`
+      const wsUrl = `${wsProtocol}//${window.location.host}${openClawUrl(
+        '/events/ws'
+      )}`
 
       try {
         const socket = new WebSocket(wsUrl)
@@ -1074,6 +1161,17 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         socket.onopen = () => {
           socket.send(JSON.stringify({sessionId: activeSessionId}))
           refreshApprovals()
+
+          const wasReconnect = hasConnected
+          hasConnected = true
+          reconnectAttempts = 0
+
+          if (wasReconnect) {
+            // Events that landed while the socket was down are gone. Without
+            // this the reply that finished during the outage stays marked as
+            // streaming forever, which keeps the composer disabled.
+            fetchMessages(true)
+          }
         }
 
         socket.onmessage = event => {
@@ -1287,13 +1385,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                         pendingRunsRef.current[activeSessionId] =
                           msgs[lastIdx].id
                       } else {
-                        const newTextMsgId = `m-ai-${Date.now()}`
+                        const createdAt = Date.now()
+                        const newTextMsgId = `m-ai-${createdAt}`
                         pendingRunsRef.current[activeSessionId] = newTextMsgId
                         const newTextMsg: ChatMessage = {
                           id: newTextMsgId,
                           sender: 'ai',
                           text: incomingText,
-                          timestamp: formatChatTimestamp(Date.now()),
+                          timestamp: formatChatTimestamp(createdAt),
+                          timestampRaw: createdAt,
                           isStreaming: true,
                           activities: [],
                         }
@@ -1356,11 +1456,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                         ? extractDisplayableText(finalDto.content || [])
                         : ''
                       const finalText = textFromFinal || m.text
+                      // Keep the moment the turn started; only stamp one if the
+                      // message somehow arrived without it.
+                      const stampedAt = m.timestampRaw ?? Date.now()
                       return {
                         ...m,
                         isStreaming: false,
                         timestamp:
-                          m.timestamp || formatChatTimestamp(Date.now()),
+                          m.timestamp || formatChatTimestamp(stampedAt),
+                        timestampRaw: stampedAt,
                         text:
                           finalText ||
                           (payload.state !== 'final' &&
@@ -1391,9 +1495,27 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         }
 
         socket.onclose = () => {
-          if (!isTornDown) {
-            reconnectTimer = setTimeout(connect, 2000)
+          if (isTornDown) {
+            return
           }
+
+          reconnectAttempts += 1
+
+          // A fixed 2s retry hammers a gateway that is down, and says nothing
+          // to the user while it does. Back off, and speak up once it is clear
+          // this is an outage rather than a blip.
+          const delay = Math.min(
+            RECONNECT_BASE_DELAY_MS * Math.pow(2, reconnectAttempts - 1),
+            RECONNECT_MAX_DELAY_MS
+          )
+
+          if (reconnectAttempts === RECONNECT_NOTIFY_AFTER) {
+            triggerErrorNotification(
+              'AI Chat 실시간 연결이 끊어졌습니다. 재연결을 시도하고 있습니다.'
+            )
+          }
+
+          reconnectTimer = setTimeout(connect, delay)
         }
       } catch (wsErr: any) {
         console.warn('[WebSocket Connection Error]', wsErr)
@@ -1405,9 +1527,19 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     return () => {
       isTornDown = true
       if (reconnectTimer) clearTimeout(reconnectTimer)
-      if (wsRef.current) wsRef.current.close()
+      historyRequest?.abort()
+      if (wsRef.current) {
+        wsRef.current.close()
+        // Match the no-session branch above, so wsRef never outlives its socket.
+        wsRef.current = null
+      }
     }
-  }, [activeSessionId, handleApprovalEvent, refreshApprovals])
+  }, [
+    activeSessionId,
+    handleApprovalEvent,
+    refreshApprovals,
+    triggerErrorNotification,
+  ])
 
   const activeSession = sessions.find(s => s.id === activeSessionId) || null
   const subagents = activeSession?.subagents || []
@@ -1690,20 +1822,34 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
   }
 
-  const handleSendPrompt = async (promptOverride?: string) => {
+  const handleSendPrompt = async (
+    promptOverride?: string,
+    options: {forceNewSession?: boolean} = {}
+  ) => {
     const promptToSend =
       typeof promptOverride === 'string' ? promptOverride : inputPrompt
     if (!promptToSend.trim() || isStreamingActive) return
 
-    const currentPrompt = promptToSend.trim()
+    // Attached context travels with the message rather than being displayed
+    // separately, so the bubble shows exactly what the agent received — including
+    // after a reload, when the bubble is rebuilt from server history.
+    const attachedCapsules = attachments
+    const currentPrompt = buildPromptWithContext(
+      promptToSend.trim(),
+      attachedCapsules
+    )
+
     setInputPrompt('')
     setIsUserScrolledUp(false)
     setIsStreamingActive(true)
+    if (attachedCapsules.length && onClearContext) {
+      onClearContext()
+    }
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
 
-    let targetSessionId = activeSessionId
+    let targetSessionId = options.forceNewSession ? '' : activeSessionId
 
     const nowTs = Date.now()
     const userMsgId = `m-${nowTs}`
@@ -1734,29 +1880,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         sessionsRef.current || sessions
       )
       try {
-        const createRes = await fetch(`${OPENCLAW_BASE_URL}/sessions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Organization-Id': 'org-default',
-            'X-User-Id': 'user-admin',
-          },
-          body: JSON.stringify({
-            title: newSessionTitle,
-          }),
-        })
-
-        if (!createRes.ok) {
-          setIsStreamingActive(false)
-          triggerErrorNotification(
-            `세션 생성 실패 (${createRes.status} ${createRes.statusText})`
-          )
-          return
-        }
-
-        const createdDto: OpenClawSessionDTO = await createRes
-          .json()
-          .catch(() => ({} as any))
+        const createdDto: OpenClawSessionDTO = await createOpenClawSession(
+          newSessionTitle
+        )
         const createdSession: ChatSession = {
           ...toChatSession(createdDto),
           messages: [userMessage, loadingAiMsg],
@@ -1767,9 +1893,15 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         setActiveSessionId(targetSessionId)
       } catch (createErr: any) {
         setIsStreamingActive(false)
-        triggerErrorNotification(
-          `세션 생성 중 통신 오류가 발생했습니다: ${createErr?.message || ''}`
-        )
+        if (createErr instanceof OpenClawAPIError) {
+          triggerErrorNotification(
+            `세션 생성 실패 (${createErr.status} ${createErr.statusText})`
+          )
+        } else {
+          triggerErrorNotification(
+            `세션 생성 중 통신 오류가 발생했습니다: ${createErr?.message || ''}`
+          )
+        }
         return
       }
     } else {
@@ -1788,54 +1920,27 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
 
     try {
-      const res = await fetch(
-        `${OPENCLAW_BASE_URL}/sessions/${targetSessionId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Organization-Id': 'org-default',
-            'X-User-Id': 'user-admin',
-          },
-          body: JSON.stringify({
-            message: currentPrompt,
-            idempotencyKey: uuid.v4(),
-          }),
-        }
-      )
+      await sendOpenClawMessage(targetSessionId, currentPrompt, uuid.v4())
+    } catch (err: any) {
+      setIsStreamingActive(false)
+      delete pendingRunsRef.current[targetSessionId]
 
-      if (!res.ok) {
-        setIsStreamingActive(false)
-        delete pendingRunsRef.current[targetSessionId]
-        if (res.status === 503) {
+      if (err instanceof OpenClawAPIError) {
+        if (err.status === 503) {
           triggerErrorNotification(
             'Gateway 연결 오류 (503 Service Unavailable): OpenClaw Gateway를 확인하세요.'
           )
         } else {
           triggerErrorNotification(
-            `메시지 전송 실패 (${res.status} ${res.statusText})`
+            `메시지 전송 실패 (${err.status} ${err.statusText})`
           )
         }
-        setSessions(prev =>
-          prev.map(s => {
-            if (s.id === targetSessionId) {
-              return {
-                ...s,
-                messages: s.messages
-                  .filter(m => m.id !== aiMsgId)
-                  .map(m => (m.id === userMsgId ? {...m, isFailed: true} : m)),
-              }
-            }
-            return s
-          })
+      } else {
+        triggerErrorNotification(
+          `메시지 전송 시 통신 오류가 발생했습니다: ${err?.message || ''}`
         )
       }
-    } catch (err: any) {
-      setIsStreamingActive(false)
-      delete pendingRunsRef.current[targetSessionId]
-      triggerErrorNotification(
-        `메시지 전송 시 통신 오류가 발생했습니다: ${err?.message || ''}`
-      )
+
       setSessions(prev =>
         prev.map(s => {
           if (s.id === targetSessionId) {
@@ -1851,6 +1956,67 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       )
     }
   }
+
+  /**
+   * Deliver an intent another screen sent through useAiContext.
+   *
+   * The intent is acknowledged before anything else happens, so an intent is
+   * delivered exactly once even though this component re-mounts on every route
+   * change today.
+   */
+  useEffect(() => {
+    if (!pendingIntent) {
+      return
+    }
+
+    const {intentId, context, prompt, skill, autoSend, target} = pendingIntent
+
+    if (onConsumeIntent) {
+      onConsumeIntent(intentId)
+    }
+
+    // A suggested skill is ordinary text the user can see and delete, so it
+    // never forces a question they did not ask. An input that already opens
+    // with a command is left alone: the user has chosen a skill.
+    const withSkill = (text: string): string =>
+      !skill || text.trimStart().startsWith('/') ? text : `${skill} ${text}`
+
+    if (!autoSend) {
+      // Attach-only: the chip is in the composer and there is nothing else to
+      // do. A type's defaultPrompt is a fallback for sending, so it must not
+      // overwrite whatever the user is in the middle of typing.
+      if (!prompt && !skill) {
+        return
+      }
+
+      setInputPrompt(current => withSkill(prompt || current))
+      textareaRef.current?.focus()
+      return
+    }
+
+    const base =
+      prompt || (context ? getAiContextDefaultPrompt(context) : '') || ''
+
+    if (!base) {
+      return
+    }
+
+    const promptText = withSkill(base)
+
+    if (isStreamingActive) {
+      // handleSendPrompt drops sends while a reply streams. Rather than lose
+      // the request, hand it to the composer and say so.
+      setInputPrompt(promptText)
+      textareaRef.current?.focus()
+      triggerErrorNotification(
+        '이미 답변을 생성 중이라 전송하지 않고 입력창에 담았습니다. 답변이 끝나면 전송해 주세요.'
+      )
+      return
+    }
+
+    handleSendPrompt(promptText, {forceNewSession: target === 'new'})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingIntent])
 
   const handleRetryMessage = (failedMsgId: string, text: string) => {
     // 1. Remove the failed message entry
@@ -2043,24 +2209,28 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                                 {`도구 ${msg.activities!.length}개 실행`}
                               </span>
                             </div>
-                            <button
-                              type="button"
-                              className={classnames(
-                                'view-activity-inspector-btn',
-                                {
-                                  active:
-                                    isTargetSelected &&
-                                    showSubagentPanel &&
-                                    activeInspectorTab === 'activity',
+                            {/* chatOnly(드로어/모달) 모드에는 우측 인스펙터
+                                패널이 없어 열 대상이 없으므로 감춘다. */}
+                            {!chatOnly && (
+                              <button
+                                type="button"
+                                className={classnames(
+                                  'view-activity-inspector-btn',
+                                  {
+                                    active:
+                                      isTargetSelected &&
+                                      showSubagentPanel &&
+                                      activeInspectorTab === 'activity',
+                                  }
+                                )}
+                                onClick={() =>
+                                  handleOpenActivityInspector(msg.id)
                                 }
-                              )}
-                              onClick={() =>
-                                handleOpenActivityInspector(msg.id)
-                              }
-                              title="우측 패널에서 상세 실행 내역 보기"
-                            >
-                              작업 내용 보기 ↗
-                            </button>
+                                title="우측 패널에서 상세 실행 내역 보기"
+                              >
+                                작업 내용 보기 ↗
+                              </button>
+                            )}
                           </div>
 
                           {hasText && (
@@ -2257,6 +2427,61 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             </div>
           </div>
         )}
+        {attachments.length > 0 && (
+          <div className="chat-context-chips">
+            {visibleAttachments.map(capsule => (
+              <span key={capsule.id} className="chat-context-chip">
+                <span className="chat-context-chip--label">
+                  {getAiContextLabel(capsule)}
+                </span>
+                <span
+                  className="chat-context-chip--title"
+                  title={capsule.summary || capsule.title}
+                >
+                  {capsule.title}
+                </span>
+                <button
+                  type="button"
+                  className="chat-context-chip--remove"
+                  aria-label={`${capsule.title} 첨부 제거`}
+                  onClick={() => onDetachContext?.(capsule.id)}
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+            {hiddenAttachmentCount > 0 && (
+              <button
+                type="button"
+                className="chat-context-chip--more"
+                title={attachments
+                  .slice(MAX_VISIBLE_CONTEXT_CHIPS)
+                  .map(c => c.title)
+                  .join(', ')}
+                onClick={() => setShowAllAttachments(true)}
+              >
+                +{hiddenAttachmentCount}
+              </button>
+            )}
+            {showAllAttachments &&
+              attachments.length > MAX_VISIBLE_CONTEXT_CHIPS && (
+                <button
+                  type="button"
+                  className="chat-context-chip--more"
+                  onClick={() => setShowAllAttachments(false)}
+                >
+                  접기
+                </button>
+              )}
+            <button
+              type="button"
+              className="chat-context-chip--clear"
+              onClick={() => onClearContext?.()}
+            >
+              모두 해제
+            </button>
+          </div>
+        )}
         <textarea
           ref={textareaRef}
           className={classnames('chat-textarea', {
@@ -2265,7 +2490,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           placeholder={
             isStreamingActive
               ? 'AI가 답변을 생성하고 있습니다...'
-              : "Cloudhub AI Ops 장애 분석 및 조치 명령을 입력하세요... (Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록)"
+              : "Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록"
           }
           value={inputPrompt}
           onChange={handleInputChange}
@@ -2313,6 +2538,56 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     defaultSidebarCollapsed
   )
 
+  /**
+   * The session list cannot be shown below CHAT_SIDEBAR_EXPANDED_MIN_WIDTH.
+   *
+   * `.chat-sidebar` and `.chat-thread-container` both carry hard min-widths, so
+   * an expanded list inside a narrower panel does not shrink — it overflows and
+   * covers whatever is beside the chat. Collapsing it keeps the layout inside
+   * its box no matter how narrow the drawer is dragged.
+   */
+  const [isTooNarrowForSidebar, setIsTooNarrowForSidebar] = useState<boolean>(
+    false
+  )
+
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el || typeof ResizeObserver === 'undefined') {
+      return
+    }
+
+    const update = () => {
+      setIsTooNarrowForSidebar(
+        el.clientWidth > 0 && el.clientWidth < CHAT_SIDEBAR_EXPANDED_MIN_WIDTH
+      )
+    }
+
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const isSidebarEffectivelyCollapsed =
+    isSidebarCollapsed || isTooNarrowForSidebar
+
+  // Attaching a whole rack should not bury the composer, so past a handful the
+  // rest collapse into a count the user can expand.
+  const [showAllAttachments, setShowAllAttachments] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (!attachments.length) {
+      setShowAllAttachments(false)
+    }
+  }, [attachments.length])
+
+  const visibleAttachments = showAllAttachments
+    ? attachments
+    : attachments.slice(0, MAX_VISIBLE_CONTEXT_CHIPS)
+  const hiddenAttachmentCount = showAllAttachments
+    ? 0
+    : attachments.length - visibleAttachments.length
+
   useEffect(() => {
     if (defaultSidebarCollapsed && isOpen) {
       setIsSidebarCollapsed(true)
@@ -2320,17 +2595,21 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   }, [defaultSidebarCollapsed, isOpen])
 
   return (
-    <div className={wrapperClass}>
+    <div className={wrapperClass} ref={wrapperRef}>
       <div className="chat-layout">
         <AiChatSidebar
           sessions={sessions}
           activeSessionId={activeSessionId}
-          isCollapsed={isSidebarCollapsed}
+          isCollapsed={isSidebarEffectivelyCollapsed}
           isStreamingActive={isStreamingActive}
           onSelectSession={handleSelectSession}
           onDeleteSession={handleDeleteSession}
           onCreateNewChat={handleCreateNewChat}
-          onToggleCollapse={() => setIsSidebarCollapsed(prev => !prev)}
+          onToggleCollapse={
+            isTooNarrowForSidebar
+              ? undefined
+              : () => setIsSidebarCollapsed(prev => !prev)
+          }
         />
 
         {chatOnly ? (
@@ -2354,16 +2633,28 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
 interface StateProps {
   persistedTimeZone?: TimeZones
+  pendingIntent: PendingAiChatIntent | null
+  attachments: AiContextCapsule[]
 }
+
+// Stable identity: a fresh [] on every mapStateToProps call would re-render the
+// chat on unrelated store activity.
+const EMPTY_ATTACHMENTS: AiContextCapsule[] = []
 
 const mSTP = (state: {
   app?: {persisted?: {timeZone?: TimeZones}}
+  aiChatContext?: AiChatContextState
 }): StateProps => ({
   persistedTimeZone: state.app?.persisted?.timeZone,
+  pendingIntent: state.aiChatContext?.pendingIntent ?? null,
+  attachments: state.aiChatContext?.attachments ?? EMPTY_ATTACHMENTS,
 })
 
 const mDTP = {
   notify: notifyAction,
+  onConsumeIntent: consumeAiChatIntent,
+  onDetachContext: detachAiChatContext,
+  onClearContext: clearAiChatContext,
 }
 
 export const CloudhubAiChatStandalone = connect(

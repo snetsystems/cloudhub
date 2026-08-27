@@ -24,10 +24,7 @@ export const AiChatPage: FC<Props> = ({timeZone, onSetTimeZone}) => {
           <Page.Title title="CloudHub AI Ops Assistant" />
         </Page.Header.Left>
         <Page.Header.Right>
-          <TimeZoneToggle
-            timeZone={timeZone}
-            onSetTimeZone={onSetTimeZone}
-          />
+          <TimeZoneToggle timeZone={timeZone} onSetTimeZone={onSetTimeZone} />
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents
@@ -47,9 +44,15 @@ export const AiChatPage: FC<Props> = ({timeZone, onSetTimeZone}) => {
   )
 }
 
-const mstp = (state: {app?: {persisted?: {timeZone?: TimeZones}}}): StateProps => ({
-  timeZone: state.app?.persisted?.timeZone ?? TimeZones.Local,
-})
+const mstp = ({
+  app: {
+    persisted: {timeZone},
+  },
+}) => {
+  return {
+    timeZone,
+  }
+}
 
 const mdtp: DispatchProps = {
   onSetTimeZone: setTimeZone,
