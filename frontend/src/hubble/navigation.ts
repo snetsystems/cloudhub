@@ -6,6 +6,7 @@ export interface KubernetesNavItem {
   label: string
   link: string
   exact?: boolean
+  icon?: string
 }
 
 export const buildKubernetesNavItems = (
@@ -15,9 +16,11 @@ export const buildKubernetesNavItems = (
     label: 'Cluster Map',
     link: `${sourcePrefix}/${KUBERNETES_OVERVIEW_ROUTE}`,
     exact: true,
+    icon: 'cluster',
   },
   {
     label: 'Traffic Map',
     link: `${sourcePrefix}/${KUBERNETES_NETWORK_ROUTE}`,
+    icon: 'shuffle',
   },
 ]

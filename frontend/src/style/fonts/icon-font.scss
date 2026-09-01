@@ -551,4 +551,24 @@
   &.side-hide::before {
     content: '\e969';
   }
+
+  &.cluster::before {
+    content: '\e96a';
+  }
+
+  &.timeboard::before {
+    content: '\e96c';
+  }
+
+  &.list::before {
+    content: '\e975';
+  }
+
+  &.sign-up::before {
+    content: '\e976';
+  }
+
+  &.bookmark::before {
+    content: '\e978';
+  }
 }
