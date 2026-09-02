@@ -35,6 +35,7 @@ import AiChatMessageMarkdown from 'src/ai_chat/components/AiChatMessageMarkdown'
 import AiChatMessageAvatar from 'src/ai_chat/components/AiChatMessageAvatar'
 import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
 import OpenClawApprovalCard from 'src/ai_chat/components/OpenClawApprovalCard'
+import AiChatToolExecutionCard from 'src/ai_chat/components/AiChatToolExecutionCard'
 import {
   createOpenClawSession,
   deleteOpenClawSession,
@@ -653,6 +654,10 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   const hasRestoredSessionRef = useRef<boolean>(false)
   const sessionsRef = useRef<ChatSession[]>(sessions)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  // 도구 내역은 기본으로 접어 두고, 사용자가 펼친 메시지만 기억한다.
+  const [expandedActivityMessageIds, setExpandedActivityMessageIds] = useState<
+    string[]
+  >([])
   const [isJustCompleted, setIsJustCompleted] = useState<boolean>(false)
   const prevStreamingRef = useRef<boolean>(false)
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -719,6 +724,14 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     }
     return null
   }, [currentSessionMessages, selectedInspectorMessageId])
+
+  const handleToggleInlineActivities = useCallback((messageId: string) => {
+    setExpandedActivityMessageIds(prev =>
+      prev.includes(messageId)
+        ? prev.filter(id => id !== messageId)
+        : [...prev, messageId]
+    )
+  }, [])
 
   const handleOpenActivityInspector = useCallback((messageId: string) => {
     setSelectedInspectorMessageId(messageId)
@@ -2136,38 +2149,92 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     const hasActivities = Boolean(msg.activities && msg.activities.length > 0)
     const hasText = Boolean(msg.text)
     const isTargetSelected = targetInspectorMessage?.id === msg.id
+    const isActivityListCollapsed = !expandedActivityMessageIds.includes(msg.id)
 
-    return [
-      <div key={`msg-${msg.id}`} className="message-item ai">
-        <AiChatMessageAvatar sender="ai" />
-        <div className="message-content-col">
-          {hasActivities ? (
-            <div className="message-bubble has-activities">
-              <div className="ai-tool-activity-summary-bar">
-                <div className="summary-bar-left">
+    const elements: React.ReactNode[] = []
+
+    // 도구 실행 내역은 답변 말풍선 안에 묻히지 않도록, 도구 아바타를 단
+    // 별개의 말풍선으로 대화 흐름에 그대로 남긴다.
+    if (hasActivities) {
+      elements.push(
+        <div
+          key={`act-summary-${msg.id}`}
+          className="message-item ai activity-message-item activity-summary-item"
+        >
+          <AiChatMessageAvatar sender="tool" />
+          <div className="message-bubble activity-message-bubble">
+            <div className="ai-tool-activity-summary-bar">
+              <div className="summary-bar-left">
+                <button
+                  type="button"
+                  className={classnames('toggle-inline-activities-btn', {
+                    collapsed: isActivityListCollapsed,
+                  })}
+                  onClick={() => handleToggleInlineActivities(msg.id)}
+                  title={
+                    isActivityListCollapsed
+                      ? '실행한 도구 내역 펼치기'
+                      : '실행한 도구 내역 접기'
+                  }
+                  aria-expanded={!isActivityListCollapsed}
+                >
+                  <span className="toggle-caret">
+                    {isActivityListCollapsed ? '▶' : '▼'}
+                  </span>
                   <span className="summary-label">
                     {`도구 ${msg.activities!.length}개 실행`}
                   </span>
-                </div>
-                {/* chatOnly(드로어/모달) 모드에는 우측 인스펙터
-                                패널이 없어 열 대상이 없으므로 감춘다. */}
-                {!chatOnly && (
-                  <button
-                    type="button"
-                    className={classnames('view-activity-inspector-btn', {
-                      active:
-                        isTargetSelected &&
-                        showSubagentPanel &&
-                        activeInspectorTab === 'activity',
-                    })}
-                    onClick={() => handleOpenActivityInspector(msg.id)}
-                    title="우측 패널에서 상세 실행 내역 보기"
-                  >
-                    작업 내용 보기 ↗
-                  </button>
-                )}
+                </button>
               </div>
+              {/* chatOnly(드로어/모달) 모드에는 우측 인스펙터
+                  패널이 없어 열 대상이 없으므로 감춘다. */}
+              {!chatOnly && (
+                <button
+                  type="button"
+                  className={classnames('view-activity-inspector-btn', {
+                    active:
+                      isTargetSelected &&
+                      showSubagentPanel &&
+                      activeInspectorTab === 'activity',
+                  })}
+                  onClick={() => handleOpenActivityInspector(msg.id)}
+                  title="우측 패널에서 상세 실행 내역 보기"
+                >
+                  작업 내용 보기 ↗
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )
 
+      if (!isActivityListCollapsed) {
+        msg.activities!.forEach(card => {
+          elements.push(
+            <div
+              key={`act-${msg.id}-${card.id}`}
+              className="message-item ai activity-message-item"
+            >
+              <AiChatMessageAvatar sender="tool" />
+              <div className="message-bubble activity-message-bubble">
+                <AiChatToolExecutionCard card={card} />
+              </div>
+            </div>
+          )
+        })
+      }
+    }
+
+    // 도구만 돌고 아직 문장이 없는 턴은 빈 답변 말풍선을 만들지 않는다.
+    const hasAnswerBubble =
+      !hasActivities || hasText || msg.isStreaming || Boolean(msg.action)
+
+    if (hasAnswerBubble) {
+      elements.push(
+        <div key={`msg-${msg.id}`} className="message-item ai">
+          <AiChatMessageAvatar sender="ai" />
+          <div className="message-content-col">
+            <div className="message-bubble">
               {hasText && (
                 <div className="message-text-content">
                   <AiChatMessageMarkdown content={msg.text} />
@@ -2215,62 +2282,23 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 </div>
               )}
             </div>
-          ) : (
-            <div className="message-bubble">
-              {hasText && (
-                <div className="message-text-content">
-                  <AiChatMessageMarkdown content={msg.text} />
-                  {msg.isStreaming && <span className="blinking-cursor" />}
-                </div>
-              )}
 
-              {!msg.isStreaming && (
-                <div className="message-bubble-footer ai-completed-footer">
-                  <div className="ai-footer-left">
-                    <AiChatBadge variant="done" icon="✓">
-                      답변 완료
-                    </AiChatBadge>
-                    {(msg.timestampRaw || msg.timestamp) && (
-                      <span className="message-timestamp">
-                        {formatChatTimestamp(
-                          msg.timestampRaw || msg.timestamp,
-                          effectiveTimeZone
-                        )}
-                      </span>
-                    )}
-                  </div>
-                  <div className="ai-footer-actions">
-                    {hasText && (
-                      <button
-                        type="button"
-                        className={classnames('ai-copy-btn', {
-                          copied: copiedMessageId === msg.id,
-                        })}
-                        onClick={() => handleCopyMessageText(msg.id, msg.text)}
-                        title="답변 내용 복사"
-                      >
-                        {copiedMessageId === msg.id ? '복사됨' : '복사'}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {msg.action === 'BLOCKED' && (
-            <AiChatBadge variant="blocked" size="md">
-              Security Gateway Intercepted (Dropped in Trash)
-            </AiChatBadge>
-          )}
-          {msg.action === 'REDACTED' && (
-            <AiChatBadge variant="redacted" size="md">
-              Sensitive Secret / PII Data Masked
-            </AiChatBadge>
-          )}
+            {msg.action === 'BLOCKED' && (
+              <AiChatBadge variant="blocked" size="md">
+                Security Gateway Intercepted (Dropped in Trash)
+              </AiChatBadge>
+            )}
+            {msg.action === 'REDACTED' && (
+              <AiChatBadge variant="redacted" size="md">
+                Sensitive Secret / PII Data Masked
+              </AiChatBadge>
+            )}
+          </div>
         </div>
-      </div>,
-    ]
+      )
+    }
+
+    return elements
   }
 
   const inspectorCount = showSubagentPanel

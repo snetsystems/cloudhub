@@ -1299,6 +1299,32 @@ $ai-chat-sidebar-rail-width: 48px;
                     font-weight: 600;
                     color: $g17-whisper;
                   }
+
+                  .toggle-inline-activities-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    background: transparent;
+                    border: 0;
+                    padding: 0;
+                    font-size: 11px;
+                    cursor: pointer;
+                    color: $g17-whisper;
+
+                    .toggle-caret {
+                      font-size: 9px;
+                      line-height: 1;
+                      color: $g11-sidewalk;
+                      transition: color 0.15s ease;
+                    }
+
+                    &:hover {
+                      .summary-label,
+                      .toggle-caret {
+                        color: $s-orange;
+                      }
+                    }
+                  }
                 }
 
                 .view-activity-inspector-btn {
@@ -1340,6 +1366,11 @@ $ai-chat-sidebar-rail-width: 48px;
               max-width: 95%;
               width: 100%;
               margin-bottom: 2px;
+            }
+
+            // 요약 바는 자기 말풍선 한 줄을 통째로 쓰므로 안쪽 여백이 필요 없다.
+            &.activity-summary-item .ai-tool-activity-summary-bar {
+              margin-bottom: 0;
             }
           }
 
