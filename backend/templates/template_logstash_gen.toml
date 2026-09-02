@@ -40,6 +40,13 @@ input {
             ]
         }
         , {
+            "name" => "memory_enh"
+            "columns" => [
+            "1.3.6.1.4.1.9.9.221.1.1.1.1.18",    # cempMemPoolUsed
+            "1.3.6.1.4.1.9.9.221.1.1.1.1.20"     # cempMemPoolFree
+            ]
+        }
+        , {
             "name" => "interfaces"
             "columns" => [
             "1.3.6.1.2.1.2.2.1.1",        # ifIndex
@@ -124,6 +131,13 @@ input {
             "columns" => [
             "1.3.6.1.4.1.9.9.48.1.1.1.5",    # used
             "1.3.6.1.4.1.9.9.48.1.1.1.6"    # free
+            ]
+        }
+        , {
+            "name" => "memory_enh"
+            "columns" => [
+            "1.3.6.1.4.1.9.9.221.1.1.1.1.18",    # cempMemPoolUsed
+            "1.3.6.1.4.1.9.9.221.1.1.1.1.20"     # cempMemPoolFree
             ]
         }
         , {
