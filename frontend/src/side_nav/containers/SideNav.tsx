@@ -209,12 +209,15 @@ class SideNav extends PureComponent<Props, State> {
           >
             <NavHeader link={`${sourcePrefix}/ai-chat`} title="AI Assistant" />
             {enabled('ai-chatbot') && (
-              <NavListItem link={`${sourcePrefix}/ai-chat`}>
+              <NavListItem link={`${sourcePrefix}/ai-chat`} icon="chat">
                 Chatbot
               </NavListItem>
             )}
             {isAdminRole && enabled('openclaw-skills') && (
-              <NavListItem link={`${sourcePrefix}/openclaw-skills`}>
+              <NavListItem
+                link={`${sourcePrefix}/openclaw-skills`}
+                icon="bookmark"
+              >
                 Skills
               </NavListItem>
             )}
@@ -253,6 +256,7 @@ class SideNav extends PureComponent<Props, State> {
             {enabled('network-management') && (
               <NavListItem
                 link={`${sourcePrefix}/network-monitoring/management`}
+                icon="sign-up"
               >
                 Device Management
               </NavListItem>
@@ -260,6 +264,7 @@ class SideNav extends PureComponent<Props, State> {
             {enabled('network-anomaly') && (
               <NavListItem
                 link={`${sourcePrefix}/network-monitoring/anomaly-prediction`}
+                icon="computer-desktop"
               >
                 Anomaly Monitoring
               </NavListItem>
@@ -278,13 +283,17 @@ class SideNav extends PureComponent<Props, State> {
               title="Server Monitoring"
             />
             {enabled('server-topology') && (
-              <NavListItem link={`${sourcePrefix}/server-monitoring/topology`}>
+              <NavListItem
+                link={`${sourcePrefix}/server-monitoring/topology`}
+                icon="tree"
+              >
                 Topology Builder
               </NavListItem>
             )}
             {enabled('server-list') && (
               <NavListItem
                 link={`${sourcePrefix}/server-monitoring/server-list`}
+                icon="text-block"
               >
                 Server List
               </NavListItem>
@@ -292,6 +301,7 @@ class SideNav extends PureComponent<Props, State> {
             {enabled('server-details') && (
               <NavListItem
                 link={`${sourcePrefix}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}`}
+                icon="list"
               >
                 Server Details
               </NavListItem>
@@ -299,6 +309,7 @@ class SideNav extends PureComponent<Props, State> {
             {enabled('gpu-monitoring') && (
               <NavListItem
                 link={`${sourcePrefix}/server-monitoring/gpu-monitoring`}
+                icon="ai-icon"
               >
                 NVIDIA GPU Monitoring
               </NavListItem>
@@ -306,6 +317,7 @@ class SideNav extends PureComponent<Props, State> {
             {enabled('server-alert') && (
               <NavListItem
                 link={`${sourcePrefix}/server-monitoring/server-alert`}
+                icon="bell"
               >
                 Server Alert
               </NavListItem>
@@ -325,12 +337,18 @@ class SideNav extends PureComponent<Props, State> {
               title="URL Monitoring"
             />
             {enabled('url-list') && (
-              <NavListItem link={`${sourcePrefix}/url-monitoring/url-list`}>
+              <NavListItem
+                link={`${sourcePrefix}/url-monitoring/url-list`}
+                icon="text-block"
+              >
                 URL List
               </NavListItem>
             )}
             {enabled('url-alert') && (
-              <NavListItem link={`${sourcePrefix}/url-monitoring/url-alert`}>
+              <NavListItem
+                link={`${sourcePrefix}/url-monitoring/url-alert`}
+                icon="bell"
+              >
                 URL Alert
               </NavListItem>
             )}
@@ -374,7 +392,12 @@ class SideNav extends PureComponent<Props, State> {
           >
             <NavHeader link={kubernetesNavItems[0].link} title="Kubernetes" />
             {kubernetesNavItems.map(item => (
-              <NavListItem key={item.link} link={item.link} exact={item.exact}>
+              <NavListItem
+                key={item.link}
+                link={item.link}
+                exact={item.exact}
+                icon={item.icon}
+              >
                 {item.label}
               </NavListItem>
             ))}
@@ -425,17 +448,20 @@ class SideNav extends PureComponent<Props, State> {
               title="Log Viewer"
             />
             {isUsingLogAnalysis && enabled('log-analysis') && (
-              <NavListItem link={`${sourcePrefix}/log-analysis`}>
+              <NavListItem link={`${sourcePrefix}/log-analysis`} icon="search">
                 Log Analysis
               </NavListItem>
             )}
             {enabled('logs') && (
-              <NavListItem link={`${sourcePrefix}/logs`}>
+              <NavListItem link={`${sourcePrefix}/logs`} icon="document">
                 Log Viewer
               </NavListItem>
             )}
             {enabled('activity-logs') && (
-              <NavListItem link={`${sourcePrefix}/activity-logs`}>
+              <NavListItem
+                link={`${sourcePrefix}/activity-logs`}
+                icon="timeboard"
+              >
                 Activity Logs
               </NavListItem>
             )}
@@ -462,12 +488,15 @@ class SideNav extends PureComponent<Props, State> {
               title="Alert"
             />
             {isAdminRole && enabled('alert-rules') && (
-              <NavListItem link={`${sourcePrefix}/alert-rules`}>
+              <NavListItem
+                link={`${sourcePrefix}/alert-rules`}
+                icon="cog-thick"
+              >
                 Alert Setting
               </NavListItem>
             )}
             {enabled('alerts') && (
-              <NavListItem link={`${sourcePrefix}/alerts`}>
+              <NavListItem link={`${sourcePrefix}/alerts`} icon="clock">
                 Alert History
               </NavListItem>
             )}
@@ -488,6 +517,7 @@ class SideNav extends PureComponent<Props, State> {
                     <NavHeader
                       link={`${sourcePrefix}/admin-influxdb/databases`}
                       title="InfluxDB Admin"
+                      icon="disks"
                     />
                   </NavBlock>
                 ) : null
@@ -514,6 +544,7 @@ class SideNav extends PureComponent<Props, State> {
                 {enabled('admin-cloudhub') && (
                   <NavListItem
                     link={`${sourcePrefix}/admin-cloudhub/current-organization`}
+                    icon="crown2"
                   >
                     CloudHub
                   </NavListItem>
@@ -521,6 +552,7 @@ class SideNav extends PureComponent<Props, State> {
                 {enabled('admin-influxdb') && (
                   <NavListItem
                     link={`${sourcePrefix}/admin-influxdb/databases`}
+                    icon="disks"
                   >
                     InfluxDB
                   </NavListItem>
@@ -628,11 +660,14 @@ class SideNav extends PureComponent<Props, State> {
           link={`${sourcePrefix}/manage-sources`}
           title="Configuration"
         />
-        <NavListItem link={`${sourcePrefix}/manage-sources`}>
+        <NavListItem link={`${sourcePrefix}/manage-sources`} icon="wrench">
           Configuration
         </NavListItem>
         {isUsingSalt && (
-          <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+          <NavListItem
+            link={`${sourcePrefix}/agent-admin/agent-minions`}
+            icon="group"
+          >
             Agent Configuration
           </NavListItem>
         )}
@@ -650,7 +685,10 @@ class SideNav extends PureComponent<Props, State> {
           link={`${sourcePrefix}/agent-admin/agent-minions`}
           title="Configuration"
         />
-        <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+        <NavListItem
+          link={`${sourcePrefix}/agent-admin/agent-minions`}
+          icon="group"
+        >
           Agent Configuration
         </NavListItem>
       </NavBlock>
@@ -671,6 +709,7 @@ class SideNav extends PureComponent<Props, State> {
               <NavHeader
                 link={`${sourcePrefix}/manage-sources`}
                 title="Configuration"
+                icon="wrench"
               />
             </NavBlock>
           }
@@ -694,6 +733,7 @@ class SideNav extends PureComponent<Props, State> {
             <NavHeader
               link={`${sourcePrefix}/manage-sources`}
               title="Configuration"
+              icon="wrench"
             />
           </NavBlock>
         }

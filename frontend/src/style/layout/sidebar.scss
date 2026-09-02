@@ -255,12 +255,20 @@ $s-sidebar--width: 45px;
 .sidebar-menu--item {
   width: 100%;
   white-space: nowrap;
-  display: block;
+  display: flex;
+  align-items: center;
   @include no-user-select();
   &:hover {
     cursor: pointer;
   }
 }
+.sidebar-menu--title-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-right: 12px;
+  font-size: 14px;
+}
+
 .sidebar-menu--heading.sidebar--no-hover,
 .sidebar-menu--heading.sidebar--no-hover:hover {
   cursor: default;

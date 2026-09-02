@@ -21,6 +21,7 @@ interface NavListItemProps {
   useAnchor?: boolean
   isExternal?: boolean
   exact?: boolean
+  icon?: string
   children?: ReactNode
 }
 
@@ -31,22 +32,35 @@ const NavListItem: FunctionComponent<NavListItemProps> = ({
   useAnchor,
   isExternal,
   exact,
+  icon,
 }) => {
   const isActive = exact ? location === link : location.startsWith(link)
+  const content = (
+    <>
+      {icon && (
+        <span
+          className={`icon ${icon} sidebar-menu--title-icon`}
+          aria-hidden="true"
+        />
+      )}
+      {children}
+    </>
+  )
+
   return useAnchor ? (
     <a
       className={classnames('sidebar-menu--item', {active: isActive})}
       href={link}
       target={isExternal ? '_blank' : '_self'}
     >
-      {children}
+      {content}
     </a>
   ) : (
     <Link
       className={classnames('sidebar-menu--item', {active: isActive})}
       to={link}
     >
-      {children}
+      {content}
     </Link>
   )
 }
@@ -55,22 +69,36 @@ interface NavHeaderProps {
   link?: string
   title?: string
   useAnchor?: string
+  icon?: string
 }
 
 const NavHeader: FunctionComponent<NavHeaderProps> = ({
   link,
   title,
   useAnchor,
+  icon,
 }) => {
+  const content = (
+    <>
+      {icon && (
+        <span
+          className={`icon ${icon} sidebar-menu--title-icon`}
+          aria-hidden="true"
+        />
+      )}
+      {title}
+    </>
+  )
+
   // Some nav items, such as Logout, need to hit an external link rather
   // than simply route to an internal page. Anchor tags serve that purpose.
   return useAnchor ? (
     <a className="sidebar-menu--heading" href={link}>
-      {title}
+      {content}
     </a>
   ) : (
     <Link className="sidebar-menu--heading" to={link}>
-      {title}
+      {content}
     </Link>
   )
 }
