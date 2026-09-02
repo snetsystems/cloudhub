@@ -75,6 +75,17 @@ input {
             "1.3.6.1.4.1.9.9.109.1.2.3.1.6"  # 1min
             ]
         }
+        , {
+            "name" => "optics"
+            "columns" => [
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.1",    # entSensorType (14 = dBm)
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.2",    # entSensorScale
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.3",    # entSensorPrecision
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.4",    # entSensorValue
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.5",    # entSensorStatus (1 = ok)
+            "1.3.6.1.2.1.47.1.1.1.1.7"         # entPhysicalName
+            ]
+        }
         ]
     }
 }
@@ -151,6 +162,17 @@ input {
             "1.3.6.1.4.1.9.9.109.1.2.3.1.6"  # 1min
             ]
         }
+        , {
+            "name" => "optics"
+            "columns" => [
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.1",    # entSensorType (14 = dBm)
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.2",    # entSensorScale
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.3",    # entSensorPrecision
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.4",    # entSensorValue
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.5",    # entSensorStatus (1 = ok)
+            "1.3.6.1.2.1.47.1.1.1.1.7"         # entPhysicalName
+            ]
+        }
         ]
     }
 }
@@ -158,7 +180,7 @@ input {
 {{end}}
 {{ define "filter_ouput" }}
 filter {
-    if [type] == "snmp_nx" or [type] == "snmp_nx_cpu_evt" or [type] == "snmp_nx_iface_evt" or [type] == "snmp_nx_proc_evt" {
+    if [type] == "snmp_nx" or [type] == "snmp_nx_cpu_evt" or [type] == "snmp_nx_iface_evt" or [type] == "snmp_nx_proc_evt" or [type] == "snmp_nx_optics_evt" {
         {{.DeviceFilter}}
     }
 }
@@ -299,6 +321,46 @@ output {
                 coerce_values => {
                     "proc_cpu5s" => "float"
                     "proc_cpu1m" => "float"
+                }
+            }
+        }
+        if [type] == "snmp_nx_optics_evt" and [opticalRxPower] {
+            influxdb {
+                host => "{{.InfluxOrigin}}"
+                port => {{.InfluxPort}}
+                db => "{{.OrgName}}"
+                measurement => "snmp_nx"
+                data_points => {
+                    "dev_id" => "%{dev_id}"
+                    "agent_host" => "%{host}"
+                    "sys_name" => "%{system.sysName.0}"
+                    "ifName" => "%{ifName}"
+                    "opticLane" => "%{opticLane}"
+                    "opticalRxPower" => "%{opticalRxPower}"
+                }
+                send_as_tags => ["dev_id", "agent_host", "sys_name", "ifName", "opticLane"]
+                coerce_values => {
+                    "opticalRxPower" => "float"
+                }
+            }
+        }
+        if [type] == "snmp_nx_optics_evt" and [opticalTxPower] {
+            influxdb {
+                host => "{{.InfluxOrigin}}"
+                port => {{.InfluxPort}}
+                db => "{{.OrgName}}"
+                measurement => "snmp_nx"
+                data_points => {
+                    "dev_id" => "%{dev_id}"
+                    "agent_host" => "%{host}"
+                    "sys_name" => "%{system.sysName.0}"
+                    "ifName" => "%{ifName}"
+                    "opticLane" => "%{opticLane}"
+                    "opticalTxPower" => "%{opticalTxPower}"
+                }
+                send_as_tags => ["dev_id", "agent_host", "sys_name", "ifName", "opticLane"]
+                coerce_values => {
+                    "opticalTxPower" => "float"
                 }
             }
         }
