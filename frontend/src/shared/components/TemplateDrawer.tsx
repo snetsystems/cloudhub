@@ -1,6 +1,7 @@
 import React, {FunctionComponent, MouseEvent} from 'react'
-import OnClickOutside from 'react-onclickoutside'
 import classnames from 'classnames'
+
+import {ClickOutside} from 'src/shared/components/ClickOutside'
 
 import {Template} from 'src/types'
 
@@ -17,28 +18,32 @@ interface Props {
   onClickTempVar: (
     template: Template
   ) => (e: MouseEvent<HTMLDivElement>) => void
+  onClickOutside: () => void
 }
 const TemplateDrawer: FunctionComponent<Props> = ({
   templates,
   selected,
   onMouseOverTempVar,
   onClickTempVar,
+  onClickOutside,
 }) => (
-  <div className="template-drawer">
-    {templates.map(t => (
-      <div
-        className={classnames('template-drawer--item', {
-          'template-drawer--selected': t.tempVar === selected.tempVar,
-        })}
-        onMouseOver={onMouseOverTempVar(t)}
-        onMouseDown={onClickTempVar(t)}
-        key={t.tempVar}
-      >
-        {' '}
-        {t.tempVar}{' '}
-      </div>
-    ))}
-  </div>
+  <ClickOutside onClickOutside={onClickOutside}>
+    <div className="template-drawer">
+      {templates.map(t => (
+        <div
+          className={classnames('template-drawer--item', {
+            'template-drawer--selected': t.tempVar === selected.tempVar,
+          })}
+          onMouseOver={onMouseOverTempVar(t)}
+          onMouseDown={onClickTempVar(t)}
+          key={t.tempVar}
+        >
+          {' '}
+          {t.tempVar}{' '}
+        </div>
+      ))}
+    </div>
+  </ClickOutside>
 )
 
-export default OnClickOutside(TemplateDrawer)
+export default TemplateDrawer

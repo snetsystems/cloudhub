@@ -1,5 +1,9 @@
 import {useCallback, useEffect, useReducer, useRef, useState} from 'react'
 
+// The error copy is raised from callbacks rather than rendered, so the shared
+// instance is read directly instead of through useTranslation.
+import i18n from 'src/i18n'
+
 import {
   getOpenClawApprovals,
   OpenClawAPIError,
@@ -75,8 +79,7 @@ export const useOpenClawApprovals = (
           await waitForSnapshotRetry(
             Math.max(
               0,
-              SNAPSHOT_RETRY_OFFSETS_MS[attempt] -
-                (Date.now() - startedAt)
+              SNAPSHOT_RETRY_OFFSETS_MS[attempt] - (Date.now() - startedAt)
             ),
             controller.signal
           )
@@ -108,7 +111,7 @@ export const useOpenClawApprovals = (
             attempt === SNAPSHOT_RETRY_OFFSETS_MS.length - 1 &&
             generation === requestGeneration.current
           ) {
-            onErrorRef.current('승인 목록을 불러오지 못했습니다.')
+            onErrorRef.current(i18n.t('ai_chat.error.approvals_load_failed'))
           }
         }
       }
@@ -189,7 +192,7 @@ export const useOpenClawApprovals = (
           approvalId,
           now: Date.now(),
         })
-        onErrorRef.current('승인 요청을 처리하지 못했습니다.')
+        onErrorRef.current(i18n.t('ai_chat.error.approval_resolve_failed'))
       } finally {
         delete resolving.current[approvalId]
       }

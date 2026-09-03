@@ -1,5 +1,6 @@
 import React, {FC, useState, useEffect} from 'react'
 import classnames from 'classnames'
+import {useTranslation} from 'react-i18next'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import RadioButtons from 'src/reusable_ui/components/radio_buttons/RadioButtons'
 import {
@@ -50,6 +51,7 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
   selectedTurnId,
   onSelectTurnId,
 }) => {
+  const {t} = useTranslation()
   const [internalTab, setInternalTab] = useState<string>(activeInspectorTab)
   const [inspectorViewMode, setInspectorViewMode] = useState<'terminal' | 'character'>(defaultViewMode)
 
@@ -83,18 +85,18 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
 
     if (sub.status === 'RUNNING') {
       if (sub.progress < 40) {
-        stateMessage = `Main Agent로부터 '${sub.taskName}' 태스크 패킷 수신 중...`
+        stateMessage = t('ai_chat.subagent.receiving', {task: sub.taskName})
       } else if (sub.progress < 85) {
-        stateMessage = `Subagent 픽셀 워커가 샌드박스에서 작업을 수행 중입니다!`
+        stateMessage = t('ai_chat.subagent.working')
       } else {
-        stateMessage = `작업 검증을 마치고 Main Agent에게 결과 보고서를 전송하는 중...`
+        stateMessage = t('ai_chat.subagent.reporting')
       }
     } else if (sub.status === 'SUCCESS') {
-      stateMessage = `작업 성공! Main Agent에게 결과 전달이 완료되었습니다.`
+      stateMessage = t('ai_chat.subagent.succeeded')
     } else if (sub.status === 'ERROR') {
-      stateMessage = `작업 중 예외 발생! Main Agent에게 비상 오류 리포트를 송출합니다.`
+      stateMessage = t('ai_chat.subagent.failed')
     } else {
-      stateMessage = `Main Agent의 새로운 태스크 할당 명령을 기다리는 중...`
+      stateMessage = t('ai_chat.subagent.idle')
     }
 
     return (
@@ -184,9 +186,9 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
           <div className="card-section-title">Interactive Workflow Progress</div>
           <div className="step-nodes-container">
             {(sub.steps || [
-              { title: '작업 할당', status: 'done' },
-              { title: '실행 진행 중', status: sub.status === 'RUNNING' ? 'active' : sub.status === 'SUCCESS' ? 'done' : 'error' },
-              { title: '검증 & 완료', status: sub.status === 'SUCCESS' ? 'done' : 'pending' }
+              { title: t('ai_chat.subagent.timeline.assigned'), status: 'done' },
+              { title: t('ai_chat.subagent.timeline.running'), status: sub.status === 'RUNNING' ? 'active' : sub.status === 'SUCCESS' ? 'done' : 'error' },
+              { title: t('ai_chat.subagent.timeline.verifying'), status: sub.status === 'SUCCESS' ? 'done' : 'pending' }
             ]).map((step, idx) => (
               <div key={idx} className={classnames('step-node', step.status)}>
                 <div className="node-icon">
@@ -209,13 +211,13 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
             <div className="log-item">
               <span className="log-time">10:45:01</span>
               <div className="log-desc">
-                <AiChatMessageMarkdown content={`Main Orchestrator가 **${sub.role}**에게 태스크 발주`} />
+                <AiChatMessageMarkdown content={t('ai_chat.subagent.dispatch', { role: sub.role })} />
               </div>
             </div>
             <div className="log-item">
               <span className="log-time">10:45:03</span>
               <div className="log-desc">
-                <AiChatMessageMarkdown content={`\`${sub.taskName}\` 수행 시작`} />
+                <AiChatMessageMarkdown content={t('ai_chat.subagent.task_start', { task: sub.taskName })} />
               </div>
             </div>
             <div className="log-item highlight">
@@ -244,7 +246,7 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
           onClick={() => handleTabChange('activity')}
           type="button"
         >
-          도구 실행 내역
+          {t('ai_chat.subagent.tool_history')}
           {turns.length > 0 && (
             <span className="tab-count-pill">{turns.length}</span>
           )}
@@ -383,7 +385,7 @@ export const SubagentInspectorPanel: FC<SubagentInspectorPanelProps> = ({
               <div className="character-view-wrapper">
                 <FancyScrollbar autoHide={true}>
                   {activeSubagent ? renderCharacterStage(activeSubagent) : (
-                    <div className="no-subagent">선택된 서브에이전트가 없습니다.</div>
+                    <div className="no-subagent">{t('ai_chat.subagent.none_selected')}</div>
                   )}
                 </FancyScrollbar>
               </div>

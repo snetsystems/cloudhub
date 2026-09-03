@@ -531,5 +531,166 @@
       "drop_hint": "텍스트 파일만 됩니다. 끌어다 놓아도 됩니다.",
       "not_text": "텍스트 파일이 아니라 넣을 수 없습니다: {{files}}"
     }
+  },
+  "ai_chat": {
+    "session": {
+      "default_title": "신규 대화 세션 #{{number}}",
+      "untitled": "새 대화",
+      "new": "새 대화 시작",
+      "expand_list": "대화 목록 펼치기",
+      "collapse_list": "사이드바 접기",
+      "close_list": "대화 목록 닫기",
+      "generating": "답변 생성 중...",
+      "title_generating": "{{title}} (답변 생성 중...)",
+      "delete": "삭제"
+    },
+    "timestamp": {
+      "today": "HH:mm",
+      "this_year": "M[월] D[일] HH:mm",
+      "full": "YYYY[년] M[월] D[일] HH:mm"
+    },
+    "empty": {
+      "title": "새로운 대화를 시작해보세요",
+      "description": "클러스터 장애 분석, 호스트 점검, 로그 쿼리 등 질문을 입력하거나 아래 추천 질문을 선택하세요."
+    },
+    "suggestions": {
+      "header": "추천 질문",
+      "was_check": "WAS 서버 상태 점검",
+      "network_fault": "네트워크 장애 주입",
+      "network_repair": "네트워크 통신 장애 복구",
+      "critical_alerts": "주요 Critical 알림 진단"
+    },
+    "composer": {
+      "placeholder": "Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록",
+      "placeholder_streaming": "AI가 답변을 생성하고 있습니다...",
+      "send": "전송",
+      "sending": "생성 중...",
+      "slash_hint": "↑↓ 키로 이동, Enter로 선택",
+      "skills_loading": "스킬 목록을 불러오는 중...",
+      "skills_error": "스킬 목록을 불러오지 못했습니다",
+      "skills_empty": "이 조직의 에이전트에 등록된 스킬이 없습니다",
+      "scroll_to_latest": "최신 메시지로 이동",
+      "scroll_to_latest_label": "최신 메시지",
+      "detach_context": "{{title}} 첨부 제거",
+      "collapse_attachments": "접기",
+      "clear_attachments": "모두 해제"
+    },
+    "message": {
+      "send_failed": "전송 실패",
+      "retry": "재시도",
+      "retry_title": "클릭하여 즉시 재전송",
+      "answer_done": "답변 완료",
+      "copy": "복사",
+      "copied": "복사됨",
+      "copy_title": "답변 내용 복사"
+    },
+    "activity": {
+      "summary": "도구 {{count}}개 실행",
+      "expand": "실행한 도구 내역 펼치기",
+      "collapse": "실행한 도구 내역 접기",
+      "open_inspector": "작업 내용 보기",
+      "open_inspector_title": "우측 패널에서 상세 실행 내역 보기"
+    },
+    "status": {
+      "running": "실행 중",
+      "running_ellipsis": "실행 중...",
+      "success": "완료",
+      "error": "오류",
+      "blocked": "차단됨"
+    },
+    "tool_card": {
+      "expand": "[입력 / 출력 / 실행 시간 보기]",
+      "collapse": "접기",
+      "input": "입력 (Input):",
+      "output": "출력 (Output):",
+      "error": "오류 (Error):",
+      "copy": "복사",
+      "copied": "✓ 복사됨",
+      "copy_title": "전체 원본 클립보드 복사",
+      "truncated": "대용량 로그입니다. 브라우저 성능을 위해 총 {{total}}자 중 {{shown}}자만 표시되었습니다. (전체 내용은 '복사' 버튼으로 확인 가능)"
+    },
+    "inspector": {
+      "open": "작업 인스펙터",
+      "close": "패널 닫기",
+      "turn_list_title": "대화 내역",
+      "turn_list_empty": "대화 내역이 없습니다.",
+      "turn_badge": "Turn #{{number}}",
+      "turns": "{{count}} Turns",
+      "no_question": "질문 내용 없음",
+      "answer_streaming": "답변 생성 중...",
+      "tools_running": "도구 실행 중...",
+      "tool_count": "도구 {{count}}개",
+      "chat_only": "대화만",
+      "detail_title": "도구 및 스킬 실행 상세",
+      "no_turn_selected": "선택된 대화 턴",
+      "input_params": "입력 파라미터 (Input)",
+      "output_result": "실행 결과 (Output)",
+      "error_message": "에러 메시지 (Error)",
+      "copy": "복사",
+      "copied": "✓ 복사됨",
+      "expand": "펼치기",
+      "collapse": "접기",
+      "cli_command": "터미널 실행 명령어 (CLI Command)",
+      "filter": {
+        "all": "전체 ({{total}})",
+        "running": "진행 중 ({{total}})",
+        "success": "완료 ({{total}})",
+        "error": "오류 ({{total}})",
+        "title": "{{label}} 필터"
+      },
+      "empty": {
+        "none_title": "도구(Tool) 실행 내역이 없습니다",
+        "none_sub": "이 대화 턴에서는 추가적인 외부 도구나 MCP를 호출하지 않고 답변을 생성했습니다.",
+        "filtered_title": "조건에 해당하는 도구 실행 내역이 없습니다",
+        "filtered_sub": "다른 필터를 선택하여 완료/오류 내역을 확인하세요."
+      }
+    },
+    "subagent": {
+      "receiving": "Main Agent로부터 '{{task}}' 태스크 패킷 수신 중...",
+      "working": "Subagent 픽셀 워커가 샌드박스에서 작업을 수행 중입니다!",
+      "reporting": "작업 검증을 마치고 Main Agent에게 결과 보고서를 전송하는 중...",
+      "succeeded": "작업 성공! Main Agent에게 결과 전달이 완료되었습니다.",
+      "failed": "작업 중 예외 발생! Main Agent에게 비상 오류 리포트를 송출합니다.",
+      "idle": "Main Agent의 새로운 태스크 할당 명령을 기다리는 중...",
+      "timeline": {
+        "assigned": "작업 할당",
+        "running": "실행 진행 중",
+        "verifying": "검증 & 완료"
+      },
+      "dispatch": "Main Orchestrator가 **{{role}}**에게 태스크 발주",
+      "task_start": "`{{task}}` 수행 시작",
+      "tool_history": "도구 실행 내역",
+      "none_selected": "선택된 서브에이전트가 없습니다."
+    },
+    "task": {
+      "running": "실행 중...",
+      "done": "실행 완료",
+      "step_received": "요청 수신 ({{name}})",
+      "step_executing": "도구 로직 수행",
+      "step_verifying": "결과 검증 및 출력",
+      "tool_label": "Tool ({{name}})",
+      "command_label": "CLI Command ({{name}})",
+      "default_name": "Tool Execution"
+    },
+    "context": {
+      "label": {
+        "server": "서버",
+        "text": "선택한 내용",
+        "k8s-connection": "연결"
+      }
+    },
+    "error": {
+      "response_failed": "응답 처리 중 오류가 발생했습니다.",
+      "socket_disconnected": "AI Chat 실시간 연결이 끊어졌습니다. 재연결을 시도하고 있습니다.",
+      "session_delete_failed": "세션 삭제 중 통신 오류 발생: {{message}}",
+      "session_create_failed": "세션 생성 실패 ({{status}} {{statusText}})",
+      "session_create_error": "세션 생성 중 통신 오류가 발생했습니다: {{message}}",
+      "gateway_unavailable": "Gateway 연결 오류 (503 Service Unavailable): OpenClaw Gateway를 확인하세요.",
+      "send_failed": "메시지 전송 실패 ({{status}} {{statusText}})",
+      "send_error": "메시지 전송 시 통신 오류가 발생했습니다: {{message}}",
+      "already_streaming": "이미 답변을 생성 중이라 전송하지 않고 입력창에 담았습니다. 답변이 끝나면 전송해 주세요.",
+      "approvals_load_failed": "승인 목록을 불러오지 못했습니다.",
+      "approval_resolve_failed": "승인 요청을 처리하지 못했습니다."
+    }
   }
 }
