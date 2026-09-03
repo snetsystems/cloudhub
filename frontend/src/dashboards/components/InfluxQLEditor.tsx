@@ -188,7 +188,7 @@ class InfluxQLEditor extends Component<Props, State> {
                   templates={filteredTemplates}
                   selected={selectedTemplate}
                   onMouseOverTempVar={this.handleMouseOverTempVar}
-                  handleClickOutside={this.handleCloseDrawer}
+                  onClickOutside={this.handleCloseDrawer}
                 />
               ) : null}
             </div>
