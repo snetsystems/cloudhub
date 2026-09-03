@@ -33,6 +33,11 @@ func (*OpenClawSessionStore) Touch(context.Context, string, time.Time) error {
 	return fmt.Errorf("no OpenClaw session store configured")
 }
 
+// UpdateTitle reports that durable session persistence is unavailable.
+func (*OpenClawSessionStore) UpdateTitle(context.Context, string, string) error {
+	return fmt.Errorf("no OpenClaw session store configured")
+}
+
 // Delete reports that durable session persistence is unavailable.
 func (*OpenClawSessionStore) Delete(context.Context, string) error {
 	return fmt.Errorf("no OpenClaw session store configured")

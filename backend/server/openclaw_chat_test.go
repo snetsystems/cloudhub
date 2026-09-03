@@ -129,6 +129,15 @@ func (s *openClawSessionStoreContract) Touch(_ context.Context, id string, updat
 	return nil
 }
 
+func (s *openClawSessionStoreContract) UpdateTitle(_ context.Context, id string, title string) error {
+	session, err := s.Get(context.Background(), id)
+	if err != nil {
+		return err
+	}
+	session.Title = title
+	return nil
+}
+
 func (s *openClawSessionStoreContract) Delete(_ context.Context, id string) error {
 	if _, ok := s.items[id]; !ok {
 		return cloudhub.ErrOpenClawSessionNotFound

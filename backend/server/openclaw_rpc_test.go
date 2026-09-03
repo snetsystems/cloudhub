@@ -268,10 +268,6 @@ func (g *fakeOpenClawRPCGateway) RecordedCall() (string, json.RawMessage) {
 	return g.callMethod, append(json.RawMessage(nil), g.callParams...)
 }
 
-func (g *fakeOpenClawGateway) Call(context.Context, string, interface{}) (json.RawMessage, error) {
-	return nil, nil
-}
-
 func (g *lifecycleGateway) Call(context.Context, string, interface{}) (json.RawMessage, error) {
 	return nil, nil
 }

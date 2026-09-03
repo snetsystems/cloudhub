@@ -124,6 +124,22 @@ func (s *OpenClawSessionStore) Touch(ctx context.Context, id string, updatedAt t
 	return nil
 }
 
+// UpdateTitle replaces the display title of a session. It also moves
+// updated_at so the sidebar re-sorts to the same position the reply did.
+func (s *OpenClawSessionStore) UpdateTitle(ctx context.Context, id string, title string) error {
+	result, err := s.db.ExecContext(ctx, `
+		UPDATE openclaw_sessions
+		SET title = $2, updated_at = now()
+		WHERE id = $1 AND delete_yn = false`, id, title)
+	if err != nil {
+		return fmt.Errorf("pgsql:openclaw session update title: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return cloudhub.ErrOpenClawSessionNotFound
+	}
+	return nil
+}
+
 // Delete soft-deletes a session mapping without deleting Gateway history.
 func (s *OpenClawSessionStore) Delete(ctx context.Context, id string) error {
 	result, err := s.db.ExecContext(ctx, `

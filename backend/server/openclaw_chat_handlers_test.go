@@ -1169,30 +1169,56 @@ func readOpenClawEvent(t *testing.T, conn *websocket.Conn) map[string]interface{
 }
 
 type fakeOpenClawGateway struct {
-	mu                   sync.Mutex
-	history              openclaw.HistoryPage
-	historyErr           error
-	historyParams        openclaw.HistoryParams
-	historyCalls         int
-	send                 openclaw.SendMessageResult
-	sendErr              error
-	sendParams           openclaw.SendMessageParams
-	sendCalls            int
-	sendHadDeadline      bool
-	events               <-chan openclaw.GatewayEvent
-	subscribeErr         error
-	subscribeCalls       int
-	subscribeStarted     chan<- struct{}
-	subscribeRelease     <-chan struct{}
-	agents               openclaw.AgentList
-	agentsErr            error
-	agentsCalls          int
-	approvals            []openclaw.PluginApproval
-	approvalsErr         error
-	approvalListCalls    int
-	resolvedApproval     openclaw.ResolvePluginApprovalParams
-	resolveApprovalErr   error
-	resolveApprovalCalls int
+	mu                    sync.Mutex
+	history               openclaw.HistoryPage
+	historyErr            error
+	historyParams         openclaw.HistoryParams
+	historyCalls          int
+	send                  openclaw.SendMessageResult
+	sendErr               error
+	sendParams            openclaw.SendMessageParams
+	sendCalls             int
+	sendHadDeadline       bool
+	sendHook              func(openclaw.SendMessageParams)
+	events                <-chan openclaw.GatewayEvent
+	subscribeErr          error
+	subscribeSucceedAfter int
+	subscribeCalls        int
+	subscribeStarted      chan<- struct{}
+	subscribeRelease      <-chan struct{}
+	agents                openclaw.AgentList
+	agentsErr             error
+	agentsCalls           int
+	approvals             []openclaw.PluginApproval
+	approvalsErr          error
+	approvalListCalls     int
+	resolvedApproval      openclaw.ResolvePluginApprovalParams
+	resolveApprovalErr    error
+	resolveApprovalCalls  int
+	callMethods           []string
+	callParams            []interface{}
+	callResults           map[string]json.RawMessage
+	callErrs              map[string]error
+}
+
+func (g *fakeOpenClawGateway) Call(_ context.Context, method string, params interface{}) (json.RawMessage, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.callMethods = append(g.callMethods, method)
+	g.callParams = append(g.callParams, params)
+	return g.callResults[method], g.callErrs[method]
+}
+
+func (g *fakeOpenClawGateway) CallsFor(method string) []interface{} {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	var out []interface{}
+	for i, m := range g.callMethods {
+		if m == method {
+			out = append(out, g.callParams[i])
+		}
+	}
+	return out
 }
 
 func (g *fakeOpenClawGateway) ListAgents(context.Context) (openclaw.AgentList, error) {
@@ -1233,11 +1259,22 @@ func (g *fakeOpenClawGateway) History(_ context.Context, params openclaw.History
 
 func (g *fakeOpenClawGateway) SendMessage(ctx context.Context, params openclaw.SendMessageParams) (openclaw.SendMessageResult, error) {
 	g.mu.Lock()
-	defer g.mu.Unlock()
 	g.sendCalls++
 	g.sendParams = params
 	_, g.sendHadDeadline = ctx.Deadline()
-	return g.send, g.sendErr
+	result, err := g.send, g.sendErr
+	hook := g.sendHook
+	g.mu.Unlock()
+	if hook != nil && err == nil {
+		hook(params)
+	}
+	return result, err
+}
+
+func (g *fakeOpenClawGateway) SendCalls() int {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	return g.sendCalls
 }
 
 func (g *fakeOpenClawGateway) Subscribe(context.Context) (<-chan openclaw.GatewayEvent, error) {
@@ -1245,6 +1282,14 @@ func (g *fakeOpenClawGateway) Subscribe(context.Context) (<-chan openclaw.Gatewa
 	g.subscribeCalls++
 	events := g.events
 	err := g.subscribeErr
+	// subscribeSucceedAfter, when set, overrides the otherwise-permanent
+	// subscribeErr: the first N calls (N == subscribeSucceedAfter) still
+	// fail with subscribeErr, and every call after that succeeds. Left at
+	// its zero value, behavior is unchanged: subscribeErr applies to every
+	// call, as it already did before this field existed.
+	if g.subscribeSucceedAfter > 0 && g.subscribeCalls > g.subscribeSucceedAfter {
+		err = nil
+	}
 	started := g.subscribeStarted
 	release := g.subscribeRelease
 	g.mu.Unlock()

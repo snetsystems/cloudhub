@@ -2429,6 +2429,8 @@ type OpenClawSessionStore interface {
 	Get(ctx context.Context, id string) (*OpenClawSession, error)
 	List(ctx context.Context, organizationID string) ([]OpenClawSession, error)
 	Touch(ctx context.Context, id string, updatedAt time.Time) error
+	// UpdateTitle replaces the display title of one session.
+	UpdateTitle(ctx context.Context, id string, title string) error
 	Delete(ctx context.Context, id string) error
 }
 

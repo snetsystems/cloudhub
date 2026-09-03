@@ -776,6 +776,13 @@ func (s *Server) Serve(ctx context.Context) {
 			WithField("component", "openclaw-gateway").
 			WithField("device_id", openClawDeviceID).
 			Info("OpenClaw gateway reconnect manager started as a paired operator device")
+
+		if err := service.StartOpenClawTitler(ctx); err != nil {
+			logger.
+				WithField("component", "openclaw-titler").
+				WithField("error", err.Error()).
+				Error("session auto-titling is disabled")
+		}
 	}
 
 	// The skill-admin server is wired independently of the Gateway. It is a
