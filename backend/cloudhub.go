@@ -1510,6 +1510,7 @@ type SSHConfig struct {
 	Password   string `json:"password"`
 	EnPassword string `json:"en_password"`
 	Port       int    `json:"port"`
+	Algorithm  string `json:"algorithm,omitempty"`
 }
 
 // SNMPConfig is Connection Config
