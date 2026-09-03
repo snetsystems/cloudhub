@@ -34,7 +34,11 @@ import {
   OrgNavMenuState,
 } from 'src/shared/actions/orgNavMenu'
 import {buildKubernetesNavItems} from 'src/hubble/navigation'
-import {isOrgNavMenuEnabled} from 'src/side_nav/utils/orgNavMenuVisibility'
+import {
+  DEFAULT_NAV_CHILD,
+  isOrgNavMenuEnabled,
+  resolveNavDestination,
+} from 'src/side_nav/utils/orgNavMenuVisibility'
 
 interface Props {
   sources: Source[]
@@ -96,6 +100,21 @@ class SideNav extends PureComponent<Props, State> {
 
   private isMenuEnabled = (menuId: string): boolean => {
     return isOrgNavMenuEnabled(this.props.orgNavMenu?.selection, menuId)
+  }
+
+  private navLink = (
+    defaultId: string,
+    items: Array<{id: string; path: string; available?: boolean}>
+  ): string => {
+    return (
+      resolveNavDestination(
+        this.props.orgNavMenu?.selection,
+        items,
+        defaultId
+      ) ||
+      items.find(item => item.id === defaultId)?.path ||
+      items[0].path
+    )
   }
 
   private setScrollRef = (el: HTMLDivElement) => {
@@ -195,6 +214,73 @@ class SideNav extends PureComponent<Props, State> {
     const isUsingLogAnalysis = this.isAddonUrlOn(AddonType.logAnalysis)
     const isAdminRole = !isUsingAuth || isUserAuthorized(me?.role, ADMIN_ROLE)
     const enabled = this.isMenuEnabled
+    const aiLink = this.navLink(DEFAULT_NAV_CHILD['ai-chat'], [
+      {id: 'ai-chatbot', path: `${sourcePrefix}/ai-chat`},
+      {
+        id: 'openclaw-skills',
+        path: `${sourcePrefix}/openclaw-skills`,
+        available: isAdminRole,
+      },
+    ])
+    const networkLink = this.navLink(DEFAULT_NAV_CHILD['network-monitoring'], [
+      {
+        id: 'network-management',
+        path: `${sourcePrefix}/network-monitoring/management`,
+      },
+      {
+        id: 'network-anomaly',
+        path: `${sourcePrefix}/network-monitoring/anomaly-prediction`,
+      },
+    ])
+    const serverLink = this.navLink(DEFAULT_NAV_CHILD['server-monitoring'], [
+      {id: 'server-topology', path: `${sourcePrefix}/server-monitoring/topology`},
+      {id: 'server-list', path: `${sourcePrefix}/server-monitoring/server-list`},
+      {
+        id: 'server-details',
+        path: `${sourcePrefix}/server-monitoring/${SERVER_DETAILS_PAGE_NAME}`,
+      },
+      {
+        id: 'gpu-monitoring',
+        path: `${sourcePrefix}/server-monitoring/gpu-monitoring`,
+      },
+      {id: 'server-alert', path: `${sourcePrefix}/server-monitoring/server-alert`},
+    ])
+    const urlLink = this.navLink(DEFAULT_NAV_CHILD['url-monitoring'], [
+      {id: 'url-list', path: `${sourcePrefix}/url-monitoring/url-list`},
+      {id: 'url-alert', path: `${sourcePrefix}/url-monitoring/url-alert`},
+    ])
+    const kubernetesLink = this.navLink(
+      DEFAULT_NAV_CHILD.kubernetes,
+      kubernetesNavItems.map(item => ({id: item.id, path: item.link}))
+    )
+    const logLink = this.navLink(
+      isUsingLogAnalysis ? DEFAULT_NAV_CHILD['log-viewer'] : 'logs',
+      [
+      {
+        id: 'log-analysis',
+        path: `${sourcePrefix}/log-analysis`,
+        available: isUsingLogAnalysis,
+      },
+      {id: 'logs', path: `${sourcePrefix}/logs`},
+      {id: 'activity-logs', path: `${sourcePrefix}/activity-logs`},
+    ])
+    const alertLink = this.navLink(
+      isAdminRole ? DEFAULT_NAV_CHILD.alert : 'alerts',
+      [
+      {
+        id: 'alert-rules',
+        path: `${sourcePrefix}/alert-rules`,
+        available: isAdminRole,
+      },
+      {id: 'alerts', path: `${sourcePrefix}/alerts`},
+    ])
+    const adminLink = this.navLink(DEFAULT_NAV_CHILD.admin, [
+      {
+        id: 'admin-cloudhub',
+        path: `${sourcePrefix}/admin-cloudhub/current-organization`,
+      },
+      {id: 'admin-influxdb', path: `${sourcePrefix}/admin-influxdb/databases`},
+    ])
 
     const navItem = () => {
       return (
@@ -204,10 +290,10 @@ class SideNav extends PureComponent<Props, State> {
             visible={enabled('ai-chat')}
             highlightWhen={['ai-chat', 'ai-chat-test', 'openclaw-skills']}
             icon="ai-robot"
-            link={`${sourcePrefix}/ai-chat`}
+            link={aiLink}
             location={location}
           >
-            <NavHeader link={`${sourcePrefix}/ai-chat`} title="AI Assistant" />
+            <NavHeader link={aiLink} title="AI Assistant" />
             {enabled('ai-chatbot') && (
               <NavListItem link={`${sourcePrefix}/ai-chat`} icon="chat">
                 Chatbot
@@ -246,13 +332,10 @@ class SideNav extends PureComponent<Props, State> {
             visible={enabled('network-monitoring')}
             highlightWhen={['network-monitoring']}
             icon="network"
-            link={`${sourcePrefix}/network-monitoring/anomaly-prediction`}
+            link={networkLink}
             location={location}
           >
-            <NavHeader
-              link={`${sourcePrefix}/network-monitoring/anomaly-prediction`}
-              title="Network Monitoring"
-            />
+            <NavHeader link={networkLink} title="Network Monitoring" />
             {enabled('network-management') && (
               <NavListItem
                 link={`${sourcePrefix}/network-monitoring/management`}
@@ -275,13 +358,10 @@ class SideNav extends PureComponent<Props, State> {
             visible={enabled('server-monitoring')}
             highlightWhen={['server-monitoring']}
             icon="server2"
-            link={`${sourcePrefix}/server-monitoring/server-list`}
+            link={serverLink}
             location={location}
           >
-            <NavHeader
-              link={`${sourcePrefix}/server-monitoring/server-list`}
-              title="Server Monitoring"
-            />
+            <NavHeader link={serverLink} title="Server Monitoring" />
             {enabled('server-topology') && (
               <NavListItem
                 link={`${sourcePrefix}/server-monitoring/topology`}
@@ -329,13 +409,10 @@ class SideNav extends PureComponent<Props, State> {
             visible={enabled('url-monitoring')}
             highlightWhen={['url-monitoring']}
             icon="sphere"
-            link={`${sourcePrefix}/url-monitoring/url-list`}
+            link={urlLink}
             location={location}
           >
-            <NavHeader
-              link={`${sourcePrefix}/url-monitoring/url-list`}
-              title="URL Monitoring"
-            />
+            <NavHeader link={urlLink} title="URL Monitoring" />
             {enabled('url-list') && (
               <NavListItem
                 link={`${sourcePrefix}/url-monitoring/url-list`}
@@ -387,20 +464,23 @@ class SideNav extends PureComponent<Props, State> {
             visible={enabled('kubernetes')}
             highlightWhen={['kubernetes']}
             icon="kubernetes"
-            link={kubernetesNavItems[0].link}
+            link={kubernetesLink}
             location={location}
           >
-            <NavHeader link={kubernetesNavItems[0].link} title="Kubernetes" />
-            {kubernetesNavItems.map(item => (
-              <NavListItem
-                key={item.link}
-                link={item.link}
-                exact={item.exact}
-                icon={item.icon}
-              >
-                {item.label}
-              </NavListItem>
-            ))}
+            <NavHeader link={kubernetesLink} title="Kubernetes" />
+            {kubernetesNavItems.map(
+              item =>
+                enabled(item.id) && (
+                  <NavListItem
+                    key={item.link}
+                    link={item.link}
+                    exact={item.exact}
+                    icon={item.icon}
+                  >
+                    {item.label}
+                  </NavListItem>
+                )
+            )}
           </NavBlock>
 
           {/* OpenStack */}
@@ -432,21 +512,10 @@ class SideNav extends PureComponent<Props, State> {
             visible={enabled('log-viewer')}
             highlightWhen={['log-analysis', 'logs', 'activity-logs']}
             icon="document"
-            link={
-              isUsingLogAnalysis && enabled('log-analysis')
-                ? `${sourcePrefix}/log-analysis`
-                : `${sourcePrefix}/logs`
-            }
+            link={logLink}
             location={location}
           >
-            <NavHeader
-              link={
-                isUsingLogAnalysis && enabled('log-analysis')
-                  ? `${sourcePrefix}/log-analysis`
-                  : `${sourcePrefix}/logs`
-              }
-              title="Log Viewer"
-            />
+            <NavHeader link={logLink} title="Log Viewer" />
             {isUsingLogAnalysis && enabled('log-analysis') && (
               <NavListItem link={`${sourcePrefix}/log-analysis`} icon="search">
                 Log Analysis
@@ -472,21 +541,10 @@ class SideNav extends PureComponent<Props, State> {
             visible={enabled('alert')}
             highlightWhen={['alerts', 'alert-rules', 'tickscript']}
             icon="bell"
-            link={
-              isAdminRole && enabled('alert-rules')
-                ? `${sourcePrefix}/alert-rules`
-                : `${sourcePrefix}/alerts`
-            }
+            link={alertLink}
             location={location}
           >
-            <NavHeader
-              link={
-                isAdminRole && enabled('alert-rules')
-                  ? `${sourcePrefix}/alert-rules`
-                  : `${sourcePrefix}/alerts`
-              }
-              title="Alert"
-            />
+            <NavHeader link={alertLink} title="Alert" />
             {isAdminRole && enabled('alert-rules') && (
               <NavListItem
                 link={`${sourcePrefix}/alert-rules`}
@@ -526,21 +584,10 @@ class SideNav extends PureComponent<Props, State> {
               <NavBlock
                 highlightWhen={['admin-cloudhub', 'admin-influxdb']}
                 icon="crown-outline"
-                link={
-                  enabled('admin-cloudhub')
-                    ? `${sourcePrefix}/admin-cloudhub/current-organization`
-                    : `${sourcePrefix}/admin-influxdb/databases`
-                }
+                link={adminLink}
                 location={location}
               >
-                <NavHeader
-                  link={
-                    enabled('admin-cloudhub')
-                      ? `${sourcePrefix}/admin-cloudhub/current-organization`
-                      : `${sourcePrefix}/admin-influxdb/databases`
-                  }
-                  title="Admin"
-                />
+                <NavHeader link={adminLink} title="Admin" />
                 {enabled('admin-cloudhub') && (
                   <NavListItem
                     link={`${sourcePrefix}/admin-cloudhub/current-organization`}

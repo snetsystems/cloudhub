@@ -27,6 +27,7 @@ import {ForceSessionAbortInputRole as ForceSessionAbortInputRoleAsync} from 'src
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {setOrgNavMenu} from 'src/shared/actions/orgNavMenu'
 import {notifyError} from 'src/shared/copy/notifications'
+import {DEFAULT_NAV_CHILD} from 'src/side_nav/utils/orgNavMenuVisibility'
 import {Links, Notification, NotificationFunc, Organization} from 'src/types'
 
 interface Props {
@@ -316,20 +317,35 @@ const OrgMenusPage = ({
       ...current,
       [menuId]: nextEnabled,
     }
+    const menuItem = findSidebarMenuItem(menuId, menuItems)
 
     if (nextEnabled) {
       const ancestors = collectAncestorMenuIds(menuId, menuItems) || []
       ancestors.forEach(ancestorId => {
         nextSelection[ancestorId] = true
       })
+      const defaultChild =
+        menuItem?.children?.find(
+          child => child.id === DEFAULT_NAV_CHILD[menuId]
+        ) || menuItem?.children?.[0]
+      if (defaultChild) {
+        nextSelection[defaultChild.id] = true
+      }
     } else {
-      const menuItem = findSidebarMenuItem(menuId, menuItems)
       if (menuItem) {
         collectDescendantMenuIds(menuItem).forEach(childId => {
           if (!isOrgMenuLocked(childId)) {
             nextSelection[childId] = false
           }
         })
+      }
+      const parentId = (collectAncestorMenuIds(menuId, menuItems) || []).pop()
+      const parent = parentId ? findSidebarMenuItem(parentId, menuItems) : undefined
+      const anyChildOn = (parent?.children || []).some(
+        child => isOrgMenuLocked(child.id) || nextSelection[child.id] !== false
+      )
+      if (parentId && parent && !isOrgMenuLocked(parentId) && !anyChildOn) {
+        nextSelection[parentId] = false
       }
     }
 

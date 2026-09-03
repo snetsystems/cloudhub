@@ -152,6 +152,8 @@ $s-sidebar--width: 45px;
   &.sidebar--item__hidden {
     height: 0;
     opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
   }
 }
 .sidebar--square {
