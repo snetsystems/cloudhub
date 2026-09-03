@@ -18,6 +18,8 @@ import {
   selectedArrayById,
 } from 'src/device_management/utils'
 import {closeModal, openModal} from 'src/shared/actions/aiModal'
+import {OrgNavMenuState} from 'src/shared/actions/orgNavMenu'
+import {isOrgNavMenuEnabled} from 'src/side_nav/utils/orgNavMenuVisibility'
 
 import {SYSTEM_MODAL} from 'src/device_management/constants'
 
@@ -34,6 +36,7 @@ interface Props {
   deleteDevicesAJAX: (idList: string[]) => Promise<void>
   onOpenApplyMonitoringModal: () => void
   onOpenLearningModelModal: () => void
+  orgNavMenu?: OrgNavMenuState
 }
 
 function DeviceManagementBtn({
@@ -49,6 +52,7 @@ function DeviceManagementBtn({
   reLearnSetting,
   onOpenApplyMonitoringModal,
   onOpenLearningModelModal,
+  orgNavMenu,
 }: Props) {
   const selectedDevices = selectedArrayById(data, checkedArray, 'id')
   const isSelectedOrganizationStatusValid = checkNetworkDeviceOrganizationStatus(
@@ -56,6 +60,10 @@ function DeviceManagementBtn({
     networkDeviceOrganizationStatus
   )
   const isAdminRole = isUserAuthorized(me.role, ADMIN_ROLE)
+  const isAnomalyMonitoringEnabled = isOrgNavMenuEnabled(
+    orgNavMenu?.selection,
+    'network-anomaly'
+  )
 
   const openDeleteModal = (idList: string[]) => {
     const validArray = selectedArrayById(data, idList, 'id')
@@ -115,32 +123,37 @@ function DeviceManagementBtn({
               <span className="icon checkmark" /> Apply Monitoring
             </button>
 
-            <button
-              onClick={() => {
-                onOpenLearningModelModal()
-              }}
-              className="btn button btn-sm btn-primary"
-              disabled={
-                checkedArray.length === 0 || !isSelectedOrganizationStatusValid
-              }
-              title="Learning Model"
-            >
-              <span className="icon capacitor2" /> Learning Model
-            </button>
+            {isAnomalyMonitoringEnabled && (
+              <>
+                <button
+                  onClick={() => {
+                    onOpenLearningModelModal()
+                  }}
+                  className="btn button btn-sm btn-primary"
+                  disabled={
+                    checkedArray.length === 0 ||
+                    !isSelectedOrganizationStatusValid
+                  }
+                  title="Learning Model"
+                >
+                  <span className="icon capacitor2" /> Learning Model
+                </button>
 
-            <button
-              className={`button button-sm button-default button-square ${
-                isSelectedOrganizationStatusValid
-                  ? ''
-                  : 'learning-model--invalid'
-              }`}
-              title="Custom Learning Setting"
-              onClick={() => {
-                reLearnSetting()
-              }}
-            >
-              <span className="button-icon icon cog-thick"></span>
-            </button>
+                <button
+                  className={`button button-sm button-default button-square ${
+                    isSelectedOrganizationStatusValid
+                      ? ''
+                      : 'learning-model--invalid'
+                  }`}
+                  title="Custom Learning Setting"
+                  onClick={() => {
+                    reLearnSetting()
+                  }}
+                >
+                  <span className="button-icon icon cog-thick"></span>
+                </button>
+              </>
+            )}
           </div>
           <div className="space-x">
             <Button
@@ -167,11 +180,17 @@ function DeviceManagementBtn({
   )
 }
 
-const mstp = ({adminCloudHub: {organizations}, auth, links}) => ({
+const mstp = ({
+  adminCloudHub: {organizations},
+  auth,
+  links,
+  orgNavMenu,
+}) => ({
   organizations,
   auth,
   me: auth.me,
   links,
+  orgNavMenu: orgNavMenu || {orgId: null, selection: {}},
 })
 
 const mdtp = (dispatch: any) => ({
