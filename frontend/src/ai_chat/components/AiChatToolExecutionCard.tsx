@@ -1,5 +1,6 @@
 import React, {FC, useState} from 'react'
 import classnames from 'classnames'
+import {useTranslation} from 'react-i18next'
 
 import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
 import {ActivityCardItem} from 'src/ai_chat/containers/CloudhubAiChatStandalone'
@@ -25,6 +26,7 @@ const SafeLargeTextPre: FC<{
   content: string
   isError?: boolean
 }> = ({title, content, isError}) => {
+  const {t} = useTranslation()
   const [isCopied, setIsCopied] = useState<boolean>(false)
   const isTruncated = content.length > MAX_TOOL_OUTPUT_DISPLAY_CHARS
   const displayContent = isTruncated
@@ -57,9 +59,11 @@ const SafeLargeTextPre: FC<{
           type="button"
           className="detail-copy-btn"
           onClick={handleCopy}
-          title="전체 원본 클립보드 복사"
+          title={t('ai_chat.tool_card.copy_title')}
         >
-          {isCopied ? '✓ 복사됨' : '복사'}
+          {isCopied
+            ? t('ai_chat.tool_card.copied')
+            : t('ai_chat.tool_card.copy')}
         </button>
       </div>
       <pre className={classnames('detail-pre', {'error-pre': isError})}>
@@ -67,10 +71,10 @@ const SafeLargeTextPre: FC<{
       </pre>
       {isTruncated && (
         <div className="detail-truncation-notice">
-          대용량 로그입니다. 브라우저 성능을 위해 총{' '}
-          {content.length.toLocaleString()}자 중{' '}
-          {MAX_TOOL_OUTPUT_DISPLAY_CHARS.toLocaleString()}자만 표시되었습니다.
-          (전체 내용은 '복사' 버튼으로 확인 가능)
+          {t('ai_chat.tool_card.truncated', {
+            total: content.length.toLocaleString(),
+            shown: MAX_TOOL_OUTPUT_DISPLAY_CHARS.toLocaleString(),
+          })}
         </div>
       )}
     </div>
@@ -80,6 +84,7 @@ const SafeLargeTextPre: FC<{
 export const AiChatToolExecutionCard: FC<{card: ActivityCardItem}> = ({
   card,
 }) => {
+  const {t} = useTranslation()
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
 
   if (!card) return null
@@ -107,12 +112,12 @@ export const AiChatToolExecutionCard: FC<{card: ActivityCardItem}> = ({
   const badgeClass = rawStatus.toLowerCase()
   const badgeLabel =
     rawStatus === 'running'
-      ? '실행 중...'
+      ? t('ai_chat.status.running_ellipsis')
       : rawStatus === 'success'
-      ? '완료'
+      ? t('ai_chat.status.success')
       : rawStatus === 'error'
-      ? '오류'
-      : '차단됨'
+      ? t('ai_chat.status.error')
+      : t('ai_chat.status.blocked')
 
   const hasDetails = Boolean(
     inputText || detailText || errorText || durationText
@@ -143,7 +148,9 @@ export const AiChatToolExecutionCard: FC<{card: ActivityCardItem}> = ({
             className="activity-card-toggle-btn"
             onClick={() => setIsExpanded(prev => !prev)}
           >
-            {isExpanded ? '▲ 접기' : '▼ [입력 / 출력 / 실행 시간 보기]'}
+            {isExpanded
+              ? `▲ ${t('ai_chat.tool_card.collapse')}`
+              : `▼ ${t('ai_chat.tool_card.expand')}`}
           </button>
           {durationText && (
             <span className="activity-duration">{durationText}</span>
@@ -154,14 +161,20 @@ export const AiChatToolExecutionCard: FC<{card: ActivityCardItem}> = ({
       {isExpanded && hasDetails && (
         <div className="activity-card-expanded">
           {inputText && (
-            <SafeLargeTextPre title="입력 (Input):" content={inputText} />
+            <SafeLargeTextPre
+              title={t('ai_chat.tool_card.input')}
+              content={inputText}
+            />
           )}
           {detailText && (
-            <SafeLargeTextPre title="출력 (Output):" content={detailText} />
+            <SafeLargeTextPre
+              title={t('ai_chat.tool_card.output')}
+              content={detailText}
+            />
           )}
           {errorText && (
             <SafeLargeTextPre
-              title="오류 (Error):"
+              title={t('ai_chat.tool_card.error')}
               content={errorText}
               isError={true}
             />

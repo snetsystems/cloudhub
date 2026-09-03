@@ -1,5 +1,6 @@
 import React, {FC, useState, useMemo} from 'react'
 import classnames from 'classnames'
+import {useTranslation} from 'react-i18next'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import RadioButtons from 'src/reusable_ui/components/radio_buttons/RadioButtons'
 import AiChatBadge from 'src/ai_chat/components/AiChatBadge'
@@ -42,10 +43,11 @@ const ActivityItemRow: FC<{activity: ActivityCardItem; defaultExpanded?: boolean
   activity,
   defaultExpanded = true,
 }) => {
+  const {t} = useTranslation()
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-  const label = ensureString(activity.label) || 'Tool Execution'
+  const label = ensureString(activity.label) || t('ai_chat.task.default_name')
   const description = ensureString(activity.description)
   const input = ensureString(activity.input)
   const detail = ensureString(activity.detail)
@@ -74,12 +76,12 @@ const ActivityItemRow: FC<{activity: ActivityCardItem; defaultExpanded?: boolean
 
   const statusLabel =
     status === 'running'
-      ? '실행 중'
+      ? t('ai_chat.status.running')
       : status === 'success'
-      ? '완료'
+      ? t('ai_chat.status.success')
       : status === 'error'
-      ? '오류'
-      : '차단됨'
+      ? t('ai_chat.status.error')
+      : t('ai_chat.status.blocked')
 
   const hasDetails = Boolean(input || detail || error)
 
@@ -122,7 +124,11 @@ const ActivityItemRow: FC<{activity: ActivityCardItem; defaultExpanded?: boolean
                 e.stopPropagation()
                 setIsExpanded(prev => !prev)
               }}
-              title={isExpanded ? '접기' : '펼치기'}
+              title={
+                isExpanded
+                  ? t('ai_chat.inspector.collapse')
+                  : t('ai_chat.inspector.expand')
+              }
             >
               {isExpanded ? '▲' : '▼'}
             </button>
@@ -139,13 +145,17 @@ const ActivityItemRow: FC<{activity: ActivityCardItem; defaultExpanded?: boolean
           {input && (
             <div className="detail-block input-block">
               <div className="detail-header-row">
-                <span className="detail-title">입력 파라미터 (Input)</span>
+                <span className="detail-title">
+                  {t('ai_chat.inspector.input_params')}
+                </span>
                 <button
                   type="button"
                   className="detail-copy-btn"
                   onClick={() => handleCopy(input, 'input')}
                 >
-                  {copiedKey === 'input' ? '✓ 복사됨' : '복사'}
+                  {copiedKey === 'input'
+                    ? t('ai_chat.inspector.copied')
+                    : t('ai_chat.inspector.copy')}
                 </button>
               </div>
               <pre className="detail-pre-code">{input.slice(0, MAX_DISPLAY_CHARS)}</pre>
@@ -155,13 +165,17 @@ const ActivityItemRow: FC<{activity: ActivityCardItem; defaultExpanded?: boolean
           {detail && (
             <div className="detail-block output-block">
               <div className="detail-header-row">
-                <span className="detail-title">실행 결과 (Output)</span>
+                <span className="detail-title">
+                  {t('ai_chat.inspector.output_result')}
+                </span>
                 <button
                   type="button"
                   className="detail-copy-btn"
                   onClick={() => handleCopy(detail, 'output')}
                 >
-                  {copiedKey === 'output' ? '✓ 복사됨' : '복사'}
+                  {copiedKey === 'output'
+                    ? t('ai_chat.inspector.copied')
+                    : t('ai_chat.inspector.copy')}
                 </button>
               </div>
               <pre className="detail-pre-code">{detail.slice(0, MAX_DISPLAY_CHARS)}</pre>
@@ -171,13 +185,17 @@ const ActivityItemRow: FC<{activity: ActivityCardItem; defaultExpanded?: boolean
           {error && (
             <div className="detail-block error-block">
               <div className="detail-header-row">
-                <span className="detail-title">에러 메시지 (Error)</span>
+                <span className="detail-title">
+                  {t('ai_chat.inspector.error_message')}
+                </span>
                 <button
                   type="button"
                   className="detail-copy-btn"
                   onClick={() => handleCopy(error, 'error')}
                 >
-                  {copiedKey === 'error' ? '✓ 복사됨' : '복사'}
+                  {copiedKey === 'error'
+                    ? t('ai_chat.inspector.copied')
+                    : t('ai_chat.inspector.copy')}
                 </button>
               </div>
               <pre className="detail-pre-code">{error.slice(0, MAX_DISPLAY_CHARS)}</pre>
@@ -195,6 +213,7 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
   onSelectTurnId,
   onClose,
 }) => {
+  const {t} = useTranslation()
   const [filter, setFilter] = useState<'ALL' | 'running' | 'success' | 'error'>('ALL')
 
   const activeTurn = useMemo(() => {
@@ -225,16 +244,20 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
         {/* Left Sidebar: List of Conversation Turns */}
         <div className="turn-menu-sidebar">
           <div className="turn-menu-header">
-            <span className="sidebar-header-title">대화 내역</span>
+            <span className="sidebar-header-title">
+              {t('ai_chat.inspector.turn_list_title')}
+            </span>
             <AiChatBadge variant="category" size="sm">
-              {turns.length} Turns
+              {t('ai_chat.inspector.turns', {count: turns.length})}
             </AiChatBadge>
           </div>
           <div className="turn-list-scroll-wrapper">
             <FancyScrollbar autoHide={true}>
               <div className="turn-list-container">
                 {turns.length === 0 ? (
-                  <div className="turn-list-empty">대화 내역이 없습니다.</div>
+                  <div className="turn-list-empty">
+                    {t('ai_chat.inspector.turn_list_empty')}
+                  </div>
                 ) : (
                   turns.map((turn, index) => {
                     const isSelected = activeTurn?.id === turn.id
@@ -242,10 +265,13 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                     const hasError = turn.activities?.some(a => a.status === 'error')
                     const isRunning = turn.activities?.some(a => a.status === 'running')
 
-                    const userText = turn.userPrompt || '질문 내용 없음'
+                    const userText =
+                      turn.userPrompt || t('ai_chat.inspector.no_question')
                     const aiText =
                       turn.aiResponse ||
-                      (turn.isStreaming ? '답변 생성 중...' : '도구 실행 중...')
+                      (turn.isStreaming
+                        ? t('ai_chat.inspector.answer_streaming')
+                        : t('ai_chat.inspector.tools_running'))
 
                     return (
                       <div
@@ -256,7 +282,11 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                         onClick={() => onSelectTurnId && onSelectTurnId(turn.id)}
                       >
                         <div className="turn-card-top">
-                          <span className="turn-badge">Turn #{index + 1}</span>
+                          <span className="turn-badge">
+                            {t('ai_chat.inspector.turn_badge', {
+                              number: index + 1,
+                            })}
+                          </span>
                           {turn.timestamp && (
                             <span className="turn-timestamp">{turn.timestamp}</span>
                           )}
@@ -273,15 +303,19 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                         <div className="turn-card-footer">
                           {toolCount > 0 ? (
                             <AiChatBadge variant="category" size="sm">
-                              도구 {toolCount}개
+                              {t('ai_chat.inspector.tool_count', {
+                                count: toolCount,
+                              })}
                             </AiChatBadge>
                           ) : (
-                            <span className="no-tool-label">대화만</span>
+                            <span className="no-tool-label">
+                              {t('ai_chat.inspector.chat_only')}
+                            </span>
                           )}
 
                           {isRunning && (
                             <AiChatBadge variant="running" size="sm">
-                              실행 중
+                              {t('ai_chat.status.running')}
                             </AiChatBadge>
                           )}
                         </div>
@@ -299,7 +333,9 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
           <div className="activity-inspector-header">
             <div className="inspector-header-left">
               <div className="inspector-header-titles">
-                <div className="inspector-main-title">도구 및 스킬 실행 상세</div>
+                <div className="inspector-main-title">
+                  {t('ai_chat.inspector.detail_title')}
+                </div>
                 <div
                   className="inspector-sub-snippet"
                   title={activeTurn?.userPrompt || activeTurn?.aiResponse}
@@ -308,7 +344,7 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                     ? `Q: ${activeTurn.userPrompt}`
                     : activeTurn?.aiResponse
                     ? `A: ${activeTurn.aiResponse}`
-                    : '선택된 대화 턴'}
+                    : t('ai_chat.inspector.no_turn_selected')}
                 </div>
               </div>
             </div>
@@ -323,7 +359,7 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                   type="button"
                   className="close-inspector-btn"
                   onClick={onClose}
-                  title="패널 닫기"
+                  title={t('ai_chat.inspector.close')}
                 >
                   ✕
                 </button>
@@ -334,10 +370,28 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
           <div className="activity-inspector-filter-bar">
             <div className="radio-buttons radio-buttons--default radio-buttons--sm">
               {[
-                {key: 'ALL', label: `전체 (${counts.all})`},
-                {key: 'running', label: `진행 중 (${counts.running})`},
-                {key: 'success', label: `완료 (${counts.success})`},
-                {key: 'error', label: `오류 (${counts.error})`},
+                {
+                  key: 'ALL',
+                  label: t('ai_chat.inspector.filter.all', {total: counts.all}),
+                },
+                {
+                  key: 'running',
+                  label: t('ai_chat.inspector.filter.running', {
+                    total: counts.running,
+                  }),
+                },
+                {
+                  key: 'success',
+                  label: t('ai_chat.inspector.filter.success', {
+                    total: counts.success,
+                  }),
+                },
+                {
+                  key: 'error',
+                  label: t('ai_chat.inspector.filter.error', {
+                    total: counts.error,
+                  }),
+                },
               ].map(f => (
                 <RadioButtons.Button
                   key={f.key}
@@ -345,7 +399,9 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                   active={filter === f.key}
                   value={f.key}
                   onClick={() => setFilter(f.key as any)}
-                  titleText={`${f.label} 필터`}
+                  titleText={t('ai_chat.inspector.filter.title', {
+                    label: f.label,
+                  })}
                 >
                   {f.label}
                 </RadioButtons.Button>
@@ -359,7 +415,9 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                 {activeTurn?.toolCommand &&
                   activeTurn.toolCommand !== 'NONE (BLOCKED BY GATEWAY)' && (
                     <div className="executed-command-card">
-                      <div className="card-label">터미널 실행 명령어 (CLI Command)</div>
+                      <div className="card-label">
+                        {t('ai_chat.inspector.cli_command')}
+                      </div>
                       <pre className="command-pre">
                         <code>{activeTurn.toolCommand}</code>
                       </pre>
@@ -370,13 +428,13 @@ export const MessageActivityInspector: FC<MessageActivityInspectorProps> = ({
                   <div className="activity-inspector-empty">
                     <div className="empty-title">
                       {counts.all === 0
-                        ? '도구(Tool) 실행 내역이 없습니다'
-                        : '조건에 해당하는 도구 실행 내역이 없습니다'}
+                        ? t('ai_chat.inspector.empty.none_title')
+                        : t('ai_chat.inspector.empty.filtered_title')}
                     </div>
                     <div className="empty-sub">
                       {counts.all === 0
-                        ? '이 대화 턴에서는 추가적인 외부 도구나 MCP를 호출하지 않고 답변을 생성했습니다.'
-                        : '다른 필터를 선택하여 완료/오류 내역을 확인하세요.'}
+                        ? t('ai_chat.inspector.empty.none_sub')
+                        : t('ai_chat.inspector.empty.filtered_sub')}
                     </div>
                   </div>
                 ) : (
