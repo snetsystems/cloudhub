@@ -273,12 +273,14 @@ func TestOpenClawTitlerNamesFirstTurn(t *testing.T) {
 	sessionKey := "agent:agent-1:cloudhub:1:2:" + sessionID
 
 	var gotID, gotTitle string
+	var titles []string
 	store := &mocks.OpenClawSessionStore{
 		GetF: func(_ context.Context, id string) (*cloudhub.OpenClawSession, error) {
 			return &cloudhub.OpenClawSession{ID: id, AgentID: "agent-1", SessionKey: sessionKey}, nil
 		},
 		UpdateTitleF: func(_ context.Context, id, title string) error {
 			gotID, gotTitle = id, title
+			titles = append(titles, title)
 			return nil
 		},
 	}
@@ -323,12 +325,19 @@ func TestOpenClawTitlerNamesFirstTurn(t *testing.T) {
 	if gotID != sessionID || gotTitle != "WAS 서버 점검" {
 		t.Fatalf("UpdateTitle(%q, %q)", gotID, gotTitle)
 	}
-	patches := gateway.CallsFor("sessions.patch")
-	if len(patches) != 1 {
-		t.Fatalf("sessions.patch called %d times", len(patches))
+	// The question-derived title has to land first: summarizing takes tens of
+	// seconds, and the sidebar must not sit on the placeholder name until it
+	// finishes.
+	want := []string{"was-server-01 점검해줘", "WAS 서버 점검"}
+	if len(titles) != len(want) || titles[0] != want[0] || titles[1] != want[1] {
+		t.Fatalf("titles written = %q, want %q", titles, want)
 	}
-	if published != 1 {
-		t.Fatalf("sessions.changed published %d times; the sidebar refreshes on it", published)
+	patches := gateway.CallsFor("sessions.patch")
+	if len(patches) != 2 {
+		t.Fatalf("sessions.patch called %d times, want one per title", len(patches))
+	}
+	if published != 2 {
+		t.Fatalf("sessions.changed published %d times; the sidebar refreshes on each title", published)
 	}
 	// The event has to carry the session's own key -- with no key (or with
 	// Reason: "resync") the chat WebSocket handler either drops it or
@@ -536,8 +545,66 @@ func TestOpenClawTitlerRunNeverBlocksOnABurst(t *testing.T) {
 	close(unblockGet)
 
 	waitForOpenClawTitler(t, done)
-	if len(gateway.CallsFor("sessions.patch")) != 1 {
-		t.Fatal("expected one sessions.patch call from the titling run")
+	// One patch for the question-derived title, one for the summary.
+	if len(gateway.CallsFor("sessions.patch")) != 2 {
+		t.Fatalf("expected two sessions.patch calls from the titling run, got %d",
+			len(gateway.CallsFor("sessions.patch")))
+	}
+}
+
+// TestOpenClawTitlerWritesOnceWhenTheSummaryFails guards the other half of
+// the two-phase write: when summarizing falls back to the same
+// question-derived title the session already carries, rewriting it would only
+// make the sidebar flicker for no change in content.
+func TestOpenClawTitlerWritesOnceWhenTheSummaryFails(t *testing.T) {
+	const sessionID = "9a1c2f7e-0000-4000-8000-000000000009"
+	sessionKey := "agent:agent-1:cloudhub:1:2:" + sessionID
+
+	var titles []string
+	store := &mocks.OpenClawSessionStore{
+		GetF: func(_ context.Context, id string) (*cloudhub.OpenClawSession, error) {
+			return &cloudhub.OpenClawSession{ID: id, AgentID: "agent-1", SessionKey: sessionKey}, nil
+		},
+		UpdateTitleF: func(_ context.Context, _, title string) error {
+			titles = append(titles, title)
+			return nil
+		},
+	}
+
+	// The send fails, so summarizeOpenClawTitle returns its fallback -- the
+	// same question-derived title already written.
+	gateway := &fakeOpenClawGateway{
+		sendErr: errors.New("gateway down"),
+		history: openclaw.HistoryPage{Messages: []openclaw.Message{
+			textMessage("user", "was-server-01 점검해줘"),
+			textMessage("assistant", "CPU 92%"),
+		}},
+	}
+
+	published := 0
+	done := make(chan struct{})
+	titler := &openClawTitler{
+		gateway: gateway,
+		store:   store,
+		publish: func(event openclaw.GatewayEvent) {
+			if event.Kind == openclaw.EventSessionsChanged {
+				published++
+			}
+		},
+		logger:  &mocks.TestLogger{},
+		settled: func(string) { close(done) },
+	}
+
+	titler.handle(context.Background(), openclaw.GatewayEvent{
+		Kind: openclaw.EventChat, SessionKey: sessionKey, State: "final",
+	})
+	waitForOpenClawTitler(t, done)
+
+	if len(titles) != 1 || titles[0] != "was-server-01 점검해줘" {
+		t.Fatalf("titles written = %q, want exactly the question-derived title once", titles)
+	}
+	if published != 1 {
+		t.Fatalf("sessions.changed published %d times, want 1", published)
 	}
 }
 
@@ -732,7 +799,12 @@ func TestOpenClawTitlerSubscribeRetriesAfterAFailure(t *testing.T) {
 		},
 		UpdateTitleF: func(_ context.Context, id, title string) error {
 			gotID, gotTitle = id, title
-			close(updateTitleDone)
+			// A titled session is written twice: the question first, then the
+			// summary. Signal on the summary, which is the one that proves the
+			// retried subscription carried the whole flow through.
+			if title == "WAS 서버 점검" {
+				close(updateTitleDone)
+			}
 			return nil
 		},
 	}

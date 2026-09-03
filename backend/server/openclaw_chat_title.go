@@ -409,24 +409,46 @@ func (t *openClawTitler) titleSession(ctx context.Context, sessionID string) {
 		return
 	}
 
-	title := fallbackOpenClawTitle(turn.Question)
-	if scratchID, err := (&idgen.UUID{}).Generate(); err == nil {
-		scratchKey := fmt.Sprintf("agent:%s:cloudhub-title:%s", session.AgentID, scratchID)
-		feed := make(chan openclaw.GatewayEvent, openClawEventSubscriberBuffer)
-		t.registerPending(scratchKey, feed)
-		defer t.unregisterPending(scratchKey)
-		title = summarizeOpenClawTitle(ctx, t.gateway, feed, session.AgentID, scratchKey, turn)
+	// Name the session from the question first. Summarizing is a full agent
+	// turn -- measured at 15 to 60 seconds against gpt-oss:20b -- and a
+	// sidebar entry should not read "신규 대화 세션 #42" for a minute while
+	// that runs. The summary replaces this in place when it arrives.
+	provisional := fallbackOpenClawTitle(turn.Question)
+	if !t.applyTitle(ctx, session, provisional) {
+		return
 	}
+	t.markTitled(session.ID)
 
+	scratchID, err := (&idgen.UUID{}).Generate()
+	if err != nil {
+		return
+	}
+	scratchKey := fmt.Sprintf("agent:%s:cloudhub-title:%s", session.AgentID, scratchID)
+	feed := make(chan openclaw.GatewayEvent, openClawEventSubscriberBuffer)
+	t.registerPending(scratchKey, feed)
+	defer t.unregisterPending(scratchKey)
+
+	title := summarizeOpenClawTitle(ctx, t.gateway, feed, session.AgentID, scratchKey, turn)
+	if title == provisional {
+		// Summarizing failed and fell back to the same question-derived
+		// title. Writing it again would only make the sidebar flicker.
+		return
+	}
+	t.applyTitle(ctx, session, title)
+}
+
+// applyTitle stores one title and mirrors it, reporting whether the store
+// write landed. A title is written twice per session -- the question first,
+// the summary once it arrives -- so this is the shared half.
+func (t *openClawTitler) applyTitle(ctx context.Context, session *cloudhub.OpenClawSession, title string) bool {
 	if err := t.store.UpdateTitle(ctx, session.ID, title); err != nil {
 		t.logger.
 			WithField("component", "openclaw-titler").
 			WithField("session", session.ID).
 			WithField("error", err.Error()).
 			Error("unable to store the generated session title")
-		return
+		return false
 	}
-	t.markTitled(session.ID)
 	if err := openClawSetSessionLabel(ctx, t.gateway, session.SessionKey, title); err != nil {
 		// CloudHub already shows the title; the Gateway label is only for
 		// consistency in other OpenClaw clients.
@@ -445,6 +467,7 @@ func (t *openClawTitler) titleSession(ctx context.Context, sessionID string) {
 		// and approvals just because one session got titled.
 		t.publish(openclaw.GatewayEvent{Kind: openclaw.EventSessionsChanged, SessionKey: session.SessionKey})
 	}
+	return true
 }
 
 func (t *openClawTitler) claim(sessionID string) bool {
