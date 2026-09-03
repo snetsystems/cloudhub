@@ -34,10 +34,21 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
             shells: [...state.shells, Object.assign(payload, {tabkey})],
           }
         } else {
+          const index = nodenameIndex(state, payload.nodename)
+
           return {
             ...state,
-            tabIndex: nodenameIndex(state, payload.nodename),
+            tabIndex: index,
             isVisible: true,
+            shells: state.shells.map((shell, i) =>
+              i === index
+                ? {
+                    ...shell,
+                    ...payload,
+                    tabkey: shell.tabkey,
+                  }
+                : shell
+            ),
           }
         }
       }

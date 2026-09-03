@@ -37,12 +37,13 @@ var upgrader = websocket.Upgrader{
 }
 
 type ssh struct {
-	user    string
-	pwd     string
-	addr    string
-	port    int
-	client  *gossh.Client
-	session *gossh.Session
+	user      string
+	pwd       string
+	addr      string
+	port      int
+	algorithm string
+	client    *gossh.Client
+	session   *gossh.Session
 }
 
 // WindowResize ssh terminal
@@ -91,11 +92,17 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	algorithm := ""
+	if values, ok := params["algorithm"]; ok && len(values) > 0 {
+		algorithm = values[0]
+	}
+
 	sh := &ssh{
-		user: params["user"][0],
-		pwd:  params["pwd"][0],
-		addr: params["addr"][0],
-		port: port,
+		user:      params["user"][0],
+		pwd:       params["pwd"][0],
+		addr:      params["addr"][0],
+		port:      port,
+		algorithm: algorithm,
 	}
 
 	sh, err = sh.Connect()
@@ -185,6 +192,10 @@ func (sh *ssh) Connect() (*ssh, error) {
 		Auth:            auth,
 		Timeout:         30 * time.Second,
 		HostKeyCallback: func(hostname string, remote net.Addr, key gossh.PublicKey) error { return nil },
+	}
+
+	if sh.algorithm != "" {
+		config.HostKeyAlgorithms = []string{sh.algorithm}
 	}
 
 	// connect to ths ssh.

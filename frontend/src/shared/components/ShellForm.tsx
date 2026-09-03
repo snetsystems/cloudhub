@@ -3,8 +3,13 @@ import _ from 'lodash'
 // Components
 import {Form, Button, ComponentColor, Input, InputType} from 'src/reusable_ui'
 import {ComponentStatus} from 'src/reusable_ui/types'
+import Dropdown from 'src/shared/components/Dropdown'
 
-import {ShellInfo} from 'src/types'
+import {DropdownItem, ShellInfo} from 'src/types'
+import {
+  SSH_ALGORITHM_DEFAULT,
+  SSH_HOST_KEY_ALGORITHMS,
+} from 'src/device_management/constants'
 
 interface Props {
   shells: ShellInfo[]
@@ -13,6 +18,7 @@ interface Props {
   user: string
   pwd: string
   port: string
+  algorithm: string
   getIP: string
   tabkey: number
   isNewEditor: boolean
@@ -23,6 +29,7 @@ interface Props {
   handleChangeID: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangePassword: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangePort: (e: ChangeEvent<HTMLInputElement>) => void
+  handleChooseAlgorithm: (item: DropdownItem) => void
   handleOpenTerminal: (shell: any) => void
 }
 const ShellForm = (props: Props) => {
@@ -33,6 +40,7 @@ const ShellForm = (props: Props) => {
     user,
     pwd,
     port,
+    algorithm,
     getIP,
     tabkey,
     isNewEditor,
@@ -42,6 +50,7 @@ const ShellForm = (props: Props) => {
     handleChangeID,
     handleChangePassword,
     handleChangePort,
+    handleChooseAlgorithm,
   } = props
 
   const onKeyPressEnter = function(event: KeyboardEvent<HTMLInputElement>) {
@@ -163,6 +172,14 @@ const ShellForm = (props: Props) => {
           placeholder={'Connect Port'}
           type={InputType.Text}
           onMouseDown={handleMouseDown}
+        />
+      </Form.Element>
+      <Form.Element label="ALGORITHM">
+        <Dropdown
+          items={SSH_HOST_KEY_ALGORITHMS}
+          onChoose={handleChooseAlgorithm}
+          selected={algorithm || SSH_ALGORITHM_DEFAULT}
+          className="dropdown-stretch"
         />
       </Form.Element>
       <Form.Footer>

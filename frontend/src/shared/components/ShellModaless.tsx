@@ -189,6 +189,7 @@ class ShellModaless extends PureComponent<Props, State> {
                         sshId={shell.sshId}
                         sshPw={shell.sshPw}
                         port={shell.port}
+                        algorithm={shell.algorithm}
                       />
                     </ApolloProvider>
                   </TabPanel>

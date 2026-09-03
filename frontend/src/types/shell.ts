@@ -10,6 +10,7 @@ export interface ShellInfo {
   sshId?: string
   sshPw?: string
   port?: string
+  algorithm?: string
 }
 
 export interface ShellLoad {

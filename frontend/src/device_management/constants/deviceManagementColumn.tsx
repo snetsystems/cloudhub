@@ -168,9 +168,10 @@ export const columns = ({
               isNewEditor: false,
               addr: rowData.device_ip,
               nodename: rowData.hostname,
-              sshId: rowData.ssh_config.user_id,
-              sshPw: rowData.ssh_config.password,
-              port: `${rowData.ssh_config.port}`,
+              sshId: rowData.ssh_config?.user_id,
+              sshPw: rowData.ssh_config?.password,
+              port: `${rowData.ssh_config?.port ?? ''}`,
+              algorithm: rowData.ssh_config?.algorithm || '',
             })
           }}
         ></button>

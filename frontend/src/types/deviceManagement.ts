@@ -79,6 +79,7 @@ export interface SSHConfig {
   en_password?: string
   port?: number
   ssh_port?: number
+  algorithm?: string
 }
 
 export interface SNMPConnectionRequest {

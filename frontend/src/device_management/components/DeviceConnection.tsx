@@ -31,6 +31,8 @@ import {StepStatusKey} from 'src/reusable_ui/constants/wizard'
 import {
   DEFAULT_NETWORK_DEVICE_DATA,
   DEFAULT_SNMP_CONFIG,
+  DEFAULT_SSH_CONFIG,
+  SSH_ALGORITHM_DEFAULT,
 } from 'src/device_management/constants'
 
 // API
@@ -116,6 +118,10 @@ class DeviceConnection extends PureComponent<Props, State> {
   private fillMissingSNMPConfig = (deviceData: DeviceData): DeviceData => {
     return {
       ...deviceData,
+      ssh_config: {
+        ...DEFAULT_SSH_CONFIG,
+        ...deviceData.ssh_config,
+      },
       snmp_config: {
         ...deviceData.snmp_config,
         security_level:
@@ -188,10 +194,12 @@ class DeviceConnection extends PureComponent<Props, State> {
           onNext={this.handleConnectSSH}
           previousLabel="Go Back"
           lastStep={true}
+          maxHeightForFancyScrollbar={this.getWizardMaxHeight()}
         >
           <SSHConnectionStep
             deviceData={deviceData}
             onChangeDeviceData={this.handleChangeDeviceData}
+            onChooseDeviceDataDropdown={this.handleChooseDeviceDataDropdown}
           />
         </WizardStep>
 
@@ -501,7 +509,25 @@ class DeviceConnection extends PureComponent<Props, State> {
     this.setState(prevState => {
       const device = prevState.deviceData
 
-      if (key in device.snmp_config) {
+      if (
+        key === 'algorithm' ||
+        (device.ssh_config && key in device.ssh_config)
+      ) {
+        const newValue =
+          key === 'algorithm' && value.text === SSH_ALGORITHM_DEFAULT
+            ? ''
+            : value.text
+
+        return {
+          deviceData: {
+            ...device,
+            ssh_config: {
+              ...device.ssh_config,
+              [key]: newValue,
+            },
+          },
+        }
+      } else if (key in device.snmp_config) {
         const newValue =
           key === 'auth_protocol'
             ? value.text
@@ -519,16 +545,6 @@ class DeviceConnection extends PureComponent<Props, State> {
             snmp_config: {
               ...device.snmp_config,
               [key]: newValue,
-            },
-          },
-        }
-      } else if (device.ssh_config && key in device.ssh_config) {
-        return {
-          deviceData: {
-            ...device,
-            ssh_config: {
-              ...device.ssh_config,
-              [key]: value.text,
             },
           },
         }
