@@ -536,5 +536,168 @@
       "drop_hint": "Text files only. You can drop them here.",
       "not_text": "Not a text file, so it cannot be attached: {{files}}"
     }
+  },
+  "ai_chat": {
+    "session": {
+      "default_title": "New chat session #{{number}}",
+      "untitled": "New chat",
+      "new": "Start a new chat",
+      "expand_list": "Expand the chat list",
+      "collapse_list": "Collapse the sidebar",
+      "close_list": "Close the chat list",
+      "generating": "Generating a reply...",
+      "title_generating": "{{title}} (generating a reply...)",
+      "delete": "Delete"
+    },
+    "timestamp": {
+      "today": "HH:mm",
+      "this_year": "MMM D, HH:mm",
+      "full": "MMM D, YYYY HH:mm"
+    },
+    "empty": {
+      "title": "Start a new conversation",
+      "description": "Ask about a cluster failure, a host check, a log query — or pick one of the suggestions below."
+    },
+    "suggestions": {
+      "header": "Suggested questions",
+      "was_check": "Check the WAS server",
+      "network_fault": "Inject a network fault",
+      "network_repair": "Repair the network fault",
+      "critical_alerts": "Audit the critical alerts"
+    },
+    "composer": {
+      "placeholder": "Enter: send, Shift+Enter: new line, '/': skill list",
+      "placeholder_streaming": "The AI is writing a reply...",
+      "send": "Send",
+      "sending": "Sending...",
+      "slash_hint": "↑↓ to move, Enter to pick",
+      "skills_loading": "Reading the skill list...",
+      "skills_error": "Could not read the skill list",
+      "skills_empty": "This organization's agent has no skills",
+      "scroll_to_latest": "Jump to the latest message",
+      "scroll_to_latest_label": "Latest message",
+      "detach_context": "Remove the {{title}} attachment",
+      "collapse_attachments": "Collapse",
+      "clear_attachments": "Clear all"
+    },
+    "message": {
+      "send_failed": "Not sent",
+      "retry": "Retry",
+      "retry_title": "Click to send it again now",
+      "answer_done": "Answered",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copy_title": "Copy the reply"
+    },
+    "activity": {
+      "summary_one": "{{count}} tool run",
+      "summary_other": "{{count}} tools run",
+      "expand": "Show the tools that ran",
+      "collapse": "Hide the tools that ran",
+      "open_inspector": "View the work",
+      "open_inspector_title": "See the full run in the side panel"
+    },
+    "status": {
+      "running": "Running",
+      "running_ellipsis": "Running...",
+      "success": "Done",
+      "error": "Error",
+      "blocked": "Blocked"
+    },
+    "tool_card": {
+      "expand": "[Input / output / duration]",
+      "collapse": "Collapse",
+      "input": "Input:",
+      "output": "Output:",
+      "error": "Error:",
+      "copy": "Copy",
+      "copied": "✓ Copied",
+      "copy_title": "Copy the whole thing to the clipboard",
+      "truncated": "This log is large. To keep the browser responsive, {{shown}} of {{total}} characters are shown. (Use Copy for the whole thing.)"
+    },
+    "inspector": {
+      "open": "Work inspector",
+      "close": "Close the panel",
+      "turn_list_title": "Conversation",
+      "turn_list_empty": "Nothing here yet.",
+      "turn_badge": "Turn #{{number}}",
+      "turns": "{{count}} Turns",
+      "no_question": "No question",
+      "answer_streaming": "Writing a reply...",
+      "tools_running": "Running tools...",
+      "tool_count_one": "{{count}} tool",
+      "tool_count_other": "{{count}} tools",
+      "chat_only": "Chat only",
+      "detail_title": "Tool and skill runs",
+      "no_turn_selected": "Selected turn",
+      "input_params": "Input parameters",
+      "output_result": "Output",
+      "error_message": "Error message",
+      "copy": "Copy",
+      "copied": "✓ Copied",
+      "expand": "Expand",
+      "collapse": "Collapse",
+      "cli_command": "CLI command",
+      "filter": {
+        "all": "All ({{total}})",
+        "running": "Running ({{total}})",
+        "success": "Done ({{total}})",
+        "error": "Error ({{total}})",
+        "title": "Filter: {{label}}"
+      },
+      "empty": {
+        "none_title": "No tool ran",
+        "none_sub": "This turn was answered without calling an external tool or MCP.",
+        "filtered_title": "No tool run matches the filter",
+        "filtered_sub": "Pick another filter to see the finished or failed runs."
+      }
+    },
+    "subagent": {
+      "receiving": "Receiving the '{{task}}' task packet from the Main Agent...",
+      "working": "The subagent worker is running the task in its sandbox.",
+      "reporting": "Verified the work; sending the report back to the Main Agent...",
+      "succeeded": "Done. The result reached the Main Agent.",
+      "failed": "The task raised an exception. Sending an error report to the Main Agent.",
+      "idle": "Waiting for the Main Agent to assign a task...",
+      "timeline": {
+        "assigned": "Assigned",
+        "running": "Running",
+        "verifying": "Verify & finish"
+      },
+      "dispatch": "The Main Orchestrator dispatched a task to **{{role}}**",
+      "task_start": "Started `{{task}}`",
+      "tool_history": "Tool runs",
+      "none_selected": "No subagent selected."
+    },
+    "task": {
+      "running": "Running...",
+      "done": "Finished",
+      "step_received": "Request received ({{name}})",
+      "step_executing": "Running the tool",
+      "step_verifying": "Verifying and returning the result",
+      "tool_label": "Tool ({{name}})",
+      "command_label": "CLI Command ({{name}})",
+      "default_name": "Tool Execution"
+    },
+    "context": {
+      "label": {
+        "server": "Server",
+        "text": "Selection",
+        "k8s-connection": "Connection"
+      }
+    },
+    "error": {
+      "response_failed": "Something went wrong while handling the reply.",
+      "socket_disconnected": "The AI Chat live connection dropped. Reconnecting...",
+      "session_delete_failed": "Could not reach the server while deleting the session: {{message}}",
+      "session_create_failed": "Could not create the session ({{status}} {{statusText}})",
+      "session_create_error": "Could not reach the server while creating the session: {{message}}",
+      "gateway_unavailable": "Gateway error (503 Service Unavailable). Check the OpenClaw Gateway.",
+      "send_failed": "Could not send the message ({{status}} {{statusText}})",
+      "send_error": "Could not reach the server while sending the message: {{message}}",
+      "already_streaming": "A reply is still being written, so the message was left in the box instead of sent. Send it once the reply finishes.",
+      "approvals_load_failed": "Could not read the approval list.",
+      "approval_resolve_failed": "Could not act on the approval request."
+    }
   }
 }

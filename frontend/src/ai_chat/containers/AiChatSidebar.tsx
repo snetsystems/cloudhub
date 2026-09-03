@@ -1,5 +1,6 @@
 import React, {FC} from 'react'
 import classnames from 'classnames'
+import {useTranslation} from 'react-i18next'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ButtonShape, ComponentColor, IconFont} from 'src/reusable_ui'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
@@ -65,6 +66,8 @@ export const AiChatSidebar: FC<Props> = ({
   onCreateNewChat,
   onToggleCollapse,
 }) => {
+  const {t} = useTranslation()
+
   if (isCollapsed) {
     return (
       <div className="chat-sidebar collapsed">
@@ -75,7 +78,7 @@ export const AiChatSidebar: FC<Props> = ({
               onClick={onToggleCollapse}
               shape={ButtonShape.Square}
               color={ComponentColor.Default}
-              titleText="대화 목록 펼치기"
+              titleText={t('ai_chat.session.expand_list')}
             />
           )}
         </div>
@@ -85,7 +88,7 @@ export const AiChatSidebar: FC<Props> = ({
             onClick={onCreateNewChat}
             shape={ButtonShape.Square}
             color={ComponentColor.Primary}
-            titleText="새 대화 시작"
+            titleText={t('ai_chat.session.new')}
           />
           {sessions.map(s => {
             const isGenerating =
@@ -100,12 +103,16 @@ export const AiChatSidebar: FC<Props> = ({
                   'is-generating': isGenerating,
                 })}
                 onClick={() => onSelectSession(s.id)}
-                title={isGenerating ? `${s.title} (답변 생성 중...)` : s.title}
+                title={
+                  isGenerating
+                    ? t('ai_chat.session.title_generating', {title: s.title})
+                    : s.title
+                }
               >
                 {isGenerating ? (
                   <span
                     className="session-generating-indicator in-collapsed"
-                    title="답변 생성 중..."
+                    title={t('ai_chat.session.generating')}
                   >
                     <span className="generating-dot" />
                     <span className="generating-dot" />
@@ -138,7 +145,7 @@ export const AiChatSidebar: FC<Props> = ({
             onClick={onToggleCollapse}
             shape={ButtonShape.Square}
             color={ComponentColor.Default}
-            titleText="사이드바 접기"
+            titleText={t('ai_chat.session.collapse_list')}
           />
         )}
       </div>
@@ -169,7 +176,7 @@ export const AiChatSidebar: FC<Props> = ({
                     <div className="session-generating-wrapper">
                       <span
                         className="session-generating-indicator"
-                        title="답변 생성 중..."
+                        title={t('ai_chat.session.generating')}
                       >
                         <span className="generating-dot" />
                         <span className="generating-dot" />
@@ -192,7 +199,7 @@ export const AiChatSidebar: FC<Props> = ({
                             size="btn-xs"
                             square={true}
                             type="btn-danger"
-                            confirmText="삭제"
+                            confirmText={t('ai_chat.session.delete')}
                             customClass="session-delete-confirm-btn"
                             isEventStopPropagation={true}
                             position="left"

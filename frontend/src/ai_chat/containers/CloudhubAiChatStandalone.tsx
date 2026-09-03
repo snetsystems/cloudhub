@@ -10,6 +10,11 @@ import React, {
 } from 'react'
 import classnames from 'classnames'
 import uuid from 'uuid'
+import {TFunction, useTranslation} from 'react-i18next'
+
+// Module-level helpers format outside a component, so they read the shared
+// instance rather than a hook.
+import i18n from 'src/i18n'
 
 // Cloudhub Design System Types & Button Reusable Component
 import {
@@ -206,14 +211,20 @@ const toChatSession = (dto: OpenClawSessionDTO): ChatSession => ({
   messages: [],
 })
 
+/**
+ * Generated titles end in `#<n>`, in whatever language was active when the
+ * session was made, so the numbering keys off the suffix rather than the
+ * wording around it.
+ */
+const AUTO_SESSION_TITLE_NUMBER = /#\s*(\d+)\s*$/
+
 export const generateDefaultSessionTitle = (
-  sessionList: ChatSession[]
+  sessionList: ChatSession[],
+  t: TFunction
 ): string => {
   let maxNum = sessionList.length
   sessionList.forEach(s => {
-    const match = s.title?.match(
-      /신규\s*(?:OpenClaw\s*)?대화\s*세션\s*#?(\d+)/i
-    )
+    const match = s.title?.match(AUTO_SESSION_TITLE_NUMBER)
     if (match) {
       const num = parseInt(match[1], 10)
       if (!isNaN(num) && num > maxNum) {
@@ -221,7 +232,7 @@ export const generateDefaultSessionTitle = (
       }
     }
   })
-  return `신규 대화 세션 #${maxNum + 1}`
+  return t('ai_chat.session.default_title', {number: maxNum + 1})
 }
 
 const isJsonString = (str: string): boolean => {
@@ -309,12 +320,12 @@ export const formatChatTimestamp = (
   const isThisYear = m.isSame(now, 'year')
 
   if (isToday) {
-    return m.format('HH:mm')
+    return m.format(i18n.t('ai_chat.timestamp.today'))
   }
   if (isThisYear) {
-    return m.format('M[월] D[일] HH:mm')
+    return m.format(i18n.t('ai_chat.timestamp.this_year'))
   }
-  return m.format('YYYY[년] M[월] D[일] HH:mm')
+  return m.format(i18n.t('ai_chat.timestamp.full'))
 }
 
 const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
@@ -625,6 +636,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   onDetachContext,
   onClearContext,
 }) => {
+  const {t} = useTranslation()
   const effectiveTimeZone = timeZoneProp ?? persistedTimeZone ?? TimeZones.Local
 
   const [sessions, setSessions] = useState<ChatSession[]>([])
@@ -862,7 +874,8 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           const existing = prevMap.get(dto.id)
           return {
             id: dto.id,
-            title: dto.title || existing?.title || '새 대화',
+            title:
+              dto.title || existing?.title || t('ai_chat.session.untitled'),
             updatedAt: dto.updatedAt,
             messages: existing?.messages || [],
             subagents: existing?.subagents || [],
@@ -1251,7 +1264,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 actData.title ||
                   actData.meta ||
                   actData.name ||
-                  'Tool Execution'
+                  t('ai_chat.task.default_name')
               )
               const metaText = ensureString(
                 actData.meta || actData.summary || actData.progressText || ''
@@ -1291,7 +1304,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 : 70
 
               const roleLabel =
-                kind === 'command' ? `CLI Command (${name})` : `Tool (${name})`
+                kind === 'command'
+                  ? t('ai_chat.task.command_label', {name})
+                  : t('ai_chat.task.tool_label', {name})
 
               setSessions(prev =>
                 prev.map(s => {
@@ -1319,31 +1334,36 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                       outputText ||
                       metaText ||
                       existingTask?.latestLog ||
-                      (status === 'RUNNING' ? '실행 중...' : '실행 완료'),
+                      (status === 'RUNNING'
+                        ? t('ai_chat.task.running')
+                        : t('ai_chat.task.done')),
                     currentAction: metaText || `Executing ${name}...`,
                     currentStepIndex: isEnd ? 3 : 2,
                     steps: [
-                      {title: `요청 수신 (${name})`, status: 'done'},
                       {
-                        title: `도구 로직 수행`,
+                        title: t('ai_chat.task.step_received', {name}),
+                        status: 'done',
+                      },
+                      {
+                        title: t('ai_chat.task.step_executing'),
                         status: isEnd ? 'done' : 'active',
                       },
                       {
-                        title: `결과 검증 및 출력`,
+                        title: t('ai_chat.task.step_verifying'),
                         status: isEnd ? 'done' : 'pending',
                       },
                     ],
                     timeline: [
                       {
-                        title: `요청 수신 (${name})`,
+                        title: t('ai_chat.task.step_received', {name}),
                         status: 'done',
                       },
                       {
-                        title: `도구 로직 수행`,
+                        title: t('ai_chat.task.step_executing'),
                         status: isEnd ? 'done' : 'running',
                       },
                       {
-                        title: `결과 검증 및 출력`,
+                        title: t('ai_chat.task.step_verifying'),
                         status: isEnd ? 'done' : 'pending',
                       },
                     ],
@@ -1489,7 +1509,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                           (payload.state !== 'final' &&
                           payload.state !== 'completed'
                             ? payload.errorMessage ||
-                              '응답 처리 중 오류가 발생했습니다.'
+                              t('ai_chat.error.response_failed')
                             : m.text),
                         activities: (m.activities || []).map(act => ({
                           ...act,
@@ -1529,9 +1549,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           )
 
           if (reconnectAttempts === RECONNECT_NOTIFY_AFTER) {
-            triggerErrorNotification(
-              'AI Chat 실시간 연결이 끊어졌습니다. 재연결을 시도하고 있습니다.'
-            )
+            triggerErrorNotification(t('ai_chat.error.socket_disconnected'))
           }
 
           reconnectTimer = setTimeout(connect, delay)
@@ -1685,7 +1703,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     } catch (err: any) {
       console.warn('Failed to delete session on backend:', err)
       triggerErrorNotification(
-        `세션 삭제 중 통신 오류 발생: ${err?.message || ''}`
+        t('ai_chat.error.session_delete_failed', {message: err?.message || ''})
       )
     }
   }
@@ -1694,25 +1712,25 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     {
       id: 'sug-1',
       icon: '🖥️',
-      title: 'WAS 서버 상태 점검',
+      title: t('ai_chat.suggestions.was_check'),
       prompt: 'was-server-01 점검해줘',
     },
     {
       id: 'sug-2',
       icon: '💥',
-      title: '네트워크 장애 주입',
+      title: t('ai_chat.suggestions.network_fault'),
       prompt: 'k8s_network 장애 만들어줘',
     },
     {
       id: 'sug-3',
       icon: '🔌',
-      title: '네트워크 통신 장애 복구',
+      title: t('ai_chat.suggestions.network_repair'),
       prompt: 'k8s_network 복구해줘',
     },
     {
       id: 'sug-4',
       icon: '🚨',
-      title: '주요 Critical 알림 진단',
+      title: t('ai_chat.suggestions.critical_alerts'),
       prompt:
         '/cloudhub-critical-alerts-audit 최근 7일간 CRITICAL 알림 점검해줘',
     },
@@ -1759,13 +1777,13 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
   // instead of a broken key. Null means there is a list to show.
   const skillsEmptyReason = (): string => {
     if (skillsStatus === 'loading') {
-      return '스킬 목록을 불러오는 중...'
+      return t('ai_chat.composer.skills_loading')
     }
     if (skillsStatus === 'failed') {
-      return '스킬 목록을 불러오지 못했습니다'
+      return t('ai_chat.composer.skills_error')
     }
     if (!skills.length) {
-      return '이 조직의 에이전트에 등록된 스킬이 없습니다'
+      return t('ai_chat.composer.skills_empty')
     }
     return ''
   }
@@ -1900,7 +1918,8 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
     // 1. If this is a new chat draft (no active session yet), create the session
     if (!targetSessionId) {
       const newSessionTitle = generateDefaultSessionTitle(
-        sessionsRef.current || sessions
+        sessionsRef.current || sessions,
+        t
       )
       try {
         const createdDto: OpenClawSessionDTO = await createOpenClawSession(
@@ -1918,11 +1937,16 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
         setIsStreamingActive(false)
         if (createErr instanceof OpenClawAPIError) {
           triggerErrorNotification(
-            `세션 생성 실패 (${createErr.status} ${createErr.statusText})`
+            t('ai_chat.error.session_create_failed', {
+              status: createErr.status,
+              statusText: createErr.statusText,
+            })
           )
         } else {
           triggerErrorNotification(
-            `세션 생성 중 통신 오류가 발생했습니다: ${createErr?.message || ''}`
+            t('ai_chat.error.session_create_error', {
+              message: createErr?.message || '',
+            })
           )
         }
         return
@@ -1950,17 +1974,18 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
       if (err instanceof OpenClawAPIError) {
         if (err.status === 503) {
-          triggerErrorNotification(
-            'Gateway 연결 오류 (503 Service Unavailable): OpenClaw Gateway를 확인하세요.'
-          )
+          triggerErrorNotification(t('ai_chat.error.gateway_unavailable'))
         } else {
           triggerErrorNotification(
-            `메시지 전송 실패 (${err.status} ${err.statusText})`
+            t('ai_chat.error.send_failed', {
+              status: err.status,
+              statusText: err.statusText,
+            })
           )
         }
       } else {
         triggerErrorNotification(
-          `메시지 전송 시 통신 오류가 발생했습니다: ${err?.message || ''}`
+          t('ai_chat.error.send_error', {message: err?.message || ''})
         )
       }
 
@@ -2031,9 +2056,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
       // the request, hand it to the composer and say so.
       setInputPrompt(promptText)
       textareaRef.current?.focus()
-      triggerErrorNotification(
-        '이미 답변을 생성 중이라 전송하지 않고 입력창에 담았습니다. 답변이 끝나면 전송해 주세요.'
-      )
+      triggerErrorNotification(t('ai_chat.error.already_streaming'))
       return
     }
 
@@ -2119,14 +2142,16 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             <div className="message-bubble-footer">
               {msg.isFailed ? (
                 <div className="user-message-failed-row">
-                  <span className="failed-label">전송 실패</span>
+                  <span className="failed-label">
+                    {t('ai_chat.message.send_failed')}
+                  </span>
                   <button
                     type="button"
                     className="retry-send-btn"
                     onClick={() => handleRetryMessage(msg.id, msg.text)}
-                    title="클릭하여 즉시 재전송"
+                    title={t('ai_chat.message.retry_title')}
                   >
-                    재시도
+                    {t('ai_chat.message.retry')}
                   </button>
                 </div>
               ) : (
@@ -2173,8 +2198,8 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   onClick={() => handleToggleInlineActivities(msg.id)}
                   title={
                     isActivityListCollapsed
-                      ? '실행한 도구 내역 펼치기'
-                      : '실행한 도구 내역 접기'
+                      ? t('ai_chat.activity.expand')
+                      : t('ai_chat.activity.collapse')
                   }
                   aria-expanded={!isActivityListCollapsed}
                 >
@@ -2182,7 +2207,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                     {isActivityListCollapsed ? '▶' : '▼'}
                   </span>
                   <span className="summary-label">
-                    {`도구 ${msg.activities!.length}개 실행`}
+                    {t('ai_chat.activity.summary', {
+                      count: msg.activities!.length,
+                    })}
                   </span>
                 </button>
               </div>
@@ -2198,9 +2225,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                       activeInspectorTab === 'activity',
                   })}
                   onClick={() => handleOpenActivityInspector(msg.id)}
-                  title="우측 패널에서 상세 실행 내역 보기"
+                  title={t('ai_chat.activity.open_inspector_title')}
                 >
-                  작업 내용 보기 ↗
+                  {`${t('ai_chat.activity.open_inspector')} ↗`}
                 </button>
               )}
             </div>
@@ -2254,7 +2281,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 <div className="message-bubble-footer ai-completed-footer">
                   <div className="ai-footer-left">
                     <AiChatBadge variant="done" icon="✓">
-                      답변 완료
+                      {t('ai_chat.message.answer_done')}
                     </AiChatBadge>
                     {(msg.timestampRaw || msg.timestamp) && (
                       <span className="message-timestamp">
@@ -2273,9 +2300,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                           copied: copiedMessageId === msg.id,
                         })}
                         onClick={() => handleCopyMessageText(msg.id, msg.text)}
-                        title="답변 내용 복사"
+                        title={t('ai_chat.message.copy_title')}
                       >
-                        {copiedMessageId === msg.id ? '복사됨' : '복사'}
+                        {copiedMessageId === msg.id
+                          ? t('ai_chat.message.copied')
+                          : t('ai_chat.message.copy')}
                       </button>
                     )}
                   </div>
@@ -2332,7 +2361,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   ? ButtonShape.Default
                   : ButtonShape.Square
               }
-              titleText={showSubagentPanel ? '패널 닫기' : '작업 인스펙터'}
+              titleText={
+                showSubagentPanel
+                  ? t('ai_chat.inspector.close')
+                  : t('ai_chat.inspector.open')
+              }
               onClick={handleToggleSubagentPanel}
             />
             {mode === 'drawer' && (
@@ -2363,16 +2396,17 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 <div className="empty-state-hero">
                   <div className="empty-hero-icon">💬</div>
                   <div className="empty-hero-title">
-                    새로운 대화를 시작해보세요
+                    {t('ai_chat.empty.title')}
                   </div>
                   <div className="empty-hero-subtitle">
-                    클러스터 장애 분석, 호스트 점검, 로그 쿼리 등 질문을
-                    입력하거나 아래 추천 질문을 선택하세요.
+                    {t('ai_chat.empty.description')}
                   </div>
                 </div>
 
                 <div className="prompt-suggestions-container">
-                  <div className="suggestions-header">추천 질문</div>
+                  <div className="suggestions-header">
+                    {t('ai_chat.suggestions.header')}
+                  </div>
                   <div className="suggestions-grid">
                     {PROMPT_SUGGESTIONS.map(sug => (
                       <button
@@ -2427,10 +2461,12 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             type="button"
             className="scroll-to-bottom-btn"
             onClick={() => scrollToBottom(true)}
-            title="최신 메시지로 이동"
+            title={t('ai_chat.composer.scroll_to_latest')}
           >
             <span className="scroll-arrow">↓</span>
-            <span className="scroll-label">최신 메시지</span>
+            <span className="scroll-label">
+              {t('ai_chat.composer.scroll_to_latest_label')}
+            </span>
             {isStreamingActive && <span className="streaming-dot-pulse" />}
           </button>
         )}
@@ -2442,7 +2478,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             <div className="slash-skill-header">
               <span>Available Skills & Commands</span>
               <span className="slash-skill-hint">
-                ↑↓ 키로 이동, Enter로 선택
+                {t('ai_chat.composer.slash_hint')}
               </span>
             </div>
             <div className="slash-skill-list">
@@ -2477,7 +2513,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             {visibleAttachments.map(capsule => (
               <span key={capsule.id} className="chat-context-chip">
                 <span className="chat-context-chip--label">
-                  {getAiContextLabel(capsule)}
+                  {t(`ai_chat.context.label.${capsule.type}`, {
+                    defaultValue: getAiContextLabel(capsule),
+                  })}
                 </span>
                 <span
                   className="chat-context-chip--title"
@@ -2488,7 +2526,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 <button
                   type="button"
                   className="chat-context-chip--remove"
-                  aria-label={`${capsule.title} 첨부 제거`}
+                  aria-label={t('ai_chat.composer.detach_context', {
+                    title: capsule.title,
+                  })}
                   onClick={() => onDetachContext?.(capsule.id)}
                 >
                   ✕
@@ -2515,7 +2555,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                   className="chat-context-chip--more"
                   onClick={() => setShowAllAttachments(false)}
                 >
-                  접기
+                  {t('ai_chat.composer.collapse_attachments')}
                 </button>
               )}
             <button
@@ -2523,7 +2563,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
               className="chat-context-chip--clear"
               onClick={() => onClearContext?.()}
             >
-              모두 해제
+              {t('ai_chat.composer.clear_attachments')}
             </button>
           </div>
         )}
@@ -2534,8 +2574,8 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           })}
           placeholder={
             isStreamingActive
-              ? 'AI가 답변을 생성하고 있습니다...'
-              : "Enter: 전송, Shift+Enter: 줄바꿈, '/': 스킬 목록"
+              ? t('ai_chat.composer.placeholder_streaming')
+              : t('ai_chat.composer.placeholder')
           }
           value={inputPrompt}
           onChange={handleInputChange}
@@ -2544,7 +2584,11 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
           disabled={isStreamingActive}
         />
         <Button
-          text={isStreamingActive ? '생성 중...' : '전송'}
+          text={
+            isStreamingActive
+              ? t('ai_chat.composer.sending')
+              : t('ai_chat.composer.send')
+          }
           color={
             isStreamingActive ? ComponentColor.Default : ComponentColor.Success
           }
@@ -2691,7 +2735,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
               'is-visible': isSidebarOverlaid,
             })}
             onClick={closeOverlaidSidebar}
-            title="대화 목록 닫기"
+            title={t('ai_chat.session.close_list')}
           />
         )}
 
