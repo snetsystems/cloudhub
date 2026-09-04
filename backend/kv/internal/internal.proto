@@ -392,6 +392,7 @@ message SSHConfig {
   string Password   = 2; // the password used for SSH connection
   string EnPassword = 3; // enable password for devices that require it
   int32 Port        = 4; // port number used for SSH connection
+  string Algorithm  = 5; // host key algorithm used for SSH connection
 }
 
 message SNMPConfig {

@@ -136,6 +136,7 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 			Password:   device.SSHConfig.Password,
 			EnPassword: device.SSHConfig.EnPassword,
 			Port:       device.SSHConfig.Port,
+			Algorithm:  device.SSHConfig.Algorithm,
 		},
 		SNMPConfig: cloudhub.SNMPConfig{
 			Community:     device.SNMPConfig.Community,
@@ -677,6 +678,9 @@ func (s *Service) UpdateDevice(ctx context.Context, req *updateDeviceData) (*clo
 		}
 		if req.SSHConfig.Port != 0 && device.SSHConfig.Port != req.SSHConfig.Port {
 			device.SSHConfig.Port = req.SSHConfig.Port
+		}
+		if device.SSHConfig.Algorithm != req.SSHConfig.Algorithm {
+			device.SSHConfig.Algorithm = req.SSHConfig.Algorithm
 		}
 	}
 	if req.SNMPConfig != nil {

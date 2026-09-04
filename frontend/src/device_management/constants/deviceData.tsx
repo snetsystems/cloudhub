@@ -26,7 +26,21 @@ export const DEFAULT_SSH_CONFIG: SSHConfig = {
   password: '',
   en_password: '',
   port: 22,
+  algorithm: '',
 }
+
+export const SSH_ALGORITHM_DEFAULT = 'Default'
+
+export const SSH_HOST_KEY_ALGORITHMS: DropdownItem[] = [
+  {text: SSH_ALGORITHM_DEFAULT},
+  {text: 'ssh-rsa'},
+  {text: 'rsa-sha2-256'},
+  {text: 'rsa-sha2-512'},
+  {text: 'ecdsa-sha2-nistp256'},
+  {text: 'ecdsa-sha2-nistp384'},
+  {text: 'ecdsa-sha2-nistp521'},
+  {text: 'ssh-ed25519'},
+]
 
 export const DEFAULT_NETWORK_DEVICE_DATA: DeviceData = {
   device_ip: '',

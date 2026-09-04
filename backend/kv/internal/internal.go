@@ -1420,6 +1420,7 @@ func MarshalNetworkDevice(t *cloudhub.NetworkDevice) ([]byte, error) {
 			Password:   t.SSHConfig.Password,
 			EnPassword: t.SSHConfig.EnPassword,
 			Port:       int32(t.SSHConfig.Port),
+			Algorithm:  t.SSHConfig.Algorithm,
 		},
 		SNMPConfig: &SNMPConfig{
 			Community:     t.SNMPConfig.Community,
@@ -1464,6 +1465,7 @@ func UnmarshalNetworkDevice(data []byte, t *cloudhub.NetworkDevice) error {
 			Password:   pb.SSHConfig.Password,
 			EnPassword: pb.SSHConfig.EnPassword,
 			Port:       int(pb.SSHConfig.Port),
+			Algorithm:  pb.SSHConfig.Algorithm,
 		}
 	} else {
 		t.SSHConfig = cloudhub.SSHConfig{}

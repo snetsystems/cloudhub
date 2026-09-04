@@ -20,6 +20,7 @@ import {Notification} from 'src/types/notifications'
 import {GET_ROUTER_DEVICEINTERFACES_INFO} from 'src/addon/128t/constants'
 import {notifyConnectShellFailed} from 'src/shared/copy/notifications'
 import {ShellInfo} from 'src/types'
+import {SSH_ALGORITHM_DEFAULT} from 'src/device_management/constants'
 
 export interface ShellProps {
   shells?: ShellInfo[]
@@ -33,6 +34,7 @@ export interface ShellProps {
   sshId?: string
   sshPw?: string
   port?: string
+  algorithm?: string
   handleShellUpdate: (shell: ShellInfo) => void
   handleShellRemove: (nodename: ShellInfo['nodename']) => void
   onTabNameRefresh: () => void
@@ -74,6 +76,7 @@ const Shell = (props: Props) => {
   const [user, setUser] = useState(props.sshId ?? '')
   const [pwd, setPwd] = useState(props.sshPw ?? '')
   const [port, setPort] = useState(props.port ?? '22')
+  const [algorithm, setAlgorithm] = useState(props.algorithm ?? '')
   const [getIP, setGetIP] = useState(null)
   const [socket, setSocket] = useState<WebSocket>(null)
   const [term, setTerm] = useState<Terminal>(null)
@@ -121,11 +124,19 @@ const Shell = (props: Props) => {
     setPort(e.target.value)
   }
 
+  const handleChooseAlgorithm = (item: {text: string}): void => {
+    setAlgorithm(item.text === SSH_ALGORITHM_DEFAULT ? '' : item.text)
+  }
+
   const handleOpenTerminal = (newTabshell: ShellInfo): void => {
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
 
-    const urlParam =
+    let urlParam =
       'user=' + user + '&pwd=' + pwd + '&addr=' + addr + '&port=' + port
+
+    if (algorithm) {
+      urlParam += '&algorithm=' + algorithm
+    }
 
     const socketURL =
       protocol +
@@ -356,6 +367,14 @@ const Shell = (props: Props) => {
     setHost(props.nodename)
   }, [props.nodename])
 
+  useEffect(() => {
+    setAddr(props.addr ? props.addr : '')
+    setUser(props.sshId ?? '')
+    setPwd(props.sshPw ?? '')
+    setPort(props.port ?? '22')
+    setAlgorithm(props.algorithm ?? '')
+  }, [props.addr, props.sshId, props.sshPw, props.port, props.algorithm])
+
   return (
     <div className={`terminal-container`}>
       {term ? (
@@ -381,6 +400,7 @@ const Shell = (props: Props) => {
             user={user}
             pwd={pwd}
             port={port}
+            algorithm={algorithm}
             getIP={getIP}
             tabkey={props.tabkey}
             isNewEditor={props.isNewEditor}
@@ -390,6 +410,7 @@ const Shell = (props: Props) => {
             handleChangeID={handleChangeID}
             handleChangePassword={handleChangePassword}
             handleChangePort={handleChangePort}
+            handleChooseAlgorithm={handleChooseAlgorithm}
             handleShellUpdate={props.handleShellUpdate}
             handleShellRemove={props.handleShellRemove}
           />

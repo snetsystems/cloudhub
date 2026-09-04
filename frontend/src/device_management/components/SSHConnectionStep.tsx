@@ -5,9 +5,22 @@ import _ from 'lodash'
 // Components
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import WizardNumberInput from 'src/reusable_ui/components/wizard/WizardNumberInput'
+import Dropdown from 'src/shared/components/Dropdown'
+
+// Constants
+import {
+  SSH_ALGORITHM_DEFAULT,
+  SSH_HOST_KEY_ALGORITHMS,
+} from 'src/device_management/constants'
 
 // Types
-import {Source, DeviceData, SNMPConfig, SSHConfig} from 'src/types'
+import {
+  Source,
+  DeviceData,
+  SNMPConfig,
+  SSHConfig,
+  DropdownItem,
+} from 'src/types'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -16,6 +29,9 @@ interface Props {
   onChangeDeviceData: (
     key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
   ) => (value: string) => void
+  onChooseDeviceDataDropdown: (
+    key: keyof DeviceData | keyof SNMPConfig | keyof SSHConfig
+  ) => (value: DropdownItem) => void
 }
 
 interface State {
@@ -30,7 +46,8 @@ export default class SSHConnectionStep extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {deviceData, onChangeDeviceData} = this.props
+    const {deviceData, onChangeDeviceData, onChooseDeviceDataDropdown} =
+      this.props
 
     return (
       <>
@@ -58,6 +75,17 @@ export default class SSHConnectionStep extends PureComponent<Props, State> {
           type={'password'}
           onChange={onChangeDeviceData('en_password')}
         />
+        <div className="form-group col-xs-6" style={{height: '100px'}}>
+          <label>SSH Algorithm</label>
+          <Dropdown
+            items={SSH_HOST_KEY_ALGORITHMS}
+            onChoose={onChooseDeviceDataDropdown('algorithm')}
+            selected={
+              deviceData?.ssh_config?.algorithm || SSH_ALGORITHM_DEFAULT
+            }
+            className="dropdown-stretch"
+          />
+        </div>
       </>
     )
   }
