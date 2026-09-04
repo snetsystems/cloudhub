@@ -1,4 +1,5 @@
 import {Cell} from 'src/types'
+import {CellType} from 'src/types/dashboards'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 
 export interface PreviewCellItem {
@@ -39,11 +40,21 @@ export function getPreviewCellsFromSelection(
         // Library saves often omit layout id; GridLayout needs a stable `i`.
         i: content.i || lc.id,
         name: content.name || lc.name,
-        type: content.type || lc.type,
+        type: content.type || (lc.type as CellType),
       },
     }
   })
   return [...fromDashboards, ...fromLibrary]
+}
+
+/**
+ * Preview card height in px, derived from the cell's own grid height so tall
+ * cells (the optics table needs room for its toolbar and two header rows) are
+ * not clipped, while ordinary graph cells keep the previous 220px card.
+ */
+export function previewCardHeight(cell: Cell): number {
+  const rows = cell.h ?? 4
+  return Math.min(Math.max(rows * 14, 220), 440)
 }
 
 export function normalizeCellForPreview(cell: Cell): Cell {

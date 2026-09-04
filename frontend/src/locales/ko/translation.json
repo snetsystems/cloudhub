@@ -692,5 +692,24 @@
       "approvals_load_failed": "승인 목록을 불러오지 못했습니다.",
       "approval_resolve_failed": "승인 요청을 처리하지 못했습니다."
     }
+  },
+  "optics": {
+    "threshold": {
+      "open": "광량 기준 설정",
+      "title": "광량 기준",
+      "intro": "이 조직의 모든 네트워크 장비에 적용됩니다. 광량이 하한 미만이거나 온도가 상한을 넘으면 해당 포트가 표시됩니다.",
+      "rx_low": "Rx 광량 하한 (dBm)",
+      "tx_low": "Tx 광량 하한 (dBm)",
+      "temp_high": "온도 상한 (°C)",
+      "power_hint": "이 값 미만은 광량 부족으로 봅니다. 기본값 {{value}}.",
+      "temp_hint": "이 값을 넘으면 과열로 봅니다. 기본값 {{value}}.",
+      "alert_enabled": "알림 사용",
+      "alert_hint": "위 기준을 그대로 사용합니다. 이 화면을 보고 있지 않아도 계속 평가합니다.",
+      "kapacitor": "Kapacitor",
+      "kapacitor_hint": "알림 태스크가 실행될 곳입니다. 데이터 소스 하나에 여러 개가 등록될 수 있어 직접 선택해야 합니다."
+    },
+    "no_data": "수집된 광 트랜시버 데이터가 없습니다.",
+    "filter_placeholder": "장비 검색...",
+    "template_update": "업데이트"
   }
 }

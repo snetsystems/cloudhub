@@ -424,7 +424,8 @@ func TestUpdateNetworkDevice(t *testing.T) {
 				"learning_update_datetime": "2023-01-04T00:00:00Z",
 				"learning_finish_datetime": "2023-01-05T12:00:00Z",
 				"ml_function":"ml_linear_descent",
-				"is_learning": false
+				"is_learning": false,
+				"location": ""
 			  }`,
 		},
 	}
@@ -1603,4 +1604,97 @@ func TestManagedSharding_Verified(t *testing.T) {
 		t.Log("Note: Config still contains device, check template logic.")
 	}
 	fmt.Println("[ALIVE] Step 4: Collection stop logic verified.")
+}
+
+// Location is a label, not a collection parameter, so editing it must not be
+// blocked on a device that is currently being collected.
+func TestUpdateDeviceLocationWhileCollecting(t *testing.T) {
+	const devID = "958172376138104800"
+	var saved *cloudhub.NetworkDevice
+
+	s := &Service{
+		Store: &mocks.Store{
+			NetworkDeviceStore: &mocks.NetworkDeviceStore{
+				GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
+					return &cloudhub.NetworkDevice{
+						ID:                     devID,
+						Organization:           "default",
+						DeviceIP:               "172.16.11.168",
+						IsCollectingCfgWritten: true,
+					}, nil
+				},
+				UpdateF: func(ctx context.Context, d *cloudhub.NetworkDevice) error {
+					saved = d
+					return nil
+				},
+			},
+			NetworkDeviceOrgStore: &mocks.NetworkDeviceOrgStore{
+				GetF: func(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
+					return &cloudhub.NetworkDeviceOrg{
+						ID:                  "default",
+						CollectedDevicesIDs: []string{devID},
+					}, nil
+				},
+			},
+			OrganizationsStore: &mocks.OrganizationsStore{
+				GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+					return &cloudhub.Organization{ID: "default", Name: "Default"}, nil
+				},
+			},
+		},
+		Logger: log.New(log.DebugLevel),
+	}
+
+	location := "Rack A-12"
+	if _, err := s.UpdateDevice(context.Background(), &updateDeviceData{
+		id:                  devID,
+		updateDeviceRequest: updateDeviceRequest{Location: &location},
+	}); err != nil {
+		t.Fatalf("Location update on a collecting device was rejected: %v", err)
+	}
+
+	if saved == nil {
+		t.Fatal("device was never saved")
+	}
+	if saved.Location != location {
+		t.Errorf("Location = %q, want %q", saved.Location, location)
+	}
+	if !saved.IsCollectingCfgWritten {
+		t.Error("IsCollectingCfgWritten was cleared, but the collector config did not change")
+	}
+}
+
+// A connection parameter still has to be blocked while collecting.
+func TestUpdateDeviceIPWhileCollectingIsRejected(t *testing.T) {
+	const devID = "958172376138104800"
+
+	s := &Service{
+		Store: &mocks.Store{
+			NetworkDeviceStore: &mocks.NetworkDeviceStore{
+				GetF: func(ctx context.Context, q cloudhub.NetworkDeviceQuery) (*cloudhub.NetworkDevice, error) {
+					return &cloudhub.NetworkDevice{
+						ID: devID, Organization: "default", DeviceIP: "172.16.11.168",
+					}, nil
+				},
+				UpdateF: func(ctx context.Context, d *cloudhub.NetworkDevice) error { return nil },
+			},
+			NetworkDeviceOrgStore: &mocks.NetworkDeviceOrgStore{
+				GetF: func(ctx context.Context, q cloudhub.NetworkDeviceOrgQuery) (*cloudhub.NetworkDeviceOrg, error) {
+					return &cloudhub.NetworkDeviceOrg{
+						ID:                  "default",
+						CollectedDevicesIDs: []string{devID},
+					}, nil
+				},
+			},
+		},
+		Logger: log.New(log.DebugLevel),
+	}
+
+	newIP := "172.16.11.200"
+	if _, err := s.UpdateDevice(context.Background(), &updateDeviceData{
+		id:                  devID,
+		updateDeviceRequest: updateDeviceRequest{DeviceIP: &newIP},
+	}); err == nil {
+		t.Error("expected the collecting guard to reject a device IP change")
+	}
 }

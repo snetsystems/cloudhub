@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useEffect, useRef} from 'react'
+import React, {useState, useMemo, useEffect, useRef, useCallback} from 'react'
 import {Cell, Source, Me, Template, TimeZones, TemplateValue} from 'src/types'
 import {
   Button,
@@ -18,6 +18,7 @@ import {CloudAutoRefresh, CloudTimeRange} from 'src/clouds/types/type'
 import LayoutRenderer, {
   RenderCellContext,
 } from 'src/shared/components/LayoutRenderer'
+import {renderRegisteredCell} from 'src/shared/components/cellRegistry'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import ServerDetailTips from 'src/shared/components/ServerDetailTips'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
@@ -237,6 +238,15 @@ function DashboardPageWithImport({
   cellQueryStatus,
   editCellQueryStatus,
 }: DashboardPageWithImportProps) {
+  // Page-specific fixed cells win; anything they decline falls through to the
+  // shared cell registry, so imported `component` cells (e.g. builtin snmp
+  // optics) render on every page that can import them.
+  const renderCellWithRegistry = useCallback(
+    (cell: Cell, context: RenderCellContext) =>
+      renderCell?.(cell, context) ?? renderRegisteredCell(cell, context),
+    [renderCell]
+  )
+
   const safeFluxLinks = fluxLinks ?? {self: '', suggestions: '', ast: ''}
   const safeNotify = notify ?? (() => {})
   const safeCellQueryStatus = cellQueryStatus ?? {queryID: '', status: {}}
@@ -763,7 +773,7 @@ function DashboardPageWithImport({
                 templates={templatesForLayout}
                 onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                 host={source.name}
-                renderCell={renderCell}
+                renderCell={renderCellWithRegistry}
                 draggableCancel={draggableCancel}
               />
             ) : showNoDataForBlockedTemplates ? (

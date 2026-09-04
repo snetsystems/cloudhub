@@ -20,13 +20,15 @@ func TestInitializeFixedCells(t *testing.T) {
 		orgID          string
 		existingDashes []cloudhub.Dashboard
 		wantCount      int
-		wantErr        bool
+		// Names of existing dashboards expected to be updated to Shared=true.
+		wantSharedNames []string
+		wantErr         bool
 	}{
 		{
 			name:           "Initialize builtin dashboards for new organization",
 			orgID:          "test-org-1",
 			existingDashes: []cloudhub.Dashboard{},
-			wantCount:      2, // server-details.json and server_overview.json
+			wantCount:      3, // server-details.json, server_overview.json and snmp.json
 			wantErr:        false,
 		},
 		{
@@ -43,9 +45,15 @@ func TestInitializeFixedCells(t *testing.T) {
 					Organization: "test-org-2",
 					Type:         cloudhub.DashboardTypeBuiltin,
 				},
+				{
+					Name:         "snmp",
+					Organization: "test-org-2",
+					Type:         cloudhub.DashboardTypeBuiltin,
+				},
 			},
-			wantCount: 0, // Already exists, should skip
-			wantErr:   false,
+			wantCount:       0,                // Already exists, should skip
+			wantSharedNames: []string{"snmp"}, // shared flag backfilled onto the stored dashboard
+			wantErr:         false,
 		},
 		{
 			name:  "Add builtin dashboard even if normal dashboard exists",
@@ -57,7 +65,7 @@ func TestInitializeFixedCells(t *testing.T) {
 					Type:         cloudhub.DashboardTypeNormal,
 				},
 			},
-			wantCount: 2, // Should still add builtin dashboards
+			wantCount: 3, // Should still add builtin dashboards
 			wantErr:   false,
 		},
 	}
@@ -69,6 +77,7 @@ func TestInitializeFixedCells(t *testing.T) {
 
 			// Create mock dashboards store
 			addedDashboards := []cloudhub.Dashboard{}
+			sharedUpdates := []string{}
 			mockDashboardsStore := &mocks.DashboardsStore{
 				AllF: func(ctx context.Context) ([]cloudhub.Dashboard, error) {
 					return ts.existingDashes, nil
@@ -77,6 +86,12 @@ func TestInitializeFixedCells(t *testing.T) {
 					addedDashboards = append(addedDashboards, d)
 					d.ID = cloudhub.DashboardID(len(addedDashboards))
 					return d, nil
+				},
+				UpdateF: func(ctx context.Context, d cloudhub.Dashboard) error {
+					if d.Shared {
+						sharedUpdates = append(sharedUpdates, d.Name)
+					}
+					return nil
 				},
 			}
 
@@ -109,6 +124,10 @@ func TestInitializeFixedCells(t *testing.T) {
 			if !tt.wantErr {
 				if len(addedDashboards) != tt.wantCount {
 					t.Errorf("InitializeFixedCells() added %d dashboards, want %d", len(addedDashboards), tt.wantCount)
+				}
+
+				if strings.Join(sharedUpdates, ",") != strings.Join(ts.wantSharedNames, ",") {
+					t.Errorf("InitializeFixedCells() backfilled shared on %v, want %v", sharedUpdates, ts.wantSharedNames)
 				}
 
 				// Verify added dashboards have correct properties

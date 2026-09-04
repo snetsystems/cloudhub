@@ -42,24 +42,36 @@ func InitializeFixedCells(
 		return err
 	}
 
-	// Map existing fixed-cell name -> ID (for skip and for mapping backfill)
-	existingByName := make(map[string]cloudhub.DashboardID)
+	// Map existing fixed-cell name -> dashboard (for skip and for mapping backfill)
+	existingByName := make(map[string]cloudhub.Dashboard)
 	for _, d := range existingDashboards {
 		if d.Type == cloudhub.DashboardTypeBuiltin && d.Organization == orgID && d.Name != "" {
-			existingByName[d.Name] = d.ID
+			existingByName[d.Name] = d
 		}
 	}
 
 	// Initialize each fixed-cell dashboard
 	for _, dashboard := range templates {
 		// If already exists: ensure mapping is registered (backfill for orgs created before mapping feature)
-		if existingID, exists := existingByName[dashboard.Name]; exists {
-			if err := mappingStore.Register(ctx, orgID, dashboard.Name, existingID); err != nil {
+		if existing, exists := existingByName[dashboard.Name]; exists {
+			if err := mappingStore.Register(ctx, orgID, dashboard.Name, existing.ID); err != nil {
 				logger.
 					WithField("component", "fixed-cell").
 					WithField("organization", orgID).
 					WithField("dashboard", dashboard.Name).
 					Error("Failed to register fixed-cell mapping (existing):", err)
+			}
+			// Backfill template-derived fields for dashboards stored before the template carried them.
+			if existing.Shared != dashboard.Shared || existing.Measurement != dashboard.Measurement {
+				existing.Shared = dashboard.Shared
+				existing.Measurement = dashboard.Measurement
+				if err := dashboardsStore.Update(orgCtx, existing); err != nil {
+					logger.
+						WithField("component", "fixed-cell").
+						WithField("organization", orgID).
+						WithField("dashboard", dashboard.Name).
+						Error("Failed to sync fixed-cell template fields:", err)
+				}
 			}
 			logger.
 				WithField("component", "fixed-cell").
@@ -220,6 +232,8 @@ func ApplyFixedCellToOrg(
 
 	dash.Templates = template.Templates
 	dash.Version = template.Version
+	dash.Shared = template.Shared
+	dash.Measurement = template.Measurement
 
 	if err := dashboardsStore.Update(ctx, dash); err != nil {
 		logger.

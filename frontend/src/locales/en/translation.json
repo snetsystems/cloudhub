@@ -699,5 +699,24 @@
       "approvals_load_failed": "Could not read the approval list.",
       "approval_resolve_failed": "Could not act on the approval request."
     }
+  },
+  "optics": {
+    "threshold": {
+      "open": "Optics Thresholds",
+      "title": "Optics Thresholds",
+      "intro": "Applies to every network device in this organization. A port is flagged when its optical power falls below the low threshold, or its temperature rises above the high threshold.",
+      "rx_low": "Rx Power Low (dBm)",
+      "tx_low": "Tx Power Low (dBm)",
+      "temp_high": "Temperature High (°C)",
+      "power_hint": "Below this counts as weak signal. Default {{value}}.",
+      "temp_hint": "Above this counts as overheating. Default {{value}}.",
+      "alert_enabled": "Raise an alert",
+      "alert_hint": "Uses the same thresholds, evaluated continuously whether or not anyone is watching this page.",
+      "kapacitor": "Kapacitor",
+      "kapacitor_hint": "Where the alert task runs. A data source can have several, so pick the one that owns alerting."
+    },
+    "no_data": "No optical transceiver data collected.",
+    "filter_placeholder": "Filter by Device...",
+    "template_update": "Update"
   }
 }

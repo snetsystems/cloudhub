@@ -8,6 +8,7 @@ import {
   TimeRange,
   Template,
   DashboardType,
+  CellType,
 } from 'src/types'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import _ from 'lodash'
@@ -17,11 +18,14 @@ import OverlayContainer from 'src/reusable_ui/components/overlays/OverlayContain
 import OverlayHeading from 'src/reusable_ui/components/overlays/OverlayHeading'
 import OverlayBody from 'src/reusable_ui/components/overlays/OverlayBody'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import {renderRegisteredCell} from 'src/shared/components/cellRegistry'
 import {
   detectTemplateConflicts,
   getTemplateQueryKey,
 } from 'src/server_details/utils/templateConflict'
-import {hasRunnableQuery} from 'src/reusable_ui/components/FixedModal/importSelectionPreview'
+import {hasRunnableQuery} from 'src/reusable_ui/components/FixedModal/previewCells'
+import {proxy} from 'src/utils/queryUrlGenerator'
+import {getDeep} from 'src/utils/wrappers'
 
 interface DashboardListProps {
   dashboards: Dashboard[]
@@ -112,6 +116,7 @@ const CellPreviewModal: React.FC<CellPreviewModalProps> = ({
               manualRefresh={0}
               templates={templates}
               host=""
+              renderCell={renderRegisteredCell}
             />
           </div>
         </OverlayBody>
@@ -300,14 +305,67 @@ function DashboardList({
     new Set()
   )
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set())
+  // Measurements collected on the current source; null while unknown, in which
+  // case no template is hidden (a failed lookup must not swallow the list).
+  const [measurements, setMeasurements] = useState<string[] | null>(null)
+
+  useEffect(() => {
+    if (!source) {
+      return
+    }
+    let isCancelled = false
+
+    proxy({
+      source: source.links.proxy,
+      query: 'SHOW MEASUREMENTS',
+      db: source.telegraf,
+    })
+      .then(({data}) => {
+        if (isCancelled) {
+          return
+        }
+        const values = getDeep<string[][]>(
+          data,
+          'results.[0].series.[0].values',
+          []
+        )
+        setMeasurements(values.map(v => v[0]))
+      })
+      .catch(() => {
+        // Leave it unknown so every shared template stays listed.
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [source])
 
   // Importable cells only (no query → “Add Data” cells are excluded from the list).
+  // `component` cells carry no query — they render from the cell registry — so
+  // they are importable even though hasRunnableQuery() rejects them.
+  const isImportableCell = (cell: Cell) =>
+    cell.type === CellType.Component || hasRunnableQuery(cell)
+
   const importableDashboards = _.sortBy(
     dashboards,
     d => d.name?.toLowerCase() || ''
   )
     .filter(dashboard => {
-      if (dashboard.type !== DashboardType.Normal) {
+      if (dashboard.type === DashboardType.Builtin) {
+        // Builtin dashboards back their own pages; only the ones the template
+        // marks as shared are offered as importable templates, and only while
+        // the measurement they read is actually being collected.
+        if (!dashboard.shared) {
+          return false
+        }
+        if (
+          dashboard.measurement &&
+          measurements &&
+          !measurements.includes(dashboard.measurement)
+        ) {
+          return false
+        }
+      } else if (dashboard.type !== DashboardType.Normal) {
         return false
       }
       if (
@@ -321,9 +379,18 @@ function DashboardList({
     })
     .map(dashboard => ({
       ...dashboard,
-      cells: (dashboard.cells ?? []).filter(hasRunnableQuery),
+      cells: (dashboard.cells ?? []).filter(isImportableCell),
     }))
     .filter(dashboard => (dashboard.cells?.length ?? 0) > 0)
+
+  // Builtin dashboards are the shipped cell templates (e.g. snmp); list them
+  // under their own heading so they read as categories, not user dashboards.
+  const templateDashboards = importableDashboards.filter(
+    d => d.type === DashboardType.Builtin
+  )
+  const userDashboards = importableDashboards.filter(
+    d => d.type !== DashboardType.Builtin
+  )
 
   const emitSelectionChange = (nextCells: Set<string>) => {
     if (!onSelectionChange) {
@@ -452,15 +519,15 @@ function DashboardList({
     )
   }
 
-  const sortedDashboards = importableDashboards
-
-  return (
-    <div className="fixedmodal-list">
-      {sortedDashboards.length === 0 ? (
-        <p className="fixedmodal-list__message">No dashboards found.</p>
-      ) : (
+  const renderGroup = (label: string, group: typeof importableDashboards) => {
+    if (group.length === 0) {
+      return null
+    }
+    return (
+      <React.Fragment key={label}>
+        <div className="fixedmodal-list__group-label">{label}</div>
         <div className="fixedmodal-list__list-box">
-          {sortedDashboards.map(dashboard => (
+          {group.map(dashboard => (
             <DashboardItem
               key={dashboard.id}
               dashboard={dashboard}
@@ -472,6 +539,19 @@ function DashboardList({
             />
           ))}
         </div>
+      </React.Fragment>
+    )
+  }
+
+  return (
+    <div className="fixedmodal-list">
+      {importableDashboards.length === 0 ? (
+        <p className="fixedmodal-list__message">No dashboards found.</p>
+      ) : (
+        <>
+          {renderGroup('Template', templateDashboards)}
+          {renderGroup('Dashboards', userDashboards)}
+        </>
       )}
       <CellPreviewModal
         isOpen={isPreviewOpen}

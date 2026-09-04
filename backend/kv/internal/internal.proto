@@ -28,6 +28,8 @@ message Dashboard {
 	string Type                  = 6; // Type distinguishes dashboard types: 'normal' (default) or 'builtin'
 	string Version               = 7; // Version is the template version for builtin dashboards (e.g., "1.0.0")
 	bool isDefault               = 8; // When true, this dashboard is the org's default
+	bool Shared                  = 9; // When true, a builtin template's cells are offered in the dashboard import list
+	string Measurement           = 10; // Measurement a shared template's cells read (empty = always offered)
 }
 
 message DashboardCell {
@@ -365,6 +367,15 @@ message NetworkDeviceOrg {
   AIKapacitor AIKapacitor             = 8;  // Kapacitor configuration for AI 
   string LearningCron                 = 9;  
   int32 ProcCnt						  = 10; // Used learning process count(s)
+  OpticsThreshold OpticsThreshold     = 11; // Optical transceiver judgement thresholds; absent until configured
+  int64 OpticsKapacitorID             = 12; // Kapacitor that runs the optical-transceiver alert
+}
+
+message OpticsThreshold {
+  double RxLowDbm    = 1; // Rx optical power below this (dBm) is a fault
+  double TxLowDbm    = 2; // Tx optical power below this (dBm) is a fault
+  double TempHighC   = 3; // Transceiver temperature above this (celsius) is a fault
+  bool AlertEnabled  = 4; // When true, a Kapacitor task alerts on these thresholds
 }
 
 message AIKapacitor {
@@ -415,6 +426,7 @@ message NetworkDevice {
   string LearningFinishDatetime = 15; // TZ=UTC, Format=RFC3339
   bool IsLearning               = 16; //  Indicates whether to create a learning model
   int32 ShardID                 = 17; // assigned collector shard ID
+  string Location               = 18; // physical location of the device (e.g. rack or site name)
 }
 
 message MLNxRst {

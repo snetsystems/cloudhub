@@ -25,6 +25,9 @@ interface Props {
   isFluxQuery: boolean
   visType: VisType
   toggleVisType: () => void
+  /** Cells whose behaviour lives in code, not in a saved query, cannot be
+      meaningfully duplicated; pass false to drop the button. */
+  isCloneable?: boolean
   getExtraActionsForCell?: (cell: Cell) => CellExtraAction[]
   onExtraAction?: (cell: Cell, actionId: string) => void
 }
@@ -84,13 +87,15 @@ class LayoutCellMenu extends Component<Props, State> {
         ))}
         {this.pencilMenu}
 
-        <Authorized requiredRole={EDITOR_ROLE}>
-          <MenuTooltipButton
-            icon="duplicate"
-            menuItems={this.cloneMenuItems}
-            informParent={this.handleToggleSubMenu}
-          />
-        </Authorized>
+        {this.props.isCloneable !== false && (
+          <Authorized requiredRole={EDITOR_ROLE}>
+            <MenuTooltipButton
+              icon="duplicate"
+              menuItems={this.cloneMenuItems}
+              informParent={this.handleToggleSubMenu}
+            />
+          </Authorized>
+        )}
         <MenuTooltipButton
           icon="trash"
           theme="danger"

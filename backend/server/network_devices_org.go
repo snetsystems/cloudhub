@@ -32,28 +32,32 @@ type devicesOrgResponse struct {
 	Organizations []*deviceOrgResponse `json:"organizations"`
 }
 type deviceOrgResponse struct {
-	ID                  string               `json:"organization"`
-	LoadModule          string               `json:"load_module"`
-	MLFunction          string               `json:"ml_function"`
-	DataDuration        int                  `json:"data_duration"`
-	LearnedDevicesIDs   []string             `json:"learned_devices_ids"`
-	CollectorServer     string               `json:"collector_server"`
-	CollectedDevicesIDs []string             `json:"collected_devices_ids"`
-	AIKapacitor         cloudhub.AIKapacitor `json:"ai_kapacitor"`
-	LearningCron        string               `json:"learning_cron"`
-	ProcCnt             int                  `json:"process_count"`
+	ID                  string                    `json:"organization"`
+	LoadModule          string                    `json:"load_module"`
+	MLFunction          string                    `json:"ml_function"`
+	DataDuration        int                       `json:"data_duration"`
+	LearnedDevicesIDs   []string                  `json:"learned_devices_ids"`
+	CollectorServer     string                    `json:"collector_server"`
+	CollectedDevicesIDs []string                  `json:"collected_devices_ids"`
+	AIKapacitor         cloudhub.AIKapacitor      `json:"ai_kapacitor"`
+	LearningCron        string                    `json:"learning_cron"`
+	ProcCnt             int                       `json:"process_count"`
+	OpticsThreshold     *cloudhub.OpticsThreshold `json:"optics_threshold,omitempty"`
+	OpticsKapacitorID   int                       `json:"optics_kapacitor_id,string,omitempty"`
 }
 type updateDeviceOrgRequest struct {
-	LoadModule          *string               `json:"load_module,omitempty"`
-	MLFunction          *string               `json:"ml_function,omitempty"`
-	DataDuration        *int                  `json:"data_duration,omitempty"`
-	CollectedDevicesIDs *[]string             `json:"collected_devices_ids"`
-	LearnedDevicesIDs   *[]string             `json:"learned_devices_ids"`
-	AIKapacitor         *cloudhub.AIKapacitor `json:"ai_kapacitor"`
-	CollectorServer     *string               `json:"collector_server"`
-	TaskStatus          int                   `json:"task_status"`
-	LearningCron        *string               `json:"learning_cron"`
-	ProcCnt             int                   `json:"process_count"`
+	LoadModule          *string                   `json:"load_module,omitempty"`
+	MLFunction          *string                   `json:"ml_function,omitempty"`
+	DataDuration        *int                      `json:"data_duration,omitempty"`
+	CollectedDevicesIDs *[]string                 `json:"collected_devices_ids"`
+	LearnedDevicesIDs   *[]string                 `json:"learned_devices_ids"`
+	AIKapacitor         *cloudhub.AIKapacitor     `json:"ai_kapacitor"`
+	CollectorServer     *string                   `json:"collector_server"`
+	TaskStatus          int                       `json:"task_status"`
+	LearningCron        *string                   `json:"learning_cron"`
+	ProcCnt             int                       `json:"process_count"`
+	OpticsThreshold     *cloudhub.OpticsThreshold `json:"optics_threshold,omitempty"`
+	OpticsKapacitorID   *int                      `json:"optics_kapacitor_id,string,omitempty"`
 }
 
 type deviceOrgRequest struct {
@@ -247,6 +251,8 @@ func newDeviceOrgResponse(deviceOrg *cloudhub.NetworkDeviceOrg) (*deviceOrgRespo
 		AIKapacitor:         deviceOrg.AIKapacitor,
 		LearningCron:        deviceOrg.LearningCron,
 		ProcCnt:             deviceOrg.ProcCnt,
+		OpticsThreshold:     deviceOrg.OpticsThreshold,
+		OpticsKapacitorID:   deviceOrg.OpticsKapacitorID,
 	}
 
 	return resData, nil
@@ -388,6 +394,8 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	previousAIKapacitor = deviceOrg.AIKapacitor
+	previousOpticsThreshold := deviceOrg.OpticsThreshold
+	previousOpticsKapacitorID := deviceOrg.OpticsKapacitorID
 	deviceOrg.ProcCnt = req.ProcCnt
 
 	if req.LoadModule != nil {
@@ -411,6 +419,13 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 
 	if req.LearningCron != nil {
 		deviceOrg.LearningCron = *req.LearningCron
+	}
+	if req.OpticsThreshold != nil {
+		threshold := *req.OpticsThreshold
+		deviceOrg.OpticsThreshold = &threshold
+	}
+	if req.OpticsKapacitorID != nil {
+		deviceOrg.OpticsKapacitorID = *req.OpticsKapacitorID
 	}
 	if req.AIKapacitor != nil {
 		deviceOrg.AIKapacitor.SrcID = req.AIKapacitor.SrcID
@@ -449,6 +464,32 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 		msg := fmt.Sprintf("Error updating Device Org ID %s: %v", idStr, err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
+	}
+
+	// The optics alert runs off the thresholds just saved, so it only needs
+	// touching when those changed — every other edit to this organization would
+	// otherwise reach out to Kapacitor for nothing. Kapacitor being unreachable
+	// must not lose the settings, so a failure is logged, not fatal.
+	// Moving to a different Kapacitor leaves the old task running, which would
+	// alert on the same fault twice.
+	if previousOpticsKapacitorID != 0 &&
+		previousOpticsKapacitorID != deviceOrg.OpticsKapacitorID {
+		if err := removeOpticsAlertTaskFrom(ctx, s, previousOpticsKapacitorID, deviceOrg.ID); err != nil {
+			s.Logger.
+				WithField("component", "optics-alert").
+				WithField("organization", deviceOrg.ID).
+				Error("Failed to remove the previous optics alert task: ", err)
+		}
+	}
+
+	if opticsThresholdChanged(previousOpticsThreshold, deviceOrg.OpticsThreshold) ||
+		previousOpticsKapacitorID != deviceOrg.OpticsKapacitorID {
+		if err := applyOpticsAlertTask(ctx, s, deviceOrg.ID, deviceOrg); err != nil {
+			s.Logger.
+				WithField("component", "optics-alert").
+				WithField("organization", deviceOrg.ID).
+				Error("Failed to apply optics alert task: ", err)
+		}
 	}
 
 	msg := fmt.Sprintf(MsgNetWorkDeviceModified.String(), idStr)

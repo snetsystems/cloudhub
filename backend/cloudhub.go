@@ -404,6 +404,8 @@ type TemplateFieldType string
 const (
 	// LearnScriptPrefix TickScript ID Prefix
 	LearnScriptPrefix = "learn-"
+	// OpticsScriptPrefix TickScript ID Prefix
+	OpticsScriptPrefix = "optics-"
 	// PredictScriptPrefix TickScript ID Prefix
 	PredictScriptPrefix = "predict-"
 	// AlertGroupScriptPrefix TickScript ID Prefix for v2 Alert Group rules
@@ -773,10 +775,12 @@ type Dashboard struct {
 	Cells        []DashboardCell `json:"cells"`
 	Templates    []Template      `json:"templates"`
 	Name         string          `json:"name"`
-	Organization string          `json:"organization"`        // Organization is the organization ID that resource belongs to
-	Type         string          `json:"type,omitempty"`      // Type: "normal" (default) or "builtin" (fixed-cell template dashboard)
-	Version      string          `json:"version,omitempty"`   // Template version for fixed-cell template dashboards (e.g., "1.0.0")
-	IsDefault    bool            `json:"isDefault,omitempty"` // IsDefault marks this dashboard as the default dashboard for the organization
+	Organization string          `json:"organization"`          // Organization is the organization ID that resource belongs to
+	Type         string          `json:"type,omitempty"`        // Type: "normal" (default) or "builtin" (fixed-cell template dashboard)
+	Version      string          `json:"version,omitempty"`     // Template version for fixed-cell template dashboards (e.g., "1.0.0")
+	IsDefault    bool            `json:"isDefault,omitempty"`   // IsDefault marks this dashboard as the default dashboard for the organization
+	Shared       bool            `json:"shared,omitempty"`      // Shared exposes a builtin template's cells in the dashboard import list; set from the template JSON
+	Measurement  string          `json:"measurement,omitempty"` // Measurement a shared template's cells read; the template is hidden when nothing collects it
 }
 
 // UnmarshalJSON unmarshals a string ID into a DashboardID (int).
@@ -1473,6 +1477,28 @@ type NetworkDeviceOrg struct {
 	AIKapacitor         AIKapacitor `json:"ai_kapacitor"`
 	LearningCron        string      `json:"learning_cron"`
 	ProcCnt             int         `json:"process_count"`
+	// OpticsThreshold is nil until an operator configures it; clients then
+	// apply their shipped defaults.
+	OpticsThreshold *OpticsThreshold `json:"optics_threshold,omitempty"`
+	// OpticsKapacitorID names the Kapacitor that runs the optical-transceiver
+	// alert. A data source can have several Kapacitors registered and that
+	// association says nothing about which should own alerts, so the operator
+	// picks one. Only the identity is stored — the connection is resolved when
+	// the task is written, so a changed URL or password is never stale here.
+	OpticsKapacitorID int `json:"optics_kapacitor_id,string,omitempty"`
+}
+
+// OpticsThreshold is the organization-wide judgement threshold for optical
+// transceiver readings. Optical power is in dBm (higher is stronger, so a
+// reading below the low threshold is the fault case); temperature is in
+// degrees Celsius.
+type OpticsThreshold struct {
+	RxLowDbm  float64 `json:"rx_low_dbm"`
+	TxLowDbm  float64 `json:"tx_low_dbm"`
+	TempHighC float64 `json:"temp_high_c"`
+	// AlertEnabled drives the Kapacitor task off the same thresholds, so an
+	// operator cannot end up alerting on numbers the dashboard is not showing.
+	AlertEnabled bool `json:"alert_enabled"`
 }
 
 // NetworkDeviceOrgStore is the Storage and retrieval of information
@@ -1545,6 +1571,7 @@ type NetworkDevice struct {
 	LearningFinishDatetime string     `json:"learning_finish_datetime"`
 	IsLearning             bool       `json:"is_learning"`
 	ShardID                int        `json:"shard_id"`
+	Location               string     `json:"location"`
 }
 
 // KafkaProducer defines the interface for publishing configuration updates to Kafka.

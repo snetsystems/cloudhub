@@ -327,11 +327,11 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				q.Shifts = q.QueryConfig.Shifts
 			}
 			queries[j] = &Query{
-				Command: q.Command,
-				Label:   q.Label,
-				Range:   r,
-				Source:  q.Source,
-				Type:    q.Type,
+				Command:       q.Command,
+				Label:         q.Label,
+				Range:         r,
+				Source:        q.Source,
+				Type:          q.Type,
 				QueryTargetOS: q.QueryTargetOS,
 			}
 
@@ -359,11 +359,11 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				q.Shifts = q.QueryConfig.Shifts
 			}
 			detailQueries[j] = &Query{
-				Command: q.Command,
-				Label:   q.Label,
-				Range:   r,
-				Source:  q.Source,
-				Type:    q.Type,
+				Command:       q.Command,
+				Label:         q.Label,
+				Range:         r,
+				Source:        q.Source,
+				Type:          q.Type,
 				QueryTargetOS: q.QueryTargetOS,
 			}
 			shifts := make([]*TimeShift, len(q.Shifts))
@@ -510,9 +510,9 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			Name:          c.Name,
 			Queries:       queries,
 			DetailQueries: detailQueries,
-			Type:    c.Type,
-			Axes:    axes,
-			Colors:  colors,
+			Type:          c.Type,
+			Axes:          axes,
+			Colors:        colors,
 			Legend: &Legend{
 				Type:        c.Legend.Type,
 				Orientation: c.Legend.Orientation,
@@ -576,6 +576,8 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		Type:         getDashboardType(d.Type),
 		Version:      d.Version,
 		IsDefault:    d.IsDefault,
+		Shared:       d.Shared,
+		Measurement:  d.Measurement,
 	}
 	return proto.Marshal(pb)
 }
@@ -596,10 +598,10 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 				queryType = q.Type
 			}
 			queries[j] = cloudhub.DashboardQuery{
-				Command: q.Command,
-				Label:   q.Label,
-				Source:  q.Source,
-				Type:    queryType,
+				Command:       q.Command,
+				Label:         q.Label,
+				Source:        q.Source,
+				Type:          queryType,
 				QueryTargetOS: q.QueryTargetOS,
 			}
 
@@ -634,10 +636,10 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 				queryType = q.Type
 			}
 			detailQueries[j] = cloudhub.DashboardQuery{
-				Command: q.Command,
-				Label:   q.Label,
-				Source:  q.Source,
-				Type:    queryType,
+				Command:       q.Command,
+				Label:         q.Label,
+				Source:        q.Source,
+				Type:          queryType,
 				QueryTargetOS: q.QueryTargetOS,
 			}
 			// Defensive nil check — MarshalDashboard always sets Range but guard against external data
@@ -791,7 +793,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 					IsShowValues:    setting.IsShowValues,
 					ValueFormat:     setting.ValueFormat,
 				}
-	}
+			}
 
 			decimalPlaces := cloudhub.DecimalPlaces{}
 			if c.TableGaugeChartOptions.DecimalPlaces != nil {
@@ -915,6 +917,8 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 	d.Type = getDashboardType(pb.Type)
 	d.Version = pb.Version
 	d.IsDefault = pb.IsDefault
+	d.Shared = pb.Shared
+	d.Measurement = pb.Measurement
 	return nil
 }
 
@@ -1510,9 +1514,23 @@ func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 			Password:           t.AIKapacitor.Password,
 			InsecureSkipVerify: t.AIKapacitor.InsecureSkipVerify,
 		},
-		LearningCron: t.LearningCron,
-		ProcCnt:      int32(t.ProcCnt),
+		LearningCron:      t.LearningCron,
+		ProcCnt:           int32(t.ProcCnt),
+		OpticsThreshold:   marshalOpticsThreshold(t.OpticsThreshold),
+		OpticsKapacitorID: int64(t.OpticsKapacitorID),
 	})
+}
+
+func marshalOpticsThreshold(t *cloudhub.OpticsThreshold) *OpticsThreshold {
+	if t == nil {
+		return nil
+	}
+	return &OpticsThreshold{
+		RxLowDbm:     t.RxLowDbm,
+		TxLowDbm:     t.TxLowDbm,
+		TempHighC:    t.TempHighC,
+		AlertEnabled: t.AlertEnabled,
+	}
 }
 
 // UnmarshalNetworkDeviceOrg decodes a networkDeviceOrg from binary protobuf data.
@@ -1542,6 +1560,17 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 	}
 	t.LearningCron = pb.LearningCron
 	t.ProcCnt = int(pb.ProcCnt)
+	if pb.OpticsThreshold != nil {
+		t.OpticsThreshold = &cloudhub.OpticsThreshold{
+			RxLowDbm:     pb.OpticsThreshold.RxLowDbm,
+			TxLowDbm:     pb.OpticsThreshold.TxLowDbm,
+			TempHighC:    pb.OpticsThreshold.TempHighC,
+			AlertEnabled: pb.OpticsThreshold.AlertEnabled,
+		}
+	} else {
+		t.OpticsThreshold = nil
+	}
+	t.OpticsKapacitorID = int(pb.OpticsKapacitorID)
 	return nil
 }
 

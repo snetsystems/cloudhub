@@ -53,6 +53,7 @@ input {
             "1.3.6.1.2.1.2.2.1.2",        # ifDescr
             "1.3.6.1.2.1.2.2.1.5",        # ifSpeed
             "1.3.6.1.2.1.2.2.1.6",        # ifPhysAddress
+            "1.3.6.1.2.1.2.2.1.7",        # ifAdminStatus
             "1.3.6.1.2.1.2.2.1.8",        # ifOperStatus
             "1.3.6.1.2.1.2.2.1.13",        # ifInDiscards
             "1.3.6.1.2.1.2.2.1.14",        # ifInErrors
@@ -83,9 +84,16 @@ input {
             ]
         }
         , {
+            "name" => "entity"
+            "columns" => [
+            "1.3.6.1.2.1.47.1.1.1.1.5",         # entPhysicalClass (3 = chassis)
+            "1.3.6.1.2.1.47.1.1.1.1.13"         # entPhysicalModelName
+            ]
+        }
+        , {
             "name" => "optics"
             "columns" => [
-            "1.3.6.1.4.1.9.9.91.1.1.1.1.1",    # entSensorType (14 = dBm)
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.1",    # entSensorType (14 = dBm, 8 = celsius)
             "1.3.6.1.4.1.9.9.91.1.1.1.1.2",    # entSensorScale
             "1.3.6.1.4.1.9.9.91.1.1.1.1.3",    # entSensorPrecision
             "1.3.6.1.4.1.9.9.91.1.1.1.1.4",    # entSensorValue
@@ -147,6 +155,7 @@ input {
             "1.3.6.1.2.1.2.2.1.2",        # ifDescr
             "1.3.6.1.2.1.2.2.1.5",        # ifSpeed
             "1.3.6.1.2.1.2.2.1.6",        # ifPhysAddress
+            "1.3.6.1.2.1.2.2.1.7",        # ifAdminStatus
             "1.3.6.1.2.1.2.2.1.8",        # ifOperStatus
             "1.3.6.1.2.1.2.2.1.13",        # ifInDiscards
             "1.3.6.1.2.1.2.2.1.14",        # ifInErrors
@@ -177,9 +186,16 @@ input {
             ]
         }
         , {
+            "name" => "entity"
+            "columns" => [
+            "1.3.6.1.2.1.47.1.1.1.1.5",         # entPhysicalClass (3 = chassis)
+            "1.3.6.1.2.1.47.1.1.1.1.13"         # entPhysicalModelName
+            ]
+        }
+        , {
             "name" => "optics"
             "columns" => [
-            "1.3.6.1.4.1.9.9.91.1.1.1.1.1",    # entSensorType (14 = dBm)
+            "1.3.6.1.4.1.9.9.91.1.1.1.1.1",    # entSensorType (14 = dBm, 8 = celsius)
             "1.3.6.1.4.1.9.9.91.1.1.1.1.2",    # entSensorScale
             "1.3.6.1.4.1.9.9.91.1.1.1.1.3",    # entSensorPrecision
             "1.3.6.1.4.1.9.9.91.1.1.1.1.4",    # entSensorValue
@@ -212,6 +228,7 @@ output {
                     "agent_host" => "%{host}"
                     "sys_name" => "%{system.sysName.0}"
                     "sys_desc" => "%{system.sysDescr.0}"
+                    "sys_model" => "%{sys_model}"
                     "sys_uptime" => "%{system.sysUpTime.sysUpTimeInstance}"
                     "mem_usage" => "%{mem_usage}"
                     "total_ifInDiscards" => "%{total_ifInDiscards}"
@@ -281,6 +298,7 @@ output {
                     "ifSpeed" => "%{[interfaces][interfaces.ifTable.ifEntry.ifSpeed]}"
                     "ifPhysAddress" => "%{[interfaces][interfaces.ifTable.ifEntry.ifPhysAddress]}"
                     "ifOperStatus" => "%{ifOperStatus}"
+                    "ifAdminStatus" => "%{ifAdminStatus}"
                     "ifInDiscards" => "%{[interfaces][interfaces.ifTable.ifEntry.ifInDiscards]}"
                     "ifInErrors" => "%{[interfaces][interfaces.ifTable.ifEntry.ifInErrors]}"
                     "ifOutDiscards" => "%{[interfaces][interfaces.ifTable.ifEntry.ifOutDiscards]}"
@@ -351,6 +369,7 @@ output {
                     "ifName" => "%{ifName}"
                     "opticLane" => "%{opticLane}"
                     "opticalRxPower" => "%{opticalRxPower}"
+                    "opticStatus" => "%{opticStatus}"
                 }
                 send_as_tags => ["dev_id", "agent_host", "sys_name", "ifName", "opticLane"]
                 coerce_values => {
@@ -376,6 +395,47 @@ output {
                 coerce_values => {
                     "opticalTxPower" => "float"
                 }
+            }
+        }
+        if [type] == "snmp_nx_optics_evt" and [opticalTemperature] {
+            influxdb {
+                host => "{{.InfluxOrigin}}"
+                port => {{.InfluxPort}}
+                db => "{{.OrgName}}"
+                measurement => "snmp_nx"
+                data_points => {
+                    "dev_id" => "%{dev_id}"
+                    "agent_host" => "%{host}"
+                    "sys_name" => "%{system.sysName.0}"
+                    "ifName" => "%{ifName}"
+                    "opticLane" => "%{opticLane}"
+                    "opticalTemperature" => "%{opticalTemperature}"
+                }
+                send_as_tags => ["dev_id", "agent_host", "sys_name", "ifName", "opticLane"]
+                coerce_values => {
+                    "opticalTemperature" => "float"
+                }
+            }
+        }
+        # An empty cage reports entSensorStatus=unavailable with no reading at
+        # all, so none of the three outputs above fire and the port vanishes
+        # from the list rather than showing as unpopulated. Emit the status on
+        # its own so it still lands as a row.
+        if [type] == "snmp_nx_optics_evt" and ![opticalRxPower] and ![opticalTxPower] and ![opticalTemperature] {
+            influxdb {
+                host => "{{.InfluxOrigin}}"
+                port => {{.InfluxPort}}
+                db => "{{.OrgName}}"
+                measurement => "snmp_nx"
+                data_points => {
+                    "dev_id" => "%{dev_id}"
+                    "agent_host" => "%{host}"
+                    "sys_name" => "%{system.sysName.0}"
+                    "ifName" => "%{ifName}"
+                    "opticLane" => "%{opticLane}"
+                    "opticStatus" => "%{opticStatus}"
+                }
+                send_as_tags => ["dev_id", "agent_host", "sys_name", "ifName", "opticLane"]
             }
         }
     }

@@ -157,7 +157,7 @@ function DeviceManagementBtn({
               color={ComponentColor.Primary}
               size={ComponentSize.Small}
               titleText="Import Device"
-              text="Import Device2"
+              text="Import Device"
               icon={IconFont.Import}
             />
           </div>

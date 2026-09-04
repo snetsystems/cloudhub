@@ -48,9 +48,13 @@ function TableBase({
     [columns]
   )
 
+  // The open row is tracked by index, so it has to close when the row set
+  // changes underneath it — a search, a sort, rows appearing or leaving. A
+  // periodic refresh replaces the array without changing which rows exist, and
+  // closing on that alone made expanded detail unusable on refreshing tables.
   useEffect(() => {
     setOpenRowAccor(null)
-  }, [data])
+  }, [data?.length, sortTarget])
 
   const keys = displayColumns?.map(item => item.key)
 

@@ -1,0 +1,24 @@
+{
+  "id": 0,
+  "name": "snmp",
+  "type": "builtin",
+  "version": "1.0.0",
+  "shared": true,
+  "measurement": "snmp_nx",
+  "organization": "",
+  "cells": [
+    {
+      "i": "snmp-optics",
+      "x": 0,
+      "y": 0,
+      "w": 96,
+      "h": 30,
+      "minW": 24,
+      "minH": 12,
+      "name": "Optical Transceiver (SFP)",
+      "queries": [],
+      "type": "component"
+    }
+  ],
+  "templates": []
+}

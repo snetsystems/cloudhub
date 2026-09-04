@@ -26,6 +26,7 @@ type createDeviceRequest struct {
 	SSHConfig    cloudhub.SSHConfig  `json:"ssh_config,omitempty"`
 	SNMPConfig   cloudhub.SNMPConfig `json:"snmp_config"`
 	DeviceVendor string              `json:"device_vendor,omitempty"`
+	Location     string              `json:"location,omitempty"`
 }
 
 type updateDeviceRequest struct {
@@ -41,6 +42,7 @@ type updateDeviceRequest struct {
 	DeviceVendor           *string              `json:"device_vendor,omitempty"`
 	IsLearning             *bool                `json:"is_learning,omitempty"`
 	Sensitivity            *float32             `json:"sensitivity,omitempty"`
+	Location               *string              `json:"location,omitempty"`
 }
 
 type updateDeviceData struct {
@@ -74,6 +76,7 @@ type deviceResponse struct {
 	LearningFinishDatetime string              `json:"learning_finish_datetime"`
 	IsLearning             bool                `json:"is_learning"`
 	MLFunction             string              `json:"ml_function"`
+	Location               string              `json:"location"`
 }
 type createDeviceError struct {
 	Index        int    `json:"index"`
@@ -153,6 +156,7 @@ func newDeviceResponse(ctx context.Context, s *Service, device *cloudhub.Network
 		LearningFinishDatetime: device.LearningFinishDatetime,
 		IsLearning:             device.IsLearning,
 		MLFunction:             MLFunction,
+		Location:               device.Location,
 	}
 
 	return resData, nil
@@ -214,6 +218,7 @@ func (r *createDeviceRequest) CreateDeviceFromRequest() (*cloudhub.NetworkDevice
 		SNMPConfig:             r.SNMPConfig,
 		Sensitivity:            1.0,
 		DeviceVendor:           r.DeviceVendor,
+		Location:               r.Location,
 		LearningState:          "",
 		LearningBeginDatetime:  "",
 		LearningFinishDatetime: "",
@@ -718,6 +723,12 @@ func (s *Service) UpdateDevice(ctx context.Context, req *updateDeviceData) (*clo
 	}
 	if req.Sensitivity != nil && device.Sensitivity != *req.Sensitivity {
 		device.Sensitivity = *req.Sensitivity
+	}
+	// Location is a label, not a collection parameter — it appears nowhere in the
+	// logstash template — so it does not invalidate a deployed config and must
+	// not trip the "stop collecting before updating" guard below.
+	if req.Location != nil && device.Location != *req.Location {
+		device.Location = *req.Location
 	}
 	if req.DeviceVendor != nil && device.DeviceVendor != *req.DeviceVendor {
 		device.DeviceVendor = *req.DeviceVendor

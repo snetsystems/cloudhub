@@ -20,6 +20,8 @@ const (
 	LogstashTemplateField cloudhub.TemplateFieldType = "logstash-snmp_nx"
 	// URLMonitoringTelegrafTemplateField renders telegraf url-monitoring config.
 	URLMonitoringTelegrafTemplateField cloudhub.TemplateFieldType = "telegraf-url-monitoring"
+	// OpticsTaskField represents the optics_tick template field
+	OpticsTaskField cloudhub.TemplateFieldType = "optics-task"
 )
 
 // LoadTemplate loads and parses the template from the given file path and field type

@@ -1854,6 +1854,32 @@ export const notifyInvalidDurationFormat = (): Notification => ({
   duration: 3000,
 })
 
+export const notifyInvalidOpticsThreshold = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Optical power and temperature thresholds must be numbers. Optical power is in dBm and is normally negative.`,
+  duration: 4000,
+})
+
+export const notifyOpticsKapacitorRequired = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Choose the Kapacitor that should run the optical transceiver alert.`,
+  duration: 4000,
+})
+
+export const notifyOpticsThresholdSaved = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Optical transceiver thresholds saved.`,
+  duration: 3000,
+})
+
+export const notifyOpticsThresholdSaveFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Could not save optical transceiver thresholds: ${message}`,
+  duration: 5000,
+})
+
 export const notifyNamespaceRequired = (): Notification => ({
   ...defaultErrorNotification,
   message: `There is no selected namespace.`,

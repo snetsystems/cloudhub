@@ -1392,3 +1392,73 @@ func TestMarshalDashboardIsDefault(t *testing.T) {
 		t.Errorf("expected IsDefault=false, got %v", got2.IsDefault)
 	}
 }
+
+func TestMarshalDashboardShared(t *testing.T) {
+	for _, shared := range []bool{true, false} {
+		d := cloudhub.Dashboard{
+			ID:           44,
+			Name:         "snmp",
+			Type:         cloudhub.DashboardTypeBuiltin,
+			Shared:       shared,
+			Measurement:  "snmp_nx",
+			Organization: "org1",
+			Cells:        []cloudhub.DashboardCell{},
+			Templates:    []cloudhub.Template{},
+		}
+
+		buf, err := internal.MarshalDashboard(d)
+		if err != nil {
+			t.Fatalf("MarshalDashboard error: %v", err)
+		}
+
+		var got cloudhub.Dashboard
+		if err := internal.UnmarshalDashboard(buf, &got); err != nil {
+			t.Fatalf("UnmarshalDashboard error: %v", err)
+		}
+
+		if got.Shared != shared {
+			t.Errorf("expected Shared=%v, got %v", shared, got.Shared)
+		}
+		if got.Measurement != "snmp_nx" {
+			t.Errorf("expected Measurement=snmp_nx, got %q", got.Measurement)
+		}
+	}
+}
+
+func TestMarshalNetworkDeviceOrgOpticsThreshold(t *testing.T) {
+	// Absent until configured: nil must survive the round trip as nil, so a
+	// client can tell "never set" from a threshold that happens to be 0.
+	var got cloudhub.NetworkDeviceOrg
+	buf, err := internal.MarshalNetworkDeviceOrg(&cloudhub.NetworkDeviceOrg{ID: "org1"})
+	if err != nil {
+		t.Fatalf("MarshalNetworkDeviceOrg error: %v", err)
+	}
+	if err := internal.UnmarshalNetworkDeviceOrg(buf, &got); err != nil {
+		t.Fatalf("UnmarshalNetworkDeviceOrg error: %v", err)
+	}
+	if got.OpticsThreshold != nil {
+		t.Errorf("expected OpticsThreshold=nil, got %+v", got.OpticsThreshold)
+	}
+
+	set := &cloudhub.NetworkDeviceOrg{
+		ID:              "org1",
+		OpticsThreshold: &cloudhub.OpticsThreshold{RxLowDbm: -17, TxLowDbm: -17, TempHighC: 75},
+	}
+	buf, err = internal.MarshalNetworkDeviceOrg(set)
+	if err != nil {
+		t.Fatalf("MarshalNetworkDeviceOrg error: %v", err)
+	}
+	got = cloudhub.NetworkDeviceOrg{}
+	if err := internal.UnmarshalNetworkDeviceOrg(buf, &got); err != nil {
+		t.Fatalf("UnmarshalNetworkDeviceOrg error: %v", err)
+	}
+	if got.OpticsThreshold == nil {
+		t.Fatal("expected OpticsThreshold to survive the round trip")
+	}
+	if got.OpticsThreshold.RxLowDbm != -17 || got.OpticsThreshold.TxLowDbm != -17 {
+		t.Errorf("optical power thresholds = %+v, want -17/-17", got.OpticsThreshold)
+	}
+	if got.OpticsThreshold.TempHighC != 75 {
+		t.Errorf("TempHighC = %v, want 75", got.OpticsThreshold.TempHighC)
+	}
+}

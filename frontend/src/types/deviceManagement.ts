@@ -17,6 +17,7 @@ export interface DeviceData {
   snmp_config: SNMPConfig
   sensitivity?: string
   device_vendor?: string
+  location?: string
   learning_state?: string
   learning_update_datetime?: string
   learning_finish_datetime?: string
@@ -206,6 +207,9 @@ export interface LearningOrganizationOption {
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
   task_status?: 1 | 2
   process_count?: number
+  optics_threshold?: OpticsThreshold
+  /** String, not number: Kapacitor IDs exceed Number.MAX_SAFE_INTEGER. */
+  optics_kapacitor_id?: string
 }
 
 export interface LearningOption extends LearningOrganizationOption {
@@ -218,6 +222,20 @@ export interface GetAllDevicesOrgResponse {
 
 export interface UpdateDevicesOrgResponse {
   data: DevicesOrgData
+}
+
+/**
+ * Judgement thresholds for optical transceiver readings, held per organization.
+ * Optical power is dBm — higher is stronger, so a reading *below* the low
+ * threshold is the fault. Absent until an operator saves it, in which case the
+ * shipped defaults apply.
+ */
+export interface OpticsThreshold {
+  rx_low_dbm: number
+  tx_low_dbm: number
+  temp_high_c: number
+  /** Drives a Kapacitor task off these same thresholds. */
+  alert_enabled: boolean
 }
 
 export interface DevicesOrgData {
@@ -233,6 +251,9 @@ export interface DevicesOrgData {
   process_count: number
   ai_kapacitor?: KapacitorForNetworkDeviceOrganization
   collected_devices_ids?: string[]
+  optics_threshold?: OpticsThreshold
+  /** String, not number: Kapacitor IDs exceed Number.MAX_SAFE_INTEGER. */
+  optics_kapacitor_id?: string
 }
 
 export interface DeviceOrganizationStatus {

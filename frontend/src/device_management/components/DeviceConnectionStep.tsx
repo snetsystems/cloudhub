@@ -99,6 +99,16 @@ export default class DeviceConnectionStep extends PureComponent<Props, State> {
           label="Community"
           onChange={onChangeDeviceData('community')}
         />
+        {/* Full width, and ahead of the dropdowns: a seventh half-width field
+            would strand one of the pairs, and the dropdowns below reserve room
+            for their open menus, so a field placed after them sits past that
+            gap instead of beside its row. */}
+        <WizardTextInput
+          value={deviceData?.location}
+          label="Location (Optional)"
+          newClassName="form-group col-xs-12"
+          onChange={onChangeDeviceData('location')}
+        />
         <div className="form-group col-xs-6">
           <label>Organization</label>
           <Dropdown

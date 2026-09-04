@@ -1,7 +1,8 @@
 import React, {useEffect, useRef, useState} from 'react'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import {renderRegisteredCell} from 'src/shared/components/cellRegistry'
 import {Cell, Source, TimeRange, Template} from 'src/types'
-import {normalizeCellForPreview} from './importSelectionPreview'
+import {normalizeCellForPreview, previewCardHeight} from './previewCells'
 
 interface PreviewCellCardProps {
   cell: Cell
@@ -43,7 +44,10 @@ function PreviewCellCard({
 
   return (
     <div className="import-selection-preview-card" ref={rootRef}>
-      <div className="import-selection-preview-card__body">
+      <div
+        className="import-selection-preview-card__body"
+        style={{height: previewCardHeight(cell)}}
+      >
         {!source ? (
           <div className="import-selection-preview-card__unavailable">
             Preview unavailable
@@ -64,6 +68,7 @@ function PreviewCellCard({
             manualRefresh={0}
             templates={templates}
             host=""
+            renderCell={renderRegisteredCell}
           />
         )}
       </div>

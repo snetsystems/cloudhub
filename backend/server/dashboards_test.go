@@ -990,6 +990,33 @@ func Test_newDashboardResponse_includesVersion(t *testing.T) {
 	}
 }
 
+func Test_newDashboardResponse_includesShared(t *testing.T) {
+	// Shared/Measurement survive the field-by-field rebuilds in DashboardDefaults/AddQueryConfigs.
+	d := cloudhub.Dashboard{
+		ID:           cloudhub.DashboardID(1),
+		Name:         "snmp",
+		Organization: "org1",
+		Type:         "builtin",
+		Version:      "1.0.0",
+		Shared:       true,
+		Measurement:  "snmp_nx",
+		Cells:        []cloudhub.DashboardCell{},
+		Templates:    []cloudhub.Template{},
+	}
+	got := newDashboardResponse(d)
+	if !got.Shared {
+		t.Error("Shared = false, want true")
+	}
+	if got.Measurement != "snmp_nx" {
+		t.Errorf("Measurement = %q, want snmp_nx", got.Measurement)
+	}
+
+	d.Shared = false
+	if got := newDashboardResponse(d); got.Shared {
+		t.Error("Shared = true, want false")
+	}
+}
+
 func TestService_UpdateDashboard(t *testing.T) {
 	validTemplate := cloudhub.Template{
 		ID:    "tid-1",

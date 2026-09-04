@@ -53,6 +53,13 @@ interface TableLineChartCellOptions {
 
 interface Props {
   values: LineValue[]
+  /**
+   * Anchors the x axis to a wall-clock window `[from, to]` in epoch ms instead
+   * of spreading the points evenly across the width. Use it where the window
+   * slides faster than the data arrives, so the line visibly moves between
+   * samples; omit it to keep the even spacing every other caller relies on.
+   */
+  xDomain?: [number, number]
   color?: string
   strokeWidth?: number
   height?: number
@@ -145,6 +152,7 @@ function TableLineChartCell({
   className,
   options,
   onChartClick,
+  xDomain,
 }: Props) {
   const timeZone = useSelector(
     (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
@@ -252,8 +260,14 @@ function TableLineChartCell({
         ? VIEW_BOX_WIDTH / (linePoints.length - 1)
         : VIEW_BOX_WIDTH / 2
 
+    const domainSpan = xDomain ? xDomain[1] - xDomain[0] : 0
+
     return linePoints.map((point, index) => {
-      const x = linePoints.length > 1 ? xStep * index : VIEW_BOX_WIDTH / 2
+      const evenX = linePoints.length > 1 ? xStep * index : VIEW_BOX_WIDTH / 2
+      const x =
+        domainSpan > 0 && typeof point.time === 'number'
+          ? ((point.time - xDomain[0]) / domainSpan) * VIEW_BOX_WIDTH
+          : evenX
       const displayValue = displayValues[index] ?? null
 
       return {
@@ -269,7 +283,7 @@ function TableLineChartCell({
             : chartTopPadding + ((max - displayValue) / range) * drawableHeight,
       }
     })
-  }, [linePoints, displayValues, validValues, zeroBaseline])
+  }, [linePoints, displayValues, validValues, zeroBaseline, xDomain])
 
   const drawablePoints = useMemo(
     () =>

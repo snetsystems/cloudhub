@@ -54,6 +54,8 @@ type dashboardResponse struct {
 	LatestVersion   string                  `json:"latestVersion,omitempty"`   // Latest version available (for fixed-cell dashboards)
 	UpdateAvailable bool                    `json:"updateAvailable,omitempty"` // True if a newer template version is available
 	IsDefault       bool                    `json:"isDefault,omitempty"`
+	Shared          bool                    `json:"shared,omitempty"`      // True if this builtin template's cells may be imported into other dashboards
+	Measurement     string                  `json:"measurement,omitempty"` // Measurement the template's cells read; clients hide the template when it is not collected
 	Links           dashboardLinks          `json:"links"`
 }
 
@@ -76,6 +78,8 @@ func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
 		Type:         getDashboardType(d.Type),
 		Version:      d.Version,
 		IsDefault:    d.IsDefault,
+		Shared:       d.Shared,
+		Measurement:  d.Measurement,
 		Links: dashboardLinks{
 			Self:      fmt.Sprintf("%s/%d", base, dd.ID),
 			Cells:     fmt.Sprintf("%s/%d/cells", base, dd.ID),
@@ -369,6 +373,10 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Shared and Measurement are template-derived; keep the stored values so a client that omits them cannot clear them.
+	req.Shared = dashboard.Shared
+	req.Measurement = dashboard.Measurement
+
 	if err := s.Store.Dashboards(ctx).Update(ctx, req); err != nil {
 		msg := fmt.Sprintf("Error updating dashboard ID %d: %v", id, err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
@@ -535,6 +543,8 @@ func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Type = getDashboardType(d.Type)
 	newDash.Version = d.Version
 	newDash.IsDefault = d.IsDefault
+	newDash.Shared = d.Shared
+	newDash.Measurement = d.Measurement
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
@@ -554,6 +564,8 @@ func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.Type = d.Type
 	newDash.Version = d.Version
 	newDash.IsDefault = d.IsDefault
+	newDash.Shared = d.Shared
+	newDash.Measurement = d.Measurement
 	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {

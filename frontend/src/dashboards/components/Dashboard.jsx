@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import {renderRegisteredCell} from 'src/shared/components/cellRegistry'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
 import {Page} from 'src/reusable_ui'
 
@@ -63,6 +64,7 @@ const Dashboard = ({
             templates={templatesIncludingDashTime}
             onSummonOverlayTechnologies={onSummonOverlayTechnologies}
             onPickTemplate={onPickTemplate}
+            renderCell={renderRegisteredCell}
           />
         ) : (
           <DashboardEmpty dashboard={dashboard} />

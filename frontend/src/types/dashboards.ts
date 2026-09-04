@@ -140,6 +140,8 @@ export enum CellType {
   News = 'news',
   Guide = 'guide',
   Note = 'note',
+  /** Rendered by a React component from the cell registry, not by a query. */
+  Component = 'component',
   StaticBar = 'staticBar',
   StaticPie = 'staticPie',
   StaticDoughnut = 'staticDoughnut',
@@ -168,6 +170,10 @@ export interface Dashboard {
   latestVersion?: string
   updateAvailable?: boolean
   isDefault?: boolean
+  /** Builtin templates only: when true, its cells are offered in the import list. */
+  shared?: boolean
+  /** Builtin templates only: measurement its cells read; hidden when not collected. */
+  measurement?: string
 }
 
 export const DashboardType = {

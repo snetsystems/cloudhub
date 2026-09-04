@@ -367,6 +367,35 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
   margin-left: 20px;
 }
 
+// Cells that own their header (rendered through the cell registry) rename in
+// place, since they never open the cell editor overlay.
+.dash-graph--name.dash-graph--name__renamable {
+  cursor: text;
+}
+
+.dash-graph--name-input {
+  position: relative;
+  z-index: $dash-graph--heading-name-z;
+  // Sized by the input's `size` attribute so the field hugs the name instead
+  // of stretching across the whole heading.
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 20px);
+  height: $dash-graph-heading - 8px;
+  margin-left: 6px;
+  padding: 0 4px;
+  border: $ix-border solid $c-pool;
+  border-radius: $radius;
+  background-color: $g2-kevlar;
+  color: $g16-pearl;
+  font-weight: 400;
+  font-size: 14px;
+
+  &:focus {
+    outline: none;
+  }
+}
+
 .dash-graph--draggable {
   cursor: move !important;
 }

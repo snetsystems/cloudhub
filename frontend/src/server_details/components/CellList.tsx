@@ -5,7 +5,7 @@ import {getLibraryCells} from 'src/dashboards/apis'
 import {CellTypeIcon} from 'src/server_details/components/CellListIcons'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {Button, ComponentSize, IconFont} from 'src/reusable_ui'
-import {hasRunnableQuery} from 'src/reusable_ui/components/FixedModal/importSelectionPreview'
+import {hasRunnableQuery} from 'src/reusable_ui/components/FixedModal/previewCells'
 
 interface CellListProps {
   onSelectionChange?: (items: ImportSelectionPayload) => void

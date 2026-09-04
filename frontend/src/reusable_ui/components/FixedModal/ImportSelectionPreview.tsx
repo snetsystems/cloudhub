@@ -5,7 +5,7 @@ import {interval} from 'src/shared/constants'
 import {ImportSelectionPayload} from 'src/shared/types/importModal'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
 import {Source, TimeRange} from 'src/types'
-import {getPreviewCellsFromSelection} from './importSelectionPreview'
+import {getPreviewCellsFromSelection} from './previewCells'
 import PreviewCellCard from './PreviewCellCard'
 
 interface OwnProps {

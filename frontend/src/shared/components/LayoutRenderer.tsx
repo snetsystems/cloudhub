@@ -48,6 +48,8 @@ export interface RenderCellContext {
   onCloneCell?: (cell: Cell) => void
   onSummonOverlayTechnologies?: (cell: Cell) => void
   onPickTemplate?: (template: Template, value: TemplateValue) => void
+  /** Persists a new cell name; absent on read-only layouts. */
+  onRenameCell?: (cell: Cell, name: string) => void
   instance?: object
 }
 
@@ -126,6 +128,7 @@ class LayoutRenderer extends Component<Props, State> {
       renderCell,
       getExtraActionsForCell,
       onCustomCellAction,
+      onPositionChange,
     } = this.props
 
     const {rowHeight} = this.state
@@ -142,6 +145,14 @@ class LayoutRenderer extends Component<Props, State> {
       onCloneCell,
       onSummonOverlayTechnologies,
       onPickTemplate,
+      // Renaming is a cell edit like show-summary, so it rides the same
+      // whole-layout save the dashboard already wires up.
+      onRenameCell: onPositionChange
+        ? (target: Cell, name: string) =>
+            onPositionChange(
+              cells.map(c => (c.i === target.i ? {...c, name} : c))
+            )
+        : undefined,
       instance,
     }
 
