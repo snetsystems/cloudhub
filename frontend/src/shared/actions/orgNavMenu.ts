@@ -17,10 +17,40 @@ export interface SetOrgNavMenuAction {
 
 export type OrgNavMenuAction = SetOrgNavMenuAction
 
-export const setOrgNavMenu = (payload: OrgNavMenuState): SetOrgNavMenuAction => ({
-  type: OrgNavMenuActionTypes.SetOrgNavMenu,
-  payload,
-})
+export const setOrgNavMenu = (payload: OrgNavMenuState): SetOrgNavMenuAction => {
+  if (payload.orgId) {
+    try {
+      window.localStorage.setItem(
+        'cloudhub.orgNavMenu',
+        JSON.stringify({
+          orgId: payload.orgId,
+          selection: payload.selection || {},
+        })
+      )
+    } catch {
+      // ignore
+    }
+  }
+
+  return {
+    type: OrgNavMenuActionTypes.SetOrgNavMenu,
+    payload,
+  }
+}
+
+export const readCachedOrgNavMenu = (): OrgNavMenuState => {
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem('cloudhub.orgNavMenu') || 'null'
+    )
+    if (parsed?.orgId && parsed.selection && typeof parsed.selection === 'object') {
+      return {orgId: parsed.orgId, selection: parsed.selection}
+    }
+  } catch {
+    // ignore
+  }
+  return {orgId: null, selection: {}}
+}
 
 export const loadOrgNavMenuAsync = (orgId: string) => async (
   dispatch: (action: OrgNavMenuAction) => void

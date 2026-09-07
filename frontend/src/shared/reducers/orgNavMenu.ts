@@ -2,15 +2,11 @@ import {
   OrgNavMenuAction,
   OrgNavMenuActionTypes,
   OrgNavMenuState,
+  readCachedOrgNavMenu,
 } from 'src/shared/actions/orgNavMenu'
 
-const initialState: OrgNavMenuState = {
-  orgId: null,
-  selection: {},
-}
-
 const orgNavMenuReducer = (
-  state: OrgNavMenuState = initialState,
+  state: OrgNavMenuState = readCachedOrgNavMenu(),
   action: OrgNavMenuAction
 ): OrgNavMenuState => {
   switch (action.type) {

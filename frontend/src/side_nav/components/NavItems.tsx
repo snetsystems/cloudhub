@@ -117,6 +117,7 @@ interface NavBlockState {
   isMenuOpen: boolean
   menuStyle: CSSProperties
   opensUpward: boolean
+  hasBeenVisible: boolean
 }
 
 class NavBlock extends PureComponent<NavBlockProps, NavBlockState> {
@@ -128,6 +129,17 @@ class NavBlock extends PureComponent<NavBlockProps, NavBlockState> {
     isMenuOpen: false,
     menuStyle: {},
     opensUpward: false,
+    hasBeenVisible: this.props.visible !== false,
+  }
+
+  public static getDerivedStateFromProps(
+    props: NavBlockProps,
+    state: NavBlockState
+  ) {
+    if (props.visible !== false && !state.hasBeenVisible) {
+      return {hasBeenVisible: true}
+    }
+    return null
   }
 
   public componentWillUnmount() {
@@ -136,7 +148,14 @@ class NavBlock extends PureComponent<NavBlockProps, NavBlockState> {
 
   public render() {
     const {location, className, highlightWhen, visible = true} = this.props
-    const {isMenuOpen, menuStyle, opensUpward} = this.state
+    const {isMenuOpen, menuStyle, opensUpward, hasBeenVisible} = this.state
+
+    // Start hidden (e.g. refresh with cached off): skip mount to avoid flash.
+    // Was visible then toggled off: keep mounted and CSS-hide for animation.
+    if (!visible && !hasBeenVisible) {
+      return null
+    }
+
     const {length} = _.intersection(_.split(location, '/'), highlightWhen)
     const isActive = !!length
 
