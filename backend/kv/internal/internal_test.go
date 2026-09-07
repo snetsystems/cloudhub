@@ -1462,3 +1462,32 @@ func TestMarshalNetworkDeviceOrgOpticsThreshold(t *testing.T) {
 		t.Errorf("TempHighC = %v, want 75", got.OpticsThreshold.TempHighC)
 	}
 }
+
+// Location lives only in the KV encoding, so dropping it from the marshal
+// leaves the API answering with the value it was handed while the store keeps
+// the old one — a write that reports success and silently does nothing.
+func TestMarshalNetworkDeviceLocation(t *testing.T) {
+	in := &cloudhub.NetworkDevice{
+		ID:          "958172376138104800",
+		Hostname:    "SWITCH_01",
+		Location:    "Rack A-12",
+		Sensitivity: 2.5,
+	}
+
+	buf, err := internal.MarshalNetworkDevice(in)
+	if err != nil {
+		t.Fatalf("MarshalNetworkDevice error: %v", err)
+	}
+
+	var got cloudhub.NetworkDevice
+	if err := internal.UnmarshalNetworkDevice(buf, &got); err != nil {
+		t.Fatalf("UnmarshalNetworkDevice error: %v", err)
+	}
+
+	if got.Location != in.Location {
+		t.Errorf("Location = %q, want %q", got.Location, in.Location)
+	}
+	if got.Sensitivity != in.Sensitivity {
+		t.Errorf("Sensitivity = %v, want %v", got.Sensitivity, in.Sensitivity)
+	}
+}
