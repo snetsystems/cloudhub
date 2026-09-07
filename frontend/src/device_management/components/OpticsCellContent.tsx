@@ -25,6 +25,7 @@ import {
 import {
   DEFAULT_OPTICS_THRESHOLD,
   judgeOpticsPort,
+  OpticsPortStatus,
 } from 'src/device_management/constants/opticsThreshold'
 import Authorized, {ADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
 import {
@@ -85,6 +86,43 @@ const LINK_QUERY =
   'FROM "snmp_nx" WHERE time > :dashboardTime: AND time < :upperDashboardTime: ' +
   'GROUP BY "dev_id", "ifName", "ifAlias"'
 
+/**
+ * How far back a port is remembered.
+ *
+ * A pulled transceiver stops producing sensor rows, so the port leaves the
+ * dashboard's window and the device quietly reads 1/1 where it read 1/2 —
+ * the removal never appears. This window is the only record that the port was
+ * ever there.
+ *
+ * 30 days is long enough that a removal is still visible days later, and it
+ * costs nothing: the query is an aggregate, so it returns one row per port
+ * whatever the window (measured at ~400 ms against 22 devices, against ~260 ms
+ * for 7 days). It is deliberately not the dashboard's own time range, which an
+ * operator narrows to minutes to read current values.
+ *
+ * A vanished port is reported as information, not a fault - see `no_module` in
+ * opticsThreshold - so a long window costs the operator nothing either. The
+ * price of raising it further is only query time.
+ */
+const BASELINE_QUERY =
+  'SELECT last("opticalRxPower") AS "seen" ' +
+  'FROM "snmp_nx" WHERE time > now() - 30d ' +
+  'GROUP BY "dev_id", "ifName", "opticLane"'
+
+/**
+ * The transceiver cages the chassis reports, fitted or not.
+ *
+ * An empty cage has no sensor and so appears in no optics row: without this a
+ * device with two modules in four slots reads "2/2" and nothing says the other
+ * two exist. Only Catalyst (IOS-XE) reports cages this way - NX-OS exposes
+ * only linecard, power and fan bays - so a device with no rows here has an
+ * unknown slot count, not zero.
+ */
+const SLOT_QUERY =
+  'SELECT last("slotFitted") AS "fitted" ' +
+  'FROM "snmp_nx" WHERE time > :dashboardTime: AND time < :upperDashboardTime: ' +
+  'GROUP BY "dev_id", "ifName"'
+
 const MODEL_QUERY =
   'SELECT last("sys_model") AS "model" ' +
   'FROM "snmp_nx" WHERE time > :dashboardTime: AND time < :upperDashboardTime: ' +
@@ -100,6 +138,39 @@ interface LinkState {
 /** The collector writes "unknown" when the device reports no description. */
 const readAlias = (value: string | undefined): string =>
   !value || value === 'unknown' ? '' : value
+
+/**
+ * The key the optics rows and the interface rows are joined on.
+ *
+ * IOS-XE names one port two ways: the sensor rows carry the long form
+ * ("GigabitEthernet1/1/1") and the interface rows the abbreviation
+ * ("Gi1/1/1"), so joining on the literal name loses the alias and the link
+ * state for every Catalyst port. NX-OS uses one form on both sides, which is
+ * why this went unnoticed.
+ *
+ * Two letters is what Cisco's own abbreviations come down to, and it is enough
+ * to keep the types apart: Gi/Fa/Fo, Te/Tw, Hu, Et, Po, Vl. The numbering is
+ * kept verbatim, so ports of the same type never collide.
+ */
+const canonicalIfName = (name: string): string => {
+  const parts = /^([A-Za-z-]+)(.*)$/.exec(name.trim())
+  return parts
+    ? parts[1].slice(0, 2).toLowerCase() + parts[2]
+    : name.trim().toLowerCase()
+}
+
+/** A transceiver cage the chassis reports, and whether anything is in it. */
+interface SlotState {
+  ifName: string
+  fitted: boolean
+}
+
+/** A port that reported optics inside the baseline window, and when it last did. */
+interface BaselinePort {
+  ifName: string
+  lane: string
+  seenAt: number | null
+}
 
 /** Per-port series pulled out of one InfluxDB series. */
 interface PortSeries {
@@ -211,6 +282,8 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
   const [ports, setPorts] = useState<PortSeries[]>([])
   const [models, setModels] = useState<Record<string, string>>({})
   const [links, setLinks] = useState<Record<string, LinkState>>({})
+  const [baseline, setBaseline] = useState<Record<string, BaselinePort[]>>({})
+  const [slots, setSlots] = useState<Record<string, SlotState[]>>({})
   const [devices, setDevices] = useState<Record<string, DeviceData>>({})
   const [isTrend, setIsTrend] = useState(false)
   const [threshold, setThreshold] = useState<OpticsThreshold>(
@@ -326,6 +399,8 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
       {id: 'snmp-optics', text: OPTICS_QUERY, db},
       {id: 'snmp-optics-model', text: MODEL_QUERY, db},
       {id: 'snmp-optics-link', text: LINK_QUERY, db},
+      {id: 'snmp-optics-baseline', text: BASELINE_QUERY, db},
+      {id: 'snmp-optics-slots', text: SLOT_QUERY, db},
     ]
 
     setIsFetching(true)
@@ -377,7 +452,7 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           const iOper = s.columns.indexOf('oper')
           const last = s.values?.[s.values.length - 1]
           if (s.tags?.dev_id && s.tags?.ifName && last) {
-            linkByPort[`${s.tags.dev_id}|${s.tags.ifName}`] = {
+            linkByPort[`${s.tags.dev_id}|${canonicalIfName(s.tags.ifName)}`] = {
               admin: last[iAdmin] ?? '',
               oper: last[iOper] ?? '',
               alias: readAlias(s.tags?.ifAlias),
@@ -385,9 +460,44 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           }
         })
 
+        const baselineByDev: Record<string, BaselinePort[]> = {}
+        seriesOf(res, 3).forEach(s => {
+          const devID = s.tags?.dev_id
+          if (!devID || !s.tags?.ifName) {
+            return
+          }
+          const last = s.values?.[s.values.length - 1]
+          if (!baselineByDev[devID]) {
+            baselineByDev[devID] = []
+          }
+          baselineByDev[devID].push({
+            ifName: s.tags.ifName,
+            lane: s.tags?.opticLane ?? '',
+            seenAt: num(last?.[s.columns.indexOf('time')]),
+          })
+        })
+
+        const slotsByDev: Record<string, SlotState[]> = {}
+        seriesOf(res, 4).forEach(s => {
+          const devID = s.tags?.dev_id
+          if (!devID || !s.tags?.ifName) {
+            return
+          }
+          const last = s.values?.[s.values.length - 1]
+          if (!slotsByDev[devID]) {
+            slotsByDev[devID] = []
+          }
+          slotsByDev[devID].push({
+            ifName: s.tags.ifName,
+            fitted: num(last?.[s.columns.indexOf('fitted')]) === 1,
+          })
+        })
+
         setPorts(parsed)
         setModels(modelByDev)
         setLinks(linkByPort)
+        setBaseline(baselineByDev)
+        setSlots(slotsByDev)
         setError(null)
       })
       .catch((err: any) => {
@@ -447,7 +557,7 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           const tx = isLive ? lastPointValue(p.tx) : null
           const rx = isLive ? lastPointValue(p.rx) : null
           const temp = isLive ? lastPointValue(p.temp) : null
-          const link = links[`${devID}|${p.ifName}`]
+          const link = links[`${devID}|${canonicalIfName(p.ifName)}`]
           return {
             id: `${devID}|${p.ifName}|${p.lane}`,
             devID,
@@ -472,9 +582,61 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
             checkedAt: toISO(p.checkedAt),
           }
         })
+        // Ports the baseline remembers but the current window has none of: the
+        // transceiver is gone. They are only added to a device that is still
+        // reporting something - a device that went silent altogether is a
+        // collection outage, and turning that into one removal per port would
+        // report a rack of pulled modules every time a switch or the collector
+        // hiccups.
+        const present = new Set(sorted.map(p => `${p.ifName}|${p.lane}`))
+        const vanished: OpticsPortRow[] = (baseline[devID] ?? [])
+          .filter(b => !present.has(`${b.ifName}|${b.lane}`))
+          .map(b => ({
+            id: `${devID}|${b.ifName}|${b.lane}`,
+            devID,
+            ifName: b.ifName,
+            alias: links[`${devID}|${canonicalIfName(b.ifName)}`]?.alias ?? '',
+            lane: b.lane,
+            tx: null,
+            rx: null,
+            temp: null,
+            status: 'no_module' as OpticsPortStatus,
+            // When it was last seen, which is what says when it went.
+            checkedAt: toISO(b.seenAt),
+          }))
+        // Cages the chassis reports with nothing in them. A cage the baseline
+        // already accounted for is the same port seen from the other side, so
+        // it is matched by name to keep it from appearing twice.
+        const named = new Set(
+          [...portRows, ...vanished].map(p => canonicalIfName(p.ifName))
+        )
+        const emptyCages: OpticsPortRow[] = (slots[devID] ?? [])
+          .filter(c => !c.fitted && !named.has(canonicalIfName(c.ifName)))
+          .map(c => ({
+            id: `${devID}|${c.ifName}|`,
+            devID,
+            ifName: c.ifName,
+            alias: links[`${devID}|${canonicalIfName(c.ifName)}`]?.alias ?? '',
+            lane: '',
+            tx: null,
+            rx: null,
+            temp: null,
+            status: 'no_module' as OpticsPortStatus,
+            checkedAt: '',
+          }))
+        const allPorts = [...portRows, ...vanished, ...emptyCages].sort(
+          comparePorts
+        )
+        // Only Catalyst reports cages, so an empty list means the count is
+        // unknown. "2/0" would be a claim about hardware that was never made.
+        const cages = slots[devID] ?? []
+        const slotRatio = cages.length
+          ? `${cages.filter(c => c.fitted).length}/${cages.length}`
+          : ''
+
         // Shut and unpopulated ports are neither healthy nor faulty, so they
         // are left out of the ratio instead of dragging it down.
-        const watched = portRows.filter(
+        const watched = allPorts.filter(
           p => p.status !== 'shutdown' && p.status !== 'no_module'
         )
         const okCount = watched.filter(p => p.status === 'ok').length
@@ -496,15 +658,16 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           temp: worstTemp?.temp ?? [],
           tempPort: worstTemp?.ifName ?? '',
           status: `${okCount}/${watched.length}`,
+          slots: slotRatio,
           isHealthy: okCount === watched.length,
           checkedAt: toISO(
             Math.max(...sorted.map(p => p.checkedAt ?? 0)) || null
           ),
-          ports: portRows,
+          ports: allPorts,
         }
       })
       .sort((a, b) => a.sysName.localeCompare(b.sysName))
-  }, [ports, devices, models, links, threshold])
+  }, [ports, devices, models, links, baseline, slots, threshold])
 
   // Anchor the trend x axis to the dashboard's own window, recomputed on every
   // refresh tick. SNMP polls once a minute, so without this the line only

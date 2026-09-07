@@ -210,6 +210,18 @@ export const opticsDeviceColumns = (
     ),
   },
   {
+    // Fitted cages over total. Kept apart from the health ratio on purpose: a
+    // device with a spare slot is not unhealthy, and folding the two together
+    // would leave it permanently red.
+    key: 'slots',
+    name: 'Slots',
+    align: AlignType.CENTER,
+    parentHeader: 'Ports',
+    options: {sorting: true, thead: {style: {width: '70px'}}},
+    // Only Catalyst reports its cages; elsewhere the count is unknown.
+    render: value => <>{value || '-'}</>,
+  },
+  {
     key: 'checkedAt',
     name: 'Checked At',
     align: AlignType.CENTER,

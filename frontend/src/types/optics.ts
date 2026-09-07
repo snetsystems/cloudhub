@@ -35,6 +35,8 @@ export interface OpticsDeviceRow extends DataTableObject {
   temp: OpticsPoint[]
   tempPort: string
   status: string
+  /** Fitted cages over total, e.g. "2/4"; empty when the device reports none. */
+  slots: string
   isHealthy: boolean
   checkedAt: string
   ports: OpticsPortRow[]
