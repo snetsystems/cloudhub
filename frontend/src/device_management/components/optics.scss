@@ -19,6 +19,31 @@
     min-height: 0;
     padding: 0;
   }
+
+  // Gauge columns claim a wide minimum, which squeezes the text columns below
+  // their content width. Without a fixed layout the overflowing text is drawn
+  // over the next column instead of being clipped, so device FQDNs collide
+  // with the model name. Fixed layout hands the column widths to the thead
+  // styles in opticsColumns, and the rules below clip what does not fit.
+  table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  // The expanded port rows nest another table that carries no width hints, so
+  // a fixed layout would divide it into equal columns. Leave it auto-sized.
+  .table-accordion-td table {
+    table-layout: auto;
+  }
+
+  // TableBase renders a plain cell as a single <span title={value}> — the
+  // title is already there, so an ellipsised name still reads in full on hover.
+  td > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 // Worst-port cells mirror the server list's Network Traffic cell: the metric

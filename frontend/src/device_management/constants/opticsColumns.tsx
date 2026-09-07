@@ -134,28 +134,31 @@ export const opticsDeviceColumns = (
     name: 'Device',
     align: AlignType.LEFT,
     parentHeader: 'Device',
-    options: {sorting: true},
+    // The table lays out fixed (see optics.scss), so these widths decide the
+    // columns. Device names are FQDNs on some sites; the cell ellipsises and
+    // keeps the full name in its title attribute.
+    options: {sorting: true, thead: {style: {width: '200px'}}},
   },
   {
     key: 'model',
     name: 'Model',
     align: AlignType.CENTER,
     parentHeader: 'Device',
-    options: {sorting: true},
+    options: {sorting: true, thead: {style: {width: '130px'}}},
   },
   {
     key: 'ip',
     name: 'IP',
     align: AlignType.LEFT,
     parentHeader: 'Device',
-    options: {sorting: true, isIP: true},
+    options: {sorting: true, isIP: true, thead: {style: {width: '110px'}}},
   },
   {
     key: 'location',
     name: 'Location',
     align: AlignType.LEFT,
     parentHeader: 'Device',
-    options: {sorting: true},
+    options: {sorting: true, thead: {style: {width: '110px'}}},
   },
   metricColumn({
     key: 'tx',
@@ -195,7 +198,7 @@ export const opticsDeviceColumns = (
     name: 'Status',
     align: AlignType.CENTER,
     parentHeader: 'Ports',
-    options: {sorting: true},
+    options: {sorting: true, thead: {style: {width: '70px'}}},
     render: (value, rowData) => (
       <div
         className={`device--indicator ${
@@ -211,7 +214,7 @@ export const opticsDeviceColumns = (
     name: 'Checked At',
     align: AlignType.CENTER,
     parentHeader: 'Ports',
-    options: {sorting: true},
+    options: {sorting: true, thead: {style: {width: '150px'}}},
     render: (value, _row, _c, _r, timeZone) => (
       <>{value ? formatDateTimeForDeviceData(value, timeZone) : '-'}</>
     ),

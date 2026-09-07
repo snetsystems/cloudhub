@@ -73,7 +73,7 @@ const OPTICS_QUERY =
   'SELECT "opticalTxPower" AS "tx", "opticalRxPower" AS "rx", ' +
   '"opticalTemperature" AS "temp", "opticStatus" AS "status" ' +
   'FROM "snmp_nx" WHERE time > :dashboardTime: AND time < :upperDashboardTime: ' +
-  'GROUP BY "dev_id", "sys_name", "ifName", "opticLane"'
+  'GROUP BY "dev_id", "sys_name", "agent_host", "ifName", "opticLane"'
 
 /**
  * ifAdminStatus/ifOperStatus live on the interface rows of the same
@@ -105,6 +105,8 @@ const readAlias = (value: string | undefined): string =>
 interface PortSeries {
   devID: string
   sysName: string
+  /** The address the collector polled, which is the device's own IP. */
+  agentHost: string
   ifName: string
   lane: string
   tx: OpticsPoint[]
@@ -349,6 +351,7 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           return {
             devID: s.tags?.dev_id ?? '',
             sysName: s.tags?.sys_name ?? '',
+            agentHost: s.tags?.agent_host ?? '',
             ifName: s.tags?.ifName ?? '',
             lane: s.tags?.opticLane ?? '',
             tx: pointsOf(iTx),
@@ -428,17 +431,22 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           staleAfter <= 0 ||
           p.checkedAt === null ||
           deviceLatest - p.checkedAt <= staleAfter
-        const reportingPorts = sorted.filter(isReporting)
-        const worstTx = worstPort(reportingPorts, 'tx', 'min')
-        const worstRx = worstPort(reportingPorts, 'rx', 'min')
-        const worstTemp = worstPort(reportingPorts, 'temp', 'max')
+        // A reading counts as live only while the port is still reporting AND
+        // the device calls its sensor usable. A cage the device reports as
+        // unavailable keeps returning the last number the departed module gave,
+        // and showing that next to "NO MODULE" reads as a live measurement.
+        const hasLiveReading = (p: PortSeries) =>
+          isReporting(p) && p.status !== 'no_module'
+        const livePorts = sorted.filter(hasLiveReading)
+        const worstTx = worstPort(livePorts, 'tx', 'min')
+        const worstRx = worstPort(livePorts, 'rx', 'min')
+        const worstTemp = worstPort(livePorts, 'temp', 'max')
         const portRows: OpticsPortRow[] = sorted.map(p => {
           const reporting = isReporting(p)
-          // A stale reading is not a current one; showing the last number a
-          // pulled module gave would read as live.
-          const tx = reporting ? lastPointValue(p.tx) : null
-          const rx = reporting ? lastPointValue(p.rx) : null
-          const temp = reporting ? lastPointValue(p.temp) : null
+          const isLive = hasLiveReading(p)
+          const tx = isLive ? lastPointValue(p.tx) : null
+          const rx = isLive ? lastPointValue(p.rx) : null
+          const temp = isLive ? lastPointValue(p.temp) : null
           const link = links[`${devID}|${p.ifName}`]
           return {
             id: `${devID}|${p.ifName}|${p.lane}`,
@@ -475,7 +483,11 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           id: devID,
           sysName: sorted[0]?.sysName || device?.hostname || devID,
           model: models[devID] ?? '',
-          ip: device?.device_ip ?? '',
+          // The device list is scoped to the session's organization, but a source
+          // can point at another organization's database, so the lookup finds
+          // nothing. The polled address is the same IP and always travels with
+          // the data.
+          ip: device?.device_ip || sorted[0]?.agentHost || '',
           location: device?.location ?? '',
           tx: worstTx?.tx ?? [],
           txPort: worstTx?.ifName ?? '',
