@@ -580,6 +580,10 @@
       "retry": "재시도",
       "retry_title": "클릭하여 즉시 재전송",
       "answer_done": "답변 완료",
+      "answer_final": "최종 답변",
+      "answer_progress": "진행 중",
+      "answer_aborted": "답변 중단됨",
+      "answer_failed": "답변 실패",
       "copy": "복사",
       "copied": "복사됨",
       "copy_title": "답변 내용 복사"
@@ -681,6 +685,7 @@
     },
     "error": {
       "response_failed": "응답 처리 중 오류가 발생했습니다.",
+      "run_aborted": "답변이 끝나기 전에 중단되었습니다. 다시 시도해 주세요.",
       "socket_disconnected": "AI Chat 실시간 연결이 끊어졌습니다. 재연결을 시도하고 있습니다.",
       "session_delete_failed": "세션 삭제 중 통신 오류 발생: {{message}}",
       "session_create_failed": "세션 생성 실패 ({{status}} {{statusText}})",

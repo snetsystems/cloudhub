@@ -585,6 +585,10 @@
       "retry": "Retry",
       "retry_title": "Click to send it again now",
       "answer_done": "Answered",
+      "answer_final": "Final answer",
+      "answer_progress": "Working",
+      "answer_aborted": "Interrupted",
+      "answer_failed": "Failed",
       "copy": "Copy",
       "copied": "Copied",
       "copy_title": "Copy the reply"
@@ -688,6 +692,7 @@
     },
     "error": {
       "response_failed": "Something went wrong while handling the reply.",
+      "run_aborted": "The reply stopped before it finished. Please try again.",
       "socket_disconnected": "The AI Chat live connection dropped. Reconnecting...",
       "session_delete_failed": "Could not reach the server while deleting the session: {{message}}",
       "session_create_failed": "Could not create the session ({{status}} {{statusText}})",

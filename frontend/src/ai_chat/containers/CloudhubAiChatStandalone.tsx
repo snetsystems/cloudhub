@@ -117,6 +117,16 @@ export interface ActivityCardItem {
   endedAt?: number
 }
 
+/**
+ * 답변이 끝까지 가지 못하고 끊긴 턴의 사유. 게이트웨이는 런이 중단되면
+ * state 'aborted' / 'error' 를 보내지만, 말풍선에 이미 글자가 있으면 그
+ * 사실이 화면에서 사라져 정상 완료와 구별되지 않았다.
+ */
+export interface RunFailure {
+  state: 'aborted' | 'error'
+  message?: string
+}
+
 export interface ChatMessage {
   id: string
   sender: 'user' | 'ai' | 'system'
@@ -129,6 +139,13 @@ export interface ChatMessage {
   isStreaming?: boolean
   activities?: ActivityCardItem[]
   isFailed?: boolean
+  runFailure?: RunFailure
+  /**
+   * 이 말풍선을 만든 턴이 왜 끝났는지. 'toolUse' 는 도구를 부르려고 잠깐
+   * 멈춘 진행 서술이고, 'stop' 이라야 사용자에게 주는 최종 답변이다.
+   * 값이 없으면(옛 기록) 종전처럼 최종 답변으로 본다.
+   */
+  stopReason?: string
 }
 
 export interface ChatSession {
@@ -261,6 +278,24 @@ const isRawToolErrorMessage = (str: string): boolean => {
   )
 }
 
+// OpenClaw 가 사람 대신 대화에 밀어 넣는 런타임 구동 프롬프트. 게이트웨이 재시작
+// 복구, 유휴 세션을 깨우는 runtime event 처럼 종류가 늘어나므로 목록으로 둔다.
+// 실제 사용자 메시지는 언제나 idempotencyKey 를 달고 오고 주입분은 달지
+// 않으므로, 그 구조 차이를 게이트로 삼고 문구는 확인 사살로만 쓴다.
+//
+// 문구 판별을 하나의 정규식에 몰지 않는 이유: 두 조각을 순서대로 잇는 패턴은
+// 프롬프트가 조금만 다시 쓰여도 매칭이 깨지고, 그러면 주입분이 사용자 말풍선으로
+// 그대로 새어 나온다. 순서에 기대지 않는 판별식으로 둔다.
+const OPENCLAW_RUNTIME_DRIVER_PROMPTS: Array<(text: string) => boolean> = [
+  // 게이트웨이 재시작 복구. 두 문구가 어느 순서로 오든 같은 프롬프트다.
+  text =>
+    text.includes('interrupted by a gateway restart') &&
+    text.includes('Continue from the existing transcript'),
+  // 유휴 세션을 깨우는 runtime event. 사용자가 같은 문장을 직접 적었을 때까지
+  // 지우지 않도록 전문 일치로만 본다.
+  text => /^Continue the OpenClaw runtime event\.?$/.test(text),
+]
+
 const extractDisplayableText = (content: any): string => {
   if (!content) return ''
   if (typeof content === 'string') return content
@@ -336,6 +371,8 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
   let currentAiMessage: ChatMessage | null = null
   const pendingActivityMap: Map<string, ActivityCardItem> = new Map()
 
+  let aiSegmentSeq = 0
+
   const flushAiMessage = () => {
     if (currentAiMessage) {
       if (
@@ -346,6 +383,26 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       }
       currentAiMessage = null
     }
+  }
+
+  // 한 턴이 도구를 여러 번 돌리면 OpenClaw 는 문장 블록마다 assistant 메시지를
+  // 따로 보낸다. 그걸 전부 한 말풍선에 이어붙이면 진행 상황 서술이 최종 답변
+  // 위에 그대로 쌓여 대화가 정리되지 않는다. 그래서 세그먼트 단위로 끊고,
+  // 끊긴 말풍선마다 고유 id 를 준다. baseId 만 쓰면 한 raw 안에서 두 번 끊길 때
+  // id 가 겹친다.
+  const ensureAiSegment = (rawTs: number, baseId: string): ChatMessage => {
+    if (currentAiMessage) return currentAiMessage
+    aiSegmentSeq += 1
+    const created: ChatMessage = {
+      id: `${baseId}::seg${aiSegmentSeq}`,
+      sender: 'ai',
+      text: '',
+      timestamp: formatChatTimestamp(rawTs),
+      timestampRaw: rawTs,
+      activities: [],
+    }
+    currentAiMessage = created
+    return created
   }
 
   rawMessages.forEach((raw, idx) => {
@@ -371,13 +428,14 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
         userText = String(raw.content)
       }
 
-      // Only ignore OpenClaw's internal automated crash recovery prompt
-      // Genuine user messages (even if they start with [System] or [OpenClaw]) will never be blocked
-      const isInternalCrashRecovery =
-        userText.includes('interrupted by a gateway restart') &&
-        userText.includes('Continue from the existing transcript')
+      // Only ignore OpenClaw's own runtime driver prompts. Genuine user
+      // messages (even if they start with [System] or [OpenClaw]) carry an
+      // idempotencyKey and so are never blocked here.
+      const isRuntimeDriverPrompt = OPENCLAW_RUNTIME_DRIVER_PROMPTS.some(
+        matches => matches(userText.trim())
+      )
 
-      if (isInternalCrashRecovery && !raw.idempotencyKey) {
+      if (isRuntimeDriverPrompt && !raw.idempotencyKey) {
         return
       }
 
@@ -404,18 +462,32 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
       role === 'ai'
     ) {
       const rawTs = raw.timestamp ? Number(raw.timestamp) : Date.now()
-      if (!currentAiMessage) {
-        currentAiMessage = {
-          id:
-            raw.__openclaw?.id ||
-            raw.id ||
-            `ai-${raw.timestamp || Date.now()}-${idx}`,
-          sender: 'ai',
-          text: '',
-          timestamp: formatChatTimestamp(rawTs),
-          timestampRaw: rawTs,
-          activities: [],
-        }
+      const baseId =
+        raw.__openclaw?.id ||
+        raw.id ||
+        `ai-${raw.timestamp || Date.now()}-${idx}`
+      // 한 턴이 여러 말풍선으로 쪼개져도 성격은 턴 전체가 같다.
+      const turnStopReason =
+        typeof raw.stopReason === 'string' ? raw.stopReason : undefined
+
+      // 앞 턴의 말풍선이 아직 열려 있는데 성격이 다르면 여기서 닫는다. 진행
+      // 서술과 최종 답변이 한 말풍선에 뭉치면 배지를 하나밖에 달 수 없다.
+      // 도구 결과만 담긴(문장이 없는) 말풍선은 이어지는 서술과 한 묶음이므로
+      // 그대로 둔다.
+      if (
+        currentAiMessage &&
+        currentAiMessage.text &&
+        currentAiMessage.stopReason !== turnStopReason
+      ) {
+        flushAiMessage()
+      }
+
+      let segment = ensureAiSegment(rawTs, baseId)
+      segment.stopReason = turnStopReason
+
+      const appendText = (addedText: string) => {
+        if (!addedText) return
+        segment.text = (segment.text ? segment.text + '\n' : '') + addedText
       }
 
       if (Array.isArray(raw.content)) {
@@ -426,6 +498,17 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
             part.type === 'tool_call' ||
             part.type === 'tool'
           ) {
+            // 도구 호출은 그 앞의 서술을 끝맺는다. 도구를 돌린 뒤에 나오는
+            // 문장은 앞 문장의 연장이 아니라 새 생각이므로 여기서 말풍선을
+            // 끊는다. 렌더러가 활동 카드를 본문 위에 그리므로, 끊고 난 뒤의
+            // 세그먼트는 "[도구 실행] + 그 결과를 받아 쓴 문장" 이 되어
+            // 시간 순서와도 맞는다.
+            if (segment.text) {
+              flushAiMessage()
+              segment = ensureAiSegment(rawTs, baseId)
+              segment.stopReason = turnStopReason
+            }
+
             const toolName = part.name || part.toolName || 'tool'
             const isMcp = toolName.includes('__')
             let inputStr = ''
@@ -453,10 +536,10 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
               status: 'success',
               startedAt: raw.timestamp ? Number(raw.timestamp) : undefined,
             }
-            if (!currentAiMessage.activities) {
-              currentAiMessage.activities = []
+            if (!segment.activities) {
+              segment.activities = []
             }
-            currentAiMessage.activities.push(card)
+            segment.activities.push(card)
             if (part.id) {
               pendingActivityMap.set(part.id, card)
             }
@@ -464,20 +547,15 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
             (part.type === 'text' || !part.type) &&
             (part.text || part.content || typeof part === 'string')
           ) {
-            const addedText =
+            appendText(
               typeof part === 'string' ? part : part.text || part.content || ''
-            currentAiMessage.text =
-              (currentAiMessage.text ? currentAiMessage.text + '\n' : '') +
-              addedText
+            )
           }
         }
       } else if (typeof raw.content === 'string' && raw.content) {
-        currentAiMessage.text =
-          (currentAiMessage.text ? currentAiMessage.text + '\n' : '') +
-          raw.content
+        appendText(raw.content)
       } else if (typeof raw.text === 'string' && raw.text) {
-        currentAiMessage.text =
-          (currentAiMessage.text ? currentAiMessage.text + '\n' : '') + raw.text
+        appendText(raw.text)
       }
       return
     }
@@ -511,19 +589,12 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
         }
       } else {
         const rawTs = raw.timestamp ? Number(raw.timestamp) : Date.now()
-        if (!currentAiMessage) {
-          currentAiMessage = {
-            id:
-              raw.__openclaw?.id ||
-              raw.id ||
-              `ai-${raw.timestamp || Date.now()}-${idx}`,
-            sender: 'ai',
-            text: '',
-            timestamp: formatChatTimestamp(rawTs),
-            timestampRaw: rawTs,
-            activities: [],
-          }
-        }
+        const segment = ensureAiSegment(
+          rawTs,
+          raw.__openclaw?.id ||
+            raw.id ||
+            `ai-${raw.timestamp || Date.now()}-${idx}`
+        )
         const toolName = raw.toolName || raw.name || 'tool'
         const card: ActivityCardItem = {
           id: toolCallId || raw.__openclaw?.id || `tool-${idx}`,
@@ -534,10 +605,10 @@ const parseOpenClawHistory = (rawMessages: any[]): ChatMessage[] => {
           error: raw.isError ? resultText : undefined,
           endedAt: raw.timestamp ? Number(raw.timestamp) : undefined,
         }
-        if (!currentAiMessage.activities) {
-          currentAiMessage.activities = []
+        if (!segment.activities) {
+          segment.activities = []
         }
-        currentAiMessage.activities.push(card)
+        segment.activities.push(card)
       }
     }
   })
@@ -1164,6 +1235,41 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
             }
 
             const targetAiMsg = msgs[pendingIdx]
+
+            // 이미 문장이 실린 말풍선에 새 도구가 걸리면, 그 문장은 도구 실행을
+            // 예고한 서술이다. 여기서 끊고 새 말풍선을 열어야 도구 이후의 설명이
+            // 최종 답변과 한 덩어리로 뭉치지 않는다. parseOpenClawHistory 가
+            // 히스토리를 나누는 규칙과 같아서, 스트리밍 중 화면과 새로고침 후
+            // 화면이 같은 모양으로 남는다.
+            if (targetAiMsg.text) {
+              // 도구가 시작돼서 닫히는 말풍선은 정의상 도구를 예고한 서술이다.
+              // 게이트웨이가 턴마다 stopReason 을 보내주기를 기다리지 않고
+              // 여기서 바로 성격을 확정한다.
+              msgs[pendingIdx] = {
+                ...targetAiMsg,
+                isStreaming: false,
+                stopReason: targetAiMsg.stopReason || 'toolUse',
+              }
+
+              const segmentedAt = Date.now()
+              const nextMsgId = `m-ai-${segmentedAt}-${key}`
+              pendingRunsRef.current[activeSessionId] = nextMsgId
+              msgs.push({
+                id: nextMsgId,
+                sender: 'ai',
+                text: '',
+                timestamp: formatChatTimestamp(segmentedAt),
+                timestampRaw: segmentedAt,
+                isStreaming: true,
+                activities: [newEntry],
+              })
+
+              return {
+                ...s,
+                messages: msgs,
+              }
+            }
+
             const existingActivities = targetAiMsg.activities || []
             msgs[pendingIdx] = {
               ...targetAiMsg,
@@ -1478,6 +1584,8 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
               payload.state === 'error'
             ) {
               setIsStreamingActive(false)
+              const runFailed =
+                payload.state === 'aborted' || payload.state === 'error'
               const pendingId = pendingRunsRef.current[activeSessionId]
               delete pendingRunsRef.current[activeSessionId]
 
@@ -1501,21 +1609,36 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                       return {
                         ...m,
                         isStreaming: false,
+                        stopReason:
+                          (typeof payload.stopReason === 'string'
+                            ? payload.stopReason
+                            : undefined) || m.stopReason,
                         timestamp:
                           m.timestamp || formatChatTimestamp(stampedAt),
                         timestampRaw: stampedAt,
                         text:
                           finalText ||
-                          (payload.state !== 'final' &&
-                          payload.state !== 'completed'
+                          (runFailed
                             ? payload.errorMessage ||
                               t('ai_chat.error.response_failed')
                             : m.text),
+                        // 중단된 턴도 여기까지 받은 본문은 그대로 남긴다. 사유는
+                        // 본문을 덮어쓰는 대신 배지로 알린다 — 예전에는 말풍선에
+                        // 글자가 조금이라도 있으면 위 fallback 이 걸리지 않아
+                        // 타임아웃이 "답변 완료"와 똑같이 보였다.
+                        runFailure: runFailed
+                          ? {
+                              state:
+                                payload.state === 'error' ? 'error' : 'aborted',
+                              message:
+                                payload.errorMessage || payload.reason || '',
+                            }
+                          : undefined,
                         activities: (m.activities || []).map(act => ({
                           ...act,
                           status:
                             act.status === 'running'
-                              ? payload.state === 'error'
+                              ? runFailed
                                 ? 'error'
                                 : 'success'
                               : act.status,
@@ -2173,6 +2296,9 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     const hasActivities = Boolean(msg.activities && msg.activities.length > 0)
     const hasText = Boolean(msg.text)
+    // 도구를 부르려고 잠깐 멈춘 턴은 사용자에게 주는 답이 아니라 진행 서술이다.
+    // stopReason 이 없는 옛 기록은 종전대로 최종 답변으로 둔다.
+    const isProgressNote = msg.stopReason === 'toolUse' && !msg.runFailure
     const isTargetSelected = targetInspectorMessage?.id === msg.id
     const isActivityListCollapsed = !expandedActivityMessageIds.includes(msg.id)
 
@@ -2258,7 +2384,12 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
 
     if (hasAnswerBubble) {
       elements.push(
-        <div key={`msg-${msg.id}`} className="message-item ai">
+        <div
+          key={`msg-${msg.id}`}
+          className={classnames('message-item ai', {
+            'is-progress-note': isProgressNote,
+          })}
+        >
           <AiChatMessageAvatar sender="ai" />
           <div className="message-content-col">
             <div className="message-bubble">
@@ -2277,12 +2408,33 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                 </div>
               )}
 
+              {msg.runFailure && (
+                <div className="ai-run-failure-notice">
+                  {msg.runFailure.message ||
+                    (msg.runFailure.state === 'aborted'
+                      ? t('ai_chat.error.run_aborted')
+                      : t('ai_chat.error.response_failed'))}
+                </div>
+              )}
+
               {!msg.isStreaming && (
                 <div className="message-bubble-footer ai-completed-footer">
                   <div className="ai-footer-left">
-                    <AiChatBadge variant="done" icon="✓">
-                      {t('ai_chat.message.answer_done')}
-                    </AiChatBadge>
+                    {msg.runFailure ? (
+                      <AiChatBadge variant="warning" icon="⚠">
+                        {msg.runFailure.state === 'aborted'
+                          ? t('ai_chat.message.answer_aborted')
+                          : t('ai_chat.message.answer_failed')}
+                      </AiChatBadge>
+                    ) : isProgressNote ? (
+                      <AiChatBadge variant="neutral" icon="⚙">
+                        {t('ai_chat.message.answer_progress')}
+                      </AiChatBadge>
+                    ) : (
+                      <AiChatBadge variant="done" icon="✓">
+                        {t('ai_chat.message.answer_final')}
+                      </AiChatBadge>
+                    )}
                     {(msg.timestampRaw || msg.timestamp) && (
                       <span className="message-timestamp">
                         {formatChatTimestamp(
@@ -2293,7 +2445,7 @@ export const CloudhubAiChatStandaloneUnconnected: FC<ComponentProps> = ({
                     )}
                   </div>
                   <div className="ai-footer-actions">
-                    {hasText && (
+                    {hasText && !isProgressNote && (
                       <button
                         type="button"
                         className={classnames('ai-copy-btn', {

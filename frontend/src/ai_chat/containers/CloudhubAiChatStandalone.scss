@@ -1257,6 +1257,40 @@ $ai-chat-sidebar-rail-width: 48px;
           &.ai {
             align-self: flex-start;
 
+            // 도구를 부르려고 잠깐 멈춘 서술은 사용자에게 주는 답이 아니다.
+            // 말풍선 껍데기를 벗겨 대화 흐름의 방주처럼 남기고, 최종 답변만
+            // 말풍선으로 남겨 시선이 그쪽에 가게 한다.
+            &.is-progress-note {
+              .message-bubble {
+                background-color: transparent;
+                border-color: transparent;
+                box-shadow: none;
+                padding-top: 2px;
+                padding-bottom: 2px;
+              }
+
+              .message-text-content {
+                // 말풍선 배경이 없어지면 글자가 더 어두운 바탕 위에 놓여 대비가
+                // 오히려 커진다. 배경이 받쳐주던 만큼 글자를 낮춰 잡는다.
+                color: $g9-mountain;
+                font-size: 11.5px;
+              }
+
+              .message-bubble-footer.ai-completed-footer {
+                border-top: none;
+                margin-top: 2px;
+                padding-top: 0;
+              }
+
+              // 배지도 칩 모양이면 이 줄에서 제일 밝은 요소가 된다. 여기서는
+              // 상태 표시가 아니라 주석에 가까우므로 테두리와 배경을 없앤다.
+              .ai-chat-badge {
+                background: transparent;
+                border-color: transparent;
+                color: $g9-mountain;
+              }
+            }
+
             .message-bubble {
               background-color: $g2-kevlar;
               color: $g16-pearl;
@@ -1591,6 +1625,20 @@ $ai-chat-sidebar-rail-width: 48px;
 
             .message-text-content {
               min-width: 0;
+              word-break: break-word;
+            }
+
+            // 런이 중단/실패로 끝난 턴에 붙는 사유 줄. 여기까지 받아둔 본문 아래에
+            // 덧붙어서, 부분 답변과 중단 사실이 함께 보이게 한다.
+            .ai-run-failure-notice {
+              margin-top: 8px;
+              padding: 6px 10px;
+              border-left: 2px solid rgba($c-laser, 0.7);
+              background: rgba($c-laser, 0.1);
+              color: $c-laser;
+              font-size: 12px;
+              line-height: 1.45;
+              white-space: pre-wrap;
               word-break: break-word;
             }
 
