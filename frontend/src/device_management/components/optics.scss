@@ -1,6 +1,10 @@
 // Optical transceiver (SFP) cell — builtin `snmp-optics` component cell.
 // Layout only; the table itself uses the shared TableComponent styling.
 
+// Height of the grouped ("Device" / "Worst port" / "Ports") header row, which
+// the column row below it has to clear when both are stuck to the top.
+$optics-parent-header-height: 30px;
+
 .optics-cell {
   height: 100%;
 
@@ -14,26 +18,32 @@
     border-radius: 0;
   }
 
-  .panel-body {
+  // The cell has no gutter of its own, so the search bar and the mode toggle
+  // sit against the border. Give them the same side padding the table gets
+  // below, so the heading and the first column line up.
+  .panel-heading {
+    padding: 10px 12px;
+  }
+
+  // Direct child only. An expanded device nests a second table whose wrapper
+  // (TableBase) carries `panel-body` as well, and a descendant selector would
+  // indent and clip that one too.
+  .panel.panel-solid > .panel-body {
     flex: 1;
     min-height: 0;
-    padding: 0;
+    // No top padding: the header is sticky and would leave a gap above itself.
+    padding: 0 12px 12px;
   }
 
-  // Gauge columns claim a wide minimum, which squeezes the text columns below
-  // their content width. Without a fixed layout the overflowing text is drawn
-  // over the next column instead of being clipped, so device FQDNs collide
-  // with the model name. Fixed layout hands the column widths to the thead
-  // styles in opticsColumns, and the rules below clip what does not fit.
+  // Auto layout, like the server list. A fixed layout would read the column
+  // widths off the first row alone, and that row is the grouped header, whose
+  // cells span several columns each — the per-column widths in opticsColumns
+  // would never be read and every column in a group would come out the same
+  // width. Auto layout reads them from the header row they are declared on.
   table {
-    table-layout: fixed;
     width: 100%;
-  }
-
-  // The expanded port rows nest another table that carries no width hints, so
-  // a fixed layout would divide it into equal columns. Leave it auto-sized.
-  .table-accordion-td table {
-    table-layout: auto;
+    border-collapse: separate;
+    border-left: $ix-border solid $g5-pepper;
   }
 
   // TableBase renders a plain cell as a single <span title={value}> — the
@@ -43,6 +53,176 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  // Header and grid, matching the server list (see .host-page-graph-table-
+  // container in style/components/host.scss). Without this the cell draws the
+  // table with no header treatment at all: the column names scroll away with
+  // the rows and nothing separates one column from the next.
+  //
+  // Written as descendant selectors on purpose. The table is wrapped by
+  // FancyScrollbar, which inserts its own divs, so a child chain from the
+  // panel body never reaches it.
+  thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 6px 10px;
+    background-color: $g4-onyx;
+    color: $g14-chromium;
+    border: 0;
+    border-top: $ix-border solid $g5-pepper;
+    border-right: $ix-border solid $g5-pepper;
+    border-bottom: $ix-border solid $g5-pepper;
+  }
+
+  // Both header rows stick. The group row keeps the top and the column row
+  // hangs below it, so the pair travels together as one header.
+  .parent-header-tr > th {
+    z-index: 11;
+    // Fixes the row height so the column row below knows what to clear.
+    height: $optics-parent-header-height;
+    padding: 5px 10px;
+    line-height: 18px;
+    border-bottom: 0;
+  }
+
+  .parent-header-tr + tr > th {
+    top: $optics-parent-header-height;
+  }
+
+  tbody > tr > td {
+    padding: 6px 10px;
+    color: $g12-forge;
+    border: 0;
+    border-right: $ix-border solid $g5-pepper;
+    border-bottom: $ix-border solid $g5-pepper;
+  }
+
+  // ─── Expanded ports ───────────────────────────────────────────────────────
+  // A device's ports are detail hanging off the row above, not a second table
+  // of peers. Left alone the nested table inherits the device table's header
+  // block and full grid, and the two read as siblings. Recessing this one and
+  // stripping it back to a rule-lined list keeps the device table as the
+  // structure the eye follows, and this as what one row opens up to.
+  .table-accordion .table-accordion-tr {
+    // Darker than the rows above, so the block reads as sunk into the table
+    // rather than laid on top of it.
+    //
+    // Repeated for :hover to outrank the table-wide row highlight, which is
+    // the more specific selector and would otherwise repaint the whole block
+    // the moment the pointer crossed it. The drawer is content; the row a
+    // pointer can pick is the device row above it.
+    &,
+    &:hover {
+      background-color: $g2-kevlar;
+    }
+
+    .table-accordion-td {
+      padding: 0;
+      border-right: 0;
+    }
+  }
+
+  .table-accordion-div {
+    padding: 12px 16px 14px;
+    // A shadow cast by the device row onto the block below it. It marks the
+    // seam the darker fill alone leaves ambiguous, and the cell's own bottom
+    // rule closes the other end, so the block reads as bounded without a
+    // marker drawn beside it.
+    box-shadow: inset 0 7px 8px -7px rgba($g0-obsidian, 0.9);
+
+    // The reveal. TableBase mounts this row already open, so the height has to
+    // be animated from nothing rather than transitioned between two states.
+    // A one-track grid is what makes that possible without naming a height:
+    // the track goes 0fr to 1fr and resolves to whatever the ports need, so it
+    // works the same for a two-port device and a forty-eight-port chassis.
+    display: grid;
+    grid-template-rows: 1fr;
+    animation: optics-ports-open 200ms ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+
+    // The track is what collapses; its content has to be clipped to it, or the
+    // table is drawn at full height outside a closed track.
+    > div {
+      min-height: 0;
+      overflow: hidden;
+    }
+  }
+
+  .table-accordion-td {
+    table {
+      border-left: 0;
+      border-collapse: collapse;
+    }
+
+    // A label row, not a second header: no fill and no grid, just a rule under
+    // it. It also must not stick — it would ride up over the device header.
+    thead > tr > th {
+      position: static;
+      padding: 0 10px 8px;
+      background-color: transparent;
+      color: $g10-wolf;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 0;
+      border-bottom: $ix-border solid $g5-pepper;
+    }
+
+    tbody > tr > td {
+      padding: 8px 10px;
+      color: $g13-mist;
+      border: 0;
+      border-bottom: 1px solid rgba($g5-pepper, 0.6);
+    }
+
+    // The port name is what identifies the row, so it carries the weight the
+    // readings beside it do not need.
+    tbody > tr > td:first-child {
+      color: $g15-platinum;
+      font-weight: 600;
+    }
+
+    // The last rule would draw against the panel edge with nothing under it.
+    tbody > tr:last-child > td {
+      border-bottom: 0;
+    }
+
+    // Opaque, because the same table-wide highlight sits under these rows and
+    // a translucent fill would blend with it into something lighter than the
+    // one step up from the block's own fill that is wanted here.
+    tbody > tr:hover > td {
+      background-color: $g3-castle;
+    }
+
+    // Readings are read down the column, so the decimal points have to line up
+    // even though the digits differ in width.
+    td.text-right {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+// Opening an expanded row. There is no closing half: TableBase unmounts the row
+// on the same click that closes it, so it leaves rather than retracts.
+@keyframes optics-ports-open {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    padding-top: 12px;
+    padding-bottom: 14px;
   }
 }
 

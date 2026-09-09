@@ -68,7 +68,15 @@ const metricColumn = ({
   name,
   align: AlignType.CENTER,
   parentHeader: 'Worst port',
-  options: {sorting: true, sortArrayBy: 'last', isGauge: true},
+  // Half the table between the three of them. A gauge or a sparkline is the
+  // one thing here that reads better with more room, so it takes the share the
+  // text columns beside it do not need.
+  options: {
+    sorting: true,
+    sortArrayBy: 'last',
+    isGauge: true,
+    thead: {style: {width: '16%'}},
+  },
   render: (value, rowData) => {
     const portName = (rowData?.[portKey] as string) ?? ''
     const label = (
@@ -134,31 +142,33 @@ export const opticsDeviceColumns = (
     name: 'Device',
     align: AlignType.LEFT,
     parentHeader: 'Device',
-    // The table lays out fixed (see optics.scss), so these widths decide the
-    // columns. Device names are FQDNs on some sites; the cell ellipsises and
-    // keeps the full name in its title attribute.
-    options: {sorting: true, thead: {style: {width: '200px'}}},
+    // Percentages, adding up to 100 across the ten columns that render, so the
+    // split holds whatever width the dashboard cell is dragged to. The table
+    // lays out auto (see optics.scss), which is what lets a width declared here
+    // reach the column at all. Device names are FQDNs on some sites; the cell
+    // ellipsises and keeps the full name in its title attribute.
+    options: {sorting: true, thead: {style: {width: '11%'}}},
   },
   {
     key: 'model',
     name: 'Model',
     align: AlignType.CENTER,
     parentHeader: 'Device',
-    options: {sorting: true, thead: {style: {width: '130px'}}},
+    options: {sorting: true, thead: {style: {width: '7%'}}},
   },
   {
     key: 'ip',
     name: 'IP',
     align: AlignType.LEFT,
     parentHeader: 'Device',
-    options: {sorting: true, isIP: true, thead: {style: {width: '110px'}}},
+    options: {sorting: true, isIP: true, thead: {style: {width: '7%'}}},
   },
   {
     key: 'location',
     name: 'Location',
     align: AlignType.LEFT,
     parentHeader: 'Device',
-    options: {sorting: true, thead: {style: {width: '110px'}}},
+    options: {sorting: true, thead: {style: {width: '6%'}}},
   },
   metricColumn({
     key: 'tx',
@@ -198,7 +208,9 @@ export const opticsDeviceColumns = (
     name: 'Status',
     align: AlignType.CENTER,
     parentHeader: 'Ports',
-    options: {sorting: true, thead: {style: {width: '70px'}}},
+    // A ratio of two short numbers, so it only needs to fit its own heading.
+    // Anything wider is room the gauges beside it can use.
+    options: {sorting: true, thead: {style: {width: '5%'}}},
     render: (value, rowData) => (
       <div
         className={`device--indicator ${
@@ -217,7 +229,7 @@ export const opticsDeviceColumns = (
     name: 'Slots',
     align: AlignType.CENTER,
     parentHeader: 'Ports',
-    options: {sorting: true, thead: {style: {width: '70px'}}},
+    options: {sorting: true, thead: {style: {width: '5%'}}},
     // Only Catalyst reports its cages; elsewhere the count is unknown.
     render: value => <>{value || '-'}</>,
   },
@@ -226,7 +238,8 @@ export const opticsDeviceColumns = (
     name: 'Checked At',
     align: AlignType.CENTER,
     parentHeader: 'Ports',
-    options: {sorting: true, thead: {style: {width: '150px'}}},
+    // Wide enough for "YYYY-MM-DD HH:mm:ss" without ellipsising it.
+    options: {sorting: true, thead: {style: {width: '11%'}}},
     render: (value, _row, _c, _r, timeZone) => (
       <>{value ? formatDateTimeForDeviceData(value, timeZone) : '-'}</>
     ),
@@ -237,6 +250,8 @@ export const opticsDeviceColumns = (
     name: 'Ports',
     align: AlignType.CENTER,
     parentHeader: 'Ports',
+    // No width: TableBase drops the accordion column from the table it draws
+    // and only reads this one for the key holding the nested rows.
     options: {isAccordion: true},
     render: value => <>{(value as unknown[])?.length ?? 0}</>,
   },

@@ -1,7 +1,12 @@
 import {opticsDeviceColumns} from 'src/device_management/constants/opticsColumns'
 import {DEFAULT_OPTICS_THRESHOLD} from 'src/device_management/constants/opticsThreshold'
 
-const columns = () => opticsDeviceColumns(false, DEFAULT_OPTICS_THRESHOLD)
+// TableBase drops the accordion column from the table it draws, so it is not
+// part of the width budget.
+const columns = () =>
+  opticsDeviceColumns(false, DEFAULT_OPTICS_THRESHOLD).filter(
+    column => !column.options?.isAccordion
+  )
 
 const widthOf = (key: string): string | undefined => {
   const column = columns().find(c => c.key === key)
@@ -9,22 +14,32 @@ const widthOf = (key: string): string | undefined => {
 }
 
 describe('device_management/constants/opticsColumns', () => {
-  // optics.scss lays the device table out fixed, so a text column without a
-  // width would be sized by the browser and long device names would collide
-  // with the next column.
-  it('gives every text column an explicit width', () => {
-    expect(widthOf('sysName')).toBe('200px')
-    expect(widthOf('model')).toBe('130px')
-    expect(widthOf('ip')).toBe('110px')
-    expect(widthOf('location')).toBe('110px')
-    expect(widthOf('status')).toBe('70px')
-    expect(widthOf('checkedAt')).toBe('150px')
+  // Nothing else decides the split: the table lays out auto, so a column left
+  // without a width is sized by the browser off its content.
+  it('gives every rendered column a percentage width', () => {
+    columns().forEach(column => {
+      expect(widthOf(column.key)).toMatch(/^\d+%$/)
+    })
   })
 
-  // The three gauges share whatever the fixed columns leave.
-  it('leaves the metric columns unsized', () => {
-    expect(widthOf('tx')).toBeUndefined()
-    expect(widthOf('rx')).toBeUndefined()
-    expect(widthOf('temp')).toBeUndefined()
+  // Percentages only hold the intended split if they account for the whole
+  // table; a short total lets the browser hand the remainder out on its own.
+  it('adds the widths up to the full table', () => {
+    const total = columns().reduce(
+      (sum, column) => sum + parseInt(widthOf(column.key), 10),
+      0
+    )
+
+    expect(total).toBe(100)
+  })
+
+  // The three gauges are the reason the cell exists, so they get the room and
+  // the two ratios beside them get as little as their headings need.
+  it('gives the metric columns more room than the port ratios', () => {
+    expect(widthOf('tx')).toBe('16%')
+    expect(widthOf('rx')).toBe('16%')
+    expect(widthOf('temp')).toBe('16%')
+    expect(widthOf('status')).toBe('5%')
+    expect(widthOf('slots')).toBe('5%')
   })
 })
