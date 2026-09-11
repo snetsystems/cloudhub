@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -66,25 +65,20 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	ws.SetWriteDeadline(time.Now().Add(wsTimeout))
 	ws.SetReadDeadline(time.Now().Add(wsTimeout))
 
-	// Parse to the original query string
-	qs, err := url.QueryUnescape(r.URL.RawQuery)
-	if err != nil {
+	// Standard query encoding from the client (URLSearchParams / url.Values).
+	// Do not QueryUnescape the whole RawQuery first: that re-introduces raw
+	// "%" in passwords and makes a second ParseQuery fail with
+	// invalid URL escape "%".
+	params := r.URL.Query()
+
+	portValues, ok := params["port"]
+	if !ok || len(portValues) == 0 {
 		s.Logger.
-			WithField("component", "terminal > WebTerminalHandler > url.QueryUnescape").
-			Error(err.Error())
+			WithField("component", "terminal > WebTerminalHandler > port").
+			Error("missing port")
 		return
 	}
-
-	// query string convert to map
-	params, err := url.ParseQuery(qs)
-	if err != nil {
-		s.Logger.
-			WithField("component", "terminal > WebTerminalHandler > url.ParseQuery").
-			Error(err.Error())
-		return
-	}
-
-	port, err := strconv.Atoi(params["port"][0])
+	port, err := strconv.Atoi(portValues[0])
 	if err != nil {
 		s.Logger.
 			WithField("component", "terminal > WebTerminalHandler > strconv.Atoi").
@@ -97,10 +91,20 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 		algorithm = values[0]
 	}
 
+	userValues, userOK := params["user"]
+	pwdValues, pwdOK := params["pwd"]
+	addrValues, addrOK := params["addr"]
+	if !userOK || len(userValues) == 0 || !pwdOK || len(pwdValues) == 0 || !addrOK || len(addrValues) == 0 {
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > params").
+			Error("missing user, pwd, or addr")
+		return
+	}
+
 	sh := &ssh{
-		user:      params["user"][0],
-		pwd:       params["pwd"][0],
-		addr:      params["addr"][0],
+		user:      userValues[0],
+		pwd:       pwdValues[0],
+		addr:      addrValues[0],
 		port:      port,
 		algorithm: algorithm,
 	}

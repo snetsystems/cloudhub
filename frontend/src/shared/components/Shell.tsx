@@ -131,11 +131,18 @@ const Shell = (props: Props) => {
   const handleOpenTerminal = (newTabshell: ShellInfo): void => {
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
 
-    let urlParam =
-      'user=' + user + '&pwd=' + pwd + '&addr=' + addr + '&port=' + port
-
+    // Encode each value separately. Wrapping the whole query in
+    // encodeURIComponent left raw "%" / "&" in passwords after one
+    // QueryUnescape, and url.ParseQuery then failed with
+    // invalid URL escape "%".
+    const params = new URLSearchParams({
+      user,
+      pwd,
+      addr,
+      port,
+    })
     if (algorithm) {
-      urlParam += '&algorithm=' + algorithm
+      params.set('algorithm', algorithm)
     }
 
     const socketURL =
@@ -144,7 +151,7 @@ const Shell = (props: Props) => {
       ':' +
       window.location.port +
       '/cloudhub/v1/WebTerminalHandler?' +
-      encodeURIComponent(urlParam)
+      params.toString()
 
     let _socket = new WebSocket(socketURL)
     _socket.binaryType = 'arraybuffer'

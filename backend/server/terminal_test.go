@@ -41,3 +41,34 @@ func TestWebTerminalHandlerClosesWebSocketWhenSSHConnectionFails(t *testing.T) {
 	var closeErr *websocket.CloseError
 	require.ErrorAs(t, err, &closeErr)
 }
+
+// Passwords with "%" used to break the old QueryUnescape+ParseQuery path
+// with "invalid URL escape \"%\"" before SSH was attempted.
+func TestWebTerminalHandlerAcceptsPercentInPassword(t *testing.T) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	port := listener.Addr().(*net.TCPAddr).Port
+	require.NoError(t, listener.Close())
+
+	service := &Service{Logger: &mocks.TestLogger{}}
+	server := httptest.NewServer(http.HandlerFunc(service.WebTerminalHandler))
+	defer server.Close()
+
+	query := url.Values{
+		"user":      {"root"},
+		"pwd":       {"p%ass&w=ord"},
+		"addr":      {"127.0.0.1"},
+		"port":      {strconv.Itoa(port)},
+		"algorithm": {"ssh-ed25519"},
+	}
+	websocketURL := "ws" + strings.TrimPrefix(server.URL, "http") + "?" + query.Encode()
+
+	connection, response, err := websocket.DefaultDialer.Dial(websocketURL, nil)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusSwitchingProtocols, response.StatusCode)
+	defer connection.Close()
+
+	_, _, err = connection.ReadMessage()
+	var closeErr *websocket.CloseError
+	require.ErrorAs(t, err, &closeErr)
+}
