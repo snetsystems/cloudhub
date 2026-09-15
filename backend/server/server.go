@@ -85,6 +85,7 @@ type Server struct {
 	LoginHint          string        `long:"login-hint" description:"OpenID login_hint paramter to passed to authorization server during authentication" env:"LOGIN_HINT"`
 	AuthDuration       time.Duration `long:"auth-duration" default:"720h" description:"Total duration of cookie life for authentication (in hours). 0 means authentication expires on browser close." env:"AUTH_DURATION"`
 	InactivityDuration time.Duration `long:"inactivity-duration" default:"5m" description:"Duration for which a token is valid without any new activity." env:"INACTIVITY_DURATION"`
+	ServiceExpiresAt   string        `long:"service-expires-at" description:"Date this installation stops serving, as YYYY-MM-DD (the whole of that day is served) or an RFC3339 timestamp. For time-boxed evaluations; empty means it never expires." env:"SERVICE_EXPIRES_AT"`
 
 	GithubClientID     string   `short:"i" long:"github-client-id" description:"Github Client ID for OAuth 2 support" env:"GH_CLIENT_ID"`
 	GithubClientSecret string   `short:"s" long:"github-client-secret" description:"Github Client Secret for OAuth 2 support" env:"GH_CLIENT_SECRET"`
@@ -658,6 +659,22 @@ func (s *Server) Serve(ctx context.Context) {
 		return
 	}
 
+	serviceExpiresAt, err := ParseServiceExpiry(s.ServiceExpiresAt)
+	if err != nil {
+		// Refuse to boot rather than fall back to "never expires": a typo here
+		// would silently hand an evaluation tenant an unlimited install.
+		logger.
+			WithField("component", "server").
+			WithField("ServiceExpiresAt", "invalid").
+			Error(err)
+		return
+	}
+	if !serviceExpiresAt.IsZero() {
+		logger.
+			WithField("component", "server").
+			Info("Service is time-boxed and stops serving at ", serviceExpiresAt.Format(time.RFC3339))
+	}
+
 	osp := NewOSP(s.OSP)
 	aiConfig := NewAIConfig(s.AI)
 	urlMonitoringConfig := NewURLMonitoringConfig(s.URLMonitoring)
@@ -988,6 +1005,7 @@ func (s *Server) Serve(ctx context.Context) {
 		BasicAuth:             basicAuthenticator,
 		PasswordPolicy:        s.PasswordPolicy,
 		PasswordPolicyMessage: s.PasswordPolicyMessage,
+		ServiceExpiresAt:      serviceExpiresAt,
 	}, service)
 
 	// Add CloudHub's version header to all requests

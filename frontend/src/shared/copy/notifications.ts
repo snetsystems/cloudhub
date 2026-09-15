@@ -82,6 +82,18 @@ export const notifySessionTimedOut = (): Notification => ({
   message: 'Your session has timed out. Log in again to continue.',
 })
 
+/**
+ * The server refuses every request once a time-boxed evaluation ends, so
+ * logging in again will not help. Say that instead of "session timed out".
+ */
+export const notifyServiceExpired = (): Notification => ({
+  type: 'error',
+  icon: 'triangle',
+  duration: INFINITE,
+  message:
+    'The CloudHub evaluation period has ended. Contact your administrator to continue.',
+})
+
 export const notifyHttpErrorRespose = (
   status: number,
   errorMessage: string = ''

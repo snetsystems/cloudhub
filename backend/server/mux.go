@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "net/http/pprof" // required for /debug/pprof endpoint
 
@@ -41,6 +42,7 @@ type MuxOpts struct {
 	BasicAuth             *basicAuth.BasicAuth // HTTP basic authentication provider
 	PasswordPolicy        string               // Password validity rules
 	PasswordPolicyMessage string               // Password validity rule description
+	ServiceExpiresAt      time.Time            // Instant a time-boxed install stops serving; zero means never
 }
 
 // NewMux attaches all the route handlers; handler returned servers cloudhub.
@@ -689,6 +691,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	} else {
 		out = router
 	}
+	// Outside everything else on purpose: a finished evaluation has to close
+	// the login page and the React bundle too, not just the API.
+	out = ServiceExpiry(opts.ServiceExpiresAt, opts.Basepath, opts.Logger, out)
 	out = Logger(opts.Logger, FlushingHandler(out))
 
 	return out
