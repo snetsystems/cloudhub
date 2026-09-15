@@ -47,6 +47,7 @@ import {AlertLevel, AlertStatusMap} from 'src/hosts/types/alertStatus'
 import AiAgentsButton from 'src/dashboards/components/AiAgentsButton'
 import {DashboardsAiSplit} from 'src/dashboards/components/AiAgentsDrawer'
 import {useAiContext} from 'src/ai_chat/hooks/useAiContext'
+import {useAiChatAccess} from 'src/ai_chat/utils/aiAccess'
 import {
   buildServerContextPayload,
   buildServerContextSummary,
@@ -272,6 +273,7 @@ export function NewHostsPage({
   const [frozenAlertStatus, setFrozenAlertStatus] = useState<any>(null)
 
   const {sendToAiChat, clear: clearAiContext} = useAiContext()
+  const isAiAllowed = useAiChatAccess()
 
   const handleAiDiagnoseClick = useCallback(
     (host: string, rowData: Record<string, HostCellValue>) => {
@@ -318,7 +320,9 @@ export function NewHostsPage({
           setFrozenAlertStatus(alertStatusMap[host] ?? null)
           setIsAlertModalOpen(true)
         },
-        onAiDiagnoseClick: handleAiDiagnoseClick,
+        // serverListColumns drops the Diagnose column when no handler comes
+        // in, which is how the action disappears below admin.
+        onAiDiagnoseClick: isAiAllowed ? handleAiDiagnoseClick : undefined,
         t,
       }),
     [
@@ -329,6 +333,7 @@ export function NewHostsPage({
       dbHosts,
       hasFetched,
       handleAiDiagnoseClick,
+      isAiAllowed,
       t,
     ]
   )

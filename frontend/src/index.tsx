@@ -31,6 +31,10 @@ import {
   OTPLoginPage,
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
+import {ensureAiAuthorized} from 'src/ai_chat/utils/aiAccess'
+import {ensureRole} from 'src/auth/routeGuards'
+import {ADMIN_ROLE} from 'src/auth/Authorized'
+import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
 import OnboardingWizard from 'src/sources/containers/OnboardingWizard'
 
 import NotFound from 'src/shared/components/NotFound'
@@ -227,6 +231,15 @@ const browserHistory = useRouterHistory(createHistory)({
 
 const store = configureStore(loadLocalStorage(errorsQueue), browserHistory)
 const {dispatch} = store
+
+// AI pages are admin-only. Hiding the menu is not a control by itself, so the
+// routes turn a viewer away before the page mounts.
+const aiRouteGuard = ensureAiAuthorized(store.getState, DEFAULT_HOME_PAGE)
+
+// Same for the Kapacitor alert rules behind the nav's admin-only "Alert
+// Setting" item. Alert history and the server alert-setup flow stay open to
+// the roles that own them, so they are deliberately not guarded here.
+const adminRouteGuard = ensureRole(store.getState, ADMIN_ROLE, DEFAULT_HOME_PAGE)
 
 const persistedLanguage = store.getState().app?.persisted?.language
 if (persistedLanguage === 'en' || persistedLanguage === 'ko') {
@@ -520,21 +533,36 @@ class Root extends PureComponent<Record<string, never>, State> {
                     )}
                   />
                   <Route path="applications" component={Applications} />
-                  <Route path="ai-chat" component={AiChatPage} />
-                  <Route path="ai-chat-test" component={AiChatPage} />
+                  <Route
+                    path="ai-chat"
+                    component={AiChatPage}
+                    onEnter={aiRouteGuard}
+                  />
+                  <Route
+                    path="ai-chat-test"
+                    component={AiChatPage}
+                    onEnter={aiRouteGuard}
+                  />
                   <Route
                     path="openclaw-skills"
                     component={OpenClawSkillsPage}
+                    onEnter={aiRouteGuard}
                   />
                   <Route path="alerts" component={AlertsApp} />
-                  <Route path="alert-rules" component={KapacitorRulesPage} />
+                  <Route
+                    path="alert-rules"
+                    component={KapacitorRulesPage}
+                    onEnter={adminRouteGuard}
+                  />
                   <Route
                     path="kapacitors/:kid/alert-rules/:ruleID" // ruleID can be "new"
                     component={KapacitorRulePage}
+                    onEnter={adminRouteGuard}
                   />
                   <Route
                     path="alert-rules/:ruleID"
                     component={KapacitorRulePage}
+                    onEnter={adminRouteGuard}
                   />
                   <Route
                     path="alert-group-rules/new"

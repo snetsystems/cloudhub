@@ -2,9 +2,10 @@ import React, {useCallback, useEffect, useRef, useState} from 'react'
 import classnames from 'classnames'
 import {connect} from 'react-redux'
 import CloudhubAiChatStandalone from 'src/ai_chat/containers/CloudhubAiChatStandalone'
-import {isOrgNavMenuEnabled} from 'src/side_nav/utils/orgNavMenuVisibility'
+import {isAiChatVisible} from 'src/ai_chat/utils/aiAccess'
 import {OrgNavMenuState} from 'src/shared/actions/orgNavMenu'
 import {AiAgentsDrawerState} from 'src/shared/reducers/aiAgentsDrawer'
+import {Me} from 'src/types/auth'
 import {
   clampDrawerWidth,
   DEFAULT_WIDTH,
@@ -15,6 +16,8 @@ import {
 interface Props {
   isOpen: boolean
   orgNavMenu: OrgNavMenuState
+  me: Me | null
+  isUsingAuth: boolean
   inPresentationMode?: boolean
   /** Width the page beneath keeps for itself. See aiDrawerWidth. */
   minMainWidth?: number
@@ -66,6 +69,8 @@ const layoutNotifier = (() => {
 const AiAgentsDrawer: React.FC<Props> = ({
   isOpen,
   orgNavMenu,
+  me,
+  isUsingAuth,
   inPresentationMode = false,
   minMainWidth = MIN_MAIN_WIDTH,
 }) => {
@@ -177,7 +182,7 @@ const AiAgentsDrawer: React.FC<Props> = ({
     }
   }, [handleResizeEnd, handleResizeMove])
 
-  if (!hasOpened || !isOrgNavMenuEnabled(orgNavMenu?.selection, 'ai-chat')) {
+  if (!hasOpened || !isAiChatVisible(me, isUsingAuth, orgNavMenu?.selection)) {
     return null
   }
 
@@ -221,12 +226,16 @@ const AiAgentsDrawer: React.FC<Props> = ({
 const mapStateToProps = ({
   aiAgentsDrawer,
   orgNavMenu,
+  auth,
 }: {
   aiAgentsDrawer: AiAgentsDrawerState
   orgNavMenu: OrgNavMenuState
+  auth: {me: Me | null; isUsingAuth: boolean}
 }) => ({
   isOpen: aiAgentsDrawer.isOpen,
   orgNavMenu: orgNavMenu || {orgId: null, selection: {}},
+  me: auth?.me ?? null,
+  isUsingAuth: auth?.isUsingAuth,
 })
 
 const ConnectedAiAgentsDrawer = connect(mapStateToProps)(AiAgentsDrawer)

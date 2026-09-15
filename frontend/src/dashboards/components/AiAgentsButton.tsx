@@ -4,14 +4,17 @@ import {withRouter, WithRouterProps} from 'react-router'
 import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
 import {toggleAiAgentsDrawer} from 'src/shared/actions/aiAgentsDrawer'
 import {OrgNavMenuState} from 'src/shared/actions/orgNavMenu'
-import {isOrgNavMenuEnabled} from 'src/side_nav/utils/orgNavMenuVisibility'
+import {isAiChatVisible} from 'src/ai_chat/utils/aiAccess'
 import {AiAgentsDrawerState} from 'src/shared/reducers/aiAgentsDrawer'
 import Tooltip from 'src/shared/components/Tooltip'
 import {Source} from 'src/types'
+import {Me} from 'src/types/auth'
 
 interface Props extends WithRouterProps {
   source: Source | undefined
   orgNavMenu: OrgNavMenuState
+  me: Me | null
+  isUsingAuth: boolean
   isDrawerOpen: boolean
   onToggle: () => void
 }
@@ -19,10 +22,12 @@ interface Props extends WithRouterProps {
 const AiAgentsButton: React.FC<Props> = ({
   source,
   orgNavMenu,
+  me,
+  isUsingAuth,
   isDrawerOpen,
   onToggle,
 }) => {
-  if (!source || !isOrgNavMenuEnabled(orgNavMenu?.selection, 'ai-chat')) {
+  if (!source || !isAiChatVisible(me, isUsingAuth, orgNavMenu?.selection)) {
     return null
   }
 
@@ -44,15 +49,19 @@ const mapStateToProps = (
     sources,
     orgNavMenu,
     aiAgentsDrawer,
+    auth,
   }: {
     sources: Source[]
     orgNavMenu: OrgNavMenuState
     aiAgentsDrawer: AiAgentsDrawerState
+    auth: {me: Me | null; isUsingAuth: boolean}
   },
   ownProps: WithRouterProps
 ) => ({
   source: sources.find(s => s.id === ownProps.params.sourceID),
   orgNavMenu: orgNavMenu || {orgId: null, selection: {}},
+  me: auth?.me ?? null,
+  isUsingAuth: auth?.isUsingAuth,
   isDrawerOpen: aiAgentsDrawer.isOpen,
 })
 
