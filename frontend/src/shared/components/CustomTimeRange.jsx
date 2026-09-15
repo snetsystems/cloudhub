@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
 import PropTypes from 'prop-types'
-import rome from 'rome'
+import rome from 'src/shared/utils/romeWithMoment'
 import moment from 'moment'
 import {connect} from 'react-redux'
 import _ from 'lodash'

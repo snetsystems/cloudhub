@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import rome from 'rome'
+import rome from 'src/shared/utils/romeWithMoment'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {formatTimeRange} from 'src/shared/utils/time'
 
