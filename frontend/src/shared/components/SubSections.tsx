@@ -52,8 +52,11 @@ class SubSections extends Component<Props> {
 
   private get activeSectionComponent(): ReactNode {
     const {sections, activeSection} = this.props
+    // `enabled` is what hides a section the user may not open, so a disabled
+    // one must not render even for the paint before redirectIfSectionMissing
+    // rewrites the URL — a typed-in address would otherwise mount the page.
     const active = sections.find(
-      section => section && section.url === activeSection
+      section => section && section.url === activeSection && section.enabled
     )
     if (active) {
       return active.component

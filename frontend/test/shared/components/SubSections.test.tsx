@@ -83,4 +83,30 @@ describe('SubSections', () => {
       })
     })
   })
+
+  describe('a section the user may not open', () => {
+    it('renders an enabled section instead of the disabled one', () => {
+      // Reached by typing the URL: the tab for it is not on the page. The
+      // redirect below only lands after mount, so rendering the disabled
+      // component here would still mount the page for a paint.
+      const wrapper = setup({activeSection: pineappleURL})
+      const content = wrapper.dive().find({'data-test': 'subsectionContent'})
+
+      expect(content.find(Pineapple).exists()).toBe(false)
+      expect(content.find(Guava).exists()).toBe(true)
+    })
+
+    it('rewrites the URL to the first section left open', () => {
+      const replace = jest.fn()
+      const wrapper = setup({
+        activeSection: pineappleURL,
+        router: {...defaultProps.router, replace},
+      })
+      wrapper.dive()
+
+      expect(replace).toHaveBeenCalledWith(
+        `/sources/fruitstand/fred-the-fruit-guy/${guavaURL}`
+      )
+    })
+  })
 })
