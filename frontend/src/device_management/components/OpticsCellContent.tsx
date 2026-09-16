@@ -18,11 +18,11 @@ import {
   DEFAULT_OPTICS_THRESHOLD,
   judgeOpticsPort,
   OpticsPortStatus,
-  opticsSeverity,
   worstOpticsSeverity,
 } from 'src/device_management/constants/opticsThreshold'
 import {
   DEFAULT_SWITCH_PORT_THRESHOLD,
+  ETHERNET_CSMACD,
   interfaceInitTicks,
   longDownDaysToTicks,
 } from 'src/device_management/constants/portLinkStatus'
@@ -213,7 +213,7 @@ const pollGapOf = (ports: PortSeries[]): number => {
 
 const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
   const {source, templates, manualRefresh, timeRange} = context
-  const {t} = useTranslation()
+  const {t, i18n} = useTranslation()
   const timeZone = useSelector(
     (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
       state.app?.persisted?.timeZone ?? TimeZones.Local
@@ -530,8 +530,23 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
         const named = new Set(
           [...portRows, ...vanished].map(p => canonicalIfName(p.ifName))
         )
-        const emptyCages: OpticsPortRow[] = (slots[devID] ?? [])
-          .filter(c => !c.fitted && !named.has(canonicalIfName(c.ifName)))
+        const cages = slots[devID] ?? []
+        // A cage the chassis reports fitted but that never produced a sensor
+        // row: no tx/rx/temp ever arrived for it, so it is almost certainly a
+        // a module the switch publishes no sensors for. Verified on the one
+        // real case (NFVO-1 Ethernet1/10, 2026-09-16): NX-OS calls the optic
+        // "transceiver is not supported", reports an empty model name and
+        // serial where every working port reports SFP-10G-SR, and creates none
+        // of the five ENTITY-MIB sensor objects its neighbours have - while the
+        // CLI reads Tx -2.55 / Rx -2.87 dBm from it quite happily. A DAC, which
+        // genuinely has no optics, is indistinguishable from here - present
+        // in the cage, but with nothing optical to read. The link itself is
+        // fine (see no_diagnostics in opticsThreshold), so this is only a
+        // monitoring gap, not a fault. A name already in `named` is a pulled
+        // module the `vanished` block already reports as no_module, so it is
+        // excluded here to keep the port from appearing twice.
+        const undiagnosed: OpticsPortRow[] = cages
+          .filter(c => c.fitted && !named.has(canonicalIfName(c.ifName)))
           .map(c => ({
             id: `${devID}|${c.ifName}|`,
             devID,
@@ -541,25 +556,100 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
             tx: null,
             rx: null,
             temp: null,
-            status: 'no_module' as OpticsPortStatus,
+            status: 'no_diagnostics' as OpticsPortStatus,
             checkedAt: '',
           }))
-        const allPorts = [...portRows, ...vanished, ...emptyCages].sort(
-          comparePorts
-        )
+        // Empty-cage rows exist to tell an operator how much spare uplink
+        // capacity is left, which only means something when the cages are a
+        // subset of the device's ports - where every port is a cage, the
+        // "Slots" ratio already says it, and listing dozens of them buries
+        // the one row that matters. So the question is not a ratio of cages
+        // to ports, it is whether the device has non-cage ports at all:
+        // physicalPortCount (IANAifType 6, ethernetCsmacd) minus the cage
+        // count. Across the fleet that difference is 50, 26, 63, 35 and 19
+        // for Catalyst switches as small as 24 SFP cages among 43 physical
+        // ports (Core_BB_01/02, C9300-24S) and as large as 4 cages among 54
+        // (C9200L-48P) - and 1 for a Nexus N9K-C9372PX, where the only
+        // non-cage port is mgmt0. The margin is 2, not 0, because a chassis
+        // can expose a management port or two that are not cages without
+        // that making it "has a copper section" - it only takes clearing 2
+        // to separate every Catalyst above from every Nexus. A collector
+        // that has not been upgraded to send ifType yet (see
+        // switch_ports.if_type_missing) leaves physicalPortCount at 0 for
+        // every port; that is "unknown", not "no non-cage ports", so it must
+        // not be read as a reason to hide cages that might matter.
+        const physicalPortCount = Object.entries(links).filter(
+          ([key, l]) =>
+            key.startsWith(`${devID}|`) && l.type === ETHERNET_CSMACD
+        ).length
+        const hasNonCagePorts =
+          physicalPortCount === 0 || physicalPortCount - cages.length > 2
+        const emptyCages: OpticsPortRow[] = hasNonCagePorts
+          ? cages
+              .filter(c => !c.fitted && !named.has(canonicalIfName(c.ifName)))
+              .map(c => ({
+                id: `${devID}|${c.ifName}|`,
+                devID,
+                ifName: c.ifName,
+                alias:
+                  links[`${devID}|${canonicalIfName(c.ifName)}`]?.alias ?? '',
+                lane: '',
+                tx: null,
+                rx: null,
+                temp: null,
+                status: 'no_module' as OpticsPortStatus,
+                checkedAt: '',
+              }))
+          : []
+        const allPorts = [
+          ...portRows,
+          ...vanished,
+          ...undiagnosed,
+          ...emptyCages,
+        ].sort(comparePorts)
         // Only Catalyst reports cages, so an empty list means the count is
         // unknown. "2/0" would be a claim about hardware that was never made.
-        const cages = slots[devID] ?? []
         const slotRatio = cages.length
           ? `${cages.filter(c => c.fitted).length}/${cages.length}`
           : ''
 
-        // Shut and unpopulated ports are neither healthy nor faulty, so they
-        // are left out of the ratio instead of dragging it down.
-        const watched = allPorts.filter(
-          p => opticsSeverity(p.status as OpticsPortStatus) !== 'none'
-        )
-        const okCount = watched.filter(p => p.status === 'ok').length
+        // Status' denominator is the same test as Slots' numerator: a module
+        // is present unless its status is `no_module` (the cage is empty, or
+        // the module was pulled). That keeps the two columns in terms of the
+        // same fact an operator can expand and count, and it is why an
+        // unused-but-fitted port (severity `none`) still lands in the
+        // denominator instead of quietly leaving it, the way it used to.
+        //
+        // A fitted-but-undiagnosed module is the same story: it IS one of the
+        // fitted modules, so leaving it out of the denominator would hide the
+        // exact blind spot it exists to surface - "Status 14/14" reading as
+        // fully healthy while "Slots 15/54" says a fifteenth module is
+        // fitted. Keeping it in `presentPorts` without counting it in
+        // `okCount` turns that into the honest "14/15": fitted, but not
+        // confirmed healthy. Its severity stays `none`, so it never drags
+        // the device's own severity down - only the ratio changes.
+        //
+        // "Slots' numerator equals Status' denominator" holds for the fleet
+        // we poll today, but it is contingent, not structural, in two ways:
+        //
+        // - Lanes. `portRows` are per `opticLane`, while the Slots numerator
+        //   is per cage, so a multi-lane QSFP or a breakout module would add
+        //   N to this denominator for the 1 it adds to Slots' numerator.
+        //   Not a regression - `watched` had the same granularity - and
+        //   every device polled today is single-lane.
+        // - A fitted cage whose optics stopped. It lands in `vanished` ->
+        //   `no_module` -> out of `presentPorts`, while Slots still counts
+        //   it fitted, briefly reproducing the mismatch this change removes.
+        //   `named` gives `vanished` precedence over the `no_diagnostics`
+        //   synthesis above on purpose: for a genuine pull that is the right
+        //   call, since the module really is gone. It is bounded - SLOT_QUERY
+        //   reads `last()` over the same window, so a real pull flips
+        //   `fitted` to 0 within one poll, and the row stays visible as NO
+        //   MODULE rather than disappearing - but a sensor that merely went
+        //   quiet (not a pull) pays for that precedence with one poll cycle
+        //   of the same "fitted but not counted" gap.
+        const presentPorts = allPorts.filter(p => p.status !== 'no_module')
+        const okCount = presentPorts.filter(p => p.status === 'ok').length
 
         return {
           id: devID,
@@ -577,10 +667,16 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           rxPort: worstRx?.ifName ?? '',
           temp: worstTemp?.temp ?? [],
           tempPort: worstTemp?.ifName ?? '',
-          status: `${okCount}/${watched.length}`,
+          status: `${okCount}/${presentPorts.length}`,
           slots: slotRatio,
+          // `presentPorts` only adds ports whose severity is `none` (unused,
+          // shutdown, long_down, no_diagnostics) on top of what the old
+          // `watched` list already fed this. `none` sits at the bottom of
+          // SEVERITY_RANK and worstOpticsSeverity only ever raises the
+          // result, so those extra ports can't make a device's severity
+          // worse - the verdict is unchanged, only the ratio is.
           severity: worstOpticsSeverity(
-            watched.map(p => p.status as OpticsPortStatus)
+            presentPorts.map(p => p.status as OpticsPortStatus)
           ),
           checkedAt: toISO(
             Math.max(...sorted.map(p => p.checkedAt ?? 0)) || null
@@ -612,9 +708,15 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
     return resolveTimeRangeBounds(timeRange) ?? undefined
   }, [isTrend, timeRange, autoRefreshTick])
 
+  // The Status/Slots header tooltips are read at column-construction time
+  // (opticsColumns.tsx), not inside a render callback, so this memo has to
+  // list the language itself - without it, switching languages re-renders
+  // the component but leaves the memoised columns, and their tooltips,
+  // showing the previous language until isTrend/threshold/xDomain changes
+  // for an unrelated reason.
   const columns = useMemo(
     () => opticsDeviceColumns(isTrend, threshold, xDomain),
-    [isTrend, threshold, xDomain]
+    [isTrend, threshold, xDomain, i18n.language]
   )
 
   return (

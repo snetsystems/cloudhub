@@ -1,5 +1,6 @@
 import React from 'react'
 
+import i18n from 'src/i18n'
 import TableGaugeCell from 'src/dashboards/components/TableGaugeCell'
 import TableLineChartCell from 'src/dashboards/components/TableLineChartCell'
 import {toLineValues} from 'src/dashboards/utils/tableLineChart'
@@ -206,7 +207,7 @@ export const opticsDeviceColumns = (
   }),
   {
     key: 'status',
-    name: 'Status',
+    name: <span title={i18n.t('optics.status_tooltip')}>Status</span>,
     align: AlignType.CENTER,
     parentHeader: 'Ports',
     // A ratio of two short numbers, so it only needs to fit its own heading.
@@ -224,7 +225,7 @@ export const opticsDeviceColumns = (
     // device with a spare slot is not unhealthy, and folding the two together
     // would leave it permanently red.
     key: 'slots',
-    name: 'Slots',
+    name: <span title={i18n.t('optics.slots_tooltip')}>Slots</span>,
     align: AlignType.CENTER,
     parentHeader: 'Ports',
     options: {sorting: true, thead: {style: {width: '5%'}}},
@@ -298,7 +299,20 @@ export const opticsPortColumns: ColumnInfo[] = [
       if (!label) {
         return <>-</>
       }
-      return <SeverityBadge label={label} severity={opticsSeverity(status)} />
+      // Only this status needs explaining on hover: everything else is
+      // self-evident from the label, and a title on every badge would just
+      // be noise.
+      const title =
+        status === 'no_diagnostics'
+          ? i18n.t('optics.no_diagnostics_tooltip')
+          : undefined
+      return (
+        <SeverityBadge
+          label={label}
+          severity={opticsSeverity(status)}
+          title={title}
+        />
+      )
     },
   },
   {

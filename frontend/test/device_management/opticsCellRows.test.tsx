@@ -31,7 +31,14 @@ jest.mock('src/dashboards/apis', () => ({
 }))
 jest.mock('react-i18next', () => ({
   __esModule: true,
-  useTranslation: () => ({t: (_k: string, d?: string) => d ?? _k}),
+  useTranslation: () => ({
+    t: (_k: string, d?: string) => d ?? _k,
+    i18n: {language: 'en'},
+  }),
+}))
+jest.mock('src/i18n', () => ({
+  __esModule: true,
+  default: {t: (_k: string, d?: string) => d ?? _k},
 }))
 
 import React from 'react'
@@ -77,6 +84,19 @@ const linkSeries = (
   tags: {dev_id: 'dev-1', ifName, ifAlias: alias},
   columns: ['time', 'admin', 'oper'],
   values: [[T2, admin, oper]],
+})
+
+/** Interface state that also carries the IF-MIB type and last-change tick. */
+const linkSeriesWithChange = (
+  ifName: string,
+  admin: string,
+  oper: string,
+  ifType: number,
+  lastChange: number
+) => ({
+  tags: {dev_id: 'dev-1', ifName, ifAlias: 'unknown'},
+  columns: ['time', 'admin', 'oper', 'type', 'lastChange'],
+  values: [[T2, admin, oper, ifType, lastChange]],
 })
 
 /**
@@ -321,7 +341,7 @@ describe('OpticsCellContent readings', () => {
 
     expect(lastTableProps.data[0]).toMatchObject({
       status: '1/1',
-      isHealthy: true,
+      severity: 'ok',
     })
   })
 
@@ -413,8 +433,46 @@ describe('OpticsCellContent readings', () => {
 
     expect(lastTableProps.data[0]).toMatchObject({
       status: '1/1',
-      isHealthy: true,
+      severity: 'ok',
     })
+  })
+
+  // A device reads as its worst port, so one degrading port has to be visible
+  // from the collapsed row - otherwise it is only found by expanding it.
+  it('carries the worst port severity up to the device row', async () => {
+    respond([
+      oneLivePort(),
+      series('GigabitEthernet1/1/2', [[T2, -5.5, -30.0, 32.4, 'ok']]),
+    ])
+
+    await render()
+
+    expect(lastTableProps.data[0]).toMatchObject({
+      status: '1/2',
+      severity: 'warn',
+    })
+  })
+
+  // A link that never came up is worse than one that is merely dim, and the
+  // device row has to say so rather than settling on the first fault it finds.
+  it('lets a down port outrank a dim one', async () => {
+    respond(
+      [
+        oneLivePort(),
+        series('GigabitEthernet1/1/2', [[T2, -5.5, -30.0, 32.4, 'ok']]),
+        series('GigabitEthernet1/1/3', [[T2, -5.5, -5.6, 32.4, 'ok']]),
+      ],
+      [linkSeries('Gi1/1/3', 'up', 'down')]
+    )
+
+    await render()
+
+    expect(lastTableProps.data[0].severity).toBe('fail')
+    expect(
+      lastTableProps.data[0].ports.find(
+        p => p.ifName === 'GigabitEthernet1/1/3'
+      ).status
+    ).toBe('down')
   })
 
   // An empty cage has no sensor, so it appears in no optics row at all. It is
@@ -435,6 +493,12 @@ describe('OpticsCellContent readings', () => {
     expect(portNamed('GigabitEthernet1/1/3')).toMatchObject({
       status: 'no_module',
       tx: null,
+    })
+    // An empty cage is not a present module, so it must not join the
+    // denominator - if it did, this device would misreport as '1/2'.
+    expect(lastTableProps.data[0]).toMatchObject({
+      status: '1/1',
+      severity: 'ok',
     })
   })
 
@@ -466,5 +530,282 @@ describe('OpticsCellContent readings', () => {
     expect(
       portsOf().filter((p: any) => p.ifName === 'GigabitEthernet1/1/2')
     ).toHaveLength(1)
+  })
+})
+
+describe('OpticsCellContent unused ports', () => {
+  beforeEach(() => {
+    lastTableProps = null
+  })
+
+  const livePort = (ifName: string) =>
+    series(ifName, [
+      [T1, -5.5, -5.6, 32.4, 'ok'],
+      [T2, -5.5, -5.6, 32.4, 'ok'],
+    ])
+
+  // Core_BB_01 Gi1/0/19 on 2026-09-15: an SFP with no patch lead. The link
+  // never changed after the interfaces came up, so it is not a fault. It is
+  // still a fitted module, so it belongs in the denominator alongside
+  // Gi1/0/3 - "1/1" would hide the very port Slots counts as fitted. Its
+  // severity is `none`, so it must not turn the device red.
+  it('shows a fitted port that was never linked as unused', async () => {
+    respond(
+      [livePort('GigabitEthernet1/0/3'), livePort('GigabitEthernet1/0/19')],
+      [
+        linkSeriesWithChange('Gi1/0/3', 'up', 'up', 6, 15038),
+        linkSeriesWithChange('Gi1/0/19', 'up', 'down', 6, 15040),
+        linkSeriesWithChange('Gi0/0', 'down', 'down', 6, 14798),
+      ]
+    )
+
+    await render()
+
+    expect(portNamed('GigabitEthernet1/0/19').status).toBe('unused')
+    expect(lastTableProps.data[0]).toMatchObject({
+      status: '1/2',
+      severity: 'ok',
+    })
+  })
+
+  it('still fails a port that went down after boot', async () => {
+    respond(
+      [livePort('GigabitEthernet1/0/3'), livePort('GigabitEthernet1/0/8')],
+      [
+        linkSeriesWithChange('Gi1/0/3', 'up', 'up', 6, 15038),
+        linkSeriesWithChange('Gi1/0/8', 'up', 'down', 6, 778392045),
+      ]
+    )
+
+    await render()
+
+    expect(portNamed('GigabitEthernet1/0/8').status).toBe('down')
+    expect(lastTableProps.data[0].severity).toBe('fail')
+  })
+})
+
+describe('OpticsCellContent undiagnosed modules', () => {
+  beforeEach(() => {
+    lastTableProps = null
+  })
+
+  const oneLivePort = () =>
+    series('GigabitEthernet1/1/1', [
+      [T1, -5.5, -5.6, 32.4, 'ok'],
+      [T2, -5.5, -5.6, 32.4, 'ok'],
+    ])
+
+  // NFVO-1 Ethernet1/10: admin up, oper up, carrying traffic, but no
+  // opticalTxPower/RxPower/Temperature ever arrived for it - a DAC/twinax
+  // cable or a module with no digital diagnostics. A cage the chassis calls
+  // fitted but that produced no sensor row at all must surface as its own
+  // row rather than vanishing between "Slots 15/54" and "Status 14/14".
+  it('lists a fitted cage with no optical readings as no_diagnostics, counted in the ratio', async () => {
+    respond(
+      [oneLivePort()],
+      [],
+      [],
+      [
+        slotSeries('GigabitEthernet1/1/1', 1),
+        slotSeries('GigabitEthernet1/1/2', 1),
+      ]
+    )
+
+    await render()
+
+    expect(portNamed('GigabitEthernet1/1/2')).toMatchObject({
+      status: 'no_diagnostics',
+      tx: null,
+      rx: null,
+      temp: null,
+    })
+    // Fitted, so it belongs in the denominator; not confirmed healthy, so it
+    // is not in okCount. "1/2" is what makes the blind spot visible - folding
+    // it into "1/1" is exactly the bug this row exists to catch.
+    expect(lastTableProps.data[0]).toMatchObject({
+      status: '1/2',
+      severity: 'ok',
+    })
+  })
+
+  // `named` is built from real sensor rows before the no_diagnostics
+  // synthesis runs (`!named.has(canonicalIfName(c.ifName))` in the
+  // `undiagnosed` filter), so a fitted cage whose module IS reporting - even
+  // badly - keeps its real verdict instead of being overwritten or
+  // duplicated by a synthesised no_diagnostics row. Drop that guard and this
+  // port gets a second row: the real 'low' one from portRows plus a
+  // synthesised 'no_diagnostics' one from `undiagnosed`, so
+  // `toHaveLength(1)` below is what would actually catch the regression -
+  // portNamed's `.find()` would still return the real row first either way,
+  // since Array#sort is stable and portRows precedes undiagnosed in the
+  // concatenation.
+  it('keeps a fitted port that is reporting badly instead of a no_diagnostics duplicate', async () => {
+    respond(
+      [
+        series('GigabitEthernet1/1/3', [
+          [T1, -5.5, -5.6, 32.4, 'ok'],
+          [T2, -5.5, -30.0, 32.4, 'ok'],
+        ]),
+      ],
+      [],
+      [],
+      [slotSeries('GigabitEthernet1/1/3', 1)]
+    )
+
+    await render()
+
+    expect(portNamed('GigabitEthernet1/1/3')).toMatchObject({status: 'low'})
+    expect(
+      portsOf().filter((p: any) => p.ifName === 'GigabitEthernet1/1/3')
+    ).toHaveLength(1)
+  })
+})
+
+describe('OpticsCellContent empty cage suppression', () => {
+  beforeEach(() => {
+    lastTableProps = null
+  })
+
+  // Nexus: every cage is a physical port (54 cages among ~55 physical ports,
+  // the one extra being mgmt0). An empty cage there says nothing "Slots"
+  // does not already say, so none of them are synthesised.
+  it("lists no empty cages when the cage list is the device's whole port list", async () => {
+    respond(
+      [
+        series('Ethernet1/1', [
+          [T1, -2.5, -3.1, 34.2, 'ok'],
+          [T2, -2.5, -3.1, 34.2, 'ok'],
+        ]),
+      ],
+      [
+        linkSeriesWithChange('Ethernet1/1', 'up', 'up', 6, 100),
+        linkSeriesWithChange('Ethernet1/2', 'down', 'down', 6, 100),
+        linkSeriesWithChange('Ethernet1/3', 'down', 'down', 6, 100),
+        linkSeriesWithChange('mgmt0', 'up', 'up', 6, 100),
+      ],
+      [],
+      [
+        slotSeries('Ethernet1/1', 1),
+        slotSeries('Ethernet1/2', 0),
+        slotSeries('Ethernet1/3', 0),
+      ]
+    )
+
+    await render()
+
+    expect(portNamed('Ethernet1/2')).toBeUndefined()
+    expect(portNamed('Ethernet1/3')).toBeUndefined()
+    expect(portsOf()).toHaveLength(1)
+  })
+
+  // Catalyst: the cages are a small uplink module (4) among many copper
+  // ports (~54). Those empty-cage rows are the only place "you have spare
+  // uplink capacity" is visible, so they must still be listed.
+  it('still lists empty cages when the device also has non-cage ports', async () => {
+    respond(
+      [
+        series('GigabitEthernet1/1/1', [
+          [T1, -5.5, -5.6, 32.4, 'ok'],
+          [T2, -5.5, -5.6, 32.4, 'ok'],
+        ]),
+      ],
+      [
+        linkSeriesWithChange('Gi1/1/1', 'up', 'up', 6, 100),
+        linkSeriesWithChange('Gi1/0/1', 'up', 'up', 6, 100),
+        linkSeriesWithChange('Gi1/0/2', 'up', 'up', 6, 100),
+        linkSeriesWithChange('Gi1/0/3', 'up', 'up', 6, 100),
+        linkSeriesWithChange('Gi1/0/4', 'up', 'up', 6, 100),
+      ],
+      [],
+      [
+        slotSeries('GigabitEthernet1/1/1', 1),
+        slotSeries('GigabitEthernet1/1/2', 0),
+      ]
+    )
+
+    await render()
+
+    expect(portNamed('GigabitEthernet1/1/2')).toMatchObject({
+      status: 'no_module',
+    })
+  })
+
+  // Core_BB_01/02 (C9300-24S): 24 SFP+ cages among 43 physical ports - the
+  // shape a cages-to-ports ratio gets wrong. 43 is not more than double 24,
+  // so a ratio-based rule would wrongly treat this as "every port is a
+  // cage" and drop its 19 non-cage ports' worth of spare capacity. The
+  // difference (43 - 24 = 19) is what says this device has a copper section,
+  // same as the smaller Catalysts above.
+  it('lists empty cages on a 24-cage/43-port device a ratio rule would wrongly suppress', async () => {
+    const cageNames = Array.from(
+      {length: 24},
+      (_, i) => `TenGigabitEthernet1/1/${i + 1}`
+    )
+    const nonCageNames = Array.from(
+      {length: 19},
+      (_, i) => `GigabitEthernet1/0/${i + 1}`
+    )
+    const cageLinks = cageNames.map(name =>
+      linkSeriesWithChange(name, 'up', 'up', 6, 100)
+    )
+    const nonCageLinks = nonCageNames.map(name =>
+      linkSeriesWithChange(name, 'up', 'up', 6, 100)
+    )
+    // Only the first cage is fitted; the other 23 are empty.
+    const slots = cageNames.map((name, i) => slotSeries(name, i === 0 ? 1 : 0))
+
+    respond(
+      [
+        series(cageNames[0], [
+          [T1, -2.5, -3.1, 34.2, 'ok'],
+          [T2, -2.5, -3.1, 34.2, 'ok'],
+        ]),
+      ],
+      [...cageLinks, ...nonCageLinks],
+      [],
+      slots
+    )
+
+    await render()
+
+    expect(portNamed(cageNames[1])).toMatchObject({status: 'no_module'})
+    expect(portsOf().filter((p: any) => p.status === 'no_module')).toHaveLength(
+      23
+    )
+  })
+
+  // Change 2 must not affect Change 1: an undiagnosed-but-fitted cage is
+  // listed on every device, Nexus included, even while its empty cages are
+  // suppressed.
+  it('still lists an undiagnosed module on a device whose empty cages are suppressed', async () => {
+    respond(
+      [
+        series('Ethernet1/1', [
+          [T1, -2.5, -3.1, 34.2, 'ok'],
+          [T2, -2.5, -3.1, 34.2, 'ok'],
+        ]),
+      ],
+      [
+        linkSeriesWithChange('Ethernet1/1', 'up', 'up', 6, 100),
+        linkSeriesWithChange('Ethernet1/10', 'up', 'up', 6, 100),
+        linkSeriesWithChange('Ethernet1/2', 'down', 'down', 6, 100),
+        linkSeriesWithChange('mgmt0', 'up', 'up', 6, 100),
+      ],
+      [],
+      [
+        slotSeries('Ethernet1/1', 1),
+        // Fitted, no optics series - the NFVO-1 Ethernet1/10 case.
+        slotSeries('Ethernet1/10', 1),
+        // Unfitted, on a device whose cages are its whole port list.
+        slotSeries('Ethernet1/2', 0),
+      ]
+    )
+
+    await render()
+
+    expect(portNamed('Ethernet1/10')).toMatchObject({
+      status: 'no_diagnostics',
+    })
+    expect(portNamed('Ethernet1/2')).toBeUndefined()
   })
 })

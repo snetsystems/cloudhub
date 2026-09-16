@@ -16,8 +16,11 @@ import {OpticsSeverity} from 'src/device_management/constants/opticsThreshold'
 const SeverityBadge: React.FC<{
   label: string
   severity: OpticsSeverity
-}> = ({label, severity}) => (
-  <span className={`severity--badge severity--badge-${severity}`}>{label}</span>
+  title?: string
+}> = ({label, severity, title}) => (
+  <span className={`severity--badge severity--badge-${severity}`} title={title}>
+    {label}
+  </span>
 )
 
 export default SeverityBadge

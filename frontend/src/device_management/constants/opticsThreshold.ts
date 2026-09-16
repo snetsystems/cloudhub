@@ -47,6 +47,7 @@ export type OpticsPortStatus =
   | 'long_down'
   | 'shutdown'
   | 'no_module'
+  | 'no_diagnostics'
   | 'unused'
   | 'error'
 
@@ -59,6 +60,7 @@ export const OPTICS_STATUS_LABEL: Record<OpticsPortStatus, string> = {
   long_down: 'LONG DOWN',
   shutdown: 'SHUTDOWN',
   no_module: 'NO MODULE',
+  no_diagnostics: 'NO DIAGNOSTICS',
   unused: 'UNUSED',
   error: 'ERROR',
 }
@@ -90,6 +92,10 @@ const SEVERITY_BY_STATUS: Record<OpticsPortStatus, OpticsSeverity> = {
   unused: 'none',
   // Down long enough to be retired cabling, not an active incident.
   long_down: 'none',
+  // The link is up and passing traffic; only its optical sensors are absent
+  // (the switch publishes no sensors for it). Nothing
+  // about the traffic path is wrong, so this must never alarm a device.
+  no_diagnostics: 'none',
 }
 
 export const opticsSeverity = (status: OpticsPortStatus): OpticsSeverity =>

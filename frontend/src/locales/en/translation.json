@@ -722,7 +722,10 @@
     },
     "no_data": "No optical transceiver data collected.",
     "filter_placeholder": "Filter by Device...",
-    "template_update": "Update"
+    "template_update": "Update",
+    "no_diagnostics_tooltip": "A transceiver is fitted but the switch publishes no optical readings for it over SNMP. Most often the switch will not identify the module — a third-party optic it reports as unsupported — and then omits its sensors entirely, even though the module is reading normally on the CLI. A direct-attach copper cable, which has no optics to read, looks the same here. The link is healthy; it just cannot be watched from this dashboard.",
+    "slots_tooltip": "Modules fitted, of the cages the chassis reports.",
+    "status_tooltip": "Of the modules fitted, how many are confirmed healthy. A port whose optics cannot be read is counted but never confirmed."
   },
   "switch_ports": {
     "no_data": "No switch port data collected.",
