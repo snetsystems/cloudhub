@@ -1463,6 +1463,61 @@ func TestMarshalNetworkDeviceOrgOpticsThreshold(t *testing.T) {
 	}
 }
 
+func TestMarshalNetworkDeviceOrgSwitchPortThreshold(t *testing.T) {
+	// Absent until configured: nil must survive the round trip as nil, so a
+	// client can tell "never set" from a threshold that happens to be 0.
+	var got cloudhub.NetworkDeviceOrg
+	buf, err := internal.MarshalNetworkDeviceOrg(&cloudhub.NetworkDeviceOrg{ID: "org1"})
+	if err != nil {
+		t.Fatalf("MarshalNetworkDeviceOrg error: %v", err)
+	}
+	if err := internal.UnmarshalNetworkDeviceOrg(buf, &got); err != nil {
+		t.Fatalf("UnmarshalNetworkDeviceOrg error: %v", err)
+	}
+	if got.SwitchPortThreshold != nil {
+		t.Errorf("expected SwitchPortThreshold=nil, got %+v", got.SwitchPortThreshold)
+	}
+
+	// 0 means the feature is off, and must be distinguishable from nil.
+	zero := &cloudhub.NetworkDeviceOrg{
+		ID:                  "org1",
+		SwitchPortThreshold: &cloudhub.SwitchPortThreshold{LongDownDays: 0},
+	}
+	buf, err = internal.MarshalNetworkDeviceOrg(zero)
+	if err != nil {
+		t.Fatalf("MarshalNetworkDeviceOrg error: %v", err)
+	}
+	got = cloudhub.NetworkDeviceOrg{}
+	if err := internal.UnmarshalNetworkDeviceOrg(buf, &got); err != nil {
+		t.Fatalf("UnmarshalNetworkDeviceOrg error: %v", err)
+	}
+	if got.SwitchPortThreshold == nil {
+		t.Fatal("expected SwitchPortThreshold to survive the round trip as a non-nil 0")
+	}
+	if got.SwitchPortThreshold.LongDownDays != 0 {
+		t.Errorf("LongDownDays = %v, want 0", got.SwitchPortThreshold.LongDownDays)
+	}
+
+	set := &cloudhub.NetworkDeviceOrg{
+		ID:                  "org1",
+		SwitchPortThreshold: &cloudhub.SwitchPortThreshold{LongDownDays: 7},
+	}
+	buf, err = internal.MarshalNetworkDeviceOrg(set)
+	if err != nil {
+		t.Fatalf("MarshalNetworkDeviceOrg error: %v", err)
+	}
+	got = cloudhub.NetworkDeviceOrg{}
+	if err := internal.UnmarshalNetworkDeviceOrg(buf, &got); err != nil {
+		t.Fatalf("UnmarshalNetworkDeviceOrg error: %v", err)
+	}
+	if got.SwitchPortThreshold == nil {
+		t.Fatal("expected SwitchPortThreshold to survive the round trip")
+	}
+	if got.SwitchPortThreshold.LongDownDays != 7 {
+		t.Errorf("LongDownDays = %v, want 7", got.SwitchPortThreshold.LongDownDays)
+	}
+}
+
 // Location lives only in the KV encoding, so dropping it from the marshal
 // leaves the API answering with the value it was handed while the store keeps
 // the old one — a write that reports success and silently does nothing.

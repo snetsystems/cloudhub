@@ -1,6 +1,7 @@
 import React from 'react'
 
 import OpticsCellContent from 'src/device_management/components/OpticsCellContent'
+import SwitchPortsCellContent from 'src/device_management/components/SwitchPortsCellContent'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import * as DashboardsModels from 'src/types/dashboards'
 
@@ -16,6 +17,7 @@ const CELL_COMPONENTS: Record<
   }>
 > = {
   'snmp-optics': OpticsCellContent,
+  'snmp-ports': SwitchPortsCellContent,
 }
 
 /**

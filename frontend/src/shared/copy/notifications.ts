@@ -1880,6 +1880,26 @@ export const notifyOpticsThresholdSaveFailed = (
   duration: 5000,
 })
 
+export const notifyInvalidSwitchPortThreshold = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `The long-down threshold must be a whole number of days. 0 turns it off.`,
+  duration: 4000,
+})
+
+export const notifySwitchPortThresholdSaved = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Switch port threshold saved.`,
+  duration: 3000,
+})
+
+export const notifySwitchPortThresholdSaveFailed = (
+  message: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Could not save switch port threshold: ${message}`,
+  duration: 5000,
+})
+
 export const notifyNamespaceRequired = (): Notification => ({
   ...defaultErrorNotification,
   message: `There is no selected namespace.`,

@@ -4,19 +4,11 @@ import {useTranslation} from 'react-i18next'
 import {bindActionCreators} from 'redux'
 
 import {executeQueries} from 'src/shared/apis/query'
-import {applyFixedCell, getDashboards} from 'src/dashboards/apis'
-import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {resolveTimeRangeBounds} from 'src/shared/utils/timeRangeBounds'
-import {getAllDevicesOrg, getDeviceList} from 'src/device_management/apis'
+import {getAllDevicesOrg} from 'src/device_management/apis'
 import TableComponent from 'src/device_management/components/TableComponent'
 import OpticsThresholdOverlay from 'src/device_management/components/OpticsThresholdOverlay'
-import LayoutCellMenu from 'src/shared/components/LayoutCellMenu'
 import LoadingDots from 'src/shared/components/LoadingDots'
-import LayoutCellHeader from 'src/shared/components/LayoutCellHeader'
-import {
-  DEFAULT_CELL_BG_COLOR,
-  DEFAULT_CELL_TEXT_COLOR,
-} from 'src/dashboards/constants'
 import {
   opticsDeviceColumns,
   opticsPortColumns,
@@ -26,8 +18,26 @@ import {
   DEFAULT_OPTICS_THRESHOLD,
   judgeOpticsPort,
   OpticsPortStatus,
+  opticsSeverity,
+  worstOpticsSeverity,
 } from 'src/device_management/constants/opticsThreshold'
-import Authorized, {ADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
+import {
+  DEFAULT_SWITCH_PORT_THRESHOLD,
+  interfaceInitTicks,
+  longDownDaysToTicks,
+} from 'src/device_management/constants/portLinkStatus'
+import {
+  canonicalIfName,
+  comparePorts,
+  readAlias,
+} from 'src/device_management/utils/ifName'
+import {num, seriesOf, toISO} from 'src/device_management/utils/influxSeries'
+import {useAutoRefreshTick} from 'src/device_management/utils/useAutoRefreshTick'
+import {useNetworkDevices} from 'src/device_management/utils/useNetworkDevices'
+import {useFixedCellTemplateUpdate} from 'src/device_management/utils/useFixedCellTemplateUpdate'
+import FixedCellFrame from 'src/device_management/components/FixedCellFrame'
+import TemplateUpdateBadge from 'src/device_management/components/TemplateUpdateBadge'
+import Authorized, {ADMIN_ROLE} from 'src/auth/Authorized'
 import {
   Button,
   ButtonShape,
@@ -37,23 +47,18 @@ import {
 } from 'src/reusable_ui'
 import type {RenderCellContext} from 'src/shared/components/LayoutRenderer'
 import {
-  DeviceData,
   DevicesOrgData,
   Me,
   OpticsDeviceRow,
   OpticsPoint,
   OpticsPortRow,
   OpticsThreshold,
+  SwitchPortThreshold,
   TimeZones,
 } from 'src/types'
 import * as DashboardsModels from 'src/types/dashboards'
-import {VisType} from 'src/types/flux'
 import {Notification} from 'src/types/notifications'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {
-  notifyTemplateUpdated,
-  notifyTemplateUpdateFailed,
-} from 'src/shared/copy/notifications'
 
 interface Props {
   cell: DashboardsModels.Cell
@@ -82,7 +87,8 @@ const OPTICS_QUERY =
  * own series and get joined onto the optics rows by device + interface.
  */
 const LINK_QUERY =
-  'SELECT last("ifAdminStatus") AS "admin", last("ifOperStatus") AS "oper" ' +
+  'SELECT last("ifAdminStatus") AS "admin", last("ifOperStatus") AS "oper", ' +
+  'last("ifType") AS "type", last("ifLastChange") AS "lastChange" ' +
   'FROM "snmp_nx" WHERE time > :dashboardTime: AND time < :upperDashboardTime: ' +
   'GROUP BY "dev_id", "ifName", "ifAlias"'
 
@@ -123,8 +129,9 @@ const SLOT_QUERY =
   'FROM "snmp_nx" WHERE time > :dashboardTime: AND time < :upperDashboardTime: ' +
   'GROUP BY "dev_id", "ifName"'
 
+/** sys_uptime is stored as a string of ticks, so it is parsed here. */
 const MODEL_QUERY =
-  'SELECT last("sys_model") AS "model" ' +
+  'SELECT last("sys_model") AS "model", last("sys_uptime") AS "uptime" ' +
   'FROM "snmp_nx" WHERE time > :dashboardTime: AND time < :upperDashboardTime: ' +
   'GROUP BY "dev_id"'
 
@@ -133,30 +140,10 @@ interface LinkState {
   admin: string
   oper: string
   alias: string
-}
-
-/** The collector writes "unknown" when the device reports no description. */
-const readAlias = (value: string | undefined): string =>
-  !value || value === 'unknown' ? '' : value
-
-/**
- * The key the optics rows and the interface rows are joined on.
- *
- * IOS-XE names one port two ways: the sensor rows carry the long form
- * ("GigabitEthernet1/1/1") and the interface rows the abbreviation
- * ("Gi1/1/1"), so joining on the literal name loses the alias and the link
- * state for every Catalyst port. NX-OS uses one form on both sides, which is
- * why this went unnoticed.
- *
- * Two letters is what Cisco's own abbreviations come down to, and it is enough
- * to keep the types apart: Gi/Fa/Fo, Te/Tw, Hu, Et, Po, Vl. The numbering is
- * kept verbatim, so ports of the same type never collide.
- */
-const canonicalIfName = (name: string): string => {
-  const parts = /^([A-Za-z-]+)(.*)$/.exec(name.trim())
-  return parts
-    ? parts[1].slice(0, 2).toLowerCase() + parts[2]
-    : name.trim().toLowerCase()
+  /** IANAifType, null before the collector sends it. */
+  type: number | null
+  /** TimeTicks of the last oper change, null before the collector sends it. */
+  lastChange: number | null
 }
 
 /** A transceiver cage the chassis reports, and whether anything is in it. */
@@ -187,28 +174,6 @@ interface PortSeries {
   checkedAt: number | null
 }
 
-const seriesOf = (res: any, index: number): any[] =>
-  res?.[index]?.value?.results?.[0]?.series ?? []
-
-const num = (v: any): number | null =>
-  v === null || v === undefined || v === '' ? null : Number(v)
-
-/**
- * Sorts ports the way an operator reads them: Ethernet1/2 before Ethernet1/10,
- * which a plain string compare gets wrong.
- */
-const comparePorts = (a: {ifName: string}, b: {ifName: string}): number => {
-  const segsOf = (s: string) => (s.match(/\d+/g) ?? []).map(Number)
-  const [sa, sb] = [segsOf(a.ifName), segsOf(b.ifName)]
-  for (let i = 0; i < Math.max(sa.length, sb.length); i++) {
-    const diff = (sa[i] ?? -1) - (sb[i] ?? -1)
-    if (diff !== 0) {
-      return diff
-    }
-  }
-  return a.ifName.localeCompare(b.ifName)
-}
-
 /**
  * Picks the port an operator should look at first: the weakest signal, or the
  * hottest transceiver. Ports with no reading at all are skipped.
@@ -231,9 +196,6 @@ const worstPort = (
     return isWorse ? port : worst
   }, null)
 
-const toISO = (ms: number | null): string =>
-  ms ? new Date(ms).toISOString() : ''
-
 /**
  * Gap between a device's two most recent polls, taken from whichever port is
  * furthest along. Ports of one device are written in a single batch, so this
@@ -250,16 +212,7 @@ const pollGapOf = (ports: PortSeries[]): number => {
 }
 
 const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
-  const {
-    source,
-    templates,
-    manualRefresh,
-    timeRange,
-    isEditable,
-    onDeleteCell,
-    onCloneCell,
-    onRenameCell,
-  } = context
+  const {source, templates, manualRefresh, timeRange} = context
   const {t} = useTranslation()
   const timeZone = useSelector(
     (state: {app?: {persisted?: {timeZone?: TimeZones}}}) =>
@@ -268,60 +221,32 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
   const organizationID = useSelector(
     (state: {auth?: {me?: Me}}) => state.auth?.me?.currentOrganization?.id ?? ''
   )
-  // RenderCellContext carries manualRefresh but not the auto refresh interval,
-  // and the dashboard keeps that rate per dashboard rather than in app state.
-  // GlobalAutoRefresher is what the page already polls on, so subscribing to it
-  // ticks in step with every other cell.
-  const [autoRefreshTick, setAutoRefreshTick] = useState(0)
-
-  useEffect(() => {
-    const tick = () => setAutoRefreshTick(count => count + 1)
-    GlobalAutoRefresher.subscribe(tick)
-    return () => GlobalAutoRefresher.unsubscribe(tick)
-  }, [])
+  const autoRefreshTick = useAutoRefreshTick()
   const [ports, setPorts] = useState<PortSeries[]>([])
   const [models, setModels] = useState<Record<string, string>>({})
+  const [uptimes, setUptimes] = useState<Record<string, number | null>>({})
   const [links, setLinks] = useState<Record<string, LinkState>>({})
   const [baseline, setBaseline] = useState<Record<string, BaselinePort[]>>({})
   const [slots, setSlots] = useState<Record<string, SlotState[]>>({})
-  const [devices, setDevices] = useState<Record<string, DeviceData>>({})
+  const devices = useNetworkDevices()
   const [isTrend, setIsTrend] = useState(false)
   const [threshold, setThreshold] = useState<OpticsThreshold>(
     DEFAULT_OPTICS_THRESHOLD
   )
+  // Shared with the switch ports cell so the two never judge one port
+  // differently. Configured (and saved) from the switch ports cell's own
+  // gear button; this cell only reads it, off the same org record.
+  const [
+    switchPortThreshold,
+    setSwitchPortThreshold,
+  ] = useState<SwitchPortThreshold>(DEFAULT_SWITCH_PORT_THRESHOLD)
   const [isThresholdOpen, setIsThresholdOpen] = useState(false)
-  const [templateUpdate, setTemplateUpdate] = useState<{
-    from: string
-    to: string
-  } | null>(null)
-  const [isApplyingUpdate, setIsApplyingUpdate] = useState(false)
+  const templateUpdate = useFixedCellTemplateUpdate(
+    OPTICS_TEMPLATE_NAME,
+    notify
+  )
   const [error, setError] = useState<string | null>(null)
   const [isFetching, setIsFetching] = useState(true)
-
-  useEffect(() => {
-    let isCancelled = false
-
-    getDeviceList()
-      .then(res => {
-        if (isCancelled) {
-          return
-        }
-        const byID: Record<string, DeviceData> = {}
-        ;(res?.data?.devices ?? []).forEach((d: DeviceData) => {
-          if (d.id) {
-            byID[d.id] = d
-          }
-        })
-        setDevices(byID)
-      })
-      .catch(() => {
-        // Device metadata is decoration; optics data still renders without it.
-      })
-
-    return () => {
-      isCancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     if (!organizationID) {
@@ -341,6 +266,11 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
         if (org?.optics_threshold) {
           setThreshold(org.optics_threshold)
         }
+        // Same org record, same "absent means shipped default" rule. Tested as
+        // an object, not the number: a saved 0 (off) must not fall back to 7.
+        if (org?.switch_port_threshold) {
+          setSwitchPortThreshold(org.switch_port_threshold)
+        }
       })
       .catch(() => {
         // Keep the defaults rather than blanking the judgement.
@@ -350,39 +280,6 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
       isCancelled = true
     }
   }, [organizationID])
-
-  const loadTemplateVersion = async () => {
-    try {
-      const {data} = await getDashboards()
-      const template = (data?.dashboards ?? []).find(
-        (d: DashboardsModels.Dashboard) => d.name === OPTICS_TEMPLATE_NAME
-      )
-      setTemplateUpdate(
-        template?.updateAvailable
-          ? {from: template.version ?? '—', to: template.latestVersion ?? '—'}
-          : null
-      )
-    } catch {
-      // No update badge is better than a wrong one.
-    }
-  }
-
-  useEffect(() => {
-    loadTemplateVersion()
-  }, [])
-
-  const handleApplyTemplate = async () => {
-    setIsApplyingUpdate(true)
-    try {
-      await applyFixedCell(OPTICS_TEMPLATE_NAME)
-      await loadTemplateVersion()
-      notify(notifyTemplateUpdated())
-    } catch (error) {
-      notify(notifyTemplateUpdateFailed(error?.message ?? 'unknown error'))
-    } finally {
-      setIsApplyingUpdate(false)
-    }
-  }
 
   // `templates` (and the time range on some pages) are rebuilt on every parent
   // render, so key the fetch on their contents. Depending on the array identity
@@ -438,11 +335,16 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
         })
 
         const modelByDev: Record<string, string> = {}
+        const uptimeByDev: Record<string, number | null> = {}
         seriesOf(res, 1).forEach(s => {
-          const i = s.columns.indexOf('model')
-          const value = s.values?.[0]?.[i]
+          const iModel = s.columns.indexOf('model')
+          const iUptime = s.columns.indexOf('uptime')
+          const value = s.values?.[0]?.[iModel]
           if (s.tags?.dev_id && value) {
             modelByDev[s.tags.dev_id] = value
+          }
+          if (s.tags?.dev_id) {
+            uptimeByDev[s.tags.dev_id] = num(s.values?.[0]?.[iUptime])
           }
         })
 
@@ -450,12 +352,16 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
         seriesOf(res, 2).forEach(s => {
           const iAdmin = s.columns.indexOf('admin')
           const iOper = s.columns.indexOf('oper')
+          const iType = s.columns.indexOf('type')
+          const iLastChange = s.columns.indexOf('lastChange')
           const last = s.values?.[s.values.length - 1]
           if (s.tags?.dev_id && s.tags?.ifName && last) {
             linkByPort[`${s.tags.dev_id}|${canonicalIfName(s.tags.ifName)}`] = {
               admin: last[iAdmin] ?? '',
               oper: last[iOper] ?? '',
               alias: readAlias(s.tags?.ifAlias),
+              type: iType < 0 ? null : num(last[iType]),
+              lastChange: iLastChange < 0 ? null : num(last[iLastChange]),
             }
           }
         })
@@ -495,6 +401,7 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
 
         setPorts(parsed)
         setModels(modelByDev)
+        setUptimes(uptimeByDev)
         setLinks(linkByPort)
         setBaseline(baselineByDev)
         setSlots(slotsByDev)
@@ -517,6 +424,8 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
     }
   }, [source, queryKey, manualRefresh, autoRefreshTick])
 
+  const longDownTicks = longDownDaysToTicks(switchPortThreshold.long_down_days)
+
   // One row per device, carrying the worst port per metric plus every port for
   // the expanded view. Device metadata arrives separately, so fold it in here.
   const tableData: OpticsDeviceRow[] = useMemo(() => {
@@ -532,6 +441,13 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
       .map(([devID, devicePorts]) => {
         const sorted = [...devicePorts].sort(comparePorts)
         const device = devices[devID]
+        // Every interface of the device, not only the optics ones, decides
+        // when its interfaces came up.
+        const initTicks = interfaceInitTicks(
+          Object.entries(links)
+            .filter(([key]) => key.startsWith(`${devID}|`))
+            .map(([, l]) => ({ifType: l.type, ifLastChange: l.lastChange}))
+        )
         // Every port of a device lands in one write, so a fitted port carries
         // the device's newest timestamp. One that has fallen a poll behind has
         // stopped reporting — its transceiver is gone.
@@ -572,12 +488,16 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
                 sensorStatus: p.status,
                 adminStatus: link?.admin,
                 operStatus: link?.oper,
+                ifLastChange: link?.lastChange,
                 isReporting: reporting,
                 tx,
                 rx,
                 temp,
               },
-              threshold
+              threshold,
+              initTicks,
+              uptimes[devID] ?? null,
+              longDownTicks
             ),
             checkedAt: toISO(p.checkedAt),
           }
@@ -637,7 +557,7 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
         // Shut and unpopulated ports are neither healthy nor faulty, so they
         // are left out of the ratio instead of dragging it down.
         const watched = allPorts.filter(
-          p => p.status !== 'shutdown' && p.status !== 'no_module'
+          p => opticsSeverity(p.status as OpticsPortStatus) !== 'none'
         )
         const okCount = watched.filter(p => p.status === 'ok').length
 
@@ -659,7 +579,9 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
           tempPort: worstTemp?.ifName ?? '',
           status: `${okCount}/${watched.length}`,
           slots: slotRatio,
-          isHealthy: okCount === watched.length,
+          severity: worstOpticsSeverity(
+            watched.map(p => p.status as OpticsPortStatus)
+          ),
           checkedAt: toISO(
             Math.max(...sorted.map(p => p.checkedAt ?? 0)) || null
           ),
@@ -667,7 +589,17 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
         }
       })
       .sort((a, b) => a.sysName.localeCompare(b.sysName))
-  }, [ports, devices, models, links, baseline, slots, threshold])
+  }, [
+    ports,
+    devices,
+    models,
+    uptimes,
+    links,
+    baseline,
+    slots,
+    threshold,
+    longDownTicks,
+  ])
 
   // Anchor the trend x axis to the dashboard's own window, recomputed on every
   // refresh tick. SNMP polls once a minute, so without this the line only
@@ -686,128 +618,89 @@ const OpticsCellContent: React.FC<Props> = ({cell, context, notify}) => {
   )
 
   return (
-    <div className="dash-graph optics-cell">
-      {/* renderCell bypasses LayoutCell, so this cell brings its own header and
-          context menu; without them it cannot be cloned or deleted. The pencil
-          hides itself for a cell with no queries. */}
-      <Authorized requiredRole={EDITOR_ROLE}>
-        <LayoutCellMenu
-          cell={cell}
-          isEditable={isEditable}
-          dataExists={false}
-          showInformationSupported={false}
-          onEdit={() => {}}
-          onClone={onCloneCell}
-          onDelete={onDeleteCell}
-          isCloneable={false}
-          onCSVDownload={() => {}}
-          onShowInformation={() => {}}
-          queries={[]}
-          isFluxQuery={false}
-          visType={VisType.Graph}
-          toggleVisType={() => {}}
+    <FixedCellFrame
+      cell={cell}
+      context={context}
+      className="optics-cell"
+      after={
+        <OpticsThresholdOverlay
+          isOpen={isThresholdOpen}
+          onClose={() => setIsThresholdOpen(false)}
+          organizationID={organizationID}
+          threshold={threshold}
+          source={source}
+          onSaved={setThreshold}
         />
-      </Authorized>
-      <LayoutCellHeader
-        cellName={cell.name}
-        isEditable={isEditable}
-        makeSpaceForCellNote={false}
-        cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-        cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-        onRename={
-          onRenameCell ? (name: string) => onRenameCell(cell, name) : undefined
+      }
+    >
+      {/* Spinner only while there is nothing to show; a refresh keeps the
+          current rows on screen instead of blanking the cell. */}
+      <TableComponent
+        data={tableData}
+        columns={columns}
+        isAccordion={true}
+        accordionColumns={opticsPortColumns}
+        isLoading={isFetching && tableData.length === 0}
+        timeZone={timeZone}
+        searchPlaceholder={t(
+          'optics.filter_placeholder',
+          'Filter by Device...'
+        )}
+        options={{
+          noDataMessage:
+            error ??
+            t('optics.no_data', 'No optical transceiver data collected.'),
+        }}
+        topLeftRender={
+          <>
+            <TemplateUpdateBadge
+              update={templateUpdate.update}
+              isApplying={templateUpdate.isApplying}
+              onApply={templateUpdate.apply}
+            />
+            <Radio shape={ButtonShape.Default}>
+              <Radio.Button
+                id="optics-mode-gauge"
+                titleText="Gauge"
+                value="gauge"
+                active={!isTrend}
+                onClick={() => setIsTrend(false)}
+              >
+                Gauge
+              </Radio.Button>
+              <Radio.Button
+                id="optics-mode-trend"
+                titleText="Trend"
+                value="trend"
+                active={isTrend}
+                onClick={() => setIsTrend(true)}
+              >
+                Trend
+              </Radio.Button>
+            </Radio>
+          </>
         }
+        toprightRender={
+          <>
+            {/* Refetching indicator, in the panel heading rather than over the
+                chart: the cell container clips anything above its top edge.
+                Same placement the server list uses. */}
+            {isFetching && <LoadingDots className="optics-loading-dots" />}
+            <Authorized requiredRole={ADMIN_ROLE}>
+              <Button
+                color={ComponentColor.Default}
+                shape={ButtonShape.Square}
+                icon={IconFont.CogThick}
+                titleText={t('optics.threshold.open', 'Optics Thresholds')}
+                onClick={() => setIsThresholdOpen(true)}
+              />
+            </Authorized>
+          </>
+        }
+        fancyScroll={true}
+        fancyScrollHeight="100%"
       />
-      <div className="dash-graph--container">
-        {/* Spinner only while there is nothing to show; a refresh keeps the
-            current rows on screen instead of blanking the cell. */}
-        <TableComponent
-          data={tableData}
-          columns={columns}
-          isAccordion={true}
-          accordionColumns={opticsPortColumns}
-          isLoading={isFetching && tableData.length === 0}
-          timeZone={timeZone}
-          searchPlaceholder={t(
-            'optics.filter_placeholder',
-            'Filter by Device...'
-          )}
-          options={{
-            noDataMessage:
-              error ??
-              t('optics.no_data', 'No optical transceiver data collected.'),
-          }}
-          topLeftRender={
-            <>
-              {templateUpdate && (
-                <div className="optics-template-update">
-                  <span className="optics-template-update--version">
-                    v{templateUpdate.from} → v{templateUpdate.to}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn btn-xs btn-primary"
-                    disabled={isApplyingUpdate}
-                    onClick={handleApplyTemplate}
-                  >
-                    {isApplyingUpdate
-                      ? t('button.saving', 'Saving...')
-                      : t('optics.template_update', 'Update')}
-                  </button>
-                </div>
-              )}
-              <Radio shape={ButtonShape.Default}>
-                <Radio.Button
-                  id="optics-mode-gauge"
-                  titleText="Gauge"
-                  value="gauge"
-                  active={!isTrend}
-                  onClick={() => setIsTrend(false)}
-                >
-                  Gauge
-                </Radio.Button>
-                <Radio.Button
-                  id="optics-mode-trend"
-                  titleText="Trend"
-                  value="trend"
-                  active={isTrend}
-                  onClick={() => setIsTrend(true)}
-                >
-                  Trend
-                </Radio.Button>
-              </Radio>
-            </>
-          }
-          toprightRender={
-            <>
-              {/* Refetching indicator, in the panel heading rather than over the
-                  chart: the cell container clips anything above its top edge.
-                  Same placement the server list uses. */}
-              {isFetching && <LoadingDots className="optics-loading-dots" />}
-              <Authorized requiredRole={ADMIN_ROLE}>
-                <Button
-                  color={ComponentColor.Default}
-                  shape={ButtonShape.Square}
-                  icon={IconFont.CogThick}
-                  titleText={t('optics.threshold.open', 'Optics Thresholds')}
-                  onClick={() => setIsThresholdOpen(true)}
-                />
-              </Authorized>
-            </>
-          }
-          fancyScroll={true}
-          fancyScrollHeight="100%"
-        />
-      </div>
-      <OpticsThresholdOverlay
-        isOpen={isThresholdOpen}
-        onClose={() => setIsThresholdOpen(false)}
-        organizationID={organizationID}
-        threshold={threshold}
-        source={source}
-        onSaved={setThreshold}
-      />
-    </div>
+    </FixedCellFrame>
   )
 }
 

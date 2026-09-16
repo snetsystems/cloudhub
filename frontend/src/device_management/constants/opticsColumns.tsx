@@ -14,11 +14,12 @@ import {
   CHART_TYPE_MODES,
   FORMAT_OPTIONS,
 } from 'src/types/statisticalgraph'
+import SeverityBadge from 'src/device_management/components/SeverityBadge'
 import {OpticsPoint} from 'src/types/optics'
 import {
   OPTICS_STATUS_LABEL,
   OpticsPortStatus,
-  isOpticsFault,
+  opticsSeverity,
   opticalPowerRange,
   temperatureRange,
 } from 'src/device_management/constants/opticsThreshold'
@@ -212,13 +213,10 @@ export const opticsDeviceColumns = (
     // Anything wider is room the gauges beside it can use.
     options: {sorting: true, thead: {style: {width: '5%'}}},
     render: (value, rowData) => (
-      <div
-        className={`device--indicator ${
-          rowData?.isHealthy ? 'indicator--primary' : 'indicator--fail'
-        }`}
-      >
-        {value}
-      </div>
+      <SeverityBadge
+        label={`${value}`}
+        severity={rowData?.severity ?? 'none'}
+      />
     ),
   },
   {
@@ -296,17 +294,11 @@ export const opticsPortColumns: ColumnInfo[] = [
     align: AlignType.CENTER,
     render: value => {
       const status = value as OpticsPortStatus
-      // Shut and unpopulated ports read as neutral: neither green nor red.
-      const indicator = isOpticsFault(status)
-        ? 'indicator--fail'
-        : status === 'ok'
-        ? 'indicator--primary'
-        : ''
-      return (
-        <div className={`device--indicator ${indicator}`}>
-          {OPTICS_STATUS_LABEL[status] ?? '-'}
-        </div>
-      )
+      const label = OPTICS_STATUS_LABEL[status]
+      if (!label) {
+        return <>-</>
+      }
+      return <SeverityBadge label={label} severity={opticsSeverity(status)} />
     },
   },
   {

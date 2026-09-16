@@ -716,5 +716,18 @@
     "no_data": "수집된 광 트랜시버 데이터가 없습니다.",
     "filter_placeholder": "장비 검색...",
     "template_update": "업데이트"
+  },
+  "switch_ports": {
+    "no_data": "수집된 스위치 포트 데이터가 없습니다.",
+    "filter_placeholder": "장비 검색...",
+    "if_type_missing": "스위치 데이터는 들어오지만 ifType이 없습니다. 갱신된 수집 설정을 적용하면 포트가 표시됩니다.",
+    "since_boot": "부팅 이후",
+    "threshold": {
+      "open": "장기 다운 기준 설정",
+      "title": "장기 다운 기준",
+      "intro": "이 조직의 모든 네트워크 장비에 적용됩니다. 이 기간보다 오래 다운된 포트는 실제 장애가 아니라 철거된 배선(LONG DOWN)으로 봅니다.",
+      "long_down_days": "장기 다운 기준 (일)",
+      "long_down_hint": "기본값 {{value}}. 0이면 사용하지 않습니다 — 포트는 기간과 상관없이 DOWN으로 유지됩니다."
+    }
   }
 }

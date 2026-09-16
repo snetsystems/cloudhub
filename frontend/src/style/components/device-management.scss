@@ -107,6 +107,42 @@
   }
 }
 
+/*
+  A status word reads as a value in a table of numbers; a filled chip reads as
+  a state. The colour is the same one the plain indicator uses, so the two
+  styles can sit in the same table without inventing a second colour language.
+*/
+.severity--badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 16px;
+  white-space: nowrap;
+  // Tinted from the text colour itself so a new state needs one rule, not two.
+  background-color: rgba(255, 255, 255, 0.06);
+  color: $g10-wolf;
+
+  &.severity--badge-ok {
+    color: $c-rainforest;
+    background-color: rgba($c-rainforest, 0.14);
+  }
+
+  // Over threshold but still carrying traffic.
+  &.severity--badge-warn {
+    color: $c-pineapple;
+    background-color: rgba($c-pineapple, 0.14);
+  }
+
+  &.severity--badge-fail {
+    color: $c-curacao;
+    background-color: rgba($c-curacao, 0.16);
+  }
+}
+
 .device-Management-toggle {
   width: 100%;
   display: flex;

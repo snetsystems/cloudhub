@@ -32,32 +32,34 @@ type devicesOrgResponse struct {
 	Organizations []*deviceOrgResponse `json:"organizations"`
 }
 type deviceOrgResponse struct {
-	ID                  string                    `json:"organization"`
-	LoadModule          string                    `json:"load_module"`
-	MLFunction          string                    `json:"ml_function"`
-	DataDuration        int                       `json:"data_duration"`
-	LearnedDevicesIDs   []string                  `json:"learned_devices_ids"`
-	CollectorServer     string                    `json:"collector_server"`
-	CollectedDevicesIDs []string                  `json:"collected_devices_ids"`
-	AIKapacitor         cloudhub.AIKapacitor      `json:"ai_kapacitor"`
-	LearningCron        string                    `json:"learning_cron"`
-	ProcCnt             int                       `json:"process_count"`
-	OpticsThreshold     *cloudhub.OpticsThreshold `json:"optics_threshold,omitempty"`
-	OpticsKapacitorID   int                       `json:"optics_kapacitor_id,string,omitempty"`
+	ID                  string                        `json:"organization"`
+	LoadModule          string                        `json:"load_module"`
+	MLFunction          string                        `json:"ml_function"`
+	DataDuration        int                           `json:"data_duration"`
+	LearnedDevicesIDs   []string                      `json:"learned_devices_ids"`
+	CollectorServer     string                        `json:"collector_server"`
+	CollectedDevicesIDs []string                      `json:"collected_devices_ids"`
+	AIKapacitor         cloudhub.AIKapacitor          `json:"ai_kapacitor"`
+	LearningCron        string                        `json:"learning_cron"`
+	ProcCnt             int                           `json:"process_count"`
+	OpticsThreshold     *cloudhub.OpticsThreshold     `json:"optics_threshold,omitempty"`
+	OpticsKapacitorID   int                           `json:"optics_kapacitor_id,string,omitempty"`
+	SwitchPortThreshold *cloudhub.SwitchPortThreshold `json:"switch_port_threshold,omitempty"`
 }
 type updateDeviceOrgRequest struct {
-	LoadModule          *string                   `json:"load_module,omitempty"`
-	MLFunction          *string                   `json:"ml_function,omitempty"`
-	DataDuration        *int                      `json:"data_duration,omitempty"`
-	CollectedDevicesIDs *[]string                 `json:"collected_devices_ids"`
-	LearnedDevicesIDs   *[]string                 `json:"learned_devices_ids"`
-	AIKapacitor         *cloudhub.AIKapacitor     `json:"ai_kapacitor"`
-	CollectorServer     *string                   `json:"collector_server"`
-	TaskStatus          int                       `json:"task_status"`
-	LearningCron        *string                   `json:"learning_cron"`
-	ProcCnt             int                       `json:"process_count"`
-	OpticsThreshold     *cloudhub.OpticsThreshold `json:"optics_threshold,omitempty"`
-	OpticsKapacitorID   *int                      `json:"optics_kapacitor_id,string,omitempty"`
+	LoadModule          *string                       `json:"load_module,omitempty"`
+	MLFunction          *string                       `json:"ml_function,omitempty"`
+	DataDuration        *int                          `json:"data_duration,omitempty"`
+	CollectedDevicesIDs *[]string                     `json:"collected_devices_ids"`
+	LearnedDevicesIDs   *[]string                     `json:"learned_devices_ids"`
+	AIKapacitor         *cloudhub.AIKapacitor         `json:"ai_kapacitor"`
+	CollectorServer     *string                       `json:"collector_server"`
+	TaskStatus          int                           `json:"task_status"`
+	LearningCron        *string                       `json:"learning_cron"`
+	ProcCnt             int                           `json:"process_count"`
+	OpticsThreshold     *cloudhub.OpticsThreshold     `json:"optics_threshold,omitempty"`
+	OpticsKapacitorID   *int                          `json:"optics_kapacitor_id,string,omitempty"`
+	SwitchPortThreshold *cloudhub.SwitchPortThreshold `json:"switch_port_threshold,omitempty"`
 }
 
 type deviceOrgRequest struct {
@@ -253,6 +255,7 @@ func newDeviceOrgResponse(deviceOrg *cloudhub.NetworkDeviceOrg) (*deviceOrgRespo
 		ProcCnt:             deviceOrg.ProcCnt,
 		OpticsThreshold:     deviceOrg.OpticsThreshold,
 		OpticsKapacitorID:   deviceOrg.OpticsKapacitorID,
+		SwitchPortThreshold: deviceOrg.SwitchPortThreshold,
 	}
 
 	return resData, nil
@@ -426,6 +429,10 @@ func (s *Service) UpdateNetworkDeviceOrg(w http.ResponseWriter, r *http.Request)
 	}
 	if req.OpticsKapacitorID != nil {
 		deviceOrg.OpticsKapacitorID = *req.OpticsKapacitorID
+	}
+	if req.SwitchPortThreshold != nil {
+		threshold := *req.SwitchPortThreshold
+		deviceOrg.SwitchPortThreshold = &threshold
 	}
 	if req.AIKapacitor != nil {
 		deviceOrg.AIKapacitor.SrcID = req.AIKapacitor.SrcID

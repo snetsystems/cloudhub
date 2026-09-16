@@ -1518,10 +1518,11 @@ func MarshalNetworkDeviceOrg(t *cloudhub.NetworkDeviceOrg) ([]byte, error) {
 			Password:           t.AIKapacitor.Password,
 			InsecureSkipVerify: t.AIKapacitor.InsecureSkipVerify,
 		},
-		LearningCron:      t.LearningCron,
-		ProcCnt:           int32(t.ProcCnt),
-		OpticsThreshold:   marshalOpticsThreshold(t.OpticsThreshold),
-		OpticsKapacitorID: int64(t.OpticsKapacitorID),
+		LearningCron:        t.LearningCron,
+		ProcCnt:             int32(t.ProcCnt),
+		OpticsThreshold:     marshalOpticsThreshold(t.OpticsThreshold),
+		OpticsKapacitorID:   int64(t.OpticsKapacitorID),
+		SwitchPortThreshold: marshalSwitchPortThreshold(t.SwitchPortThreshold),
 	})
 }
 
@@ -1534,6 +1535,15 @@ func marshalOpticsThreshold(t *cloudhub.OpticsThreshold) *OpticsThreshold {
 		TxLowDbm:     t.TxLowDbm,
 		TempHighC:    t.TempHighC,
 		AlertEnabled: t.AlertEnabled,
+	}
+}
+
+func marshalSwitchPortThreshold(t *cloudhub.SwitchPortThreshold) *SwitchPortThreshold {
+	if t == nil {
+		return nil
+	}
+	return &SwitchPortThreshold{
+		LongDownDays: int32(t.LongDownDays),
 	}
 }
 
@@ -1575,6 +1585,13 @@ func UnmarshalNetworkDeviceOrg(data []byte, t *cloudhub.NetworkDeviceOrg) error 
 		t.OpticsThreshold = nil
 	}
 	t.OpticsKapacitorID = int(pb.OpticsKapacitorID)
+	if pb.SwitchPortThreshold != nil {
+		t.SwitchPortThreshold = &cloudhub.SwitchPortThreshold{
+			LongDownDays: int(pb.SwitchPortThreshold.LongDownDays),
+		}
+	} else {
+		t.SwitchPortThreshold = nil
+	}
 	return nil
 }
 

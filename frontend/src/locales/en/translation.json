@@ -723,5 +723,18 @@
     "no_data": "No optical transceiver data collected.",
     "filter_placeholder": "Filter by Device...",
     "template_update": "Update"
+  },
+  "switch_ports": {
+    "no_data": "No switch port data collected.",
+    "filter_placeholder": "Filter by Device...",
+    "if_type_missing": "Switches are reporting, but without ifType. Apply the updated collector settings to see their ports.",
+    "since_boot": "since boot",
+    "threshold": {
+      "open": "Switch Port Threshold",
+      "title": "Switch Port Threshold",
+      "intro": "Applies to every network device in this organization. A port down longer than this is treated as retired cabling (LONG DOWN) instead of an active fault.",
+      "long_down_days": "Long Down (days)",
+      "long_down_hint": "Default {{value}}. 0 turns this off — ports stay DOWN no matter how long."
+    }
   }
 }

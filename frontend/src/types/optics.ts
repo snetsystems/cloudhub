@@ -1,3 +1,4 @@
+import {OpticsSeverity} from 'src/device_management/constants/opticsThreshold'
 import {DataTableObject} from 'src/types/tableType'
 
 /** One bucketed sample of an optical metric. */
@@ -37,7 +38,8 @@ export interface OpticsDeviceRow extends DataTableObject {
   status: string
   /** Fitted cages over total, e.g. "2/4"; empty when the device reports none. */
   slots: string
-  isHealthy: boolean
+  /** The worst severity among the device's watched ports. */
+  severity: OpticsSeverity
   checkedAt: string
   ports: OpticsPortRow[]
 }

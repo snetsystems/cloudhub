@@ -211,6 +211,7 @@ export interface LearningOrganizationOption {
   optics_threshold?: OpticsThreshold
   /** String, not number: Kapacitor IDs exceed Number.MAX_SAFE_INTEGER. */
   optics_kapacitor_id?: string
+  switch_port_threshold?: SwitchPortThreshold
 }
 
 export interface LearningOption extends LearningOrganizationOption {
@@ -239,6 +240,15 @@ export interface OpticsThreshold {
   alert_enabled: boolean
 }
 
+/**
+ * Judgement threshold for long-down switch ports, held per organization.
+ * Absent until an operator saves it, in which case the shipped default
+ * applies. 0 means off — a port is never marked LONG DOWN.
+ */
+export interface SwitchPortThreshold {
+  long_down_days: number
+}
+
 export interface DevicesOrgData {
   organization: OrganizationID
   data_duration: number
@@ -255,6 +265,7 @@ export interface DevicesOrgData {
   optics_threshold?: OpticsThreshold
   /** String, not number: Kapacitor IDs exceed Number.MAX_SAFE_INTEGER. */
   optics_kapacitor_id?: string
+  switch_port_threshold?: SwitchPortThreshold
 }
 
 export interface DeviceOrganizationStatus {

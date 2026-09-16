@@ -197,3 +197,33 @@ func TestBinDashboardsStore_GetByFileName(t *testing.T) {
 		})
 	}
 }
+
+// The switch ports cell ships beside the optics cell; bumping the version is
+// what makes existing organizations see the Update badge and pick it up.
+func TestBinDashboardsStore_SnmpCells(t *testing.T) {
+	t.Parallel()
+
+	store := &BinDashboardsStore{Logger: log.New(log.DebugLevel)}
+	dashboard, err := store.Get(context.Background(), "snmp")
+	if err != nil {
+		t.Fatalf("BinDashboardsStore.Get(snmp) error = %v", err)
+	}
+	if dashboard.Version != "1.1.0" {
+		t.Errorf("snmp version = %q, want %q", dashboard.Version, "1.1.0")
+	}
+
+	cells := map[string]cloudhub.DashboardCell{}
+	for _, c := range dashboard.Cells {
+		cells[c.ID] = c
+	}
+	for _, id := range []string{"snmp-optics", "snmp-ports"} {
+		c, ok := cells[id]
+		if !ok {
+			t.Errorf("snmp dashboard has no %q cell", id)
+			continue
+		}
+		if c.Type != cloudhub.DashboardCellTypeComponent {
+			t.Errorf("cell %q type = %q, want %q", id, c.Type, cloudhub.DashboardCellTypeComponent)
+		}
+	}
+}

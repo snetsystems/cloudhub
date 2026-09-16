@@ -1486,6 +1486,9 @@ type NetworkDeviceOrg struct {
 	// picks one. Only the identity is stored — the connection is resolved when
 	// the task is written, so a changed URL or password is never stale here.
 	OpticsKapacitorID int `json:"optics_kapacitor_id,string,omitempty"`
+	// SwitchPortThreshold is nil until an operator configures it; clients then
+	// apply their shipped defaults.
+	SwitchPortThreshold *SwitchPortThreshold `json:"switch_port_threshold,omitempty"`
 }
 
 // OpticsThreshold is the organization-wide judgement threshold for optical
@@ -1499,6 +1502,14 @@ type OpticsThreshold struct {
 	// AlertEnabled drives the Kapacitor task off the same thresholds, so an
 	// operator cannot end up alerting on numbers the dashboard is not showing.
 	AlertEnabled bool `json:"alert_enabled"`
+}
+
+// SwitchPortThreshold is the organization-wide judgement threshold for how
+// long a switch port may stay down before the dashboard stops treating it as
+// an alarm (LONG DOWN instead of DOWN). A value of 0 disables the feature —
+// a port is never marked LONG DOWN.
+type SwitchPortThreshold struct {
+	LongDownDays int `json:"long_down_days"`
 }
 
 // NetworkDeviceOrgStore is the Storage and retrieval of information

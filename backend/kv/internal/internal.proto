@@ -369,6 +369,7 @@ message NetworkDeviceOrg {
   int32 ProcCnt						  = 10; // Used learning process count(s)
   OpticsThreshold OpticsThreshold     = 11; // Optical transceiver judgement thresholds; absent until configured
   int64 OpticsKapacitorID             = 12; // Kapacitor that runs the optical-transceiver alert
+  SwitchPortThreshold SwitchPortThreshold = 13; // Switch port judgement thresholds; absent until configured
 }
 
 message OpticsThreshold {
@@ -376,6 +377,10 @@ message OpticsThreshold {
   double TxLowDbm    = 2; // Tx optical power below this (dBm) is a fault
   double TempHighC   = 3; // Transceiver temperature above this (celsius) is a fault
   bool AlertEnabled  = 4; // When true, a Kapacitor task alerts on these thresholds
+}
+
+message SwitchPortThreshold {
+  int32 LongDownDays = 1; // Days a port must stay down before it is LONG DOWN (display-only, not an alarm); 0 disables the feature
 }
 
 message AIKapacitor {
