@@ -144,6 +144,46 @@ func TestServiceExpiry(t *testing.T) {
 		}
 	})
 
+	t.Run("the notice carries both contacts in Korean and English", func(t *testing.T) {
+		// The notice is the only thing an expired tenant can still reach, so
+		// it has to be the whole handover: who to call, in either language.
+		rec := served(past, "GET", "/", nil)
+		body := rec.Body.String()
+
+		for _, want := range []string{
+			// Reachable details for both contacts.
+			"kyungyong.kim@goodussolution.com", "010-5477-9150",
+			"yongsik.lee@snetsystems.co.kr", "010-9166-0275",
+			// Korean pane, which is what a visitor sees with no fragment.
+			"평가 기간이 종료되었습니다", "김경용", "이용식",
+			// English pane, reached through the :target switch.
+			"Evaluation period has ended", "Kyungyong Kim", "Yongsik Lee",
+			// The switch, and both marks carried in the document itself.
+			`href="#ko"`, `href="#en"`, "<svg", "data:image/png;base64,",
+		} {
+			if !strings.Contains(body, want) {
+				t.Errorf("notice is missing %q", want)
+			}
+		}
+	})
+
+	t.Run("every placeholder is substituted and the date lands in both panes", func(t *testing.T) {
+		rec := served(past, "GET", "/", nil)
+		body := rec.Body.String()
+
+		for _, placeholder := range []string{expiryDatePlaceholder, snetMarkPlaceholder} {
+			if strings.Contains(body, placeholder) {
+				t.Errorf("notice still holds the unsubstituted %s", placeholder)
+			}
+		}
+		if !strings.Contains(body, snetSymbolPNG) {
+			t.Error("the SNet mark did not make it into the notice")
+		}
+		if got := strings.Count(body, past.Format(ExpiryDateLayout)); got != 2 {
+			t.Errorf("the date appears %d times, want once per language pane", got)
+		}
+	})
+
 	t.Run("an XHR outside the API prefixes still gets JSON", func(t *testing.T) {
 		header := http.Header{"X-Requested-With": []string{"XMLHttpRequest"}}
 		rec := served(past, "GET", "/some/other/path", header)
