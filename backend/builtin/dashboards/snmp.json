@@ -2,7 +2,7 @@
   "id": 0,
   "name": "snmp",
   "type": "builtin",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "shared": true,
   "measurement": "snmp_nx",
   "organization": "",
@@ -16,6 +16,18 @@
       "minW": 24,
       "minH": 12,
       "name": "Optical Transceiver (SFP)",
+      "queries": [],
+      "type": "component"
+    },
+    {
+      "i": "snmp-ports",
+      "x": 0,
+      "y": 30,
+      "w": 96,
+      "h": 30,
+      "minW": 24,
+      "minH": 12,
+      "name": "Switch Ports",
       "queries": [],
       "type": "component"
     }
