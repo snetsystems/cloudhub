@@ -51,6 +51,7 @@ import {
   buildLogContextPayload,
 } from 'src/log_analysis/util/aiLogContext'
 import useAiContext from 'src/ai_chat/hooks/useAiContext'
+import {useAiChatAccess} from 'src/ai_chat/utils/aiAccess'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import _ from 'lodash'
 import {colorForSeverity, getBrighterColor} from 'src/logs/utils/colors'
@@ -191,6 +192,7 @@ function LogAnalysisSyslogTable<_>({
   fixedTimeRange,
 }: LogAnalysisSyslogTableProps) {
   const dispatch = useDispatch()
+  const isAiAllowed = useAiChatAccess()
   const [
     isMessageTokensModalVisible,
     setIsMessageTokensModalVisible,
@@ -201,14 +203,21 @@ function LogAnalysisSyslogTable<_>({
 
   const baseColumns = useMemo(
     () => [
-      {
-        id: 'aiAnalysis',
-        display: 'Analysis',
-        isExpandable: false,
-        isSortable: false,
-        // Matches Metrics, the column's only sibling that holds a bare icon.
-        initialWidth: 65,
-      },
+      // The Analysis column is the AI entry point, so it only exists for the
+      // roles allowed to use AI. See src/ai_chat/utils/aiAccess.
+      ...(isAiAllowed
+        ? [
+            {
+              id: 'aiAnalysis',
+              display: 'Analysis',
+              isExpandable: false,
+              isSortable: false,
+              // Matches Metrics, the column's only sibling that holds a bare
+              // icon.
+              initialWidth: 65,
+            },
+          ]
+        : []),
       {
         id: '@timestamp',
         display: 'Timestamp',
@@ -300,7 +309,7 @@ function LogAnalysisSyslogTable<_>({
         initialWidth: 135,
       },
     ],
-    []
+    [isAiAllowed]
   )
 
   const [columnOrder, setColumnOrder] = useState<string[]>(() => {

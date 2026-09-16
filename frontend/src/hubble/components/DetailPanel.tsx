@@ -9,6 +9,7 @@ import {
 } from 'src/hubble/types'
 import {useEdgeFlows} from 'src/hubble/hooks/useEdgeFlows'
 import useAiContext from 'src/ai_chat/hooks/useAiContext'
+import {useAiChatAccess} from 'src/ai_chat/utils/aiAccess'
 import {
   buildConnectionContextPayload,
   buildConnectionContextSummary,
@@ -78,6 +79,7 @@ const DetailPanel: React.FC<Props> = ({
       livePaused
     )
   const {sendToAiChat, clear: clearAiContext} = useAiContext()
+  const isAiAllowed = useAiChatAccess()
 
   // The hook lives here rather than in EdgeListView: that view is called as a
   // plain function (see the warning below), so a hook inside it would attach
@@ -140,7 +142,9 @@ const DetailPanel: React.FC<Props> = ({
         dstSearch: edgeDstSearch,
         onSrcSearchChange: setEdgeSrcSearch,
         onDstSearchChange: setEdgeDstSearch,
-        onAiInspect: handleAiInspect,
+        // Undefined below admin, which is what drops the AI button from
+        // every row. See src/ai_chat/utils/aiAccess.
+        onAiInspect: isAiAllowed ? handleAiInspect : undefined,
       })
     }
     return (
@@ -438,7 +442,7 @@ const EdgeListView: React.FC<{
   dstSearch: string
   onSrcSearchChange: (value: string) => void
   onDstSearchChange: (value: string) => void
-  onAiInspect: (edge: HubbleEdge) => void
+  onAiInspect?: (edge: HubbleEdge) => void
 }> = ({
   snapshot,
   activeNodeId,
@@ -555,7 +559,7 @@ const EdgeListView: React.FC<{
                       </span>
                     )}
                   </span>
-                  {denied > 0 && (
+                  {denied > 0 && onAiInspect && (
                     <button
                       className="hubble-edge-inspect icon ai-robot"
                       title="이 연결을 AI에게 점검 요청"

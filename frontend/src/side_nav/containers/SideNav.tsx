@@ -9,6 +9,7 @@ import Authorized, {
   isUserAuthorized,
   SUPERADMIN_ROLE,
 } from 'src/auth/Authorized'
+import {isAiRoleAuthorized} from 'src/ai_chat/utils/aiAccess'
 
 import UserNavBlock from 'src/side_nav/components/UserNavBlock'
 
@@ -213,13 +214,21 @@ class SideNav extends PureComponent<Props, State> {
     const isUsingOsp = this.isExistInLinks(AddonType.osp)
     const isUsingLogAnalysis = this.isAddonUrlOn(AddonType.logAnalysis)
     const isAdminRole = !isUsingAuth || isUserAuthorized(me?.role, ADMIN_ROLE)
+    // The AI section is admin-only, and unlike isAdminRole above it fails
+    // closed while `isUsingAuth` is still undefined so the menu never flashes
+    // for a viewer mid-load. See src/ai_chat/utils/aiAccess.
+    const isAiAuthorized = isAiRoleAuthorized(me, isUsingAuth)
     const enabled = this.isMenuEnabled
     const aiLink = this.navLink(DEFAULT_NAV_CHILD['ai-chat'], [
-      {id: 'ai-chatbot', path: `${sourcePrefix}/ai-chat`},
+      {
+        id: 'ai-chatbot',
+        path: `${sourcePrefix}/ai-chat`,
+        available: isAiAuthorized,
+      },
       {
         id: 'openclaw-skills',
         path: `${sourcePrefix}/openclaw-skills`,
-        available: isAdminRole,
+        available: isAiAuthorized,
       },
     ])
     const networkLink = this.navLink(DEFAULT_NAV_CHILD['network-monitoring'], [
@@ -287,19 +296,19 @@ class SideNav extends PureComponent<Props, State> {
         <>
           {/* AI Assistant */}
           <NavBlock
-            visible={enabled('ai-chat')}
+            visible={isAiAuthorized && enabled('ai-chat')}
             highlightWhen={['ai-chat', 'ai-chat-test', 'openclaw-skills']}
             icon="ai-robot"
             link={aiLink}
             location={location}
           >
             <NavHeader link={aiLink} title="AI Assistant" />
-            {enabled('ai-chatbot') && (
+            {isAiAuthorized && enabled('ai-chatbot') && (
               <NavListItem link={`${sourcePrefix}/ai-chat`} icon="chat">
                 Chatbot
               </NavListItem>
             )}
-            {isAdminRole && enabled('openclaw-skills') && (
+            {isAiAuthorized && enabled('openclaw-skills') && (
               <NavListItem
                 link={`${sourcePrefix}/openclaw-skills`}
                 icon="bookmark"

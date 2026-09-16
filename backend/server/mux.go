@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "net/http/pprof" // required for /debug/pprof endpoint
 
@@ -41,6 +42,7 @@ type MuxOpts struct {
 	BasicAuth             *basicAuth.BasicAuth // HTTP basic authentication provider
 	PasswordPolicy        string               // Password validity rules
 	PasswordPolicyMessage string               // Password validity rule description
+	ServiceExpiresAt      time.Time            // Instant a time-boxed install stops serving; zero means never
 }
 
 // NewMux attaches all the route handlers; handler returned servers cloudhub.
@@ -81,16 +83,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		//The assets handler is always unaware of basepaths, so the
 		// basepath needs to always be removed before sending requests to it
 		hr.NotFound = http.StripPrefix(opts.Basepath, hr.NotFound)
-	}
-
-	EnsureMember := func(next http.HandlerFunc) http.HandlerFunc {
-		return AuthorizedUser(
-			service.Store,
-			opts.UseAuth,
-			roles.MemberRoleName,
-			opts.Logger,
-			next,
-		)
 	}
 
 	EnsureViewer := func(next http.HandlerFunc) http.HandlerFunc {
@@ -190,7 +182,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// websocket
 	router.GET("/cloudhub/v1/WebTerminalHandler", EnsureAdmin(service.WebTerminalHandler))
-	router.GET("/cloudhub/v2/openclaw/events/ws", EnsureViewer(service.OpenClawEvents))
+	router.GET("/cloudhub/v2/openclaw/events/ws", EnsureAdmin(service.OpenClawEvents))
 
 	/* Health */
 	router.GET("/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
@@ -372,28 +364,34 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// OpenClaw chat relay. The handlers derive the Gateway mapping from the
 	// authenticated user and organization rather than client request fields.
-	router.POST("/cloudhub/v2/openclaw/sessions", EnsureMember(service.OpenClawSessions))
-	router.GET("/cloudhub/v2/openclaw/sessions", EnsureViewer(service.OpenClawSessions))
-	router.DELETE("/cloudhub/v2/openclaw/sessions/:id", EnsureMember(service.OpenClawSessionDelete))
-	router.GET("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureViewer(service.OpenClawSessionMessages))
-	router.POST("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureMember(service.OpenClawSessionMessage))
-	router.GET("/cloudhub/v2/openclaw/sessions/:id/approvals", EnsureViewer(service.OpenClawSessionApprovals))
-	router.POST("/cloudhub/v2/openclaw/sessions/:id/approvals/:approvalId/resolve", EnsureEditor(service.OpenClawSessionApprovalResolve))
-	router.POST("/cloudhub/v2/openclaw/rpc", EnsureMember(service.OpenClawRPC))
+	//
+	// The AI assistant is admin-only, so every route below is EnsureAdmin even
+	// for plain reads: the frontend hides the menus and buttons for lower
+	// roles, and these guards are what actually enforce it. The MCP-auth
+	// callbacks are the exception — those are the agent calling back in, not a
+	// browser session.
+	router.POST("/cloudhub/v2/openclaw/sessions", EnsureAdmin(service.OpenClawSessions))
+	router.GET("/cloudhub/v2/openclaw/sessions", EnsureAdmin(service.OpenClawSessions))
+	router.DELETE("/cloudhub/v2/openclaw/sessions/:id", EnsureAdmin(service.OpenClawSessionDelete))
+	router.GET("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureAdmin(service.OpenClawSessionMessages))
+	router.POST("/cloudhub/v2/openclaw/sessions/:id/messages", EnsureAdmin(service.OpenClawSessionMessage))
+	router.GET("/cloudhub/v2/openclaw/sessions/:id/approvals", EnsureAdmin(service.OpenClawSessionApprovals))
+	router.POST("/cloudhub/v2/openclaw/sessions/:id/approvals/:approvalId/resolve", EnsureAdmin(service.OpenClawSessionApprovalResolve))
+	router.POST("/cloudhub/v2/openclaw/rpc", EnsureAdmin(service.OpenClawRPC))
 	router.POST("/cloudhub/v2/openclaw/skill-drafts", EnsureAdmin(service.OpenClawSkillDraft))
-	router.GET("/cloudhub/v2/openclaw/skills", EnsureViewer(service.OpenClawSkillsList))
-	router.GET("/cloudhub/v2/openclaw/skill-inventory", EnsureViewer(service.OpenClawSkillInventory))
-	router.GET("/cloudhub/v2/openclaw/skill-inventory/:name", EnsureViewer(service.OpenClawSkillInventoryFiles))
+	router.GET("/cloudhub/v2/openclaw/skills", EnsureAdmin(service.OpenClawSkillsList))
+	router.GET("/cloudhub/v2/openclaw/skill-inventory", EnsureAdmin(service.OpenClawSkillInventory))
+	router.GET("/cloudhub/v2/openclaw/skill-inventory/:name", EnsureAdmin(service.OpenClawSkillInventoryFiles))
 	router.POST("/cloudhub/v2/openclaw/skills", EnsureAdmin(service.OpenClawSkillCreate))
-	router.GET("/cloudhub/v2/openclaw/skills/:id", EnsureViewer(service.OpenClawSkillGet))
+	router.GET("/cloudhub/v2/openclaw/skills/:id", EnsureAdmin(service.OpenClawSkillGet))
 	router.POST("/cloudhub/v2/openclaw/skills/:id/revisions", EnsureAdmin(service.OpenClawSkillRevisionCreate))
-	router.GET("/cloudhub/v2/openclaw/skills/:id/revisions/:rev", EnsureViewer(service.OpenClawSkillRevisionGet))
+	router.GET("/cloudhub/v2/openclaw/skills/:id/revisions/:rev", EnsureAdmin(service.OpenClawSkillRevisionGet))
 	router.POST("/cloudhub/v2/openclaw/skills/:id/revisions/:rev/approve", EnsureAdmin(service.OpenClawSkillRevisionApprove))
 	router.POST("/cloudhub/v2/openclaw/skills/:id/revisions/:rev/reject", EnsureAdmin(service.OpenClawSkillRevisionReject))
 	router.POST("/cloudhub/v2/openclaw/skills/:id/rollback", EnsureAdmin(service.OpenClawSkillRollback))
 	router.DELETE("/cloudhub/v2/openclaw/skills/:id/revisions/:rev", EnsureAdmin(service.OpenClawSkillRevisionDelete))
 	router.DELETE("/cloudhub/v2/openclaw/skills/:id", EnsureAdmin(service.OpenClawSkillDelete))
-	router.GET("/cloudhub/v2/openclaw/org-agents", EnsureViewer(service.OpenClawOrgAgentsGet))
+	router.GET("/cloudhub/v2/openclaw/org-agents", EnsureAdmin(service.OpenClawOrgAgentsGet))
 	router.PUT("/cloudhub/v2/openclaw/org-agents", EnsureAdmin(service.OpenClawOrgAgentsReplace))
 	router.POST("/cloudhub/v2/openclaw/workspaces/reclaim", EnsureSuperAdmin(service.OpenClawWorkspaceReclaim))
 	router.POST("/api/v1/openclaw/managed-approvals", EnsureMCPAuth(service.OpenClawManagedApprovalCreate))
@@ -693,6 +691,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	} else {
 		out = router
 	}
+	// Outside everything else on purpose: a finished evaluation has to close
+	// the login page and the React bundle too, not just the API.
+	out = ServiceExpiry(opts.ServiceExpiresAt, opts.Basepath, opts.Logger, out)
 	out = Logger(opts.Logger, FlushingHandler(out))
 
 	return out

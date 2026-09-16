@@ -10,6 +10,7 @@ import {
   notifyErrorWithAltText,
   notifyOrgIsPrivate,
   notifyCurrentOrgDeleted,
+  notifyServiceExpired,
 } from 'src/shared/copy/notifications'
 
 const actionsAllowedDuringBlackout = [
@@ -41,24 +42,32 @@ const errorsMiddleware = store => next => action => {
     if (status === HTTP_FORBIDDEN) {
       const message = _.get(error, 'data.message', '')
 
+      // A finished evaluation refuses everything, login included, so telling
+      // the user their session timed out would send them in circles.
+      const serviceExpired = _.get(error, 'data.expired', false)
+
       const organizationWasRemoved =
         message === `user's current organization was not found` // eslint-disable-line quotes
       const wasSessionTimeout = me !== null
 
       store.dispatch(authExpired(auth))
 
-      if (
-        message ===
-        `This organization is private. To gain access, you must be explicitly added by an administrator.` // eslint-disable-line quotes
-      ) {
-        store.dispatch(notify(notifyOrgIsPrivate()))
-      }
+      if (serviceExpired) {
+        store.dispatch(notify(notifyServiceExpired()))
+      } else {
+        if (
+          message ===
+          `This organization is private. To gain access, you must be explicitly added by an administrator.` // eslint-disable-line quotes
+        ) {
+          store.dispatch(notify(notifyOrgIsPrivate()))
+        }
 
-      if (organizationWasRemoved) {
-        store.dispatch(notify(notifyCurrentOrgDeleted()))
-      } else if (wasSessionTimeout) {
-        store.dispatch(notify(notifyHttpErrorRespose(status, statusText)))
-        store.dispatch(notify(notifySessionTimedOut()))
+        if (organizationWasRemoved) {
+          store.dispatch(notify(notifyCurrentOrgDeleted()))
+        } else if (wasSessionTimeout) {
+          store.dispatch(notify(notifyHttpErrorRespose(status, statusText)))
+          store.dispatch(notify(notifySessionTimedOut()))
+        }
       }
     } else if (altText) {
       store.dispatch(notify(notifyErrorWithAltText(alertType, altText)))
