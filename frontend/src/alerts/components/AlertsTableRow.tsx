@@ -19,6 +19,7 @@ interface Props {
   value: string | null
   timeZone: TimeZones
   triggerType?: string
+  alertDomain?: string
 }
 
 const {colName, colLevel, colTime, colHost, colValue} = ALERTS_TABLE
@@ -103,7 +104,22 @@ class AlertsTableRow extends PureComponent<Props> {
   }
 
   private get hostCell(): JSX.Element {
-    const {sourceID, host, triggerType} = this.props
+    const {sourceID, host, triggerType, alertDomain} = this.props
+
+    // Network device alerts come from hand-maintained SNMP tickscripts. Their
+    // source is a switch port, which has no host-details page, so linking to
+    // the server list would land on an empty screen. Render plain text.
+    if (host !== null && alertDomain === 'network-device') {
+      return (
+        <div
+          className="alert-history-table--td alert-history-table--host"
+          style={{width: colHost}}
+          data-test="hostCell"
+        >
+          <span title={host}>{host}</span>
+        </div>
+      )
+    }
 
     return (
       <div

@@ -71,4 +71,17 @@ describe('Components.Shared.ProvidersTableRowNew', () => {
     expect(hostCell.find(Link).exists()).toBe(false)
     expect(valueCell.text()).toBe('–')
   })
+
+  it('should render a network device source as plain text', () => {
+    // Switch ports have no host-details page, so the source must not link out.
+    const {wrapper} = setup({
+      host: 'Ethernet1/5 @ 10.20.3.252',
+      alertDomain: 'network-device',
+    })
+
+    const hostCell = wrapper.find({'data-test': 'hostCell'})
+
+    expect(hostCell.find(Link).exists()).toBe(false)
+    expect(hostCell.text()).toBe('Ethernet1/5 @ 10.20.3.252')
+  })
 })

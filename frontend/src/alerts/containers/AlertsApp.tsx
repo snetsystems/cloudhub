@@ -190,6 +190,9 @@ class AlertsApp extends PureComponent<Props, State> {
         const agentHostIndex = alertSeries[0].columns.findIndex(
           col => col === 'agent_host'
         )
+        const alertDomainIndex = alertSeries[0].columns.findIndex(
+          col => col === 'alertDomain'
+        )
 
         alertSeries[0].values.forEach(s => {
           const host = s[hostIndex] ?? s[agentHostIndex]
@@ -212,6 +215,7 @@ class AlertsApp extends PureComponent<Props, State> {
                 ? `${s[triggerTypeIndex]}`
                 : null
             }`,
+            alertDomain: s[alertDomainIndex],
           })
         })
 
