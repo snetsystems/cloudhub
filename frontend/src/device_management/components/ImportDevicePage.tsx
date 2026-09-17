@@ -388,6 +388,13 @@ class ImportDevicePage extends PureComponent<Props, State> {
             password: deviceData?.ssh_password || '',
             en_password: deviceData?.ssh_en_password || '',
             port: deviceData?.ssh_port || 22,
+            algorithm:
+              !deviceData?.ssh_algorithm ||
+              String(deviceData.ssh_algorithm).trim() === '' ||
+              String(deviceData.ssh_algorithm).trim().toLowerCase() ===
+                'default'
+                ? ''
+                : String(deviceData.ssh_algorithm).trim(),
           },
           snmp_config: {
             community: snmpVersionString === '3' ? '' : snmp_community,
