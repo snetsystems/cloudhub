@@ -72,16 +72,42 @@ describe('Components.Shared.ProvidersTableRowNew', () => {
     expect(valueCell.text()).toBe('–')
   })
 
-  it('should render a network device source as plain text', () => {
-    // Switch ports have no host-details page, so the source must not link out.
+  it('should link a server source to its host details page', () => {
+    const {wrapper} = setup()
+
+    const link = wrapper.find({'data-test': 'hostCell'}).find(Link)
+
+    expect(link.prop('to')).toBe(
+      '/sources/3/server-monitoring/server-list/Ada Island'
+    )
+  })
+
+  it('should link an anomaly prediction source with its trigger', () => {
+    const {wrapper} = setup({triggerType: 'anomaly_predict'})
+
+    const link = wrapper.find({'data-test': 'hostCell'}).find(Link)
+
+    expect(link.prop('to')).toBe(
+      '/sources/3/server-monitoring/server-list/Ada Island' +
+        '?trigger=anomaly_predict&app=snmp_nx_all'
+    )
+  })
+
+  it('should link a network device source by its management ip', () => {
+    // The cell reads "<port> @ <ip>" but HostPage resolves devices by
+    // agent_host, so the link must carry the bare ip.
     const {wrapper} = setup({
       host: 'Ethernet1/5 @ 10.20.3.252',
       alertDomain: 'network-device',
+      agentHost: '10.20.3.252',
     })
 
-    const hostCell = wrapper.find({'data-test': 'hostCell'})
+    const link = wrapper.find({'data-test': 'hostCell'}).find(Link)
 
-    expect(hostCell.find(Link).exists()).toBe(false)
-    expect(hostCell.text()).toBe('Ethernet1/5 @ 10.20.3.252')
+    expect(link.prop('to')).toBe(
+      '/sources/3/server-monitoring/server-list/10.20.3.252?app=snmp_nx_all'
+    )
+    // the cell still reads as the port, only the destination uses the ip
+    expect(link.prop('title')).toBe('Ethernet1/5 @ 10.20.3.252')
   })
 })

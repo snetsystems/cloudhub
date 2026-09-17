@@ -210,12 +210,15 @@ class AlertsApp extends PureComponent<Props, State> {
             value: `${value}`,
             level: s[levelIndex],
             name: `${s[nameIndex]}`,
-            triggerType: `${
+            // Only anomaly predictions carry a trigger. Interpolating null
+            // here produced the string 'null', which is truthy, so every row
+            // got ?trigger=null&app=snmp_nx_all and landed on an empty page.
+            triggerType:
               s[triggerTypeIndex] === 'anomaly_predict'
-                ? `${s[triggerTypeIndex]}`
-                : null
-            }`,
+                ? s[triggerTypeIndex]
+                : undefined,
             alertDomain: s[alertDomainIndex],
+            agentHost: s[agentHostIndex],
           })
         })
 

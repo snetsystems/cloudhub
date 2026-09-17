@@ -79,7 +79,11 @@ class HostPage extends PureComponent<Props, State> {
   public async componentDidMount() {
     const {location, autoRefresh} = this.props
     try {
-      const isAgentHost = location?.query?.trigger === 'anomaly_predict'
+      // snmp_nx devices reach this page from two places: anomaly predictions
+      // and the snmp_nx alert tickscripts. Both ask for the snmp_nx_all app.
+      const isAgentHost =
+        location?.query?.trigger === 'anomaly_predict' ||
+        location?.query?.app === 'snmp_nx_all'
 
       this.setState({isAgentHost: isAgentHost})
 

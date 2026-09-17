@@ -20,6 +20,7 @@ interface Props {
   timeZone: TimeZones
   triggerType?: string
   alertDomain?: string
+  agentHost?: string
 }
 
 const {colName, colLevel, colTime, colHost, colValue} = ALERTS_TABLE
@@ -103,23 +104,29 @@ class AlertsTableRow extends PureComponent<Props> {
     return moment(Number(time)).format('YYYY-MM-DDTHH:mm:ss.SSS')
   }
 
-  private get hostCell(): JSX.Element {
-    const {sourceID, host, triggerType, alertDomain} = this.props
+  /**
+   * Network device alerts show "<port> @ <ip>" as their source, but HostPage
+   * looks a device up by agent_host, so those rows link with the bare ip and
+   * ask for the snmp_nx_all app. Anomaly predictions keep their own trigger.
+   * Server alerts carry neither and get a plain host link.
+   */
+  private get hostLink(): string {
+    const {sourceID, host, triggerType, alertDomain, agentHost} = this.props
+    const serverList = `/sources/${sourceID}/server-monitoring/server-list`
 
-    // Network device alerts come from hand-maintained SNMP tickscripts. Their
-    // source is a switch port, which has no host-details page, so linking to
-    // the server list would land on an empty screen. Render plain text.
-    if (host !== null && alertDomain === 'network-device') {
-      return (
-        <div
-          className="alert-history-table--td alert-history-table--host"
-          style={{width: colHost}}
-          data-test="hostCell"
-        >
-          <span title={host}>{host}</span>
-        </div>
-      )
+    if (alertDomain === 'network-device' && agentHost) {
+      return `${serverList}/${agentHost}?app=snmp_nx_all`
     }
+
+    if (triggerType) {
+      return `${serverList}/${host}?trigger=${triggerType}&app=snmp_nx_all`
+    }
+
+    return `${serverList}/${host}`
+  }
+
+  private get hostCell(): JSX.Element {
+    const {host} = this.props
 
     return (
       <div
@@ -132,9 +139,7 @@ class AlertsTableRow extends PureComponent<Props> {
         ) : (
           <Link
             onClick={e => e.stopPropagation()}
-            to={`/sources/${sourceID}/server-monitoring/server-list/${host}${
-              !!triggerType ? `?trigger=${triggerType}&app=snmp_nx_all` : ''
-            }`}
+            to={this.hostLink}
             title={host}
           >
             {/* <Link

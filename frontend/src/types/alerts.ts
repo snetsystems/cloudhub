@@ -5,7 +5,10 @@ export interface Alert {
   host: string
   level: string
   triggerType?: string
-  /** Set by hand-maintained SNMP tickscripts. Network device alerts have no
-   *  host-details page to link to, so the source cell renders as plain text. */
+  /** Set by the hand-maintained snmp_nx tickscripts. */
   alertDomain?: string
+  /** Management ip of the network device. The source cell shows "<port> @ <ip>",
+   *  but the host details page looks a device up by agent_host, so the link
+   *  needs the bare ip. */
+  agentHost?: string
 }
