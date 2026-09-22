@@ -544,10 +544,10 @@ export async function getManageUp(pUrl: string, pToken: string) {
     const params = {
       client: 'runner',
       fun: 'manage.up',
-      kwarg: {timeout: 3, gather_job_timeout: 2},
+      kwarg: {timeout: 10, gather_job_timeout: 20},
     }
     const clientTimeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('manage.up client timeout')), 15000)
+      setTimeout(() => reject(new Error('manage.up client timeout')), 60000)
     )
     return await Promise.race([apiRequest(pUrl, pToken, params), clientTimeout])
   } catch (error) {
